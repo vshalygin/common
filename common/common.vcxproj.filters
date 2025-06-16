@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="utils">
+      <UniqueIdentifier>{d9212874-65ac-4e90-81fa-8c73fd921bbd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\function-traits">
+      <UniqueIdentifier>{ed78b2d2-1a5e-4c55-ae54-19d189c6cfd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\function">
+      <UniqueIdentifier>{74772d10-d169-44dc-8445-7b7e152ac1fa}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common\utils\function-traits\funtion-traits.h">
+      <Filter>utils\function-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common\utils\function\function.h">
+      <Filter>utils\function</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
