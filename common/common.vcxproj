@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common\utils\function-traits\funtion-traits.h" />
-    <ClInclude Include="common\utils\function\function.h" />
+    <ClInclude Include="common\utils\function-traits\remove-mem-func-qualifiers.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
