@@ -12,27 +12,17 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A73A4837-35C7-451C-B557-3E2F1F779622}.Debug|x64.ActiveCfg = Debug|x64
 		{A73A4837-35C7-451C-B557-3E2F1F779622}.Debug|x64.Build.0 = Debug|x64
-		{A73A4837-35C7-451C-B557-3E2F1F779622}.Debug|x86.ActiveCfg = Debug|Win32
-		{A73A4837-35C7-451C-B557-3E2F1F779622}.Debug|x86.Build.0 = Debug|Win32
 		{A73A4837-35C7-451C-B557-3E2F1F779622}.Release|x64.ActiveCfg = Release|x64
 		{A73A4837-35C7-451C-B557-3E2F1F779622}.Release|x64.Build.0 = Release|x64
-		{A73A4837-35C7-451C-B557-3E2F1F779622}.Release|x86.ActiveCfg = Release|Win32
-		{A73A4837-35C7-451C-B557-3E2F1F779622}.Release|x86.Build.0 = Release|Win32
 		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Debug|x64.ActiveCfg = Debug|x64
 		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Debug|x64.Build.0 = Debug|x64
-		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Debug|x86.ActiveCfg = Debug|Win32
-		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Debug|x86.Build.0 = Debug|Win32
 		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Release|x64.ActiveCfg = Release|x64
 		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Release|x64.Build.0 = Release|x64
-		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Release|x86.ActiveCfg = Release|Win32
-		{4BDBB3A5-4331-4161-A341-A5D1C5E24138}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
