@@ -11,8 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common\utils\function-traits\funtion-traits.h" />
-    <ClInclude Include="common\utils\function-traits\remove-mem-func-qualifiers.h" />
+    <ClInclude Include="common\utils\safe-ptr\safe-ptr.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

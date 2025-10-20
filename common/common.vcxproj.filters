@@ -4,16 +4,13 @@
     <Filter Include="utils">
       <UniqueIdentifier>{d9212874-65ac-4e90-81fa-8c73fd921bbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils\function-traits">
-      <UniqueIdentifier>{ed78b2d2-1a5e-4c55-ae54-19d189c6cfd4}</UniqueIdentifier>
+    <Filter Include="utils\safe-ptr">
+      <UniqueIdentifier>{64c5147c-2f44-44d8-8780-33df67be121b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common\utils\function-traits\funtion-traits.h">
-      <Filter>utils\function-traits</Filter>
-    </ClInclude>
-    <ClInclude Include="common\utils\function-traits\remove-mem-func-qualifiers.h">
-      <Filter>utils\function-traits</Filter>
+    <ClInclude Include="common\utils\safe-ptr\safe-ptr.h">
+      <Filter>utils\safe-ptr</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

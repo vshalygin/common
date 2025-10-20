@@ -10,6 +10,9 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\safe-ptr\safe-ptr-test.cpp">
+      <Filter>utils\safe-ptr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
