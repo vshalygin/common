@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common\utils\safe-ptr\safe-ptr.h" />
+    <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

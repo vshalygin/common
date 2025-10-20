@@ -1,8 +1,8 @@
-#include <common/utils/safe-ptr/safe-ptr.h>
+#include <common-lib/utils/safe-ptr/safe-ptr.h>
 
 #include <gtest/gtest.h>
 
-using namespace vsh::common;
+using namespace vsh::common_lib;
 using namespace testing;
 
 namespace {
