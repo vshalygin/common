@@ -19,6 +19,9 @@ namespace {
             is_instance_exists = false;
         }
 
+        call_type(call_type &) = delete;
+        call_type &operator=(call_type &) = delete;
+
         void call()
         {
             is_called_ = true;

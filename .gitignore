@@ -415,3 +415,7 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# ProtoBuf
+*.pb.h
+*.pb.cc

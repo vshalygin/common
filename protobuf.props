@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+	<PROTOBUF_PATH>C:\SDK\Protobuf\protobuf-33.0\</PROTOBUF_PATH>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(PROTOBUF_PATH)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies Condition="'$(Configuration)'=='Release'">libprotobuf.lib;libutf8_range.lib;libutf8_validity.lib;%(AdditionalDependencies)</AdditionalDependencies>
+	  <AdditionalDependencies Condition="'$(Configuration)'=='Debug'">libprotobufd.lib;libutf8_range.lib;libutf8_validity.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <PropertyGroup >
+    <LibraryPath Condition="'$(Configuration)'=='Release'">$(PROTOBUF_PATH)\lib;$(PROTOBUF_PATH)\lib\libutf8_release;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)'=='Debug'">$(PROTOBUF_PATH)\lib;$(PROTOBUF_PATH)\lib\libutf8_debug;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+</Project>

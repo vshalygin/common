@@ -24,5 +24,13 @@
     <Filter Include="utils\safe-ptr">
       <UniqueIdentifier>{06117024-c8a7-4e65-84bf-4dc06e04c6e2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="proto">
+      <UniqueIdentifier>{2eb06b96-4944-4063-a1d0-eb2f7b7eda2d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="src\proto\test.proto">
+      <Filter>proto</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
