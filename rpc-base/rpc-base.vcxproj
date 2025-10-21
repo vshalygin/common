@@ -10,25 +10,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="rpc-base\proto\example.pb.cc">
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
-    </ClCompile>
-    <ClCompile Include="rpc-base\test.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="rpc-base\proto\example.proto">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename).pb.cc;%(RootDir)%(Directory)%(Filename).pb.h</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename).pb.cc;%(RootDir)%(Directory)%(Filename).pb.h</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="rpc-base\proto\example.pb.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
