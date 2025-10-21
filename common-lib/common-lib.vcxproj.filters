@@ -7,10 +7,21 @@
     <Filter Include="utils\safe-ptr">
       <UniqueIdentifier>{64c5147c-2f44-44d8-8780-33df67be121b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\event">
+      <UniqueIdentifier>{4cafff36-4ab0-4ca8-ba5d-832d051a0e59}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h">
       <Filter>utils\safe-ptr</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\utils\event\event.h">
+      <Filter>utils\event</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="common-lib\utils\event\event.cpp">
+      <Filter>utils\event</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

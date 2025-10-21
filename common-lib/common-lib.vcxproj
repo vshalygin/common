@@ -11,7 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common-lib\utils\event\event.h" />
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="common-lib\utils\event\event.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
