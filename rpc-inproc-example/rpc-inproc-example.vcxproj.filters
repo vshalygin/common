@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\proto\service.pb.cc">
+      <Filter>proto</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rpc-client\rpc-client.cpp">
+      <Filter>rpc-client</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pseudopipe\pseudopipe.cpp">
+      <Filter>pseudopipe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rpc-client\rpc-client-transport\rpc-client-transport.cpp">
+      <Filter>rpc-client\rpc-client-transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rpc-client\rpc-client-channel\rpc-client-channel.cpp">
+      <Filter>rpc-client\rpc-client-channel</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rpc-server\rpc-server.cpp">
+      <Filter>rpc-server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rpc-server\rpc-service\rpc-service.cpp">
+      <Filter>rpc-server\rpc-service</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rpc-server\rpc-server-transport\rpc-server-transport.cpp">
+      <Filter>rpc-server\rpc-server-transport</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="proto">
+      <UniqueIdentifier>{067f314a-7f87-4422-93ec-0741232a4881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-client">
+      <UniqueIdentifier>{d5f2ae94-db44-4dcd-87e9-cd108cc13e98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-server">
+      <UniqueIdentifier>{7ed27428-0e9d-4f00-a906-84742c46aaab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-client\rpc-client-transport">
+      <UniqueIdentifier>{92227d4d-2782-4141-90fd-02bd0bf3efb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pseudopipe">
+      <UniqueIdentifier>{6ca67a35-a92d-4c1f-89d7-8dc52585011a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-client\rpc-client-channel">
+      <UniqueIdentifier>{5a09786b-b6c4-411d-919d-5935d346bbe5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-server\rpc-server-transport">
+      <UniqueIdentifier>{84040578-da0f-43b7-8ab0-a6923a9d8416}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-server\rpc-service">
+      <UniqueIdentifier>{50b07c83-6dc5-496f-9f10-91db26078ef0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="src\proto\service.proto">
+      <Filter>proto</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\proto\service.pb.h">
+      <Filter>proto</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\irpc-client.h">
+      <Filter>rpc-client</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\rpc-client.h">
+      <Filter>rpc-client</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pseudopipe\pseudopipe.h">
+      <Filter>pseudopipe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-transport.h">
+      <Filter>rpc-client\rpc-client-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\rpc-client-transport\rpc-client-transport.h">
+      <Filter>rpc-client\rpc-client-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\rpc-client-channel\rpc-client-channel.h">
+      <Filter>rpc-client\rpc-client-channel</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-connection.h">
+      <Filter>rpc-client\rpc-client-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\irpc-server.h">
+      <Filter>rpc-server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\rpc-server.h">
+      <Filter>rpc-server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\rpc-service\rpc-service.h">
+      <Filter>rpc-server\rpc-service</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\rpc-service\irpc-service.h">
+      <Filter>rpc-server\rpc-service</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-connection.h">
+      <Filter>rpc-server\rpc-server-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-transport.h">
+      <Filter>rpc-server\rpc-server-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\rpc-server-transport\rpc-server-transport.h">
+      <Filter>rpc-server\rpc-server-transport</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
