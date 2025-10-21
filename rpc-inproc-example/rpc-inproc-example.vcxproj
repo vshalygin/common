@@ -126,7 +126,6 @@
     <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-transport.h" />
     <ClInclude Include="src\rpc-server\rpc-server-transport\rpc-server-transport.h" />
     <ClInclude Include="src\rpc-server\rpc-server.h" />
-    <ClInclude Include="src\rpc-server\rpc-service\irpc-service.h" />
     <ClInclude Include="src\rpc-server\rpc-service\rpc-service.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

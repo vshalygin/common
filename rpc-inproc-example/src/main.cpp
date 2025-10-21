@@ -14,8 +14,8 @@ using namespace vsh::example;
 int main()
 {
     auto server_transport = std::make_unique<rpc_server_transport>();
-    auto service = std::make_unique<rpc_service>(std::move(server_transport));
-    auto server = std::make_shared<rpc_server>(std::move(service));
+    auto service = std::make_unique<rpc_service>();
+    auto server = std::make_shared<rpc_server>(std::move(server_transport), std::move(service));
     auto thread = std::jthread([server]() { server->run(); });
 
     auto client_transport = std::make_shared<rpc_client_transport>();

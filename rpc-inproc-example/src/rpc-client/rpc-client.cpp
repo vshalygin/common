@@ -11,7 +11,6 @@ namespace vsh::example {
         , connection_(std::move(connection))
     {}
 
-
     int rpc_client::connect()
     {
         return connection_->connect();

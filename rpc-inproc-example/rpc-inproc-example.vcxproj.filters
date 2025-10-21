@@ -83,16 +83,10 @@
     <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-connection.h">
       <Filter>rpc-client\rpc-client-transport</Filter>
     </ClInclude>
-    <ClInclude Include="src\rpc-server\irpc-server.h">
-      <Filter>rpc-server</Filter>
-    </ClInclude>
     <ClInclude Include="src\rpc-server\rpc-server.h">
       <Filter>rpc-server</Filter>
     </ClInclude>
     <ClInclude Include="src\rpc-server\rpc-service\rpc-service.h">
-      <Filter>rpc-server\rpc-service</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rpc-server\rpc-service\irpc-service.h">
       <Filter>rpc-server\rpc-service</Filter>
     </ClInclude>
     <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-connection.h">
@@ -103,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="src\rpc-server\rpc-server-transport\rpc-server-transport.h">
       <Filter>rpc-server\rpc-server-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-server\irpc-server.h">
+      <Filter>rpc-server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
