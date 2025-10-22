@@ -7,10 +7,14 @@ namespace google::protobuf {
     class RpcChannel;
 }
 
+namespace vsh::common_lib {
+    class ithread_pool;
+}
+
 namespace vsh::example {
     class irpc_client_connection;
 
-    class rpc_client
+    class rpc_client final
         : public irpc_client
     {
         using RpcChannel = google::protobuf::RpcChannel;

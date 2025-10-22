@@ -1,6 +1,9 @@
 #include "rpc-client.h"
 #include "rpc-client/rpc-client-transport/irpc-client-connection.h"
 
+#include "rpc-client/rpc-client-closure/rpc-client-closure.h"
+
+#include <common-lib/utils/event/event.h>
 
 #include <google/protobuf/service.h>
 
@@ -23,12 +26,23 @@ namespace vsh::example {
 
     proto::GetUserResponse rpc_client::get_user(const proto::GetUserRequest &req)
     {
-        proto::GetUserResponse response;
-        service_stub_.GetUser(nullptr, //TODO add rpc_controller and closure
-                              &req,
-                              &response,
-                              nullptr);
+        auto response = std::make_shared<proto::GetUserResponse>();
+        auto response_ptr = response.get();
 
-        return response;
+        common_lib::event sync_event;
+        auto callback = [&sync_event]() {
+            sync_event.set();
+        };
+
+        auto done = rpc_client_closure::create(std::move(callback));
+
+        service_stub_.GetUser(nullptr, //TODO add rpc_controller
+                              &req,
+                              response_ptr,
+                              done);
+
+        sync_event.wait();
+
+        return *response;
     }
 }

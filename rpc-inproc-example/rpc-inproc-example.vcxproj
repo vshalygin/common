@@ -58,7 +58,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)rpc-inproc-example\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rpc-inproc-example\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -77,7 +77,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)rpc-inproc-example\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rpc-inproc-example\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -97,6 +97,7 @@
     </ClCompile>
     <ClCompile Include="src\pseudopipe\pseudopipe.cpp" />
     <ClCompile Include="src\rpc-client\rpc-client-channel\rpc-client-channel.cpp" />
+    <ClCompile Include="src\rpc-client\rpc-client-closure\rpc-client-closure.cpp" />
     <ClCompile Include="src\rpc-client\rpc-client-transport\rpc-client-transport.cpp" />
     <ClCompile Include="src\rpc-client\rpc-client.cpp" />
     <ClCompile Include="src\rpc-server\rpc-server-transport\rpc-server-transport.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="src\pseudopipe\pseudopipe.h" />
     <ClInclude Include="src\rpc-client\irpc-client.h" />
     <ClInclude Include="src\rpc-client\rpc-client-channel\rpc-client-channel.h" />
+    <ClInclude Include="src\rpc-client\rpc-client-closure\rpc-client-closure.h" />
     <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-connection.h" />
     <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-transport.h" />
     <ClInclude Include="src\rpc-client\rpc-client-transport\rpc-client-transport.h" />
@@ -127,6 +129,11 @@
     <ClInclude Include="src\rpc-server\rpc-server-transport\rpc-server-transport.h" />
     <ClInclude Include="src\rpc-server\rpc-server.h" />
     <ClInclude Include="src\rpc-server\rpc-service\rpc-service.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\common-lib\common-lib.vcxproj">
+      <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,32 +1,50 @@
 #include "rpc-client-channel.h"
 #include "rpc-client/rpc-client-transport/irpc-client-transport.h"
 
+#include <common-lib/thread-pool/ithread-pool.h>
+
 #pragma warning(push, 0)
 #include <google/protobuf/message.h>
 #pragma warning(pop)
 
 namespace vsh::example {
-    rpc_client_channel::rpc_client_channel(std::shared_ptr<irpc_client_transport> transport)
+    rpc_client_channel::rpc_client_channel(std::shared_ptr<irpc_client_transport> transport,
+                                           std::shared_ptr<ithread_pool> thread_pool)
         : transport_(std::move(transport))
-    {}
+        , thread_pool_(std::move(thread_pool))
+    {
+        listen_thread_ = std::jthread([this](std::stop_token st) {
+                                          while(!st.stop_requested()) {
+                                              listen_server();
+                                          }
+                                      });
+    }
 
     rpc_client_channel::~rpc_client_channel() = default;
 
     void rpc_client_channel::CallMethod(const MethodDescriptor * /*method*/,
                                         RpcController * /*controller*/,
                                         const Message *request,
-                                        Message * response,
+                                        Message *response,
                                         Closure *done)
     {
-        transport_->send(request->SerializeAsString());
+        thread_pool_->post([this, response, done, req = request->SerializeAsString()]() {
+                               callback_ = [done, response](const std::string &res){
+                                   response->ParseFromString(res);
+                                   done->Run();
+                               };
+                               transport_->send(req);
+                           });
+    }
 
+    void rpc_client_channel::listen_server()
+    {
         std::string ans;
         transport_->recv(ans);
-
-        response->ParseFromString(ans);
-
-        if(done) {
-            done->Run();
-        }
+        thread_pool_->post([this, ans = std::move(ans)]() {
+                               if(callback_) {
+                                   callback_(ans);
+                               }
+                           });
     }
 }

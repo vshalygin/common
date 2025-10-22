@@ -26,6 +26,9 @@
     <ClCompile Include="src\rpc-server\rpc-server-transport\rpc-server-transport.cpp">
       <Filter>rpc-server\rpc-server-transport</Filter>
     </ClCompile>
+    <ClCompile Include="src\rpc-client\rpc-client-closure\rpc-client-closure.cpp">
+      <Filter>rpc-client\rpc-client-closure</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="proto">
@@ -51,6 +54,9 @@
     </Filter>
     <Filter Include="rpc-server\rpc-service">
       <UniqueIdentifier>{50b07c83-6dc5-496f-9f10-91db26078ef0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rpc-client\rpc-client-closure">
+      <UniqueIdentifier>{ed1f0c73-78c2-4598-bb15-f096dffa6b05}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -100,6 +106,9 @@
     </ClInclude>
     <ClInclude Include="src\rpc-server\irpc-server.h">
       <Filter>rpc-server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rpc-client\rpc-client-closure\rpc-client-closure.h">
+      <Filter>rpc-client\rpc-client-closure</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
