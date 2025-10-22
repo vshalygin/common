@@ -1,6 +1,0 @@
-syntax = "proto3";
-
-message Duration {
-  optional int64 seconds = 1;
-  optional int32 nanos = 2;
-}

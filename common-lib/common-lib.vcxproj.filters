@@ -10,6 +10,9 @@
     <Filter Include="utils\event">
       <UniqueIdentifier>{4cafff36-4ab0-4ca8-ba5d-832d051a0e59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thread-pool">
+      <UniqueIdentifier>{72468f17-1487-406e-9029-e0cbd6f63c9c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h">
@@ -18,10 +21,19 @@
     <ClInclude Include="common-lib\utils\event\event.h">
       <Filter>utils\event</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread-pool\ithread-pool.h">
+      <Filter>thread-pool</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread-pool\thread-pool.h">
+      <Filter>thread-pool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\event\event.cpp">
       <Filter>utils\event</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
+      <Filter>thread-pool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

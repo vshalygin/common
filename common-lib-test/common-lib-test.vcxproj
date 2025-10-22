@@ -11,16 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\thread-pool\thread-pool-test.cpp" />
     <ClCompile Include="src\utils\safe-ptr\safe-ptr-test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="src\proto\test.proto">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory).pb.cc;%(RootDir)%(Directory).pb.h</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory).pb.cc;%(RootDir)%(Directory).pb.h</Outputs>
-    </CustomBuild>
+    <ProjectReference Include="..\common-lib\common-lib.vcxproj">
+      <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -52,15 +49,11 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)\boost.props" />
     <Import Project="$(SolutionDir)\googletest.props" />
-    <Import Project="$(SolutionDir)\protobuf.props" />
-    <Import Project="$(SolutionDir)\absl.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(SolutionDir)\boost.props" />
     <Import Project="$(SolutionDir)\googletest.props" />
-    <Import Project="$(SolutionDir)\protobuf.props" />
-    <Import Project="$(SolutionDir)\absl.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

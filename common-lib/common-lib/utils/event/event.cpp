@@ -52,7 +52,14 @@ namespace vsh::common_lib {
         std::condition_variable cv_;
     };
 
+    event::event()
+        : impl_(std::make_unique<impl>())
+    {}
+
     event::~event() = default;
+
+    event::event(event &&) = default;
+    event &event::operator=(event &&) = default;
 
     void event::set()
     {

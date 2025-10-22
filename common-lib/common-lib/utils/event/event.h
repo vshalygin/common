@@ -6,14 +6,14 @@ namespace vsh::common_lib {
     class event
     {
     public:
-        event() = default;
+        event();
         ~event();
 
         event(event &) = delete;
         event &operator=(event &) = delete;
 
-        event(event &&) = default;
-        event &operator=(event &&) = default;
+        event(event &&);
+        event &operator=(event &&);
 
         void set();
         bool is_set();
