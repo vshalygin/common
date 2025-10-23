@@ -91,7 +91,7 @@ namespace vsh::common_lib {
     };
 
     template<typename T, typename...Args>
-    safe_ptr<T> make_safe_ptr(Args&&...args)
+    safe_ptr<T> make_safe(Args&&...args)
     {
         auto val = new T(std::forward<Args>(args)...);
         

@@ -129,7 +129,7 @@ TEST(SafePtr, CapturesInnerValueOnCreation)
 
 TEST(SafePtr, MayBeCreatedWithFreeFunction)
 {
-    auto sut = make_safe_ptr<call_type>();
+    auto sut = make_safe<call_type>();
 
     sut->call();
 
