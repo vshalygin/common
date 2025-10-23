@@ -13,6 +13,9 @@
     <ClCompile Include="src\common\transfer-entry\transfer-entry-test.cpp">
       <Filter>common\transfer-entry</Filter>
     </ClCompile>
+    <ClCompile Include="src\buffer\buffer-test.cpp">
+      <Filter>common\buffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -23,6 +26,9 @@
     </Filter>
     <Filter Include="common\transfer-entry">
       <UniqueIdentifier>{3089d65e-3e3f-4b66-bdaf-22258b37221c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\buffer">
+      <UniqueIdentifier>{efafa9b8-38c9-4569-8ebb-cb1a6a88b807}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
