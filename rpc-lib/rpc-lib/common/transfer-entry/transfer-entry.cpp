@@ -11,12 +11,14 @@
     transfer_type::res - entry sent from server to client as an answer to the request
 
     Each type has its own header structure:
-    req: 1 byte entry type + 4 bytes entry id + 32 bytes client id + 4 bytes method idx
-    res: 1 byte entry type + 4 bytes entry id + 32 bytes client id + 4 bytes method idx
+    req: 1 byte entry type + 4 bytes entry number + 32 bytes client id + 4 bytes method idx
+    res: 1 byte entry type + 4 bytes entry number + 32 bytes client id + 4 bytes method idx
 */
 
 namespace vsh::rpc {
     namespace {
+        constexpr const unsigned bits_in_byte = 8;
+
         constexpr const unsigned entry_type_bytes = 1;
         constexpr const unsigned entry_id_bytes = 4;
         constexpr const unsigned client_id_bytes = 32;
@@ -54,14 +56,24 @@ namespace vsh::rpc {
         {
             unsigned ans = 0;
             for(unsigned i = 0; i < size; ++i) {
-                ans += static_cast<unsigned>(buf[i]) << ((size-i-1) * sizeof(char));
+                unsigned offset = (size - i - 1) * bits_in_byte;
+                auto byte = static_cast<unsigned char>(buf[i]);
+                unsigned add_bits = static_cast<unsigned>(byte) << offset;
+                ans |= add_bits;
             }
 
             return ans;
         }
     }
 
-    unsigned get_entry_id_req(const char *buf, size_t size)
+    transfer_type get_entry_type(const char *buf, size_t size)
+    {
+        assert_prerequests(buf, size, transfer_type::req);
+
+        return static_cast<transfer_type>(*buf);
+    }
+
+    unsigned get_entry_number_req(const char *buf, size_t size)
     {
         assert_prerequests(buf, size, transfer_type::req);
 

@@ -5,12 +5,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(GOOGLETEST_ROOT)\googletest;
-                                    $(GOOGLETEST_ROOT)\googlemock;
-                                    $(GOOGLETEST_ROOT)\googletest\include;
-                                    $(GOOGLETEST_ROOT)\googlemock\include;
-                                    %(AdditionalIncludeDirectories)
-       </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(GOOGLETEST_ROOT)\googletest;$(GOOGLETEST_ROOT)\googlemock;$(GOOGLETEST_ROOT)\googletest\include;$(GOOGLETEST_ROOT)\googlemock\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
