@@ -29,6 +29,9 @@
     <ClCompile Include="src\rpc-client\rpc-client-closure\rpc-client-closure.cpp">
       <Filter>rpc-client\rpc-client-closure</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\buffer\buffer.cpp">
+      <Filter>common\buffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="proto">
@@ -57,6 +60,12 @@
     </Filter>
     <Filter Include="rpc-client\rpc-client-closure">
       <UniqueIdentifier>{ed1f0c73-78c2-4598-bb15-f096dffa6b05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{69c2dfbb-f06c-4a3c-b8e5-46c1e0aac69d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\buffer">
+      <UniqueIdentifier>{611bab54-ffb3-4b84-a55a-966cda3c2abd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -109,6 +118,9 @@
     </ClInclude>
     <ClInclude Include="src\rpc-client\rpc-client-closure\rpc-client-closure.h">
       <Filter>rpc-client\rpc-client-closure</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\buffer\buffer.h">
+      <Filter>common\buffer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
