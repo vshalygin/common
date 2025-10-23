@@ -9,23 +9,25 @@ using namespace testing;
 
 namespace {
     constexpr const unsigned entry_number = 4291937406; //0xFFD1C47E
-    const std::string entry_number_bytes = "\xFF\xD1\xC4\x7E";
+    const std::vector<char> entry_number_bytes = { '\xFF', '\xD1', '\xC4', '\x7E' };
 
     const std::string client_id = "2E92794A409548B1994B54CD9CECFBA1";
 
     constexpr const unsigned method_idx = 4091900406; //0xF3E571F6
-    const std::string method_idx_bytes = "\xF3\xE5\x71\xF6";
+    const std::vector<char> method_idx_bytes = { '\xF3', '\xE5', '\x71', '\xF6' };
 
-    const std::string serialized_message = "3l;ewrj;le342;4jrf0sdje0jfj02js0d"; //some rubbish
+    const std::string serialized_message = "3l;ed45631"; //some rubbish
+    const std::vector<char> serialized_message_size_str = { '\x00', '\x00', '\x00', '\x0A' };
 
-    std::string create_entry()
+    std::vector<char> create_entry()
     {
-        std::string res;
-        res += static_cast<char>(transfer_type::req);
-        res += entry_number_bytes;
-        res += client_id;
-        res += method_idx_bytes;
-        res += serialized_message;
+        std::vector<char> res;
+        res.push_back(static_cast<char>(transfer_type::req));
+        res.insert(res.cend(), serialized_message_size_str.begin(), serialized_message_size_str.end());
+        res.insert(res.cend(), serialized_message.begin(), serialized_message.end());
+        res.insert(res.cend(), entry_number_bytes.begin(), entry_number_bytes.end());
+        res.insert(res.cend(), client_id.begin(), client_id.end());
+        res.insert(res.cend(), method_idx_bytes.begin(), method_idx_bytes.end());
 
         return res;
     }
@@ -42,26 +44,26 @@ TEST(TransferEntryReq, ResolveEntryNumber)
 {
     const auto entry = create_entry();
 
-    ASSERT_EQ(entry_number, get_entry_number_req(entry.data(), entry.size()));
+    ASSERT_EQ(entry_number, transfer_view_req(entry.data(), entry.size()).get_entry_number_req());
 }
 
 TEST(TransferEntryReq, ResolveClientId)
 {
     const auto entry = create_entry();
 
-    ASSERT_EQ(client_id, get_client_id_req(entry.data(), entry.size()));
+    ASSERT_EQ(client_id, transfer_view_req(entry.data(), entry.size()).get_client_id_req());
 }
 
 TEST(TransferEntryReq, ResolveMethodIdx)
 {
     const auto entry = create_entry();
 
-    ASSERT_EQ(method_idx, get_method_idx_req(entry.data(), entry.size()));
+    ASSERT_EQ(method_idx, transfer_view_req(entry.data(), entry.size()).get_method_idx_req());
 }
 
 TEST(TransferEntryReq, ResolveSerializedMessage)
 {
     const auto entry = create_entry();
 
-    ASSERT_EQ(serialized_message, get_serialized_message_req(entry.data(), entry.size()));
+    ASSERT_EQ(serialized_message, transfer_view_req(entry.data(), entry.size()).get_serialized_message_req());
 }
