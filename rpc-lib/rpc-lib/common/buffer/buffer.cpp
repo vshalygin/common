@@ -3,7 +3,7 @@
 #include <utility>
 
 namespace vsh::rpc {
-    buffer::buffer()
+    buffer::buffer() noexcept
         : buffer_(nullptr)
         , capacity_(0)
     {}
@@ -18,14 +18,14 @@ namespace vsh::rpc {
         delete[] buffer_;
     }
 
-    buffer::buffer(buffer &&other)
+    buffer::buffer(buffer &&other) noexcept
         : buffer()
     {
         std::swap(buffer_, other.buffer_);
         std::swap(capacity_, other.capacity_);
     }
 
-    buffer &buffer::operator=(buffer &&other)
+    buffer &buffer::operator=(buffer &&other) noexcept
     {
         std::swap(buffer_, other.buffer_);
         std::swap(capacity_, other.capacity_);

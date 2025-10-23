@@ -4,7 +4,7 @@ namespace vsh::rpc {
     class buffer final
     {
     public:
-        buffer();
+        buffer() noexcept;
         explicit buffer(size_t capacity);
 
         ~buffer();
@@ -12,8 +12,8 @@ namespace vsh::rpc {
         buffer(buffer &) = delete;
         buffer &operator=(buffer &) = delete;
 
-        buffer(buffer &&);
-        buffer &operator=(buffer &&);
+        buffer(buffer &&) noexcept;
+        buffer &operator=(buffer &&) noexcept;
 
         void reserve(size_t new_cap);
 
