@@ -1,5 +1,5 @@
 #include "client-channel.h"
-#include "client/client-transport/iclient-transport.h"
+#include "rpc-lib/client/client-transport/iclient-transport.h"
 
 #include <common-lib/thread-pool/ithread-pool.h>
 

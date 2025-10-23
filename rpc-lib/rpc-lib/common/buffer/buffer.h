@@ -1,11 +1,11 @@
 #pragma once
-
 namespace vsh::rpc {
+    //TODO move to common lib
     class buffer final
     {
     public:
         buffer() noexcept;
-        explicit buffer(size_t capacity);
+        explicit buffer(size_t size);
 
         ~buffer();
 
@@ -15,15 +15,15 @@ namespace vsh::rpc {
         buffer(buffer &&) noexcept;
         buffer &operator=(buffer &&) noexcept;
 
-        void reserve(size_t new_cap);
+        void reallocate(size_t new_size);
 
-        char *data();
-        const char *data() const;
+        unsigned char *data();
+        const unsigned char *data() const;
 
-        size_t capacity() const;
+        size_t size() const;
 
     private:
-        char *buffer_;
-        size_t capacity_;
+        unsigned char *buffer_;
+        size_t size_;
     };
 }

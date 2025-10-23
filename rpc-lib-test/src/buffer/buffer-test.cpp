@@ -12,11 +12,11 @@ TEST(Buffer, ReturnsNullptrAfterDefaultConstruction)
     ASSERT_THAT(sut.data(), IsNull());
 }
 
-TEST(Buffer, ReturnsZeroCapacityAfterDefaultConstruction)
+TEST(Buffer, ReturnsZeroSizeAfterDefaultConstruction)
 {
     buffer sut;
 
-    ASSERT_THAT(sut.capacity(), Eq(0));
+    ASSERT_THAT(sut.size(), Eq(0));
 }
 
 TEST(Buffer, ReturnsNonZeroBufferAfterConstructionWithParameter)
@@ -26,11 +26,11 @@ TEST(Buffer, ReturnsNonZeroBufferAfterConstructionWithParameter)
     ASSERT_THAT(sut.data(), NotNull());
 }
 
-TEST(Buffer, ReturnsCapacityAfterConstructionWithParameter)
+TEST(Buffer, ReturnsSizeAfterConstructionWithSizeParameter)
 {
     buffer sut(3);
 
-    ASSERT_THAT(sut.capacity(), Eq(3));
+    ASSERT_THAT(sut.size(), Eq(3));
 }
 
 TEST(Buffer, MovesToAnotherObjectByCopying)
@@ -41,7 +41,7 @@ TEST(Buffer, MovesToAnotherObjectByCopying)
     buffer buf2(std::move(buf1));
 
     ASSERT_EQ(buf2.data(), data_ptr);
-    ASSERT_EQ(buf2.capacity(), 3);
+    ASSERT_EQ(buf2.size(), 3);
 }
 
 TEST(Buffer, MovesToAnotherObjectByAssignment)
@@ -53,36 +53,16 @@ TEST(Buffer, MovesToAnotherObjectByAssignment)
     buf2 = std::move(buf1);
 
     ASSERT_EQ(buf2.data(), data_ptr);
-    ASSERT_EQ(buf2.capacity(), 3);
+    ASSERT_EQ(buf2.size(), 3);
 }
 
-TEST(Buffer, DoesNotAllocateNewBufferIfNewCapacityIsEqualToCurrentOne)
+TEST(Buffer, AllocatesNewBufferIfNewSizeIsBiggerThanCurrentOne)
 {
     buffer buf(3);
     auto data_ptr = buf.data();
 
-    buf.reserve(3);
-
-    ASSERT_EQ(buf.data(), data_ptr);
-}
-
-TEST(Buffer, DoesNotAllocateNewBufferIfNewCapacityIsLessThanCurrentOne)
-{
-    buffer buf(3);
-    auto data_ptr = buf.data();
-
-    buf.reserve(2);
-
-    ASSERT_EQ(buf.data(), data_ptr);
-}
-
-TEST(Buffer, AllocatesNewBufferIfNewCapacityIsBiggerThanCurrentOne)
-{
-    buffer buf(3);
-    auto data_ptr = buf.data();
-
-    buf.reserve(4);
+    buf.reallocate(4);
 
     ASSERT_NE(buf.data(), data_ptr);
-    ASSERT_EQ(buf.capacity(), 4);
+    ASSERT_EQ(buf.size(), 4);
 }

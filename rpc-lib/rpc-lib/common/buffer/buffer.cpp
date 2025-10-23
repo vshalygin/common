@@ -5,12 +5,12 @@
 namespace vsh::rpc {
     buffer::buffer() noexcept
         : buffer_(nullptr)
-        , capacity_(0)
+        , size_(0)
     {}
 
-    buffer::buffer(size_t capacity)
-        : buffer_(new char[capacity])
-        , capacity_(capacity)
+    buffer::buffer(size_t size)
+        : buffer_(new unsigned char[size])
+        , size_(size)
     {}
 
     buffer::~buffer()
@@ -22,42 +22,38 @@ namespace vsh::rpc {
         : buffer()
     {
         std::swap(buffer_, other.buffer_);
-        std::swap(capacity_, other.capacity_);
+        std::swap(size_, other.size_);
     }
 
     buffer &buffer::operator=(buffer &&other) noexcept
     {
         std::swap(buffer_, other.buffer_);
-        std::swap(capacity_, other.capacity_);
+        std::swap(size_, other.size_);
 
         return *this;
     }
 
-    void buffer::reserve(size_t new_cap)
+    void buffer::reallocate(size_t new_size)
     {
-        if(capacity_ >= new_cap) {
-            return;
-        }
-
-        char *new_buf = new char[new_cap];
+        unsigned char *new_buf = new unsigned char[new_size];
 
         delete[] buffer_;
         buffer_ = new_buf;
-        capacity_ = new_cap;
+        size_ = new_size;
     }
 
-    char *buffer::data()
+    unsigned char *buffer::data()
     {
         return buffer_;
     }
 
-    const char *buffer::data() const
+    const unsigned char *buffer::data() const
     {
         return buffer_;
     }
 
-    size_t buffer::capacity() const
+    size_t buffer::size() const
     {
-        return capacity_;
+        return size_;
     }
 }
