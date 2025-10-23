@@ -24,9 +24,10 @@ namespace vsh::example {
         return connection_->close();
     }
 
-    proto::GetUserResponse rpc_client::get_user(const proto::GetUserRequest &req)
+    template<typename Request, typename Response, auto Method>
+    std::shared_ptr<Response> rpc_client::call_method(const Request &req)
     {
-        auto response = std::make_shared<proto::GetUserResponse>();
+        auto response = std::make_shared<Response>();
         auto response_ptr = response.get();
 
         common_lib::event sync_event;
@@ -36,13 +37,23 @@ namespace vsh::example {
 
         auto done = rpc_client_closure::create(std::move(callback));
 
-        service_stub_.GetUser(nullptr, //TODO add rpc_controller
-                              &req,
-                              response_ptr,
-                              done);
+        (service_stub_.*Method)(nullptr, //TODO add rpc_controller
+                                &req,
+                                response_ptr,
+                                done);
 
         sync_event.wait();
 
-        return *response;
+        return response;
+    }
+
+    std::shared_ptr<proto::GetUserResponse> rpc_client::get_user(const proto::GetUserRequest &req)
+    {
+        return call_method<proto::GetUserRequest, proto::GetUserResponse, &proto::Service_Stub::GetUser>(req);
+    }
+
+    std::shared_ptr<proto::GetUserResponse> rpc_client::get_user2(const proto::GetUserRequest &req)
+    {
+        return call_method<proto::GetUserRequest, proto::GetUserResponse, &proto::Service_Stub::GetUser2>(req);
     }
 }

@@ -29,7 +29,12 @@ namespace vsh::example {
         int connect() override;
         int disconnect() override;
 
-        proto::GetUserResponse get_user(const proto::GetUserRequest &req) override;
+        std::shared_ptr<proto::GetUserResponse> get_user(const proto::GetUserRequest &req) override;
+        std::shared_ptr<proto::GetUserResponse> get_user2(const proto::GetUserRequest &req) override;
+
+    private:
+        template<typename Request, typename Response, auto Method>
+        std::shared_ptr<Response> call_method(const Request &req);
 
     private:
         proto::Service_Stub service_stub_;
