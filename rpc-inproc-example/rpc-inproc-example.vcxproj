@@ -89,6 +89,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\common\buffer\buffer.cpp" />
+    <ClCompile Include="src\common\transfer-entry\transfer-entry.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\proto\service.pb.cc">
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
@@ -116,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\buffer\buffer.h" />
+    <ClInclude Include="src\common\transfer-entry\transfer-entry.h" />
     <ClInclude Include="src\proto\service.pb.h" />
     <ClInclude Include="src\pseudopipe\pseudopipe.h" />
     <ClInclude Include="src\rpc-client\irpc-client.h" />

@@ -32,6 +32,9 @@
     <ClCompile Include="src\common\buffer\buffer.cpp">
       <Filter>common\buffer</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\transfer-entry\transfer-entry.cpp">
+      <Filter>common\transfer-entry</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="proto">
@@ -66,6 +69,9 @@
     </Filter>
     <Filter Include="common\buffer">
       <UniqueIdentifier>{611bab54-ffb3-4b84-a55a-966cda3c2abd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\transfer-entry">
+      <UniqueIdentifier>{9472d6a1-0c05-4fb0-b3b8-cadaead80c78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -121,6 +127,9 @@
     </ClInclude>
     <ClInclude Include="src\common\buffer\buffer.h">
       <Filter>common\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\transfer-entry\transfer-entry.h">
+      <Filter>common\transfer-entry</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
