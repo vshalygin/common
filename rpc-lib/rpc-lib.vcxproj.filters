@@ -1,2 +1,72 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" />
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{b42ec19e-91c4-415f-8a16-89127ea75c19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client">
+      <UniqueIdentifier>{1ead717e-857b-4114-9b23-beae2274ba1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server">
+      <UniqueIdentifier>{d2b977be-2334-4693-b825-044df23c21ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\buffer">
+      <UniqueIdentifier>{82f372c8-cebf-4d7b-8217-e8d5a4e7033b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\transfer-entry">
+      <UniqueIdentifier>{7b24c5d3-d2e5-41f8-95e9-2310642d2212}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\client-channel">
+      <UniqueIdentifier>{c294a1f4-3746-46b3-8bff-b03f4370b5da}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\client-closure">
+      <UniqueIdentifier>{0298ecbd-9fc0-4602-8ea8-f3fd3a8fcde0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\client-transport">
+      <UniqueIdentifier>{4be360aa-ae22-4bb0-9495-a366290cfc21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server\server-transport">
+      <UniqueIdentifier>{f4533616-2535-4987-9d54-75b37787207b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rpc-lib\common\buffer\buffer.cpp">
+      <Filter>common\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp">
+      <Filter>common\transfer-entry</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\client\client-channel\client-channel.cpp">
+      <Filter>client\client-channel</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp">
+      <Filter>client\client-closure</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="rpc-lib\common\buffer\buffer.h">
+      <Filter>common\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h">
+      <Filter>common\transfer-entry</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\client-channel\client-channel.h">
+      <Filter>client\client-channel</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\client-closure\client-closure.h">
+      <Filter>client\client-closure</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\client-transport\iclient-connection.h">
+      <Filter>client\client-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\client-transport\iclient-transport.h">
+      <Filter>client\client-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\server\server-transport\iserver-connection.h">
+      <Filter>server\server-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h">
+      <Filter>server\server-transport</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

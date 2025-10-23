@@ -7,14 +7,16 @@
 
 #include <memory>
 
-namespace vsh::example {
-    class irpc_server_transport;
+namespace vsh::rpc {
+    class iserver_transport;
+}
 
+namespace vsh::example {
     class rpc_server
         : public irpc_server
     {
     public:
-        explicit rpc_server(std::unique_ptr<irpc_server_transport> transport,
+        explicit rpc_server(std::unique_ptr<rpc::iserver_transport> transport,
                             std::unique_ptr<proto::Service> service);
         ~rpc_server() override;
 
@@ -24,7 +26,7 @@ namespace vsh::example {
         void run() override;
 
     private:
-        std::unique_ptr<irpc_server_transport> transport_;
+        std::unique_ptr<rpc::iserver_transport> transport_;
         std::unique_ptr<proto::Service> service_;
     };
 }

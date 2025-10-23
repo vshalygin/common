@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace vsh::example {
+namespace vsh::rpc {
     buffer::buffer()
         : buffer_(nullptr)
         , capacity_(0)

@@ -10,6 +10,27 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rpc-lib\client\client-channel\client-channel.cpp" />
+    <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp" />
+    <ClCompile Include="rpc-lib\common\buffer\buffer.cpp" />
+    <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="rpc-lib\client\client-channel\client-channel.h" />
+    <ClInclude Include="rpc-lib\client\client-closure\client-closure.h" />
+    <ClInclude Include="rpc-lib\client\client-transport\iclient-connection.h" />
+    <ClInclude Include="rpc-lib\client\client-transport\iclient-transport.h" />
+    <ClInclude Include="rpc-lib\common\buffer\buffer.h" />
+    <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h" />
+    <ClInclude Include="rpc-lib\server\server-transport\iserver-connection.h" />
+    <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\common-lib\common-lib.vcxproj">
+      <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -59,7 +80,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)\common;$(SolutionDir)\rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\common-lib;$(SolutionDir)\rpc-lib\rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -82,7 +103,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)\common;$(SolutionDir)\rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\common-lib;$(SolutionDir)\rpc-lib\rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>

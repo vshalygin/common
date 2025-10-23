@@ -15,7 +15,7 @@
     res: 1 byte entry type + 4 bytes entry id + 32 bytes client id + 4 bytes method idx
 */
 
-namespace vsh::example {
+namespace vsh::rpc {
     namespace {
         constexpr const unsigned entry_type_bytes = 1;
         constexpr const unsigned entry_id_bytes = 4;

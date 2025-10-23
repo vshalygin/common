@@ -10,10 +10,10 @@ namespace vsh::common_lib {
     class ithread_pool;
 }
 
-namespace vsh::example {
-    class irpc_client_transport;
+namespace vsh::rpc {
+    class iclient_transport;
 
-    class rpc_client_channel final
+    class client_channel final
         : public google::protobuf::RpcChannel
     {
         using ithread_pool = common_lib::ithread_pool;
@@ -23,12 +23,12 @@ namespace vsh::example {
         using Closure = google::protobuf::Closure;
 
     public:
-        explicit rpc_client_channel(std::shared_ptr<irpc_client_transport> transport,
-                                    std::shared_ptr<ithread_pool> thread_pool);
-        ~rpc_client_channel();
+        explicit client_channel(std::shared_ptr<iclient_transport> transport,
+                                std::shared_ptr<ithread_pool> thread_pool);
+        ~client_channel();
 
-        rpc_client_channel(rpc_client_channel &) = delete;
-        rpc_client_channel &operator=(rpc_client_channel &) = delete;
+        client_channel(client_channel &) = delete;
+        client_channel &operator=(client_channel &) = delete;
 
         void CallMethod(const MethodDescriptor *method,
                         RpcController *controller,
@@ -40,7 +40,7 @@ namespace vsh::example {
         void listen_server();
 
     private:
-        std::shared_ptr<irpc_client_transport> transport_;
+        std::shared_ptr<iclient_transport> transport_;
         std::shared_ptr<ithread_pool> thread_pool_;
 
         std::jthread listen_thread_;

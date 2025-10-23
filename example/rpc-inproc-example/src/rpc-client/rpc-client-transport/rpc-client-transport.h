@@ -1,13 +1,13 @@
 #pragma once
-#include "irpc-client-transport.h"
-#include "irpc-client-connection.h"
+#include <rpc-lib/client/client-transport/iclient-connection.h>
+#include <rpc-lib/client/client-transport/iclient-transport.h>
 
 #include <atomic>
 
 namespace vsh::example {
     class rpc_client_transport final
-        : public irpc_client_transport
-        , public irpc_client_connection
+        : public rpc::iclient_transport
+        , public rpc::iclient_connection
     {
     public:
         rpc_client_transport() = default;

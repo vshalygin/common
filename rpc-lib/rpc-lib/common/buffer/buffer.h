@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vsh::example {
+namespace vsh::rpc {
     class buffer final
     {
     public:

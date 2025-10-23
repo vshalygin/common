@@ -1,11 +1,11 @@
 #pragma once
-#include "irpc-server-connection.h"
-#include "irpc-server-transport.h"
+#include <rpc-lib/server/server-transport/iserver-connection.h>
+#include <rpc-lib/server/server-transport/iserver-transport.h>
 
 namespace vsh::example {
     class rpc_server_transport
-        : public irpc_server_transport
-        , public irpc_server_connection
+        : public rpc::iserver_transport
+        , public rpc::iserver_connection
     {
     public:
         rpc_server_transport() = default;

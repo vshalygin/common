@@ -1,7 +1,6 @@
 #include "rpc-client.h"
-#include "rpc-client/rpc-client-transport/irpc-client-connection.h"
-
-#include "rpc-client/rpc-client-closure/rpc-client-closure.h"
+#include <rpc-lib/client/client-transport/iclient-connection.h>
+#include <rpc-lib/client/client-closure/client-closure.h>
 
 #include <common-lib/utils/event/event.h>
 
@@ -9,7 +8,7 @@
 
 namespace vsh::example {
     rpc_client::rpc_client(std::unique_ptr<RpcChannel> channel,
-                           std::shared_ptr<irpc_client_connection> connection)
+                           std::shared_ptr<rpc::iclient_connection> connection)
         : service_stub_(channel.release(), ::google::protobuf::Service::STUB_OWNS_CHANNEL)
         , connection_(std::move(connection))
     {}
@@ -35,7 +34,7 @@ namespace vsh::example {
             sync_event.set();
         };
 
-        auto done = rpc_client_closure::create(std::move(callback));
+        auto done = rpc::client_closure::create(std::move(callback));
 
         (service_stub_.*Method)(nullptr, //TODO add rpc_controller
                                 &req,

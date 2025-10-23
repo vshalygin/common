@@ -11,9 +11,11 @@ namespace vsh::common_lib {
     class ithread_pool;
 }
 
-namespace vsh::example {
-    class irpc_client_connection;
+namespace vsh::rpc {
+    class iclient_connection;
+}
 
+namespace vsh::example {
     class rpc_client final
         : public irpc_client
     {
@@ -21,7 +23,7 @@ namespace vsh::example {
 
     public:
         explicit rpc_client(std::unique_ptr<RpcChannel> channel,
-                            std::shared_ptr<irpc_client_connection> connection);
+                            std::shared_ptr<rpc::iclient_connection> connection);
 
         rpc_client(rpc_client &) = delete;
         rpc_client &operator=(rpc_client &) = delete;
@@ -38,6 +40,6 @@ namespace vsh::example {
 
     private:
         proto::Service_Stub service_stub_;
-        std::shared_ptr<irpc_client_connection> connection_;
+        std::shared_ptr<rpc::iclient_connection> connection_;
     };
 }

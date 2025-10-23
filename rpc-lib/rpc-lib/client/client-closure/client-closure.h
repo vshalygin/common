@@ -7,20 +7,20 @@
 #include <memory>
 #include <functional>
 
-namespace vsh::example {
-    class rpc_client_closure final
+namespace vsh::rpc {
+    class client_closure final
         : public ::google::protobuf::Closure
     {
         using Closure = ::google::protobuf::Closure;
         using Message = ::google::protobuf::Message;
 
-        rpc_client_closure(std::function<void()> &&on_success);
+        client_closure(std::function<void()> &&on_success);
 
     public:
         static Closure *create(std::function<void()> &&on_success);
 
-        rpc_client_closure(rpc_client_closure &) = delete;
-        rpc_client_closure &operator=(rpc_client_closure &) = delete;
+        client_closure(client_closure &) = delete;
+        client_closure &operator=(client_closure &) = delete;
 
         void Run() override;
 

@@ -1,9 +1,9 @@
 #include "rpc-server.h"
 
-#include "rpc-server/rpc-server-transport/irpc-server-transport.h"
+#include <rpc-lib/server/server-transport/iserver-transport.h>
 
 namespace vsh::example {
-    rpc_server::rpc_server(std::unique_ptr<irpc_server_transport> transport,
+    rpc_server::rpc_server(std::unique_ptr<rpc::iserver_transport> transport,
                            std::unique_ptr<proto::Service> service)
         : transport_(std::move(transport))
         , service_(std::move(service))

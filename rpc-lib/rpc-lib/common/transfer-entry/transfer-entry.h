@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace vsh::example {
+namespace vsh::rpc {
     enum class transfer_type : char
     {
         req = 0,

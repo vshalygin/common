@@ -1,10 +1,10 @@
 #pragma once
 
-namespace vsh::example {
-    class irpc_client_connection
+namespace vsh::rpc {
+    class iclient_connection
     {
     public:
-        virtual ~irpc_client_connection() = default;
+        virtual ~iclient_connection() = default;
 
         virtual bool is_connected() const = 0;
 

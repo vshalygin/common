@@ -1,10 +1,10 @@
 #pragma once
 
-namespace vsh::example {
-    class irpc_server_connection
+namespace vsh::rpc {
+    class iserver_connection
     {
     public:
-        virtual ~irpc_server_connection() = default;
+        virtual ~iserver_connection() = default;
 
         virtual void listen() = 0;
         //TODO accept 

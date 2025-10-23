@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 
-namespace vsh::example {
-    class irpc_server_transport
+namespace vsh::rpc {
+    class iserver_transport
     {
     public:
-        virtual ~irpc_server_transport() = default;
+        virtual ~iserver_transport() = default;
 
         virtual int send(const std::string &buff) = 0;
         virtual int send(std::string &&buff) = 0;

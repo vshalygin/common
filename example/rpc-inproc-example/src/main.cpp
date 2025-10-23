@@ -1,17 +1,18 @@
 #include <rpc-client/rpc-client-transport/rpc-client-transport.h>
-#include <rpc-client/rpc-client-channel/rpc-client-channel.h>
 #include <rpc-client/rpc-client.h>
 
 #include <rpc-server/rpc-server-transport/rpc-server-transport.h>
 #include <rpc-server/rpc-service/rpc-service.h>
 #include <rpc-server/rpc-server.h>
 
+#include <rpc-lib/client/client-channel/client-channel.h>
 #include <common-lib/thread-pool/thread-pool.h>
 
 #include <iostream>
 #include <thread>
 
 using namespace vsh::example;
+using namespace vsh::rpc;
 
 int main()
 {
@@ -23,7 +24,7 @@ int main()
     auto thread = std::jthread([server]() { server->run(); });
 
     auto client_transport = std::make_shared<rpc_client_transport>();
-    auto channel = std::make_unique<rpc_client_channel>(client_transport, thread_pool);
+    auto channel = std::make_unique<client_channel>(client_transport, thread_pool);
     auto client = std::make_unique<rpc_client>(std::move(channel), client_transport);
 
     client->connect();

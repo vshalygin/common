@@ -58,7 +58,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)example\rpc-inproc-example\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)example\rpc-inproc-example\src;$(SolutionDir)common-lib;$(SolutionDir)rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -77,7 +77,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)example\rpc-inproc-example\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)example\rpc-inproc-example\src;$(SolutionDir)common-lib;$(SolutionDir)rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -88,8 +88,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\common\buffer\buffer.cpp" />
-    <ClCompile Include="src\common\transfer-entry\transfer-entry.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\proto\service.pb.cc">
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
@@ -98,8 +96,6 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="src\pseudopipe\pseudopipe.cpp" />
-    <ClCompile Include="src\rpc-client\rpc-client-channel\rpc-client-channel.cpp" />
-    <ClCompile Include="src\rpc-client\rpc-client-closure\rpc-client-closure.cpp" />
     <ClCompile Include="src\rpc-client\rpc-client-transport\rpc-client-transport.cpp" />
     <ClCompile Include="src\rpc-client\rpc-client.cpp" />
     <ClCompile Include="src\rpc-server\rpc-server-transport\rpc-server-transport.cpp" />
@@ -116,20 +112,12 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\common\buffer\buffer.h" />
-    <ClInclude Include="src\common\transfer-entry\transfer-entry.h" />
     <ClInclude Include="src\proto\service.pb.h" />
     <ClInclude Include="src\pseudopipe\pseudopipe.h" />
     <ClInclude Include="src\rpc-client\irpc-client.h" />
-    <ClInclude Include="src\rpc-client\rpc-client-channel\rpc-client-channel.h" />
-    <ClInclude Include="src\rpc-client\rpc-client-closure\rpc-client-closure.h" />
-    <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-connection.h" />
-    <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-transport.h" />
     <ClInclude Include="src\rpc-client\rpc-client-transport\rpc-client-transport.h" />
     <ClInclude Include="src\rpc-client\rpc-client.h" />
     <ClInclude Include="src\rpc-server\irpc-server.h" />
-    <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-connection.h" />
-    <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-transport.h" />
     <ClInclude Include="src\rpc-server\rpc-server-transport\rpc-server-transport.h" />
     <ClInclude Include="src\rpc-server\rpc-server.h" />
     <ClInclude Include="src\rpc-server\rpc-service\rpc-service.h" />
@@ -137,6 +125,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\common-lib\common-lib.vcxproj">
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\rpc-lib\rpc-lib.vcxproj">
+      <Project>{a2383ad1-18d5-4ca6-838a-873d961d38b5}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

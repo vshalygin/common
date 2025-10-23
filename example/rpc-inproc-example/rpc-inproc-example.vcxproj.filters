@@ -14,9 +14,6 @@
     <ClCompile Include="src\rpc-client\rpc-client-transport\rpc-client-transport.cpp">
       <Filter>rpc-client\rpc-client-transport</Filter>
     </ClCompile>
-    <ClCompile Include="src\rpc-client\rpc-client-channel\rpc-client-channel.cpp">
-      <Filter>rpc-client\rpc-client-channel</Filter>
-    </ClCompile>
     <ClCompile Include="src\rpc-server\rpc-server.cpp">
       <Filter>rpc-server</Filter>
     </ClCompile>
@@ -25,15 +22,6 @@
     </ClCompile>
     <ClCompile Include="src\rpc-server\rpc-server-transport\rpc-server-transport.cpp">
       <Filter>rpc-server\rpc-server-transport</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rpc-client\rpc-client-closure\rpc-client-closure.cpp">
-      <Filter>rpc-client\rpc-client-closure</Filter>
-    </ClCompile>
-    <ClCompile Include="src\common\buffer\buffer.cpp">
-      <Filter>common\buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\common\transfer-entry\transfer-entry.cpp">
-      <Filter>common\transfer-entry</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -52,26 +40,11 @@
     <Filter Include="pseudopipe">
       <UniqueIdentifier>{6ca67a35-a92d-4c1f-89d7-8dc52585011a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="rpc-client\rpc-client-channel">
-      <UniqueIdentifier>{5a09786b-b6c4-411d-919d-5935d346bbe5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="rpc-server\rpc-server-transport">
       <UniqueIdentifier>{84040578-da0f-43b7-8ab0-a6923a9d8416}</UniqueIdentifier>
     </Filter>
     <Filter Include="rpc-server\rpc-service">
       <UniqueIdentifier>{50b07c83-6dc5-496f-9f10-91db26078ef0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="rpc-client\rpc-client-closure">
-      <UniqueIdentifier>{ed1f0c73-78c2-4598-bb15-f096dffa6b05}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common">
-      <UniqueIdentifier>{69c2dfbb-f06c-4a3c-b8e5-46c1e0aac69d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\buffer">
-      <UniqueIdentifier>{611bab54-ffb3-4b84-a55a-966cda3c2abd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\transfer-entry">
-      <UniqueIdentifier>{9472d6a1-0c05-4fb0-b3b8-cadaead80c78}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -92,16 +65,7 @@
     <ClInclude Include="src\pseudopipe\pseudopipe.h">
       <Filter>pseudopipe</Filter>
     </ClInclude>
-    <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-transport.h">
-      <Filter>rpc-client\rpc-client-transport</Filter>
-    </ClInclude>
     <ClInclude Include="src\rpc-client\rpc-client-transport\rpc-client-transport.h">
-      <Filter>rpc-client\rpc-client-transport</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rpc-client\rpc-client-channel\rpc-client-channel.h">
-      <Filter>rpc-client\rpc-client-channel</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rpc-client\rpc-client-transport\irpc-client-connection.h">
       <Filter>rpc-client\rpc-client-transport</Filter>
     </ClInclude>
     <ClInclude Include="src\rpc-server\rpc-server.h">
@@ -110,26 +74,11 @@
     <ClInclude Include="src\rpc-server\rpc-service\rpc-service.h">
       <Filter>rpc-server\rpc-service</Filter>
     </ClInclude>
-    <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-connection.h">
-      <Filter>rpc-server\rpc-server-transport</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rpc-server\rpc-server-transport\irpc-server-transport.h">
-      <Filter>rpc-server\rpc-server-transport</Filter>
-    </ClInclude>
     <ClInclude Include="src\rpc-server\rpc-server-transport\rpc-server-transport.h">
       <Filter>rpc-server\rpc-server-transport</Filter>
     </ClInclude>
     <ClInclude Include="src\rpc-server\irpc-server.h">
       <Filter>rpc-server</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rpc-client\rpc-client-closure\rpc-client-closure.h">
-      <Filter>rpc-client\rpc-client-closure</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\buffer\buffer.h">
-      <Filter>common\buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\transfer-entry\transfer-entry.h">
-      <Filter>common\transfer-entry</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
