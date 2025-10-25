@@ -1,10 +1,45 @@
 #pragma once
 #include <memory>
+#include <iterator>
 
 namespace vsh::common_lib {
     class buffer final
     {
     public:
+        //TODO write the rest of iterators
+        class iterator
+        {
+            friend buffer;
+
+            iterator(unsigned char *buffer) noexcept;
+
+        public:
+            using difference_type = std::ptrdiff_t;
+            using value_type = unsigned char;
+            using pointer = unsigned char *;
+            using reference = unsigned char &;
+            using iterator_category = std::random_access_iterator_tag;
+
+            iterator &operator++() noexcept;
+            iterator operator++(int) noexcept;
+            iterator &operator--() noexcept;
+            iterator operator--(int) noexcept;
+
+            unsigned char &operator*() noexcept;
+            const unsigned char &operator*() const noexcept;
+
+            bool operator==(const iterator &other) const noexcept;
+            bool operator!=(const iterator &other) const noexcept;
+
+            iterator operator+(difference_type offset) const noexcept;
+            iterator operator-(difference_type offset) const noexcept;
+
+            difference_type operator-(iterator other) const noexcept;
+
+        private:
+            unsigned char *buffer_;
+        };
+
         buffer() noexcept;
         explicit buffer(size_t size);
 
@@ -24,8 +59,19 @@ namespace vsh::common_lib {
         unsigned char &operator[](size_t pos) noexcept;
         const unsigned char &operator[](size_t pos) const noexcept;
 
+        operator bool() const noexcept;
+
+        unsigned char &at(size_t pos);
+        const unsigned char &at(size_t pos) const;
+
+        iterator begin() noexcept;
+        iterator end() noexcept;
+
     private:
         unsigned char *buffer_;
         size_t size_;
     };
+
+    buffer::iterator operator+(buffer::iterator::difference_type offset,
+                               const buffer::iterator &rhs) noexcept;
 }
