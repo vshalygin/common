@@ -12,6 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp" />
+    <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp" />
+    <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp" />
+    <ClCompile Include="src\utils\buffer\buffer-test.cpp" />
     <ClCompile Include="src\utils\safe-ptr\safe-ptr-test.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -81,11 +81,11 @@ namespace vsh::rpc {
         return to_unsigned_big_endian(begin, s_entry_number_bytes_num);
     }
 
-    cbuffer_view transfer_view_req::get_client_id() const
+    common_lib::cbuffer_view transfer_view_req::get_client_id() const
     {
         auto begin = buf_ + s_header_bytes_num + message_size_ + s_entry_number_bytes_num;
 
-        return cbuffer_view(begin, s_client_id_bytes_num);
+        return common_lib::cbuffer_view(begin, s_client_id_bytes_num);
     }
 
     unsigned transfer_view_req::get_method_idx() const
@@ -98,24 +98,24 @@ namespace vsh::rpc {
         return to_unsigned_big_endian(begin, s_method_idx_bytes_num);
     }
 
-    cbuffer_view transfer_view_req::get_serialized_message() const
+    common_lib::cbuffer_view transfer_view_req::get_serialized_message() const
     {
         auto begin = buf_ + s_header_bytes_num;
 
-        return cbuffer_view(begin, message_size_);
+        return common_lib::cbuffer_view(begin, message_size_);
     }
 
-    buffer create_transfer_entry_req(unsigned entry_number,
-                                     const std::string &client_id,
-                                     unsigned method_idx,
-                                     google::protobuf::Message *message)
+    common_lib::buffer create_transfer_entry_req(unsigned entry_number,
+                                                 const std::string &client_id,
+                                                 unsigned method_idx,
+                                                 google::protobuf::Message *message)
     {
         assert(message);
 
         unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
         unsigned buf_size = s_header_bytes_num + serialized_message_size + s_req_trailer_bytes_num;
 
-        buffer ans(buf_size);
+        common_lib::buffer ans(buf_size);
         auto curr_pos = ans.data();
         unsigned filled_bytes = 0;
 
@@ -163,10 +163,10 @@ namespace vsh::rpc {
         return ans;
     }
 
-    buffer create_transfer_entry_res(unsigned entry_number,
-                                     const std::string &client_id,
-                                     unsigned method_id,
-                                     google::protobuf::Message *message)
+    common_lib::buffer create_transfer_entry_res(unsigned entry_number,
+                                                 const std::string &client_id,
+                                                 unsigned method_id,
+                                                 google::protobuf::Message *message)
     {
         return create_transfer_entry_req(entry_number, client_id, method_id, message);
     }

@@ -1,6 +1,6 @@
 #pragma once
-#include "rpc-lib/common/buffer/buffer.h"
-#include "rpc-lib/common/buffer-view/cbuffer-view.h"
+#include <common-lib/utils/buffer-view/cbuffer-view.h>
+#include <common-lib/utils/buffer/buffer.h>
 
 #pragma warning(push, 0)
 #include <google/protobuf/message.h>
@@ -40,9 +40,9 @@ namespace vsh::rpc {
         transfer_view_req(const unsigned char *buf, size_t size);
 
         unsigned get_entry_number() const;
-        cbuffer_view get_client_id() const;
+        common_lib::cbuffer_view get_client_id() const;
         unsigned get_method_idx() const;
-        cbuffer_view get_serialized_message() const;
+        common_lib::cbuffer_view get_serialized_message() const;
 
     private:
         const unsigned char *buf_;
@@ -53,13 +53,13 @@ namespace vsh::rpc {
 
     using transfer_view_res = transfer_view_req;
 
-    buffer create_transfer_entry_req(unsigned entry_number,
-                                     const std::string &client_id,
-                                     unsigned method_idx,
-                                     google::protobuf::Message *message);
+    common_lib::buffer create_transfer_entry_req(unsigned entry_number,
+                                                 const std::string &client_id,
+                                                 unsigned method_idx,
+                                                 google::protobuf::Message *message);
 
-    buffer create_transfer_entry_res(unsigned entry_number,
-                                     const std::string &client_id,
-                                     unsigned method_idx,
-                                     google::protobuf::Message *message);
+    common_lib::buffer create_transfer_entry_res(unsigned entry_number,
+                                                 const std::string &client_id,
+                                                 unsigned method_idx,
+                                                 google::protobuf::Message *message);
 }

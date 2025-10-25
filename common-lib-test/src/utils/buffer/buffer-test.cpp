@@ -1,8 +1,9 @@
-#include <rpc-lib/common/buffer/buffer.h>
+#include <common-lib/utils/buffer/buffer.h>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-using namespace vsh::rpc;
+using namespace vsh::common_lib;
 using namespace testing;
 
 TEST(Buffer, ReturnsNullptrAfterDefaultConstruction)

@@ -16,6 +16,15 @@
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp">
       <Filter>thread-pool</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp">
+      <Filter>utils\buffer-view</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp">
+      <Filter>utils\buffer-view</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\buffer\buffer-test.cpp">
+      <Filter>utils\buffer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -29,6 +38,12 @@
     </Filter>
     <Filter Include="thread-pool">
       <UniqueIdentifier>{ac62afa3-f9d2-4c4d-95cb-29d1816700e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\buffer">
+      <UniqueIdentifier>{6caeadf5-9b30-4375-8681-b60145e65430}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\buffer-view">
+      <UniqueIdentifier>{0439f935-ed95-433d-af54-e1312d88586c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

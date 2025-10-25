@@ -13,11 +13,17 @@
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\ithread-pool.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
+    <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h" />
+    <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h" />
+    <ClInclude Include="common-lib\utils\buffer\buffer.h" />
     <ClInclude Include="common-lib\utils\event\event.h" />
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp" />
+    <ClCompile Include="common-lib\utils\buffer-view\buffer-view.cpp" />
+    <ClCompile Include="common-lib\utils\buffer-view\cbuffer-view.cpp" />
+    <ClCompile Include="common-lib\utils\buffer\buffer.cpp" />
     <ClCompile Include="common-lib\utils\event\event.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

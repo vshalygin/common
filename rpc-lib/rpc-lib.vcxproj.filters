@@ -10,9 +10,6 @@
     <Filter Include="server">
       <UniqueIdentifier>{d2b977be-2334-4693-b825-044df23c21ec}</UniqueIdentifier>
     </Filter>
-    <Filter Include="common\buffer">
-      <UniqueIdentifier>{82f372c8-cebf-4d7b-8217-e8d5a4e7033b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="common\transfer-entry">
       <UniqueIdentifier>{7b24c5d3-d2e5-41f8-95e9-2310642d2212}</UniqueIdentifier>
     </Filter>
@@ -28,14 +25,8 @@
     <Filter Include="server\server-transport">
       <UniqueIdentifier>{f4533616-2535-4987-9d54-75b37787207b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="common\buffer-view">
-      <UniqueIdentifier>{72efa8b9-1872-488d-b080-d9ab70dd5354}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rpc-lib\common\buffer\buffer.cpp">
-      <Filter>common\buffer</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp">
       <Filter>common\transfer-entry</Filter>
     </ClCompile>
@@ -45,17 +36,8 @@
     <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp">
       <Filter>client\client-closure</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\common\buffer-view\buffer-view.cpp">
-      <Filter>common\buffer-view</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\common\buffer-view\cbuffer-view.cpp">
-      <Filter>common\buffer-view</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="rpc-lib\common\buffer\buffer.h">
-      <Filter>common\buffer</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h">
       <Filter>common\transfer-entry</Filter>
     </ClInclude>
@@ -76,12 +58,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h">
       <Filter>server\server-transport</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\buffer-view\buffer-view.h">
-      <Filter>common\buffer-view</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\buffer-view\cbuffer-view.h">
-      <Filter>common\buffer-view</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

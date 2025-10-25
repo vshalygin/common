@@ -1,6 +1,6 @@
 #include "cbuffer-view.h"
 
-namespace vsh::rpc {
+namespace vsh::common_lib {
     cbuffer_view::cbuffer_view(const unsigned char *buffer, size_t size)
         : buffer_(buffer)
         , size_(size)

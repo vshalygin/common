@@ -92,7 +92,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)\rpc-lib;$(SolutionDir)\rpc-lib-test\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)rpc-lib-test\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -110,7 +110,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)\rpc-lib;$(SolutionDir)\rpc-lib-test\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)rpc-lib-test\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,9 +125,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\common\buffer-view\buffer-view-test.cpp" />
-    <ClCompile Include="src\common\buffer-view\cbuffer-view-test.cpp" />
-    <ClCompile Include="src\common\buffer\buffer-test.cpp" />
     <ClCompile Include="src\common\transfer-entry\transfer-entry-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>

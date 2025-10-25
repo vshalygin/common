@@ -13,6 +13,12 @@
     <Filter Include="thread-pool">
       <UniqueIdentifier>{72468f17-1487-406e-9029-e0cbd6f63c9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\buffer">
+      <UniqueIdentifier>{057eadbd-91fb-40f6-9326-1f615a78ca64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\buffer-view">
+      <UniqueIdentifier>{3ee5ee4d-c3d4-4a80-a26f-740f984a0577}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h">
@@ -27,6 +33,15 @@
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\utils\buffer\buffer.h">
+      <Filter>utils\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h">
+      <Filter>utils\buffer-view</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h">
+      <Filter>utils\buffer-view</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\event\event.cpp">
@@ -34,6 +49,15 @@
     </ClCompile>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
       <Filter>thread-pool</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\utils\buffer\buffer.cpp">
+      <Filter>utils\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\utils\buffer-view\buffer-view.cpp">
+      <Filter>utils\buffer-view</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\utils\buffer-view\cbuffer-view.cpp">
+      <Filter>utils\buffer-view</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

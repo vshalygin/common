@@ -1,8 +1,8 @@
-#include <rpc-lib/common/buffer-view/cbuffer-view.h>
+#include <common-lib/utils/buffer-view/cbuffer-view.h>
 
 #include <gtest/gtest.h>
 
-using namespace vsh::rpc;
+using namespace vsh::common_lib;
 using namespace testing;
 
 TEST(CBufferView, ReturnsStoringData)

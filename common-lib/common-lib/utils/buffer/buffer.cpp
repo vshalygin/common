@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace vsh::rpc {
+namespace vsh::common_lib {
     buffer::buffer() noexcept
         : buffer_(nullptr)
         , size_(0)

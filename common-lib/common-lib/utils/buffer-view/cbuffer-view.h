@@ -1,6 +1,5 @@
 #pragma once
-namespace vsh::rpc {
-    //TODO move to common lib
+namespace vsh::common_lib {
     class cbuffer_view
     {
     public:
