@@ -40,6 +40,38 @@ namespace vsh::common_lib {
             unsigned char *buffer_;
         };
 
+        class const_iterator
+        {
+            friend buffer;
+
+            const_iterator(const unsigned char *buffer) noexcept;
+
+        public:
+            using difference_type = std::ptrdiff_t;
+            using value_type = unsigned char;
+            using pointer = const unsigned char *;
+            using reference = const unsigned char &;
+            using iterator_category = std::random_access_iterator_tag;
+
+            const_iterator &operator++() noexcept;
+            const_iterator operator++(int) noexcept;
+            const_iterator &operator--() noexcept;
+            const_iterator operator--(int) noexcept;
+
+            const unsigned char &operator*() const noexcept;
+
+            bool operator==(const const_iterator &other) const noexcept;
+            bool operator!=(const const_iterator &other) const noexcept;
+
+            const_iterator operator+(difference_type offset) const noexcept;
+            const_iterator operator-(difference_type offset) const noexcept;
+
+            difference_type operator-(const_iterator other) const noexcept;
+
+        private:
+            const unsigned char *buffer_;
+        };
+
         buffer() noexcept;
         explicit buffer(size_t size);
 
@@ -67,6 +99,9 @@ namespace vsh::common_lib {
         iterator begin() noexcept;
         iterator end() noexcept;
 
+        const_iterator cbegin() const noexcept;
+        const_iterator cend() const noexcept;
+
     private:
         unsigned char *buffer_;
         size_t size_;
@@ -74,4 +109,6 @@ namespace vsh::common_lib {
 
     buffer::iterator operator+(buffer::iterator::difference_type offset,
                                const buffer::iterator &rhs) noexcept;
+    buffer::const_iterator operator+(buffer::const_iterator::difference_type offset,
+                                     const buffer::const_iterator &rhs) noexcept;
 }

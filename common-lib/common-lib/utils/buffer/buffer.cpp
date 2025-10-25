@@ -67,6 +67,64 @@ namespace vsh::common_lib {
         return buffer_ - other.buffer_;
     }
 
+    buffer::const_iterator::const_iterator(const unsigned char *buffer) noexcept
+        : buffer_(buffer)
+    {}
+
+    buffer::const_iterator &buffer::const_iterator::operator++() noexcept
+    {
+        ++buffer_;
+        return *this;
+    }
+
+    buffer::const_iterator buffer::const_iterator::operator++(int) noexcept
+    {
+        auto prev = buffer_++;
+        return buffer::const_iterator(prev);
+    }
+
+    buffer::const_iterator &buffer::const_iterator::operator--() noexcept
+    {
+        --buffer_;
+        return *this;
+    }
+
+    buffer::const_iterator buffer::const_iterator::operator--(int) noexcept
+    {
+        auto prev = buffer_--;
+        return buffer::const_iterator(prev);
+    }
+
+    const unsigned char &buffer::const_iterator::operator*() const noexcept
+    {
+        return *buffer_;
+    }
+
+    bool buffer::const_iterator::operator==(const const_iterator &other) const noexcept
+    {
+        return buffer_ == other.buffer_;
+    }
+
+    bool buffer::const_iterator::operator!=(const const_iterator &other) const noexcept
+    {
+        return !(other == *this);
+    }
+
+    buffer::const_iterator buffer::const_iterator::operator+(difference_type offset) const noexcept
+    {
+        return const_iterator(buffer_ + offset);
+    }
+
+    buffer::const_iterator buffer::const_iterator::operator-(difference_type offset) const noexcept
+    {
+        return const_iterator(buffer_ - offset);
+    }
+
+    buffer::const_iterator::difference_type buffer::const_iterator::operator-(const_iterator other) const noexcept
+    {
+        return buffer_ - other.buffer_;
+    }
+
     buffer::buffer() noexcept
         : buffer_(nullptr)
         , size_(0)
@@ -151,8 +209,24 @@ namespace vsh::common_lib {
         return iterator(buffer_ + size_);
     }
 
+    buffer::const_iterator buffer::cbegin() const noexcept
+    {
+        return const_iterator(buffer_);
+    }
+
+    buffer::const_iterator buffer::cend() const noexcept
+    {
+        return const_iterator(buffer_ + size_);
+    }
+
     buffer::iterator operator+(buffer::iterator::difference_type offset,
                                const buffer::iterator &rhs) noexcept
+    {
+        return rhs + offset;
+    }
+
+    buffer::const_iterator operator+(buffer::const_iterator::difference_type offset,
+                                     const buffer::const_iterator &rhs) noexcept
     {
         return rhs + offset;
     }
