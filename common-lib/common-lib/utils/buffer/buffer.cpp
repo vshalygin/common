@@ -219,6 +219,26 @@ namespace vsh::common_lib {
         return const_iterator(buffer_ + size_);
     }
 
+    buffer::reverse_iterator buffer::rbegin() noexcept
+    {
+        return reverse_iterator(buffer_ + size_);
+    }
+
+    buffer::reverse_iterator buffer::rend() noexcept
+    {
+        return reverse_iterator(buffer_);
+    }
+
+    buffer::const_reverse_iterator buffer::crbegin() const noexcept
+    {
+        return const_reverse_iterator(buffer_ + size_);
+    }
+
+    buffer::const_reverse_iterator buffer::crend() const noexcept
+    {
+        return const_reverse_iterator(buffer_);
+    }
+
     buffer::iterator operator+(buffer::iterator::difference_type offset,
                                const buffer::iterator &rhs) noexcept
     {
@@ -227,6 +247,18 @@ namespace vsh::common_lib {
 
     buffer::const_iterator operator+(buffer::const_iterator::difference_type offset,
                                      const buffer::const_iterator &rhs) noexcept
+    {
+        return rhs + offset;
+    }
+
+    buffer::reverse_iterator operator+(buffer::reverse_iterator::difference_type offset,
+                                       const buffer::reverse_iterator &rhs) noexcept
+    {
+        return rhs + offset;
+    }
+
+    buffer::const_reverse_iterator operator+(buffer::const_reverse_iterator::difference_type offset,
+                                             const buffer::const_reverse_iterator &rhs) noexcept
     {
         return rhs + offset;
     }

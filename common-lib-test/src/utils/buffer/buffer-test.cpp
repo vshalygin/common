@@ -124,6 +124,32 @@ TEST(Buffer, HasConstIterators)
     }
 }
 
+TEST(Buffer, HasReverseIterators)
+{
+    buffer buf(3);
+    unsigned char byte_val = 0x0;
+    *(buf.data()) = byte_val;
+    *(buf.data() + 1) = ++byte_val;
+    *(buf.data() + 2) = ++byte_val;
+
+    for(auto it = buf.rbegin(); it != buf.rend(); ++it, --byte_val) {
+        ASSERT_EQ(byte_val, *it);
+    }
+}
+
+TEST(Buffer, HasConstReverseIterators)
+{
+    buffer buf(3);
+    unsigned char byte_val = 0x0;
+    *(buf.data()) = byte_val;
+    *(buf.data() + 1) = ++byte_val;
+    *(buf.data() + 2) = ++byte_val;
+
+    for(auto it = buf.crbegin(); it != buf.crend(); ++it, --byte_val) {
+        ASSERT_EQ(byte_val, *it);
+    }
+}
+
 TEST(BufferIterator, HasIteratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<buffer::iterator::difference_type, std::ptrdiff_t>;
@@ -165,7 +191,7 @@ TEST(BufferIterator, IncrementsIteratorWithPostfixIncrementation)
 
 TEST(BufferIterator, DecrementsIteratorWithPrefixDecrementation)
 {
-    buffer buf(3);
+    buffer buf(2);
     *(buf.data()) = 0x1;
     *(buf.data() + 1) = 0x2;
 
@@ -226,8 +252,8 @@ TEST(BufferIterator, SummarizeAnIteratorWithANumber)
 {
     buffer buf(3);
 
-    ASSERT_EQ(buf.cbegin() + 3, buf.cend());
-    ASSERT_EQ(3 + buf.cbegin(), buf.cend());
+    ASSERT_EQ(buf.begin() + 3, buf.end());
+    ASSERT_EQ(3 + buf.begin(), buf.end());
 }
 
 TEST(BufferConstIterator, HasIteratorTraits)
@@ -334,4 +360,230 @@ TEST(BufferConstIterator, SummarizeAnIteratorWithANumber)
 
     ASSERT_EQ(buf.cbegin() + 3, buf.cend());
     ASSERT_EQ(3 + buf.cbegin(), buf.cend());
+}
+
+TEST(BufferReverseIterator, HasIteratorTraits)
+{
+    bool is_difference_type_same = std::is_same_v<buffer::reverse_iterator::difference_type, std::ptrdiff_t>;
+    bool is_value_type_type = std::is_same_v<buffer::reverse_iterator::value_type, unsigned char>;
+    bool is_pointer_type_same = std::is_same_v<buffer::reverse_iterator::pointer, unsigned char *>;
+    bool is_reference_type_same = std::is_same_v<buffer::reverse_iterator::reference, unsigned char &>;
+    bool is_iterator_category_same = std::is_same_v<buffer::reverse_iterator::iterator_category,
+                                                    std::random_access_iterator_tag>;
+
+    ASSERT_TRUE(is_difference_type_same);
+    ASSERT_TRUE(is_value_type_type);
+    ASSERT_TRUE(is_pointer_type_same);
+    ASSERT_TRUE(is_reference_type_same);
+    ASSERT_TRUE(is_iterator_category_same);
+}
+
+TEST(BufferReverseIterator, IncrementsIteratorWithPrefixIncrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = buf.rbegin();
+    ASSERT_EQ(*++iter, 0x1);
+}
+
+TEST(BufferReverseIterator, IncrementsIteratorWithPostfixIncrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = buf.rbegin();
+    auto prev_iter = iter++;
+
+    ASSERT_EQ(*prev_iter, 0x2);
+    ASSERT_EQ(*iter, 0x1);
+}
+
+TEST(BufferReverseIterator, DecrementsIteratorWithPrefixDecrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = ++buf.rbegin();
+    ASSERT_EQ(*--iter, 0x2);
+}
+
+TEST(BufferReverseIterator, DecrementsIteratorWithPostfixDecrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = ++buf.rbegin();
+    auto prev_iter = iter--;
+
+    ASSERT_EQ(*prev_iter, 0x1);
+    ASSERT_EQ(*iter, 0x2);
+}
+
+TEST(BufferReverseIterator, AllowsDereferencing)
+{
+    buffer buf(1);
+    *(buf.data()) = 0x1;
+
+    ASSERT_EQ(*buf.rbegin(), 0x1);
+}
+
+TEST(BufferReverseIterator, DetermineEqualIterators)
+{
+    buffer buf(3);
+
+    ASSERT_TRUE(buf.rbegin() == buf.rbegin());
+}
+
+TEST(BufferReverseIterator, DetermineNonEqualIterators)
+{
+    buffer buf(3);
+
+    ASSERT_TRUE(buf.rbegin() != buf.rend());
+}
+
+TEST(BufferReverseIterator, SubtractOneIteratorFromAnother)
+{
+    buffer buf(3);
+
+    ASSERT_EQ(buf.rend() - buf.rbegin(), 3);
+}
+
+TEST(BufferReverseIterator, SubtractNumberFromIterator)
+{
+    buffer buf(3);
+
+    ASSERT_EQ(buf.rend() - 3, buf.rbegin());
+}
+
+TEST(BufferReverseIterator, SummarizeAnIteratorWithANumber)
+{
+    buffer buf(3);
+
+    ASSERT_EQ(buf.rbegin() + 3, buf.rend());
+    ASSERT_EQ(3 + buf.rbegin(), buf.rend());
+}
+
+TEST(BufferReverseIterator, ConvertsToIterator)
+{
+    buffer buf(1);
+
+    ASSERT_EQ(buf.begin() + 1, buf.rbegin().base());
+}
+
+TEST(BufferConstReverseIterator, HasIteratorTraits)
+{
+    bool is_difference_type_same = std::is_same_v<buffer::const_reverse_iterator::difference_type, std::ptrdiff_t>;
+    bool is_value_type_type = std::is_same_v<buffer::const_reverse_iterator::value_type, unsigned char>;
+    bool is_pointer_type_same = std::is_same_v<buffer::const_reverse_iterator::pointer, const unsigned char *>;
+    bool is_reference_type_same = std::is_same_v<buffer::const_reverse_iterator::reference, const unsigned char &>;
+    bool is_iterator_category_same = std::is_same_v<buffer::const_reverse_iterator::iterator_category,
+                                                    std::random_access_iterator_tag>;
+
+    ASSERT_TRUE(is_difference_type_same);
+    ASSERT_TRUE(is_value_type_type);
+    ASSERT_TRUE(is_pointer_type_same);
+    ASSERT_TRUE(is_reference_type_same);
+    ASSERT_TRUE(is_iterator_category_same);
+}
+
+TEST(BufferConstReverseIterator, IncrementsIteratorWithPrefixIncrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = buf.crbegin();
+    ASSERT_EQ(*++iter, 0x1);
+}
+
+TEST(BufferConstReverseIterator, IncrementsIteratorWithPostfixIncrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = buf.crbegin();
+    auto prev_iter = iter++;
+
+    ASSERT_EQ(*prev_iter, 0x2);
+    ASSERT_EQ(*iter, 0x1);
+}
+
+TEST(BufferConstReverseIterator, DecrementsIteratorWithPrefixDecrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = ++buf.crbegin();
+    ASSERT_EQ(*--iter, 0x2);
+}
+
+TEST(BufferConstReverseIterator, DecrementsIteratorWithPostfixDecrementation)
+{
+    buffer buf(2);
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+
+    auto iter = ++buf.crbegin();
+    auto prev_iter = iter--;
+
+    ASSERT_EQ(*prev_iter, 0x1);
+    ASSERT_EQ(*iter, 0x2);
+}
+
+TEST(BufferConstReverseIterator, AllowsDereferencing)
+{
+    buffer buf(1);
+    *(buf.data()) = 0x1;
+
+    ASSERT_EQ(*buf.crbegin(), 0x1);
+}
+
+TEST(BufferConstReverseIterator, DetermineEqualIterators)
+{
+    buffer buf(3);
+
+    ASSERT_TRUE(buf.crbegin() == buf.crbegin());
+}
+
+TEST(BufferConstReverseIterator, DetermineNonEqualIterators)
+{
+    buffer buf(3);
+
+    ASSERT_TRUE(buf.crbegin() != buf.crend());
+}
+
+TEST(BufferConstReverseIterator, SubtractOneIteratorFromAnother)
+{
+    buffer buf(3);
+
+    ASSERT_EQ(buf.crend() - buf.crbegin(), 3);
+}
+
+TEST(BufferConstReverseIterator, SubtractNumberFromIterator)
+{
+    buffer buf(3);
+
+    ASSERT_EQ(buf.crend() - 3, buf.crbegin());
+}
+
+TEST(BufferConstReverseIterator, SummarizeAnIteratorWithANumber)
+{
+    buffer buf(3);
+
+    ASSERT_EQ(buf.crbegin() + 3, buf.crend());
+    ASSERT_EQ(3 + buf.crbegin(), buf.crend());
+}
+
+TEST(BufferConstReverseIterator, ConvertsToIterator)
+{
+    const buffer buf(1);
+
+    ASSERT_EQ(buf.cbegin() + 1, buf.crbegin().base());
 }

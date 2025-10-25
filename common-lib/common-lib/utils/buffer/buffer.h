@@ -6,7 +6,6 @@ namespace vsh::common_lib {
     class buffer final
     {
     public:
-        //TODO write the rest of iterators
         class iterator
         {
             friend buffer;
@@ -72,6 +71,9 @@ namespace vsh::common_lib {
             const unsigned char *buffer_;
         };
 
+        using reverse_iterator = std::reverse_iterator<iterator>;
+        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
         buffer() noexcept;
         explicit buffer(size_t size);
 
@@ -102,6 +104,12 @@ namespace vsh::common_lib {
         const_iterator cbegin() const noexcept;
         const_iterator cend() const noexcept;
 
+        reverse_iterator rbegin() noexcept;
+        reverse_iterator rend() noexcept;
+
+        const_reverse_iterator crbegin() const noexcept;
+        const_reverse_iterator crend() const noexcept;
+
     private:
         unsigned char *buffer_;
         size_t size_;
@@ -111,4 +119,8 @@ namespace vsh::common_lib {
                                const buffer::iterator &rhs) noexcept;
     buffer::const_iterator operator+(buffer::const_iterator::difference_type offset,
                                      const buffer::const_iterator &rhs) noexcept;
+    buffer::reverse_iterator operator+(buffer::reverse_iterator::difference_type offset,
+                                       const buffer::reverse_iterator &rhs) noexcept;
+    buffer::const_reverse_iterator operator+(buffer::const_reverse_iterator::difference_type offset,
+                                             const buffer::const_reverse_iterator &rhs) noexcept;
 }
