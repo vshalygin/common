@@ -31,3 +31,13 @@ TEST(BufferView, ReturnsSizeOfStoringBuffer)
 
     ASSERT_EQ(sut.size(), buffer.size());
 }
+
+TEST(BufferView, GetAccessToElementByIndex)
+{
+    std::vector<unsigned char> buf{ 0x0, 0x1, 0x2 };
+    buffer_view sut(buf.data(), buf.size());
+
+    sut[2] = 0x34;
+
+    ASSERT_EQ(buf[2], 0x34);
+}

@@ -18,14 +18,15 @@ namespace vsh::rpc {
         constexpr const unsigned s_req_trailer_bytes_num = s_entry_number_bytes_num +
                                                            s_client_id_bytes_num +
                                                            s_method_idx_bytes_num;
-        constexpr const unsigned s_res_trailer_bytes_num = s_req_trailer_bytes_num;
 
-        unsigned to_unsigned_big_endian(const unsigned char *buf, unsigned size)
+        constexpr const unsigned s_res_trailer_bytes_num = s_entry_number_bytes_num;
+
+        unsigned to_unsigned_big_endian(common_lib::cbuffer_view bytes)
         {
             unsigned ans = 0;
-            for(unsigned i = 0; i < size; ++i) {
-                unsigned offset = (size - i - 1) * s_bits_in_byte;
-                unsigned add_bits = static_cast<unsigned>(buf[i]) << offset;
+            for(size_t i = 0; i < bytes.size(); ++i) {
+                unsigned offset = static_cast<unsigned>(bytes.size() - i - 1) * s_bits_in_byte;
+                unsigned add_bits = static_cast<unsigned>(bytes[i]) << offset;
                 ans |= add_bits;
             }
 
@@ -46,63 +47,142 @@ namespace vsh::rpc {
             return ans;
         }
 
-        unsigned extract_message_size(const unsigned char *buf)
+        unsigned extract_message_size(common_lib::cbuffer_view entry)
         {
-            const auto begin = buf + s_entry_type_bytes_num;
+            const auto begin = entry.data() + s_entry_type_bytes_num;
 
-            return to_unsigned_big_endian(begin, s_entry_message_size_bytes_num);
+            return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_message_size_bytes_num });
+        }
+
+        void fill_entry_type_byte(common_lib::buffer &buff, size_t &pos, transfer_type type)
+        {
+            buff[pos++] = static_cast<unsigned char>(type);
+        }
+        
+        void fill_serialized_message_size_bytes(common_lib::buffer &buff,
+                                                size_t &pos,
+                                                unsigned serialized_message_size)
+        {
+            auto serialized_message_size_bytes = from_unsigned_big_endian(serialized_message_size);
+            assert(serialized_message_size_bytes.size() == s_entry_message_size_bytes_num);
+            for(int i = 0; i < serialized_message_size_bytes.size(); ++i) {
+                buff[pos++] = serialized_message_size_bytes[i];
+            }
+        }
+
+        void fill_serialized_message_bytes(common_lib::buffer &buff,
+                                           size_t &pos,
+                                           google::protobuf::Message *message,
+                                           unsigned serialized_message_size)
+        {
+            //TODO check if failed
+            message->SerializeToArray(buff.data() + pos, static_cast<unsigned>(buff.size() - pos));
+            pos += serialized_message_size;
+        }
+
+        void fill_entry_number_bytes(common_lib::buffer &buff,
+                                     size_t &pos,
+                                     unsigned entry_number)
+        {
+            auto entry_number_bytes = from_unsigned_big_endian(entry_number);
+            assert(entry_number_bytes.size() == s_entry_number_bytes_num);
+            for(int i = 0; i < entry_number_bytes.size(); ++i) {
+                buff[pos++] = entry_number_bytes[i];
+            }
+        }
+
+        void fill_client_id_bytes(common_lib::buffer &buff,
+                                  size_t &pos,
+                                  const std::string &client_id)
+        {
+            assert(client_id.size() == s_client_id_bytes_num);
+            for(size_t i = 0; i < client_id.size(); ++i) {
+                buff[pos++] = static_cast<unsigned char>(client_id[i]);
+            }
+        }
+
+        void fill_method_idx_bytes(common_lib::buffer &buff,
+                                   size_t &pos,
+                                   unsigned method_idx)
+        {
+            auto method_idx_bytes = from_unsigned_big_endian(method_idx);
+            assert(method_idx_bytes.size() == s_method_idx_bytes_num);
+            for(int i = 0; i < method_idx_bytes.size(); ++i) {
+                buff[pos++] = method_idx_bytes[i];
+            }
+        }
+
+        void assert_entry_req([[maybe_unused]] const common_lib::cbuffer_view &entry)
+        {
+            assert(entry.data());
+            assert(entry.size() >= s_header_bytes_num);
+            assert(s_header_bytes_num + extract_message_size(entry) + s_req_trailer_bytes_num <= entry.size());
+        }
+
+        void assert_entry_res([[maybe_unused]] const common_lib::cbuffer_view &entry)
+        {
+            assert(entry.data());
+            assert(entry.size() >= s_header_bytes_num);
+            assert(s_header_bytes_num + extract_message_size(entry) + s_res_trailer_bytes_num <= entry.size());
         }
     }
 
-    transfer_type get_transfer_entry_type(const unsigned char *buf,
-                                          [[maybe_unused]] size_t size)
+    transfer_type get_transfer_entry_type(common_lib::cbuffer_view entry)
     {
-        assert(buf);
-        assert(size > 0);
+        assert(entry.data());
+        assert(entry.size() > 0);
 
-        return static_cast<transfer_type>(*buf);
+        return static_cast<transfer_type>(entry[0]);
     }
 
-    transfer_view_req::transfer_view_req(const unsigned char *buf, size_t size)
-        : buf_(buf)
-        , size_(size)
+    unsigned get_entry_number_req(common_lib::cbuffer_view entry)
     {
-        assert(buf);
-        assert(size >= s_header_bytes_num);
+        assert_entry_req(entry);
 
-        message_size_ = extract_message_size(buf);
-        assert(s_header_bytes_num + message_size_ + s_req_trailer_bytes_num <= size);
+        auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry);
+        return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
     }
 
-    unsigned transfer_view_req::get_entry_number() const
+    common_lib::cbuffer_view get_client_id_req(common_lib::cbuffer_view entry)
     {
-        auto begin = buf_ + s_header_bytes_num + message_size_;
+        assert_entry_req(entry);
 
-        return to_unsigned_big_endian(begin, s_entry_number_bytes_num);
-    }
-
-    common_lib::cbuffer_view transfer_view_req::get_client_id() const
-    {
-        auto begin = buf_ + s_header_bytes_num + message_size_ + s_entry_number_bytes_num;
-
+        auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry) + s_entry_number_bytes_num;
         return common_lib::cbuffer_view(begin, s_client_id_bytes_num);
     }
 
-    unsigned transfer_view_req::get_method_idx() const
+    unsigned get_method_idx_req(common_lib::cbuffer_view entry)
     {
-        auto begin = buf_ + s_header_bytes_num +
-                     message_size_ +
-                     s_entry_number_bytes_num +
-                     s_client_id_bytes_num;
+        assert_entry_req(entry);
 
-        return to_unsigned_big_endian(begin, s_method_idx_bytes_num);
+        auto begin = entry.data() + s_header_bytes_num +
+                                    extract_message_size(entry) +
+                                    s_entry_number_bytes_num +
+                                    s_client_id_bytes_num;
+
+        return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_method_idx_bytes_num });
     }
 
-    common_lib::cbuffer_view transfer_view_req::get_serialized_message() const
+    common_lib::cbuffer_view get_serialized_message_req(common_lib::cbuffer_view entry)
     {
-        auto begin = buf_ + s_header_bytes_num;
+        assert_entry_req(entry);
 
-        return common_lib::cbuffer_view(begin, message_size_);
+        auto begin = entry.data() + s_header_bytes_num;
+        return common_lib::cbuffer_view(begin, extract_message_size(entry));
+    }
+
+    unsigned get_entry_number_res(common_lib::cbuffer_view entry)
+    {
+        assert_entry_res(entry);
+
+        auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry);
+        return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
+    }
+
+    common_lib::cbuffer_view get_serialized_message_res(common_lib::cbuffer_view entry)
+    {
+        auto begin = entry.data() + s_header_bytes_num;
+        return common_lib::cbuffer_view(begin, extract_message_size(entry));
     }
 
     common_lib::buffer create_transfer_entry_req(unsigned entry_number,
@@ -116,58 +196,36 @@ namespace vsh::rpc {
         unsigned buf_size = s_header_bytes_num + serialized_message_size + s_req_trailer_bytes_num;
 
         common_lib::buffer ans(buf_size);
-        auto curr_pos = ans.data();
-        unsigned filled_bytes = 0;
+        size_t curr_pos = 0;
 
-        //fill entry type byte
-        *(curr_pos++) = static_cast<unsigned char>(transfer_type::req);
-        ++filled_bytes;
+        fill_entry_type_byte(ans, curr_pos, transfer_type::req);
+        fill_serialized_message_size_bytes(ans, curr_pos, serialized_message_size);
+        fill_serialized_message_bytes(ans, curr_pos, message, serialized_message_size);
+        fill_entry_number_bytes(ans, curr_pos, entry_number);
+        fill_client_id_bytes(ans, curr_pos, client_id);
+        fill_method_idx_bytes(ans, curr_pos, method_idx);
 
-        //fill serialized message size bytes
-        auto serialized_message_size_bytes = from_unsigned_big_endian(serialized_message_size);
-        assert(serialized_message_size_bytes.size() == s_entry_message_size_bytes_num);
-        for(int i = 0; i < serialized_message_size_bytes.size(); ++i) {
-            *(curr_pos++) = serialized_message_size_bytes[i];
-            ++filled_bytes;
-        }
-
-        //fill serialized message bytes
-        message->SerializeToArray(curr_pos, buf_size - filled_bytes); //TODO check if failed
-        curr_pos += serialized_message_size;
-        filled_bytes += serialized_message_size;
-
-        //fill entry number bytes
-        auto entry_number_bytes = from_unsigned_big_endian(entry_number);
-        assert(entry_number_bytes.size() == s_entry_number_bytes_num);
-        for(int i = 0; i < entry_number_bytes.size(); ++i) {
-            *(curr_pos++) = entry_number_bytes[i];
-            ++filled_bytes;
-        }
-
-        //fill client id bytes
-        assert(client_id.size() == s_client_id_bytes_num);
-        for(size_t i = 0; i < client_id.size(); ++i) {
-            *(curr_pos++) = static_cast<unsigned char>(client_id[i]);
-            ++filled_bytes;
-        }
-
-        //fill method idx bytes
-        auto method_idx_bytes = from_unsigned_big_endian(method_idx);
-        assert(method_idx_bytes.size() == s_method_idx_bytes_num);
-        for(int i = 0; i < method_idx_bytes.size(); ++i) {
-            *(curr_pos++) = method_idx_bytes[i];
-            ++filled_bytes;
-        }
-
-        assert(filled_bytes == buf_size);
+        assert(curr_pos == buf_size);
         return ans;
     }
 
     common_lib::buffer create_transfer_entry_res(unsigned entry_number,
-                                                 const std::string &client_id,
-                                                 unsigned method_id,
                                                  google::protobuf::Message *message)
     {
-        return create_transfer_entry_req(entry_number, client_id, method_id, message);
+        assert(message);
+
+        unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
+        unsigned buf_size = s_header_bytes_num + serialized_message_size + s_res_trailer_bytes_num;
+
+        common_lib::buffer ans(buf_size);
+        size_t curr_pos = 0;
+
+        fill_entry_type_byte(ans, curr_pos, transfer_type::res);
+        fill_serialized_message_size_bytes(ans, curr_pos, serialized_message_size);
+        fill_serialized_message_bytes(ans, curr_pos, message, serialized_message_size);
+        fill_entry_number_bytes(ans, curr_pos, entry_number);
+
+        assert(curr_pos == buf_size);
+        return ans;
     }
 }

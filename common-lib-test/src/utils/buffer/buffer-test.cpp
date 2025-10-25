@@ -57,13 +57,12 @@ TEST(Buffer, MovesToAnotherObjectByAssignment)
     ASSERT_EQ(buf2.size(), 3);
 }
 
-TEST(Buffer, AllocatesNewBufferIfNewSizeIsBiggerThanCurrentOne)
+TEST(Buffer, GiveAccessToTheElementByIndex)
 {
     buffer buf(3);
-    auto data_ptr = buf.data();
+    *(buf.data()) = 0x1;
+    *(buf.data() + 1) = 0x2;
+    *(buf.data() + 2) = 0x3;
 
-    buf.reallocate(4);
-
-    ASSERT_NE(buf.data(), data_ptr);
-    ASSERT_EQ(buf.size(), 4);
+    ASSERT_EQ(buf[2], 0x3);
 }

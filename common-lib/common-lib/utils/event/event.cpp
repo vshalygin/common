@@ -21,7 +21,7 @@ namespace vsh::common_lib {
             cv_.notify_all();
         }
 
-        bool is_set()
+        bool is_set() const
         {
             std::lock_guard guard(mtx_);
             return is_set_;
@@ -46,7 +46,7 @@ namespace vsh::common_lib {
         }
 
     private:
-        std::mutex mtx_;
+        mutable std::mutex mtx_;
         bool is_set_ = false;
 
         std::condition_variable cv_;
@@ -66,7 +66,7 @@ namespace vsh::common_lib {
         impl_->set();
     }
 
-    bool event::is_set()
+    bool event::is_set() const
     {
         return impl_->is_set();
     }

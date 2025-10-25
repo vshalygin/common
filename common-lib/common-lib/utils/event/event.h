@@ -16,7 +16,7 @@ namespace vsh::common_lib {
         event &operator=(event &&);
 
         void set();
-        bool is_set();
+        bool is_set() const;
         void clear();
 
         void wait();

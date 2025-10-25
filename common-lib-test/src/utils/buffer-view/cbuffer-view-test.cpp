@@ -22,3 +22,13 @@ TEST(CBufferView, ReturnsSizeOfStoringBuffer)
 
     ASSERT_EQ(sut.size(), buffer.size());
 }
+
+TEST(CBufferView, GetAccessToElementByIndex)
+{
+    std::vector<unsigned char> buf{ 0x0, 0x1, 0x34 };
+    cbuffer_view sut(buf.data(), buf.size());
+
+    auto third_byte = sut[2];
+
+    ASSERT_EQ(third_byte, 0x34);
+}

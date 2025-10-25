@@ -33,27 +33,28 @@ namespace vsh::common_lib {
         return *this;
     }
 
-    void buffer::reallocate(size_t new_size)
+    unsigned char *buffer::data() noexcept
     {
-        unsigned char *new_buf = new unsigned char[new_size];
-
-        delete[] buffer_;
-        buffer_ = new_buf;
-        size_ = new_size;
+        return const_cast<unsigned char *>(static_cast<const buffer &>(*this).data());
     }
 
-    unsigned char *buffer::data()
+    const unsigned char *buffer::data() const noexcept
     {
         return buffer_;
     }
 
-    const unsigned char *buffer::data() const
-    {
-        return buffer_;
-    }
-
-    size_t buffer::size() const
+    size_t buffer::size() const noexcept
     {
         return size_;
+    }
+
+    unsigned char &buffer::operator[](size_t pos) noexcept
+    {
+        return const_cast<unsigned char &>(static_cast<const buffer &>(*this)[pos]);
+    }
+
+    const unsigned char &buffer::operator[](size_t pos) const noexcept
+    {
+        return *(buffer_ + pos);
     }
 }
