@@ -3,12 +3,22 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "proto/test-messages.pb.h"
+
 #include <string>
 
 using namespace vsh::rpc;
 using namespace testing;
 
 namespace {
+    proto::some_message get_test_message()
+    {
+        proto::some_message msg;
+        msg.set_some_data(34);
+
+        return msg;
+    }
+
     constexpr const unsigned s_entry_number = 4291937406; //0xFFD1C47E
     const std::vector<char> s_entry_number_bytes = { '\xFF', '\xD1', '\xC4', '\x7E' };
 
@@ -17,15 +27,19 @@ namespace {
     constexpr const unsigned s_method_idx = 4091900406; //0xF3E571F6
     const std::vector<unsigned char> s_method_idx_bytes = { 0xF3, 0xE5, 0x71, 0xF6 };
 
-    const std::string s_serialized_message = "3l;ed45631"; //some rubbish
-    const std::vector<char> s_serialized_message_size_str = { 0x00, 0x00, 0x00, 0x0A };
-
     std::vector<unsigned char> create_entry()
     {
+        auto test_msg = get_test_message();
+        auto serialized_test_msg = test_msg.SerializeAsString();
+        auto serialized_test_msg_size = static_cast<unsigned>(serialized_test_msg.size());
+        std::vector<unsigned char> serialized_message_size_bytes{ (unsigned char)(serialized_test_msg_size >> 24),
+                                                                  (unsigned char)(serialized_test_msg_size >> 16),
+                                                                  (unsigned char)(serialized_test_msg_size >> 8),
+                                                                  (unsigned char)(serialized_test_msg_size >> 0) };
         std::vector<unsigned char> res;
         res.push_back(static_cast<char>(transfer_type::req));
-        res.insert(res.cend(), s_serialized_message_size_str.begin(), s_serialized_message_size_str.end());
-        res.insert(res.cend(), s_serialized_message.begin(), s_serialized_message.end());
+        res.insert(res.cend(), serialized_message_size_bytes.begin(), serialized_message_size_bytes.end());
+        res.insert(res.cend(), serialized_test_msg.begin(), serialized_test_msg.end());
         res.insert(res.cend(), s_entry_number_bytes.begin(), s_entry_number_bytes.end());
         res.insert(res.cend(), s_client_id.begin(), s_client_id.end());
         res.insert(res.cend(), s_method_idx_bytes.begin(), s_method_idx_bytes.end());
@@ -55,14 +69,14 @@ TEST(TransferEntryReq, ResolveEntryNumber)
 {
     const auto entry = create_entry();
 
-    ASSERT_EQ(s_entry_number, transfer_view_req(entry.data(), entry.size()).get_entry_number_req());
+    ASSERT_EQ(s_entry_number, transfer_view_req(entry.data(), entry.size()).get_entry_number());
 }
 
 TEST(TransferEntryReq, ResolveClientId)
 {
     const auto entry = create_entry();
 
-    auto client_id = transfer_view_req(entry.data(), entry.size()).get_client_id_req();
+    auto client_id = transfer_view_req(entry.data(), entry.size()).get_client_id();
     ASSERT_THAT(reinterpret_cast<const unsigned char *>(s_client_id.data()),
                 ArrayEq(client_id.data(), client_id.size()));
 }
@@ -71,14 +85,34 @@ TEST(TransferEntryReq, ResolveMethodIdx)
 {
     const auto entry = create_entry();
 
-    ASSERT_EQ(s_method_idx, transfer_view_req(entry.data(), entry.size()).get_method_idx_req());
+    ASSERT_EQ(s_method_idx, transfer_view_req(entry.data(), entry.size()).get_method_idx());
 }
 
 TEST(TransferEntryReq, ResolveSerializedMessage)
 {
     const auto entry = create_entry();
+    const auto expected_serialized_message = get_test_message().SerializeAsString();
 
-    auto serialize_message = transfer_view_req(entry.data(), entry.size()).get_serialized_message_req();
-    ASSERT_THAT(reinterpret_cast<const unsigned char *>(s_serialized_message.data()),
+    auto serialize_message = transfer_view_req(entry.data(), entry.size()).get_serialized_message();
+    ASSERT_THAT(reinterpret_cast<const unsigned char *>(expected_serialized_message.data()),
                 ArrayEq(serialize_message.data(), serialize_message.size()));
+}
+
+TEST(TransferEntryReq, CreateTransferEntry)
+{
+    const auto expected_entry = create_entry();
+    proto::some_message test_message;
+    auto expected_view = transfer_view_req(expected_entry.data(), expected_entry.size());
+    test_message.ParseFromArray(expected_view.get_serialized_message().data(),
+                                expected_view.get_serialized_message().size());
+    std::string client_id(reinterpret_cast<const char *>(expected_view.get_client_id().data()),
+                          expected_view.get_client_id().size());
+
+    auto entry = create_transfer_entry_req(expected_view.get_entry_number(),
+                                           client_id,
+                                           expected_view.get_method_idx(),
+                                           &test_message);
+
+    ASSERT_THAT(expected_entry.data(),
+                ArrayEq(entry.data(), entry.size()));
 }

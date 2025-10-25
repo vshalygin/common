@@ -16,6 +16,9 @@
     <ClCompile Include="src\buffer\buffer-test.cpp">
       <Filter>common\buffer</Filter>
     </ClCompile>
+    <ClCompile Include="src\proto\test-messages.pb.cc">
+      <Filter>proto</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -30,5 +33,18 @@
     <Filter Include="common\buffer">
       <UniqueIdentifier>{efafa9b8-38c9-4569-8ebb-cb1a6a88b807}</UniqueIdentifier>
     </Filter>
+    <Filter Include="proto">
+      <UniqueIdentifier>{aeef9d66-6699-4ccf-8d64-26a35721cffe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="src\proto\test-messages.proto">
+      <Filter>proto</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\proto\test-messages.pb.h">
+      <Filter>proto</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

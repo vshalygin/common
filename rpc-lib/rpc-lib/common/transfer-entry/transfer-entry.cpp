@@ -74,21 +74,21 @@ namespace vsh::rpc {
         assert(s_header_bytes_num + message_size_ + s_req_trailer_bytes_num <= size);
     }
 
-    unsigned transfer_view_req::get_entry_number_req() const
+    unsigned transfer_view_req::get_entry_number() const
     {
         auto begin = buf_ + s_header_bytes_num + message_size_;
 
         return to_unsigned_big_endian(begin, s_entry_number_bytes_num);
     }
 
-    cbuffer_view transfer_view_req::get_client_id_req() const
+    cbuffer_view transfer_view_req::get_client_id() const
     {
         auto begin = buf_ + s_header_bytes_num + message_size_ + s_entry_number_bytes_num;
 
         return cbuffer_view(begin, s_client_id_bytes_num);
     }
 
-    unsigned transfer_view_req::get_method_idx_req() const
+    unsigned transfer_view_req::get_method_idx() const
     {
         auto begin = buf_ + s_header_bytes_num +
                      message_size_ +
@@ -98,7 +98,7 @@ namespace vsh::rpc {
         return to_unsigned_big_endian(begin, s_method_idx_bytes_num);
     }
 
-    cbuffer_view transfer_view_req::get_serialized_message_req() const
+    cbuffer_view transfer_view_req::get_serialized_message() const
     {
         auto begin = buf_ + s_header_bytes_num;
 

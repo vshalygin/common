@@ -39,10 +39,10 @@ namespace vsh::rpc {
     public:
         transfer_view_req(const unsigned char *buf, size_t size);
 
-        unsigned get_entry_number_req() const;
-        cbuffer_view get_client_id_req() const;
-        unsigned get_method_idx_req() const;
-        cbuffer_view get_serialized_message_req() const;
+        unsigned get_entry_number() const;
+        cbuffer_view get_client_id() const;
+        unsigned get_method_idx() const;
+        cbuffer_view get_serialized_message() const;
 
     private:
         const unsigned char *buf_;
