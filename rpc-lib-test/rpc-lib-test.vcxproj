@@ -125,7 +125,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\buffer\buffer-test.cpp" />
+    <ClCompile Include="src\common\buffer-view\buffer-view-test.cpp" />
+    <ClCompile Include="src\common\buffer-view\cbuffer-view-test.cpp" />
+    <ClCompile Include="src\common\buffer\buffer-test.cpp" />
     <ClCompile Include="src\common\transfer-entry\transfer-entry-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>

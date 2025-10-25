@@ -1,19 +1,17 @@
 #pragma once
-
 namespace vsh::rpc {
     //TODO move to common lib
-    class buffer_view
+    class cbuffer_view
     {
     public:
-        buffer_view(unsigned char *buffer, size_t size);
+        cbuffer_view(const unsigned char *buffer, size_t size);
 
-        unsigned char *data();
         const unsigned char *data() const;
 
         size_t size() const;
 
     private:
-        unsigned char *buffer_;
+        const unsigned char *buffer_;
         size_t size_;
     };
 }

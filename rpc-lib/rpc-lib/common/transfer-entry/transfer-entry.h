@@ -1,6 +1,6 @@
 #pragma once
 #include "rpc-lib/common/buffer/buffer.h"
-#include "rpc-lib/common/buffer-view/buffer-view.h"
+#include "rpc-lib/common/buffer-view/cbuffer-view.h"
 
 #pragma warning(push, 0)
 #include <google/protobuf/message.h>

@@ -13,11 +13,17 @@
     <ClCompile Include="src\common\transfer-entry\transfer-entry-test.cpp">
       <Filter>common\transfer-entry</Filter>
     </ClCompile>
-    <ClCompile Include="src\buffer\buffer-test.cpp">
-      <Filter>common\buffer</Filter>
-    </ClCompile>
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <Filter>proto</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\buffer\buffer-test.cpp">
+      <Filter>common\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\buffer-view\buffer-view-test.cpp">
+      <Filter>common\buffer-view</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\buffer-view\cbuffer-view-test.cpp">
+      <Filter>common\buffer-view</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +41,9 @@
     </Filter>
     <Filter Include="proto">
       <UniqueIdentifier>{aeef9d66-6699-4ccf-8d64-26a35721cffe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\buffer-view">
+      <UniqueIdentifier>{25d202a9-e3ff-4b68-bfdb-5f4a4f7f23ff}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

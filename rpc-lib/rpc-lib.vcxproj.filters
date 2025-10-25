@@ -48,6 +48,9 @@
     <ClCompile Include="rpc-lib\common\buffer-view\buffer-view.cpp">
       <Filter>common\buffer-view</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\common\buffer-view\cbuffer-view.cpp">
+      <Filter>common\buffer-view</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\common\buffer\buffer.h">
@@ -75,6 +78,9 @@
       <Filter>server\server-transport</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\common\buffer-view\buffer-view.h">
+      <Filter>common\buffer-view</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\buffer-view\cbuffer-view.h">
       <Filter>common\buffer-view</Filter>
     </ClInclude>
   </ItemGroup>
