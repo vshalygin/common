@@ -33,14 +33,14 @@ namespace vsh::rpc {
     };
 
     transfer_type get_transfer_entry_type(common_lib::cbuffer_view entry);
+    common_lib::cbuffer_view get_serialized_message(common_lib::cbuffer_view entry);
 
     unsigned get_entry_number_req(common_lib::cbuffer_view entry);
     common_lib::cbuffer_view get_client_id_req(common_lib::cbuffer_view entry);
     unsigned get_method_idx_req(common_lib::cbuffer_view entry);
-    common_lib::cbuffer_view get_serialized_message_req(common_lib::cbuffer_view entry);
 
     unsigned get_entry_number_res(common_lib::cbuffer_view entry);
-    common_lib::cbuffer_view get_serialized_message_res(common_lib::cbuffer_view entry);
+    
 
     common_lib::buffer create_transfer_entry_req(unsigned entry_number,
                                                  const std::string &client_id,

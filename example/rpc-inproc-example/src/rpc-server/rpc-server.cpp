@@ -22,7 +22,7 @@ namespace vsh::example {
 
             auto req_descr = service_->descriptor()->method(method_idx)->input_type();
             auto res_descr = service_->descriptor()->method(method_idx)->output_type();
-            const auto serialized_message = rpc::get_serialized_message_req(cbv);
+            const auto serialized_message = rpc::get_serialized_message(cbv);
             const auto entry_number = rpc::get_entry_number_req(cbv);
 
             auto req = google::protobuf::MessageFactory::generated_factory()->GetPrototype(req_descr)->New();

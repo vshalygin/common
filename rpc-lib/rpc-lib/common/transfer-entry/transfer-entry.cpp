@@ -135,6 +135,16 @@ namespace vsh::rpc {
         return static_cast<transfer_type>(entry[0]);
     }
 
+    common_lib::cbuffer_view get_serialized_message(common_lib::cbuffer_view entry)
+    {
+        assert(entry.data());
+        assert(s_header_bytes_num <= entry.size());
+        assert(s_header_bytes_num + extract_message_size(entry) <= entry.size());
+
+        auto begin = entry.data() + s_header_bytes_num;
+        return common_lib::cbuffer_view(begin, extract_message_size(entry));
+    }
+
     unsigned get_entry_number_req(common_lib::cbuffer_view entry)
     {
         assert_entry_req(entry);
@@ -163,28 +173,12 @@ namespace vsh::rpc {
         return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_method_idx_bytes_num });
     }
 
-    common_lib::cbuffer_view get_serialized_message_req(common_lib::cbuffer_view entry)
-    {
-        assert_entry_req(entry);
-
-        auto begin = entry.data() + s_header_bytes_num;
-        return common_lib::cbuffer_view(begin, extract_message_size(entry));
-    }
-
     unsigned get_entry_number_res(common_lib::cbuffer_view entry)
     {
         assert_entry_res(entry);
 
         auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry);
         return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
-    }
-
-    common_lib::cbuffer_view get_serialized_message_res(common_lib::cbuffer_view entry)
-    {
-        assert_entry_res(entry);
-
-        auto begin = entry.data() + s_header_bytes_num;
-        return common_lib::cbuffer_view(begin, extract_message_size(entry));
     }
 
     common_lib::buffer create_transfer_entry_req(unsigned entry_number,

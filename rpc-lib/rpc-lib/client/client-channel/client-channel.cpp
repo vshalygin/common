@@ -33,7 +33,7 @@ namespace vsh::rpc {
 
         auto callback = [this, response, done](const common_lib::buffer &answer_entry)
         {
-            auto serialized_message = get_serialized_message_res(answer_entry);
+            auto serialized_message = get_serialized_message(answer_entry);
             response->ParseFromArray(serialized_message.data(), static_cast<int>(serialized_message.size()));
 
             done->Run();

@@ -113,7 +113,7 @@ TEST(TransferEntryReq, ResolveSerializedMessage)
     const auto entry = create_entry_req();
     const auto expected_serialized_message = get_test_message().SerializeAsString();
 
-    auto serialize_message = get_serialized_message_req({ entry.data(), entry.size() });
+    auto serialize_message = get_serialized_message({ entry.data(), entry.size() });
     ASSERT_THAT(reinterpret_cast<const unsigned char *>(expected_serialized_message.data()),
                 ArrayEq(serialize_message.data(), serialize_message.size()));
 }
@@ -123,8 +123,8 @@ TEST(TransferEntryReq, CreateTransferEntry)
     const auto expected_entry = create_entry_req();
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
     proto::some_message test_message;
-    test_message.ParseFromArray(get_serialized_message_req(expected_entry_view).data(),
-                                get_serialized_message_req(expected_entry_view).size());
+    test_message.ParseFromArray(get_serialized_message(expected_entry_view).data(),
+                                get_serialized_message(expected_entry_view).size());
     std::string client_id(reinterpret_cast<const char *>(get_client_id_req(expected_entry_view).data()),
                           get_client_id_req(expected_entry_view).size());
 
@@ -149,7 +149,7 @@ TEST(TransferEntryRes, ResolveSerializedMessage)
     const auto entry = create_entry_res();
     const auto expected_serialized_message = get_test_message().SerializeAsString();
 
-    auto serialize_message = get_serialized_message_res({ entry.data(), entry.size() });
+    auto serialize_message = get_serialized_message({ entry.data(), entry.size() });
     ASSERT_THAT(reinterpret_cast<const unsigned char *>(expected_serialized_message.data()),
                 ArrayEq(serialize_message.data(), serialize_message.size()));
 }
@@ -159,8 +159,8 @@ TEST(TransferEntryRes, CreateTransferEntry)
     const auto expected_entry = create_entry_res();
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
     proto::some_message test_message;
-    test_message.ParseFromArray(get_serialized_message_res(expected_entry_view).data(),
-                                get_serialized_message_res(expected_entry_view).size());
+    test_message.ParseFromArray(get_serialized_message(expected_entry_view).data(),
+                                get_serialized_message(expected_entry_view).size());
 
     auto entry = create_transfer_entry_res(get_entry_number_res(expected_entry_view),
                                            &test_message);
