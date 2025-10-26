@@ -1,21 +1,20 @@
 #pragma once
+#include "ichannel.h"
+
+#include "transfer-entry-creator/itransfer-entry-creator.h"
 #include "rpc-lib/common/transport/itransport.h"
 
 #include <common-lib/utils/guarded-value/guarded-value.h>
 #include <common-lib/thread-pool/ithread-pool.h>
 #include <common-lib/utils/buffer/buffer.h>
 
-#pragma warning(push, 0)
-#include <google/protobuf/service.h>
-#pragma warning(pop)
-
 #include <memory>
 #include <unordered_map>
 #include <atomic>
 
 namespace vsh::rpc {
-    class client_channel
-        : public ::google::protobuf::RpcChannel
+    class channel
+        : public ichannel
     {
         using callback_type = std::function<void(const common_lib::buffer &)>;
         using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
@@ -27,13 +26,13 @@ namespace vsh::rpc {
         using Closure = google::protobuf::Closure;
 
     public:
-        client_channel(std::shared_ptr<itransport> transport,
-                       std::shared_ptr<ithread_pool> thread_pool,
-                       std::shared_ptr<guarded_cb_map> cb_map,
-                       const std::string &client_id);
+        channel(std::shared_ptr<itransport> transport,
+                std::shared_ptr<ithread_pool> thread_pool,
+                std::shared_ptr<guarded_cb_map> cb_map,
+                std::unique_ptr<itransfer_entry_creator> entry_creator);
 
-        client_channel(client_channel &) = delete;
-        client_channel &operator=(client_channel &) = delete;
+        channel(channel &) = delete;
+        channel &operator=(channel &) = delete;
 
         void CallMethod(const MethodDescriptor *method,
                         RpcController *controller,
@@ -42,12 +41,9 @@ namespace vsh::rpc {
                         Closure *done) override;
 
     private:
-        std::atomic_uint64_t counter_ = 0;
-        const std::string client_id_;
-
         std::shared_ptr<itransport> transport_;
         std::shared_ptr<ithread_pool> thread_pool_;
         std::shared_ptr<guarded_cb_map> cb_map_;
-
+        std::unique_ptr<itransfer_entry_creator> entry_creator_;
     };
 }

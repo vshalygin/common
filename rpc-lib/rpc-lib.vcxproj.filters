@@ -13,9 +13,6 @@
     <Filter Include="common\transfer-entry">
       <UniqueIdentifier>{7b24c5d3-d2e5-41f8-95e9-2310642d2212}</UniqueIdentifier>
     </Filter>
-    <Filter Include="client\client-channel">
-      <UniqueIdentifier>{c294a1f4-3746-46b3-8bff-b03f4370b5da}</UniqueIdentifier>
-    </Filter>
     <Filter Include="client\client-closure">
       <UniqueIdentifier>{0298ecbd-9fc0-4602-8ea8-f3fd3a8fcde0}</UniqueIdentifier>
     </Filter>
@@ -34,6 +31,15 @@
     <Filter Include="client\server-event-processor">
       <UniqueIdentifier>{5d452014-ec37-424b-86ae-9bc09de0ee87}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common\channel">
+      <UniqueIdentifier>{703e2666-2c54-42fa-afc9-51a4c1710651}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\rpc-channel">
+      <UniqueIdentifier>{674e15a2-c140-4db8-9e6c-09c94176339d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\channel\transfer-entry-creator">
+      <UniqueIdentifier>{00163c91-1f9b-49bb-9106-3aa69611740f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp">
@@ -42,14 +48,20 @@
     <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp">
       <Filter>client\client-closure</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\client\client-channel\client-channel.cpp">
-      <Filter>client\client-channel</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\common\listener\listener.cpp">
       <Filter>common\listener</Filter>
     </ClCompile>
     <ClCompile Include="rpc-lib\client\server-event-processor\server-event-processor.cpp">
       <Filter>client\server-event-processor</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\common\channel\channel.cpp">
+      <Filter>common\channel</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.cpp">
+      <Filter>common\channel\transfer-entry-creator</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\common\rpc-channel\rpc-channel.cpp">
+      <Filter>common\rpc-channel</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -68,9 +80,6 @@
     <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h">
       <Filter>server\server-transport</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-channel\client-channel.h">
-      <Filter>client\client-channel</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\common\listener\ilistener.h">
       <Filter>common\listener</Filter>
     </ClInclude>
@@ -85,6 +94,21 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\client\server-event-processor\server-event-processor.h">
       <Filter>client\server-event-processor</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\channel\channel.h">
+      <Filter>common\channel</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\channel\ichannel.h">
+      <Filter>common\channel</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\itransfer-entry-creator.h">
+      <Filter>common\channel\transfer-entry-creator</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.h">
+      <Filter>common\channel\transfer-entry-creator</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\rpc-channel\rpc-channel.h">
+      <Filter>common\rpc-channel</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
