@@ -39,8 +39,8 @@ namespace vsh::example {
                                  response.get(),
                                  nullptr);
 
-            const auto transfer_entry = rpc::create_transfer_entry_res(entry_number, response.get());
-            transport_->send(transfer_entry);
+            auto transfer_entry = rpc::create_transfer_entry_res(entry_number, response.get());
+            transport_->send(std::move(transfer_entry));
         }
     }
 }

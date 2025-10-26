@@ -18,7 +18,7 @@ namespace vsh::example {
         static pseudopipe &instance_cs(); //info from client to server;
         static pseudopipe &instance_sc(); //info from server to client;
 
-        int send(const common_lib::buffer &buff);
+        int send(common_lib::buffer &&buff);
         int recv(common_lib::buffer &buff);
 
     private:

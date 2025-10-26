@@ -48,7 +48,7 @@ namespace vsh::rpc {
                 m.insert({ static_cast<unsigned>(transfer_entry_number), std::move(callback) });
             }
 
-            transport->send(transfer_entry);
+            transport->send(std::move(transfer_entry));
         };
 
         thread_pool_->post(std::move(task));

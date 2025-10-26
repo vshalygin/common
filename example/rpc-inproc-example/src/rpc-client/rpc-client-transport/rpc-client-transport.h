@@ -20,7 +20,6 @@ namespace vsh::example {
         int connect() override;
         int close() override;
 
-        int send(const common_lib::buffer &buff) override;
         int send(common_lib::buffer &&buff) override;
 
         int recv(common_lib::buffer &buff) override;
@@ -28,9 +27,6 @@ namespace vsh::example {
         bool is_active() const override;
 
     private:
-        template<typename Buffer>
-        int send_impl(Buffer &&buff);
-
         std::atomic_bool is_connected_ = false;
     };
 }

@@ -13,11 +13,11 @@ namespace vsh::example {
         return pp;
     }
 
-    int pseudopipe::send(const common_lib::buffer &buff)
+    int pseudopipe::send(common_lib::buffer &&buff)
     {
         {
             std::lock_guard guard(mtx_);
-            queue_.push(buff);
+            queue_.push(std::move(buff));
         }
 
         cv_.notify_all();

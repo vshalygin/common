@@ -7,9 +7,7 @@ namespace vsh::rpc {
     public:
         virtual ~iserver_transport() = default;
 
-        virtual int send(const common_lib::buffer &buff) = 0;
         virtual int send(common_lib::buffer &&buff) = 0;
-
         virtual int recv(common_lib::buffer &buff) = 0;
     };
 }
