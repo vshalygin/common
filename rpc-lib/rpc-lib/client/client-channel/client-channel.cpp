@@ -3,7 +3,7 @@
 #include "rpc-lib/common/transfer-entry/transfer-entry.h"
 
 namespace vsh::rpc {
-    client_channel::client_channel(std::shared_ptr<iclient_transport> transport,
+    client_channel::client_channel(std::shared_ptr<itransport> transport,
                                    std::shared_ptr<ithread_pool> thread_pool,
                                    std::shared_ptr<guarded_cb_map> cb_map,
                                    const std::string &client_id)

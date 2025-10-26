@@ -1,6 +1,7 @@
 #include <rpc-client/rpc-client-transport/rpc-client-transport.h>
 #include <rpc-client/rpc-client.h>
-#include <rpc-lib/client/server-listener/server-listener.h>
+#include <rpc-lib/client/server-event-processor/server-event-processor.h>
+#include <rpc-lib/common/listener/listener.h>
 
 #include <rpc-server/rpc-server-transport/rpc-server-transport.h>
 #include <rpc-server/rpc-service/rpc-service.h>
@@ -31,7 +32,8 @@ int main()
     auto thread = std::jthread([server]() { server->run(); });
 
     auto client_transport = std::make_shared<rpc_client_transport>();
-    auto server_listener = std::make_unique<rpc::server_listener>(map, client_transport, thread_pool);
+    auto serv_event_processor = std::make_shared<server_event_processor>(map);
+    auto server_listener = std::make_unique<rpc::listener>(serv_event_processor, client_transport, thread_pool);
     auto channel = std::make_unique<client_channel>(client_transport, thread_pool, map, "2A158D39610C4DE695A21A3B657EC039");
     auto client = std::make_unique<rpc_client>(std::move(channel), std::move(server_listener), client_transport);
 

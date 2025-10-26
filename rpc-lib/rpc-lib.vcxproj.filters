@@ -25,8 +25,14 @@
     <Filter Include="server\server-transport">
       <UniqueIdentifier>{f4533616-2535-4987-9d54-75b37787207b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="client\server-listener">
-      <UniqueIdentifier>{744e8630-e36c-4614-8678-215effd306c7}</UniqueIdentifier>
+    <Filter Include="common\listener">
+      <UniqueIdentifier>{491b3cf5-b878-45d2-99e5-30699baecf8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="common\transport">
+      <UniqueIdentifier>{02942ba8-d4cd-49fb-bbc0-84d4d5c11e0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="client\server-event-processor">
+      <UniqueIdentifier>{5d452014-ec37-424b-86ae-9bc09de0ee87}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -39,8 +45,11 @@
     <ClCompile Include="rpc-lib\client\client-channel\client-channel.cpp">
       <Filter>client\client-channel</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\client\server-listener\server-listener.cpp">
-      <Filter>client\server-listener</Filter>
+    <ClCompile Include="rpc-lib\common\listener\listener.cpp">
+      <Filter>common\listener</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\client\server-event-processor\server-event-processor.cpp">
+      <Filter>client\server-event-processor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -53,9 +62,6 @@
     <ClInclude Include="rpc-lib\client\client-transport\iclient-connection.h">
       <Filter>client\client-transport</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-transport\iclient-transport.h">
-      <Filter>client\client-transport</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\server\server-transport\iserver-connection.h">
       <Filter>server\server-transport</Filter>
     </ClInclude>
@@ -65,11 +71,20 @@
     <ClInclude Include="rpc-lib\client\client-channel\client-channel.h">
       <Filter>client\client-channel</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\client\server-listener\iserver-listener.h">
-      <Filter>client\server-listener</Filter>
+    <ClInclude Include="rpc-lib\common\listener\ilistener.h">
+      <Filter>common\listener</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\client\server-listener\server-listener.h">
-      <Filter>client\server-listener</Filter>
+    <ClInclude Include="rpc-lib\common\listener\listener.h">
+      <Filter>common\listener</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\listener\irecv-event-processor.h">
+      <Filter>common\listener</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\common\transport\itransport.h">
+      <Filter>common\transport</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\server-event-processor\server-event-processor.h">
+      <Filter>client\server-event-processor</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 #pragma once
-#include "rpc-lib/client/client-transport/iclient-transport.h"
+#include "rpc-lib/common/transport/itransport.h"
 
 #include <common-lib/utils/guarded-value/guarded-value.h>
 #include <common-lib/thread-pool/ithread-pool.h>
@@ -27,7 +27,7 @@ namespace vsh::rpc {
         using Closure = google::protobuf::Closure;
 
     public:
-        client_channel(std::shared_ptr<iclient_transport> transport,
+        client_channel(std::shared_ptr<itransport> transport,
                        std::shared_ptr<ithread_pool> thread_pool,
                        std::shared_ptr<guarded_cb_map> cb_map,
                        const std::string &client_id);
@@ -45,7 +45,7 @@ namespace vsh::rpc {
         std::atomic_uint64_t counter_ = 0;
         const std::string client_id_;
 
-        std::shared_ptr<iclient_transport> transport_;
+        std::shared_ptr<itransport> transport_;
         std::shared_ptr<ithread_pool> thread_pool_;
         std::shared_ptr<guarded_cb_map> cb_map_;
 

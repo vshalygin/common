@@ -1,10 +1,9 @@
 #pragma once
-
 namespace vsh::rpc {
-    class iserver_listener
+    class ilistener
     {
     public:
-        virtual ~iserver_listener() = default;
+        virtual ~ilistener() = default;
 
         virtual void start() = 0;
     };
