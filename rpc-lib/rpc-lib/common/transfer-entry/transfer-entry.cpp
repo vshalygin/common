@@ -181,6 +181,8 @@ namespace vsh::rpc {
 
     common_lib::cbuffer_view get_serialized_message_res(common_lib::cbuffer_view entry)
     {
+        assert_entry_res(entry);
+
         auto begin = entry.data() + s_header_bytes_num;
         return common_lib::cbuffer_view(begin, extract_message_size(entry));
     }

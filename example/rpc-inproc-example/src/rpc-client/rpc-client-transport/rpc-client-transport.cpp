@@ -35,6 +35,11 @@ namespace vsh::example {
         return pseudopipe::instance_sc().recv(buff);
     }
 
+    bool rpc_client_transport::is_active() const
+    {
+        return true; //TODO make correct
+    }
+
     template<typename Buffer>
     int rpc_client_transport::send_impl(Buffer &&buff)
     {

@@ -5,6 +5,16 @@
 using namespace vsh::common_lib;
 using namespace testing;
 
+TEST(BBufferView, MayBeCreatedFromBuffer)
+{
+    buffer buf(3);
+
+    cbuffer_view sut = buf;
+
+    ASSERT_EQ(sut.data(), buf.data());
+}
+
+
 TEST(CBufferView, ReturnsStoringData)
 {
     std::vector<unsigned char> buffer{ 0x34, 0x22 };

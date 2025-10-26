@@ -13,6 +13,7 @@ namespace vsh::common_lib {
 
 namespace vsh::rpc {
     class iclient_connection;
+    class iserver_listener;
 }
 
 namespace vsh::example {
@@ -23,6 +24,7 @@ namespace vsh::example {
 
     public:
         explicit rpc_client(std::unique_ptr<RpcChannel> channel,
+                            std::unique_ptr<rpc::iserver_listener> server_listener, 
                             std::shared_ptr<rpc::iclient_connection> connection);
 
         rpc_client(rpc_client &) = delete;
@@ -40,6 +42,7 @@ namespace vsh::example {
 
     private:
         proto::Service_Stub service_stub_;
+        std::unique_ptr<rpc::iserver_listener> server_listener_;
         std::shared_ptr<rpc::iclient_connection> connection_;
     };
 }

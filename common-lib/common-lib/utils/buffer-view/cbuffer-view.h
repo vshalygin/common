@@ -1,4 +1,5 @@
 #pragma once
+#include "common-lib/utils/buffer/buffer.h"
 #include <iterator>
 
 namespace vsh::common_lib {
@@ -43,6 +44,7 @@ namespace vsh::common_lib {
 
         cbuffer_view() noexcept;
         cbuffer_view(const unsigned char *buffer, size_t size) noexcept;
+        cbuffer_view(const buffer &buf) noexcept;
 
         const unsigned char *data() const noexcept;
 

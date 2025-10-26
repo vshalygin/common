@@ -1,5 +1,6 @@
 #include <rpc-client/rpc-client-transport/rpc-client-transport.h>
 #include <rpc-client/rpc-client.h>
+#include <rpc-lib/client/server-listener/server-listener.h>
 
 #include <rpc-server/rpc-server-transport/rpc-server-transport.h>
 #include <rpc-server/rpc-service/rpc-service.h>
@@ -13,9 +14,15 @@
 
 using namespace vsh::example;
 using namespace vsh::rpc;
+using namespace vsh;
+
+using callback_type = std::function<void(const common_lib::buffer &)>;
+using guarded_cb_map = common_lib::guarded_value<std::unordered_map<unsigned, callback_type>>;
 
 int main()
 {
+    auto map = std::make_shared<guarded_cb_map>();
+
     auto thread_pool = std::make_shared<vsh::common_lib::thread_pool>(4);
 
     auto server_transport = std::make_unique<rpc_server_transport>();
@@ -24,8 +31,9 @@ int main()
     auto thread = std::jthread([server]() { server->run(); });
 
     auto client_transport = std::make_shared<rpc_client_transport>();
-    auto channel = std::make_unique<client_channel>(client_transport, thread_pool);
-    auto client = std::make_unique<rpc_client>(std::move(channel), client_transport);
+    auto server_listener = std::make_unique<rpc::server_listener>(map, client_transport, thread_pool);
+    auto channel = std::make_unique<client_channel>(client_transport, thread_pool, map, "2A158D39610C4DE695A21A3B657EC039");
+    auto client = std::make_unique<rpc_client>(std::move(channel), std::move(server_listener), client_transport);
 
     client->connect();
     while(true) {

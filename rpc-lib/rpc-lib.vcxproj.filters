@@ -25,24 +25,27 @@
     <Filter Include="server\server-transport">
       <UniqueIdentifier>{f4533616-2535-4987-9d54-75b37787207b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="client\server-listener">
+      <UniqueIdentifier>{744e8630-e36c-4614-8678-215effd306c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp">
       <Filter>common\transfer-entry</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp">
+      <Filter>client\client-closure</Filter>
+    </ClCompile>
     <ClCompile Include="rpc-lib\client\client-channel\client-channel.cpp">
       <Filter>client\client-channel</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp">
-      <Filter>client\client-closure</Filter>
+    <ClCompile Include="rpc-lib\client\server-listener\server-listener.cpp">
+      <Filter>client\server-listener</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h">
       <Filter>common\transfer-entry</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-channel\client-channel.h">
-      <Filter>client\client-channel</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\client\client-closure\client-closure.h">
       <Filter>client\client-closure</Filter>
@@ -58,6 +61,15 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h">
       <Filter>server\server-transport</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\client-channel\client-channel.h">
+      <Filter>client\client-channel</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\server-listener\iserver-listener.h">
+      <Filter>client\server-listener</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client\server-listener\server-listener.h">
+      <Filter>client\server-listener</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

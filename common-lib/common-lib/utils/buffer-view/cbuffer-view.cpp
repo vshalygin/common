@@ -70,6 +70,10 @@ namespace vsh::common_lib {
         , size_(size)
     {}
 
+    cbuffer_view::cbuffer_view(const buffer &buf) noexcept
+        : cbuffer_view(buf.data(), buf.size())
+    {}
+
     const unsigned char *cbuffer_view::data() const noexcept
     {
         return buffer_;

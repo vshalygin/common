@@ -1,6 +1,7 @@
 #include "rpc-client.h"
 #include <rpc-lib/client/client-transport/iclient-connection.h>
 #include <rpc-lib/client/client-closure/client-closure.h>
+#include <rpc-lib/client/server-listener/iserver-listener.h>
 
 #include <common-lib/utils/event/event.h>
 
@@ -8,13 +9,16 @@
 
 namespace vsh::example {
     rpc_client::rpc_client(std::unique_ptr<RpcChannel> channel,
+                           std::unique_ptr<rpc::iserver_listener> server_listener,
                            std::shared_ptr<rpc::iclient_connection> connection)
         : service_stub_(channel.release(), ::google::protobuf::Service::STUB_OWNS_CHANNEL)
+        , server_listener_(std::move(server_listener))
         , connection_(std::move(connection))
     {}
 
     int rpc_client::connect()
     {
+        server_listener_->start();
         return connection_->connect();
     }
 

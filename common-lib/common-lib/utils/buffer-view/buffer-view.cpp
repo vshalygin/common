@@ -133,6 +133,10 @@ namespace vsh::common_lib {
         , size_(size)
     {}
 
+    buffer_view::buffer_view(buffer &buf) noexcept
+        : buffer_view(buf.data(), buf.size())
+    {}
+
     unsigned char *buffer_view::data() noexcept
     {
         return const_cast<unsigned char *>(static_cast<const buffer_view &>(*this).data());

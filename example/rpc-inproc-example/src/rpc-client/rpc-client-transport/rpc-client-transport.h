@@ -25,6 +25,8 @@ namespace vsh::example {
 
         int recv(common_lib::buffer &buff) override;
 
+        bool is_active() const override;
+
     private:
         template<typename Buffer>
         int send_impl(Buffer &&buff);

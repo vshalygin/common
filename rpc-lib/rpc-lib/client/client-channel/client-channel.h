@@ -1,4 +1,8 @@
 #pragma once
+#include "rpc-lib/client/client-transport/iclient-transport.h"
+
+#include <common-lib/utils/guarded-value/guarded-value.h>
+#include <common-lib/thread-pool/ithread-pool.h>
 #include <common-lib/utils/buffer/buffer.h>
 
 #pragma warning(push, 0)
@@ -6,18 +10,16 @@
 #pragma warning(pop)
 
 #include <memory>
-#include <thread>
-
-namespace vsh::common_lib {
-    class ithread_pool;
-}
+#include <unordered_map>
+#include <atomic>
 
 namespace vsh::rpc {
-    class iclient_transport;
-
-    class client_channel final
-        : public google::protobuf::RpcChannel
+    class client_channel
+        : public ::google::protobuf::RpcChannel
     {
+        using callback_type = std::function<void(const common_lib::buffer &)>;
+        using guarded_cb_map = common_lib::guarded_value<std::unordered_map<unsigned, callback_type>>;
+
         using ithread_pool = common_lib::ithread_pool;
         using MethodDescriptor = google::protobuf::MethodDescriptor;
         using RpcController = google::protobuf::RpcController;
@@ -25,9 +27,10 @@ namespace vsh::rpc {
         using Closure = google::protobuf::Closure;
 
     public:
-        explicit client_channel(std::shared_ptr<iclient_transport> transport,
-                                std::shared_ptr<ithread_pool> thread_pool);
-        ~client_channel();
+        client_channel(std::shared_ptr<iclient_transport> transport,
+                       std::shared_ptr<ithread_pool> thread_pool,
+                       std::shared_ptr<guarded_cb_map> cb_map,
+                       const std::string &client_id);
 
         client_channel(client_channel &) = delete;
         client_channel &operator=(client_channel &) = delete;
@@ -39,14 +42,12 @@ namespace vsh::rpc {
                         Closure *done) override;
 
     private:
-        void listen_server();
+        std::atomic_uint64_t counter_ = 0;
+        const std::string client_id_;
 
-    private:
         std::shared_ptr<iclient_transport> transport_;
         std::shared_ptr<ithread_pool> thread_pool_;
+        std::shared_ptr<guarded_cb_map> cb_map_;
 
-        std::jthread listen_thread_;
-
-        std::function<void(const common_lib::buffer &)> callback_;
     };
 }

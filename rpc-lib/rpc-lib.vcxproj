@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="rpc-lib\client\client-channel\client-channel.cpp" />
     <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp" />
+    <ClCompile Include="rpc-lib\client\server-listener\server-listener.cpp" />
     <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -20,6 +21,8 @@
     <ClInclude Include="rpc-lib\client\client-closure\client-closure.h" />
     <ClInclude Include="rpc-lib\client\client-transport\iclient-connection.h" />
     <ClInclude Include="rpc-lib\client\client-transport\iclient-transport.h" />
+    <ClInclude Include="rpc-lib\client\server-listener\iserver-listener.h" />
+    <ClInclude Include="rpc-lib\client\server-listener\server-listener.h" />
     <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h" />
     <ClInclude Include="rpc-lib\server\server-transport\iserver-connection.h" />
     <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h" />

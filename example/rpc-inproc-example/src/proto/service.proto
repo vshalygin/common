@@ -18,3 +18,13 @@ service Service {
   rpc GetUser (GetUserRequest) returns (GetUserResponse);
   rpc GetUser2 (GetUserRequest) returns (GetUserResponse);
 }
+
+service ServerService {
+  rpc GetUserServer (GetUserRequest) returns (GetUserResponse);
+  rpc GetUserServer2 (GetUserRequest) returns (GetUserResponse);
+}
+
+service ClientService {
+  rpc GetUserClient (GetUserRequest) returns (GetUserResponse);
+  rpc GetUserClient2 (GetUserRequest) returns (GetUserResponse);
+}
