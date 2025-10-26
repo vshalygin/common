@@ -17,6 +17,7 @@
     <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h" />
     <ClInclude Include="common-lib\utils\buffer\buffer.h" />
     <ClInclude Include="common-lib\utils\event\event.h" />
+    <ClInclude Include="common-lib\utils\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h" />
   </ItemGroup>
   <ItemGroup>

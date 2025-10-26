@@ -19,6 +19,9 @@
     <Filter Include="utils\buffer-view">
       <UniqueIdentifier>{3ee5ee4d-c3d4-4a80-a26f-740f984a0577}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\gurded-value">
+      <UniqueIdentifier>{01e26060-2a49-4514-9333-cfb174f1a80e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h">
@@ -41,6 +44,9 @@
     </ClInclude>
     <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h">
       <Filter>utils\buffer-view</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\guarded-value\guarded-value.h">
+      <Filter>utils\gurded-value</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
