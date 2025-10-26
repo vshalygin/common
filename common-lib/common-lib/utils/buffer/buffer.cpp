@@ -29,7 +29,7 @@ namespace vsh::common_lib {
     buffer::iterator buffer::iterator::operator--(int) noexcept
     {
         auto prev = buffer_--;
-        return buffer::iterator(prev);
+        return iterator(prev);
     }
 
     unsigned char &buffer::iterator::operator*() noexcept
@@ -80,7 +80,7 @@ namespace vsh::common_lib {
     buffer::const_iterator buffer::const_iterator::operator++(int) noexcept
     {
         auto prev = buffer_++;
-        return buffer::const_iterator(prev);
+        return const_iterator(prev);
     }
 
     buffer::const_iterator &buffer::const_iterator::operator--() noexcept
@@ -92,7 +92,7 @@ namespace vsh::common_lib {
     buffer::const_iterator buffer::const_iterator::operator--(int) noexcept
     {
         auto prev = buffer_--;
-        return buffer::const_iterator(prev);
+        return const_iterator(prev);
     }
 
     const unsigned char &buffer::const_iterator::operator*() const noexcept
