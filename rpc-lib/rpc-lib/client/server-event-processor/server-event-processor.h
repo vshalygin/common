@@ -11,7 +11,7 @@ namespace vsh::rpc {
         : public irecv_event_processor
     {
         using callback_type = std::function<void(const common_lib::buffer &)>;
-        using guarded_cb_map = common_lib::guarded_value<std::unordered_map<unsigned, callback_type>>;
+        using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
 
     public:
         explicit server_event_processor(std::shared_ptr<guarded_cb_map> cb_map);

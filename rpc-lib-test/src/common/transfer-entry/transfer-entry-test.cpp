@@ -21,8 +21,9 @@ namespace {
         return msg;
     }
 
-    constexpr const unsigned s_entry_number = 4291937406; //0xFFD1C47E
-    const std::vector<char> s_entry_number_bytes = { '\xFF', '\xD1', '\xC4', '\x7E' };
+    constexpr const uint64_t s_entry_number = 429193740634345; //0x18659747348E9
+    const std::vector<char> s_entry_number_bytes = { '\x00', '\x01', '\x86', '\x59',
+                                                     '\x74', '\x73', '\x48', '\xE9' };
 
     const std::string s_client_id = "2E92794A409548B1994B54CD9CECFBA1";
 

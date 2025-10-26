@@ -18,7 +18,7 @@ using namespace vsh::rpc;
 using namespace vsh;
 
 using callback_type = std::function<void(const common_lib::buffer &)>;
-using guarded_cb_map = common_lib::guarded_value<std::unordered_map<unsigned, callback_type>>;
+using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
 
 int main()
 {

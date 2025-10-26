@@ -26,7 +26,7 @@ namespace vsh::rpc {
 
         auto transfer_entry_number = counter_.fetch_add(1);
         auto method_idx = static_cast<unsigned>(method->index());
-        auto transfer_entry = create_transfer_entry_req(static_cast<unsigned>(transfer_entry_number),
+        auto transfer_entry = create_transfer_entry_req(transfer_entry_number,
                                                         client_id_,
                                                         method_idx,
                                                         request);

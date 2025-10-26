@@ -21,8 +21,8 @@
     1 byte entry type + 4 bytes size of serialize message
 
     Every type has its own trailer:
-    req: 4 bytes entry number + 32 bytes client id + 4 bytes method idx
-    res: 4 bytes entry number
+    req: 8 bytes entry number + 32 bytes client id + 4 bytes method idx
+    res: 8 bytes entry number
 */
 
 namespace vsh::rpc {
@@ -35,18 +35,18 @@ namespace vsh::rpc {
     transfer_type get_transfer_entry_type(common_lib::cbuffer_view entry);
     common_lib::cbuffer_view get_serialized_message(common_lib::cbuffer_view entry);
 
-    unsigned get_entry_number_req(common_lib::cbuffer_view entry);
+    uint64_t get_entry_number_req(common_lib::cbuffer_view entry);
     common_lib::cbuffer_view get_client_id_req(common_lib::cbuffer_view entry);
     unsigned get_method_idx_req(common_lib::cbuffer_view entry);
 
-    unsigned get_entry_number_res(common_lib::cbuffer_view entry);
+    uint64_t get_entry_number_res(common_lib::cbuffer_view entry);
     
 
-    common_lib::buffer create_transfer_entry_req(unsigned entry_number,
+    common_lib::buffer create_transfer_entry_req(uint64_t entry_number,
                                                  const std::string &client_id,
                                                  unsigned method_idx,
                                                  const google::protobuf::Message *message);
 
-    common_lib::buffer create_transfer_entry_res(unsigned entry_number,
+    common_lib::buffer create_transfer_entry_res(uint64_t entry_number,
                                                  google::protobuf::Message *message);
 }

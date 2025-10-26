@@ -9,7 +9,7 @@ namespace vsh::rpc {
         constexpr const unsigned s_entry_type_bytes_num = 1;
         constexpr const unsigned s_entry_message_size_bytes_num = 4;
 
-        constexpr const unsigned s_entry_number_bytes_num = 4;
+        constexpr const unsigned s_entry_number_bytes_num = 8;
         constexpr const unsigned s_client_id_bytes_num = 32;
         constexpr const unsigned s_method_idx_bytes_num = 4;
 
@@ -23,6 +23,8 @@ namespace vsh::rpc {
 
         unsigned to_unsigned_big_endian(common_lib::cbuffer_view bytes)
         {
+            assert(bytes.size() <= sizeof(unsigned));
+
             unsigned ans = 0;
             for(size_t i = 0; i < bytes.size(); ++i) {
                 unsigned offset = static_cast<unsigned>(bytes.size() - i - 1) * s_bits_in_byte;
@@ -33,9 +35,37 @@ namespace vsh::rpc {
             return ans;
         }
 
+        uint64_t to_uint64_big_endian(common_lib::cbuffer_view bytes)
+        {
+            assert(bytes.size() <= sizeof(uint64_t));
+
+            uint64_t ans = 0;
+            for(size_t i = 0; i < bytes.size(); ++i) {
+                uint64_t offset = (bytes.size() - i - 1) * s_bits_in_byte;
+                uint64_t add_bits = static_cast<uint64_t>(bytes[i]) << offset;
+                ans |= add_bits;
+            }
+
+            return ans;
+        }
+
         std::array<unsigned char, 4> from_unsigned_big_endian(unsigned number)
         {
             std::array<unsigned char, 4> ans;
+
+            const auto max_size = static_cast<unsigned>(ans.max_size());
+            for(unsigned i = 0; i < max_size; ++i) {
+                unsigned offset = (max_size - i - 1) * s_bits_in_byte;
+                auto byte = static_cast<unsigned char>((number >> offset) & 0xFF);
+                ans[i] = byte;
+            }
+
+            return ans;
+        }
+
+        std::array<unsigned char, 8> from_uint64_big_endian(uint64_t number)
+        {
+            std::array<unsigned char, 8> ans;
 
             const auto max_size = static_cast<unsigned>(ans.max_size());
             for(unsigned i = 0; i < max_size; ++i) {
@@ -82,9 +112,9 @@ namespace vsh::rpc {
 
         void fill_entry_number_bytes(common_lib::buffer &buff,
                                      size_t &pos,
-                                     unsigned entry_number)
+                                     uint64_t entry_number)
         {
-            auto entry_number_bytes = from_unsigned_big_endian(entry_number);
+            auto entry_number_bytes = from_uint64_big_endian(entry_number);
             assert(entry_number_bytes.size() == s_entry_number_bytes_num);
             for(int i = 0; i < entry_number_bytes.size(); ++i) {
                 buff[pos++] = entry_number_bytes[i];
@@ -145,12 +175,12 @@ namespace vsh::rpc {
         return common_lib::cbuffer_view(begin, extract_message_size(entry));
     }
 
-    unsigned get_entry_number_req(common_lib::cbuffer_view entry)
+    uint64_t get_entry_number_req(common_lib::cbuffer_view entry)
     {
         assert_entry_req(entry);
 
         auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry);
-        return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
+        return to_uint64_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
     }
 
     common_lib::cbuffer_view get_client_id_req(common_lib::cbuffer_view entry)
@@ -173,15 +203,15 @@ namespace vsh::rpc {
         return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_method_idx_bytes_num });
     }
 
-    unsigned get_entry_number_res(common_lib::cbuffer_view entry)
+    uint64_t get_entry_number_res(common_lib::cbuffer_view entry)
     {
         assert_entry_res(entry);
 
         auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry);
-        return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
+        return to_uint64_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
     }
 
-    common_lib::buffer create_transfer_entry_req(unsigned entry_number,
+    common_lib::buffer create_transfer_entry_req(uint64_t entry_number,
                                                  const std::string &client_id,
                                                  unsigned method_idx,
                                                  const google::protobuf::Message *message)
@@ -205,7 +235,7 @@ namespace vsh::rpc {
         return ans;
     }
 
-    common_lib::buffer create_transfer_entry_res(unsigned entry_number,
+    common_lib::buffer create_transfer_entry_res(uint64_t entry_number,
                                                  google::protobuf::Message *message)
     {
         assert(message);
