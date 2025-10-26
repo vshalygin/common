@@ -79,8 +79,8 @@ namespace vsh::common_lib {
 
         ~buffer();
 
-        buffer(buffer &) = delete;
-        buffer &operator=(buffer &) = delete;
+        buffer(const buffer &);
+        buffer &operator=(const buffer &);
 
         buffer(buffer &&) noexcept;
         buffer &operator=(buffer &&) noexcept;

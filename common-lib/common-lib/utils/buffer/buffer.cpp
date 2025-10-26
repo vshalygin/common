@@ -140,6 +140,35 @@ namespace vsh::common_lib {
         delete[] buffer_;
     }
 
+    buffer::buffer(const buffer &other)
+        : buffer()
+    {
+        buffer_ = new unsigned char[other.size_];
+        size_ = other.size_;
+
+        for(size_t i = 0; i < size_; ++i) {
+            buffer_[i] = other[i];
+        }
+    }
+
+    buffer &buffer::operator=(const buffer &other)
+    {
+        if(this == &other) {
+            return *this;
+        }
+
+        auto new_buf = new unsigned char[other.size_];
+        for(size_t i = 0; i < other.size_; ++i) {
+            new_buf[i] = other[i];
+        }
+
+        delete[] buffer_;
+        buffer_ = new_buf;
+        size_ = other.size_;
+
+        return *this;
+    }
+
     buffer::buffer(buffer &&other) noexcept
         : buffer()
     {
