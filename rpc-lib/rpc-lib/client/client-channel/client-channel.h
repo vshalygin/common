@@ -1,4 +1,6 @@
 #pragma once
+#include <common-lib/utils/buffer/buffer.h>
+
 #pragma warning(push, 0)
 #include <google/protobuf/service.h>
 #pragma warning(pop)
@@ -45,6 +47,6 @@ namespace vsh::rpc {
 
         std::jthread listen_thread_;
 
-        std::function<void(const std::string &)> callback_;
+        std::function<void(const common_lib::buffer &)> callback_;
     };
 }

@@ -1,5 +1,6 @@
 #pragma once
-#include <string>
+#include <common-lib/utils/buffer/buffer.h>
+
 #include <queue>
 #include <mutex>
 #include <condition_variable>
@@ -17,11 +18,11 @@ namespace vsh::example {
         static pseudopipe &instance_cs(); //info from client to server;
         static pseudopipe &instance_sc(); //info from server to client;
 
-        int send(const std::string &buff);
-        int recv(std::string &buff);
+        int send(const common_lib::buffer &buff);
+        int recv(common_lib::buffer &buff);
 
     private:
-        std::queue<std::string> queue_;
+        std::queue<common_lib::buffer> queue_;
 
         std::mutex mtx_;
         std::condition_variable cv_;

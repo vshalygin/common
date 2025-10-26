@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+#include <common-lib/utils/buffer/buffer.h>
 
 namespace vsh::rpc {
     class iserver_transport
@@ -7,9 +7,9 @@ namespace vsh::rpc {
     public:
         virtual ~iserver_transport() = default;
 
-        virtual int send(const std::string &buff) = 0;
-        virtual int send(std::string &&buff) = 0;
+        virtual int send(const common_lib::buffer &buff) = 0;
+        virtual int send(common_lib::buffer &&buff) = 0;
 
-        virtual int recv(std::string &buff) = 0;
+        virtual int recv(common_lib::buffer &buff) = 0;
     };
 }

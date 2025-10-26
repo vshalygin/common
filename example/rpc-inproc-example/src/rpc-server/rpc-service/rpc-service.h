@@ -20,5 +20,10 @@ namespace vsh::example {
                      const ::vsh::example::proto::GetUserRequest *request,
                      ::vsh::example::proto::GetUserResponse *response,
                      ::google::protobuf::Closure *done) override;
+
+        void GetUser2(::google::protobuf::RpcController *controller,
+                      const ::vsh::example::proto::GetUserRequest *request,
+                      ::vsh::example::proto::GetUserResponse *response,
+                      ::google::protobuf::Closure *done) override;
     };
 }

@@ -13,16 +13,16 @@ namespace vsh::example {
         rpc_server_transport(rpc_server_transport &) = delete;
         rpc_server_transport &operator=(rpc_server_transport &) = delete;
 
-        int send(const std::string &buff) override;
-        int send(std::string &&buff) override;
+        int send(const common_lib::buffer &buff) override;
+        int send(common_lib::buffer &&buff) override;
 
-        int recv(std::string &buff) override;
+        int recv(common_lib::buffer &buff) override;
 
         void listen() override;
         void close() override;
 
     private:
-        template<typename String>
-        int send_impl(String &&buff);
+        template<typename Buffer>
+        int send_impl(Buffer &&buff);
     };
 }

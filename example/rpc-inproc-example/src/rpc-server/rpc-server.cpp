@@ -1,6 +1,7 @@
 #include "rpc-server.h"
 
 #include <rpc-lib/server/server-transport/iserver-transport.h>
+#include <rpc-lib/common/transfer-entry/transfer-entry.h>
 
 namespace vsh::example {
     rpc_server::rpc_server(std::unique_ptr<rpc::iserver_transport> transport,
@@ -14,26 +15,32 @@ namespace vsh::example {
     void rpc_server::run()
     {
         while(true) {
-            std::string buff;
+            common_lib::buffer buff;
             transport_->recv(buff);
+            common_lib::cbuffer_view cbv(buff.data(), buff.size());
+            auto method_idx = static_cast<int>(rpc::get_method_idx_req(cbv));
 
-            auto req_descr = service_->descriptor()->method(0)->input_type();
-            auto res_descr = service_->descriptor()->method(0)->output_type();
+            auto req_descr = service_->descriptor()->method(method_idx)->input_type();
+            auto res_descr = service_->descriptor()->method(method_idx)->output_type();
+            const auto serialized_message = rpc::get_serialized_message_req(cbv);
+            const auto entry_number = rpc::get_entry_number_req(cbv);
 
             auto req = google::protobuf::MessageFactory::generated_factory()->GetPrototype(req_descr)->New();
             std::unique_ptr<google::protobuf::Message> request(req);
-            request->ParseFromString(buff);
+            request->ParseFromArray(serialized_message.data(),
+                                    static_cast<int>(serialized_message.size()));
 
             auto res = google::protobuf::MessageFactory::generated_factory()->GetPrototype(res_descr)->New();
             std::unique_ptr<google::protobuf::Message> response(res);
 
-            service_->CallMethod(service_->descriptor()->method(0),
+            service_->CallMethod(service_->descriptor()->method(method_idx),
                                  nullptr,
                                  request.get(),
                                  response.get(),
                                  nullptr);
 
-            transport_->send(response->SerializeAsString());
+            const auto transfer_entry = rpc::create_transfer_entry_res(entry_number, response.get());
+            transport_->send(transfer_entry);
         }
     }
 }

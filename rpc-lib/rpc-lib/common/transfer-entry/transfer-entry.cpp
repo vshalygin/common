@@ -72,7 +72,7 @@ namespace vsh::rpc {
 
         void fill_serialized_message_bytes(common_lib::buffer &buff,
                                            size_t &pos,
-                                           google::protobuf::Message *message,
+                                           const google::protobuf::Message *message,
                                            unsigned serialized_message_size)
         {
             //TODO check if failed
@@ -188,7 +188,7 @@ namespace vsh::rpc {
     common_lib::buffer create_transfer_entry_req(unsigned entry_number,
                                                  const std::string &client_id,
                                                  unsigned method_idx,
-                                                 google::protobuf::Message *message)
+                                                 const google::protobuf::Message *message)
     {
         assert(message);
 

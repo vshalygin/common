@@ -20,14 +20,14 @@ namespace vsh::example {
         int connect() override;
         int close() override;
 
-        int send(const std::string &buff) override;
-        int send(std::string &&buff) override;
+        int send(const common_lib::buffer &buff) override;
+        int send(common_lib::buffer &&buff) override;
 
-        int recv(std::string &buff) override;
+        int recv(common_lib::buffer &buff) override;
 
     private:
-        template<typename String>
-        int send_impl(String &&buff);
+        template<typename Buffer>
+        int send_impl(Buffer &&buff);
 
         std::atomic_bool is_connected_ = false;
     };

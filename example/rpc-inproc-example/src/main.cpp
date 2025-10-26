@@ -29,7 +29,7 @@ int main()
 
     client->connect();
     while(true) {
-        auto ans = client->get_user({});
+        auto ans = client->get_user2({});
         std::cout << ans->name() << std::endl;
 
         std::this_thread::sleep_for(std::chrono::seconds(1));

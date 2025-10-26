@@ -3,17 +3,17 @@
 #include "pseudopipe/pseudopipe.h"
 
 namespace vsh::example {
-    int rpc_server_transport::send(const std::string &buff)
+    int rpc_server_transport::send(const common_lib::buffer &buff)
     {
         return send_impl(buff);
     }
 
-    int rpc_server_transport::send(std::string &&buff)
+    int rpc_server_transport::send(common_lib::buffer &&buff)
     {
         return send_impl(std::move(buff));
     }
 
-    int rpc_server_transport::recv(std::string &buff)
+    int rpc_server_transport::recv(common_lib::buffer &buff)
     {
         return pseudopipe::instance_cs().recv(buff);
     }
@@ -28,9 +28,9 @@ namespace vsh::example {
         //no need implementation (yet)
     }
 
-    template<typename String>
-    int rpc_server_transport::send_impl(String &&buff)
+    template<typename Buffer>
+    int rpc_server_transport::send_impl(Buffer &&buff)
     {
-        return pseudopipe::instance_sc().send(std::forward<String>(buff));
+        return pseudopipe::instance_sc().send(std::forward<Buffer>(buff));
     }
 }

@@ -13,7 +13,7 @@ namespace vsh::example {
         return pp;
     }
 
-    int pseudopipe::send(const std::string &buff)
+    int pseudopipe::send(const common_lib::buffer &buff)
     {
         {
             std::lock_guard guard(mtx_);
@@ -25,7 +25,7 @@ namespace vsh::example {
         return 0;
     }
 
-    int pseudopipe::recv(std::string &buff)
+    int pseudopipe::recv(common_lib::buffer &buff)
     {
         std::unique_lock lock(mtx_);
         if(!queue_.empty()) {

@@ -20,24 +20,24 @@ namespace vsh::example {
         return 0;
     }
 
-    int rpc_client_transport::send(const std::string &buff)
+    int rpc_client_transport::send(const common_lib::buffer &buff)
     {
         return send_impl(buff);
     }
 
-    int rpc_client_transport::send(std::string &&buff)
+    int rpc_client_transport::send(common_lib::buffer &&buff)
     {
         return send_impl(std::move(buff));
     }
 
-    int rpc_client_transport::recv(std::string &buff)
+    int rpc_client_transport::recv(common_lib::buffer &buff)
     {
         return pseudopipe::instance_sc().recv(buff);
     }
 
-    template<typename String>
-    int rpc_client_transport::send_impl(String &&buff)
+    template<typename Buffer>
+    int rpc_client_transport::send_impl(Buffer &&buff)
     {
-        return pseudopipe::instance_cs().send(std::forward<String>(buff));
+        return pseudopipe::instance_cs().send(std::forward<Buffer>(buff));
     }
 }
