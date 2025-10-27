@@ -1,62 +1,35 @@
 #include "rpc-client.h"
-#include <rpc-lib/client/client-transport/iclient-connection.h>
+#include "rpc-client/rpc-client-transport/rpc-client-transport.h"
+
 #include <rpc-lib/client/client-closure/client-closure.h>
-#include <rpc-lib/common/listener/listener.h>
+#include <rpc-lib/common/listener/ilistener.h>
 
 #include <common-lib/utils/event/event.h>
 
 #include <google/protobuf/service.h>
 
 namespace vsh::example {
-    rpc_client::rpc_client(std::unique_ptr<RpcChannel> channel,
-                           std::unique_ptr<rpc::ilistener> server_listener,
-                           std::shared_ptr<rpc::iclient_connection> connection)
-        : service_stub_(channel.release(), ::google::protobuf::Service::STUB_OWNS_CHANNEL)
-        , server_listener_(std::move(server_listener))
-        , connection_(std::move(connection))
+    rpc_client::rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool)
+        : rpc_client(std::move(thread_pool), std::make_shared<rpc_client_transport>())
     {}
 
-    int rpc_client::connect()
+    rpc_client::rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+                           std::shared_ptr<rpc_client_transport> rpc_client_transport)
+        : rpc::client_base(std::move(thread_pool), rpc_client_transport, rpc_client_transport)
+        , service_stub_(get_channel())
+    {}
+
+    std::unique_ptr<proto::GetUserResponse> rpc_client::get_user(const proto::GetUserRequest &req)
     {
-        server_listener_->start();
-        return connection_->connect();
+        return call_method<proto::GetUserRequest, proto::GetUserResponse>(req,
+                                                                          service_stub_,
+                                                                          &proto::Service_Stub::GetUser);
     }
 
-    int rpc_client::disconnect()
+    std::unique_ptr<proto::GetUserResponse> rpc_client::get_user2(const proto::GetUserRequest &req)
     {
-        return connection_->close();
-    }
-
-    template<typename Request, typename Response, auto Method>
-    std::shared_ptr<Response> rpc_client::call_method(const Request &req)
-    {
-        auto response = std::make_shared<Response>();
-        auto response_ptr = response.get();
-
-        common_lib::event sync_event;
-        auto callback = [&sync_event]() {
-            sync_event.set();
-        };
-
-        auto done = rpc::client_closure::create(std::move(callback));
-
-        (service_stub_.*Method)(nullptr, //TODO add rpc_controller
-                                &req,
-                                response_ptr,
-                                done);
-
-        sync_event.wait();
-
-        return response;
-    }
-
-    std::shared_ptr<proto::GetUserResponse> rpc_client::get_user(const proto::GetUserRequest &req)
-    {
-        return call_method<proto::GetUserRequest, proto::GetUserResponse, &proto::Service_Stub::GetUser>(req);
-    }
-
-    std::shared_ptr<proto::GetUserResponse> rpc_client::get_user2(const proto::GetUserRequest &req)
-    {
-        return call_method<proto::GetUserRequest, proto::GetUserResponse, &proto::Service_Stub::GetUser2>(req);
+        return call_method<proto::GetUserRequest, proto::GetUserResponse>(req,
+                                                                          service_stub_,
+                                                                          &proto::Service_Stub::GetUser2);
     }
 }

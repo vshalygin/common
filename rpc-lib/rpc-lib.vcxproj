@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="rpc-lib\client\client-base.cpp" />
     <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp" />
     <ClCompile Include="rpc-lib\client\server-event-processor\server-event-processor.cpp" />
     <ClCompile Include="rpc-lib\common\channel\channel.cpp" />
@@ -19,8 +20,10 @@
     <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="rpc-lib\client\client-base.h" />
     <ClInclude Include="rpc-lib\client\client-closure\client-closure.h" />
-    <ClInclude Include="rpc-lib\client\client-transport\iclient-connection.h" />
+    <ClInclude Include="rpc-lib\client\client-connection\iclient-connection.h" />
+    <ClInclude Include="rpc-lib\client\iclient.h" />
     <ClInclude Include="rpc-lib\client\server-event-processor\server-event-processor.h" />
     <ClInclude Include="rpc-lib\common\channel\channel.h" />
     <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\itransfer-entry-creator.h" />

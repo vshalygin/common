@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/client/client-transport/iclient-connection.h>
+#include <rpc-lib/client/client-connection/iclient-connection.h>
 #include <rpc-lib/common/transport/itransport.h>
 
 #include <atomic>

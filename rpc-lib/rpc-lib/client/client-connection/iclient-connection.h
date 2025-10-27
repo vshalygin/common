@@ -8,7 +8,7 @@ namespace vsh::rpc {
 
         virtual bool is_connected() const = 0;
 
-        virtual int connect() = 0;
+        virtual int connect() = 0; //TODO return error code
         virtual int close() = 0;
     };
 }

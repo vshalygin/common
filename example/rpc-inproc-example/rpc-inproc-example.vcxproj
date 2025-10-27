@@ -114,7 +114,6 @@
   <ItemGroup>
     <ClInclude Include="src\proto\service.pb.h" />
     <ClInclude Include="src\pseudopipe\pseudopipe.h" />
-    <ClInclude Include="src\rpc-client\irpc-client.h" />
     <ClInclude Include="src\rpc-client\rpc-client-transport\rpc-client-transport.h" />
     <ClInclude Include="src\rpc-client\rpc-client.h" />
     <ClInclude Include="src\rpc-server\irpc-server.h" />

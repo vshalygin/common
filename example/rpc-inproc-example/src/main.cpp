@@ -32,15 +32,7 @@ int main()
     auto server = std::make_shared<rpc_server>(std::move(server_transport), std::move(service));
     auto thread = std::jthread([server]() { server->run(); });
 
-    auto client_transport = std::make_shared<rpc_client_transport>();
-    auto serv_event_processor = std::make_shared<server_event_processor>(map);
-    auto server_listener = std::make_unique<rpc::listener>(serv_event_processor, client_transport, thread_pool);
-    auto entry_creator = std::make_unique<rpc::transfer_entry_req_creator>("2A158D39610C4DE695A21A3B657EC039");
-    auto channell = std::make_unique<channel>(client_transport, thread_pool, map, std::move(entry_creator) );
-
-    auto client = std::make_unique<rpc_client>(std::move(channell),
-                                               std::move(server_listener),
-                                               client_transport);
+    auto client = std::make_unique<rpc_client>(thread_pool);
 
     client->connect();
     while(true) {

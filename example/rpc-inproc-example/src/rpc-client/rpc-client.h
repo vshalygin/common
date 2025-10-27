@@ -1,48 +1,37 @@
 #pragma once
-#include "irpc-client.h"
+#include <rpc-lib/client/client-base.h>
+
+#pragma warning(push, 0)
+#include "proto/service.pb.h"
+#pragma warning(pop)
 
 #include <memory>
-
-namespace google::protobuf {
-    class RpcChannel;
-}
 
 namespace vsh::common_lib {
     class ithread_pool;
 }
 
-namespace vsh::rpc {
-    class iclient_connection;
-    class ilistener;
-}
-
 namespace vsh::example {
+    class rpc_client_transport;
+
     class rpc_client final
-        : public irpc_client
+        : public rpc::client_base
     {
         using RpcChannel = google::protobuf::RpcChannel;
 
+        rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+                   std::shared_ptr<rpc_client_transport> rpc_client_transport);
+
     public:
-        explicit rpc_client(std::unique_ptr<RpcChannel> channel,
-                            std::unique_ptr<rpc::ilistener> server_listener, 
-                            std::shared_ptr<rpc::iclient_connection> connection);
+        explicit rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool);
 
         rpc_client(rpc_client &) = delete;
         rpc_client &operator=(rpc_client &) = delete;
 
-        int connect() override;
-        int disconnect() override;
-
-        std::shared_ptr<proto::GetUserResponse> get_user(const proto::GetUserRequest &req) override;
-        std::shared_ptr<proto::GetUserResponse> get_user2(const proto::GetUserRequest &req) override;
-
-    private:
-        template<typename Request, typename Response, auto Method>
-        std::shared_ptr<Response> call_method(const Request &req);
+        std::unique_ptr<proto::GetUserResponse> get_user(const proto::GetUserRequest &req);
+        std::unique_ptr<proto::GetUserResponse> get_user2(const proto::GetUserRequest &req);
 
     private:
         proto::Service_Stub service_stub_;
-        std::unique_ptr<rpc::ilistener> server_listener_;
-        std::shared_ptr<rpc::iclient_connection> connection_;
     };
 }
