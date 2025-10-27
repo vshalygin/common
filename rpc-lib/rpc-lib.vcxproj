@@ -13,7 +13,7 @@
   <ItemGroup>
     <ClCompile Include="rpc-lib\client\client-base.cpp" />
     <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp" />
-    <ClCompile Include="rpc-lib\client\server-event-processor\server-event-processor.cpp" />
+    <ClCompile Include="rpc-lib\client\client-recv-handler\client-recv-handler.cpp" />
     <ClCompile Include="rpc-lib\common\channel\channel.cpp" />
     <ClCompile Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.cpp" />
     <ClCompile Include="rpc-lib\common\listener\listener.cpp" />
@@ -23,13 +23,13 @@
     <ClInclude Include="rpc-lib\client\client-base.h" />
     <ClInclude Include="rpc-lib\client\client-closure\client-closure.h" />
     <ClInclude Include="rpc-lib\client\client-connection\iclient-connection.h" />
+    <ClInclude Include="rpc-lib\client\client-recv-handler\client-recv-handler.h" />
     <ClInclude Include="rpc-lib\client\iclient.h" />
-    <ClInclude Include="rpc-lib\client\server-event-processor\server-event-processor.h" />
     <ClInclude Include="rpc-lib\common\channel\channel.h" />
     <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\itransfer-entry-creator.h" />
     <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.h" />
     <ClInclude Include="rpc-lib\common\listener\ilistener.h" />
-    <ClInclude Include="rpc-lib\common\listener\irecv-event-processor.h" />
+    <ClInclude Include="rpc-lib\common\listener\irecv-handler.h" />
     <ClInclude Include="rpc-lib\common\listener\listener.h" />
     <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h" />
     <ClInclude Include="rpc-lib\common\transport\itransport.h" />

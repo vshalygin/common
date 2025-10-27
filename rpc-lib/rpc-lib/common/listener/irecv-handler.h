@@ -3,10 +3,10 @@
 #include <common-lib/utils/buffer/buffer.h>
 
 namespace vsh::rpc {
-    class irecv_event_processor
+    class irecv_handler
     {
     public:
-        virtual ~irecv_event_processor() = default;
+        virtual ~irecv_handler() = default;
 
         virtual int process(const common_lib::buffer &buffer) = 0;//TODO add error ret code
     };

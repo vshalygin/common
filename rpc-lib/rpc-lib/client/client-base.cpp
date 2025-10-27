@@ -2,7 +2,7 @@
 #include "rpc-lib/client/client-connection/iclient-connection.h"
 #include "rpc-lib/common/channel/channel.h"
 #include "rpc-lib/common/channel/transfer-entry-creator/transfer-entry-req-creator.h"
-#include "rpc-lib/client/server-event-processor/server-event-processor.h"
+#include "rpc-lib/client/client-recv-handler/client-recv-handler.h"
 #include "rpc-lib/common/listener/listener.h"
 
 namespace vsh::rpc {
@@ -11,8 +11,8 @@ namespace vsh::rpc {
                                                    auto transport,
                                                    auto thread_pool)
         {
-            auto event_processor = std::make_shared<server_event_processor>(std::move(cb_map));
-            return std::make_unique<listener>(std::move(event_processor),
+            auto recv_handler = std::make_shared<client_recv_handler>(std::move(cb_map));
+            return std::make_unique<listener>(std::move(recv_handler),
                                               std::move(transport),
                                               std::move(thread_pool));
         }

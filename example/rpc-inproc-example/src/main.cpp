@@ -1,6 +1,6 @@
 #include <rpc-client/rpc-client-transport/rpc-client-transport.h>
 #include <rpc-client/rpc-client.h>
-#include <rpc-lib/client/server-event-processor/server-event-processor.h>
+#include <rpc-lib/client/client-recv-handler/client-recv-handler.h>
 #include <rpc-lib/common/listener/listener.h>
 
 #include <rpc-server/rpc-server-transport/rpc-server-transport.h>
