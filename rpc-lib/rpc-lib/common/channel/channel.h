@@ -1,6 +1,4 @@
 #pragma once
-#include "ichannel.h"
-
 #include "transfer-entry-creator/itransfer-entry-creator.h"
 #include "rpc-lib/common/transport/itransport.h"
 
@@ -8,13 +6,17 @@
 #include <common-lib/thread-pool/ithread-pool.h>
 #include <common-lib/utils/buffer/buffer.h>
 
+#pragma warning(push, 0)
+#include <google/protobuf/service.h>
+#pragma warning(pop)
+
 #include <memory>
 #include <unordered_map>
 #include <atomic>
 
 namespace vsh::rpc {
     class channel
-        : public ichannel
+        : public ::google::protobuf::RpcChannel
     {
         using callback_type = std::function<void(const common_lib::buffer &)>;
         using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;

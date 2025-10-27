@@ -7,7 +7,6 @@
 #include <rpc-server/rpc-service/rpc-service.h>
 #include <rpc-server/rpc-server.h>
 
-#include <rpc-lib/common/rpc-channel/rpc-channel.h>
 #include <rpc-lib/common/channel/channel.h>
 #include <rpc-lib/common/channel/transfer-entry-creator/transfer-entry-req-creator.h>
 #include <common-lib/thread-pool/thread-pool.h>
@@ -38,9 +37,8 @@ int main()
     auto server_listener = std::make_unique<rpc::listener>(serv_event_processor, client_transport, thread_pool);
     auto entry_creator = std::make_unique<rpc::transfer_entry_req_creator>("2A158D39610C4DE695A21A3B657EC039");
     auto channell = std::make_unique<channel>(client_transport, thread_pool, map, std::move(entry_creator) );
-    auto rpc_channell = std::make_unique<rpc_channel>(std::move(channell));
 
-    auto client = std::make_unique<rpc_client>(std::move(rpc_channell),
+    auto client = std::make_unique<rpc_client>(std::move(channell),
                                                std::move(server_listener),
                                                client_transport);
 

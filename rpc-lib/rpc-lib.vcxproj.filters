@@ -34,9 +34,6 @@
     <Filter Include="common\channel">
       <UniqueIdentifier>{703e2666-2c54-42fa-afc9-51a4c1710651}</UniqueIdentifier>
     </Filter>
-    <Filter Include="common\rpc-channel">
-      <UniqueIdentifier>{674e15a2-c140-4db8-9e6c-09c94176339d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="common\channel\transfer-entry-creator">
       <UniqueIdentifier>{00163c91-1f9b-49bb-9106-3aa69611740f}</UniqueIdentifier>
     </Filter>
@@ -59,9 +56,6 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.cpp">
       <Filter>common\channel\transfer-entry-creator</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\common\rpc-channel\rpc-channel.cpp">
-      <Filter>common\rpc-channel</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,17 +92,11 @@
     <ClInclude Include="rpc-lib\common\channel\channel.h">
       <Filter>common\channel</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\common\channel\ichannel.h">
-      <Filter>common\channel</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\itransfer-entry-creator.h">
       <Filter>common\channel\transfer-entry-creator</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.h">
       <Filter>common\channel\transfer-entry-creator</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\rpc-channel\rpc-channel.h">
-      <Filter>common\rpc-channel</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
