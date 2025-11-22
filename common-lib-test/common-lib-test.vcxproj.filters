@@ -10,9 +10,6 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\safe-ptr\safe-ptr-test.cpp">
-      <Filter>utils\safe-ptr</Filter>
-    </ClCompile>
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp">
       <Filter>thread-pool</Filter>
     </ClCompile>
@@ -28,6 +25,9 @@
     <ClCompile Include="src\utils\guarded-value\guarded-value-test.cpp">
       <Filter>utils\guarded-value</Filter>
     </ClCompile>
+    <ClCompile Include="src\memory\safe-ptr\safe-ptr-test.cpp">
+      <Filter>memory\safe-ptr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -35,9 +35,6 @@
     </Filter>
     <Filter Include="utils">
       <UniqueIdentifier>{6121cd54-af91-45fb-914e-e16fb1714513}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="utils\safe-ptr">
-      <UniqueIdentifier>{06117024-c8a7-4e65-84bf-4dc06e04c6e2}</UniqueIdentifier>
     </Filter>
     <Filter Include="thread-pool">
       <UniqueIdentifier>{ac62afa3-f9d2-4c4d-95cb-29d1816700e0}</UniqueIdentifier>
@@ -50,6 +47,12 @@
     </Filter>
     <Filter Include="utils\guarded-value">
       <UniqueIdentifier>{93a0c065-d19e-4661-964c-5b70348e03ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="memory">
+      <UniqueIdentifier>{465acbd0-1231-4b6d-ac9b-2b56e4aa2633}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="memory\safe-ptr">
+      <UniqueIdentifier>{2645c3e9-28a7-4cd6-9da0-48c773a5d60e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

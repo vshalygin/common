@@ -4,9 +4,6 @@
     <Filter Include="utils">
       <UniqueIdentifier>{d9212874-65ac-4e90-81fa-8c73fd921bbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils\safe-ptr">
-      <UniqueIdentifier>{64c5147c-2f44-44d8-8780-33df67be121b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="utils\event">
       <UniqueIdentifier>{4cafff36-4ab0-4ca8-ba5d-832d051a0e59}</UniqueIdentifier>
     </Filter>
@@ -22,11 +19,14 @@
     <Filter Include="utils\gurded-value">
       <UniqueIdentifier>{01e26060-2a49-4514-9333-cfb174f1a80e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="memory">
+      <UniqueIdentifier>{7840e649-abb3-464c-a00d-dca379f24b1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="memory\safe-ptr">
+      <UniqueIdentifier>{9d59c992-fe46-448d-aa73-53a4bdb8ab0f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common-lib\utils\safe-ptr\safe-ptr.h">
-      <Filter>utils\safe-ptr</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\utils\event\event.h">
       <Filter>utils\event</Filter>
     </ClInclude>
@@ -47,6 +47,9 @@
     </ClInclude>
     <ClInclude Include="common-lib\utils\guarded-value\guarded-value.h">
       <Filter>utils\gurded-value</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\memory\safe-ptr\safe-ptr.h">
+      <Filter>memory\safe-ptr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

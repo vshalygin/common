@@ -1,4 +1,4 @@
-#include <common-lib/utils/safe-ptr/safe-ptr.h>
+#include <common-lib/memory/safe-ptr/safe-ptr.h>
 
 #include <gtest/gtest.h>
 

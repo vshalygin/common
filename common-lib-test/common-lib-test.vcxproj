@@ -11,12 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\memory\safe-ptr\safe-ptr-test.cpp" />
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer\buffer-test.cpp" />
     <ClCompile Include="src\utils\guarded-value\guarded-value-test.cpp" />
-    <ClCompile Include="src\utils\safe-ptr\safe-ptr-test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">

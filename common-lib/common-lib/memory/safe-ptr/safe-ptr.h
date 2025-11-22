@@ -94,7 +94,11 @@ namespace vsh::common_lib {
     safe_ptr<T> make_safe(Args&&...args)
     {
         auto val = new T(std::forward<Args>(args)...);
-        
-        return safe_ptr<T>(val);
+        try {
+            return safe_ptr<T>(val);
+        } catch(...) {
+            delete val;
+            throw;
+        }
     }
 }
