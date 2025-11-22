@@ -25,6 +25,9 @@
     <Filter Include="memory\safe-ptr">
       <UniqueIdentifier>{9d59c992-fe46-448d-aa73-53a4bdb8ab0f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="memory\unique-ptr">
+      <UniqueIdentifier>{0926c359-cea5-4e7b-9c95-7f930581c207}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\event\event.h">
@@ -50,6 +53,9 @@
     </ClInclude>
     <ClInclude Include="common-lib\memory\safe-ptr\safe-ptr.h">
       <Filter>memory\safe-ptr</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\memory\unique-ptr\unique-ptr.h">
+      <Filter>memory\unique-ptr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

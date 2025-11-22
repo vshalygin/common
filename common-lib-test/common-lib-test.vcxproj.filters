@@ -28,6 +28,9 @@
     <ClCompile Include="src\memory\safe-ptr\safe-ptr-test.cpp">
       <Filter>memory\safe-ptr</Filter>
     </ClCompile>
+    <ClCompile Include="src\memory\unique-ptr\unique-ptr-test.cpp">
+      <Filter>memory\unique-ptr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -53,6 +56,9 @@
     </Filter>
     <Filter Include="memory\safe-ptr">
       <UniqueIdentifier>{2645c3e9-28a7-4cd6-9da0-48c773a5d60e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="memory\unique-ptr">
+      <UniqueIdentifier>{db266bdf-b269-480b-9d55-145ef0d62621}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
