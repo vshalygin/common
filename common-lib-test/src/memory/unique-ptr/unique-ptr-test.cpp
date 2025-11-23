@@ -98,6 +98,8 @@ namespace {
     class virual_base
     {
     public:
+        virtual ~virual_base() = default;
+
         void set_virual_base(int val)
         {
             val_ = val;
@@ -117,6 +119,16 @@ namespace {
         : public virtual life_cycle_tracker
     {
     public:
+        virtual ~test_base() = default;
+
+        test_base() = default;
+
+        test_base(const test_base &) = default;
+        test_base &operator=(const test_base &) = default;
+
+        test_base(test_base &&) = default;
+        test_base &operator=(test_base &&) = default;
+
         void set_test_base(int val) const
         {
             val_ = val;
@@ -136,6 +148,8 @@ namespace {
         : public test_base
     {
     public:
+        virtual ~test_base_1() = default;
+
         void set_test_base1(int val) const
         {
             val_ = val;
@@ -154,6 +168,8 @@ namespace {
         : public test_base
     {
     public:
+        virtual ~test_base_2() = default;
+
         double get_test_base2() const
         {
             return val_;
@@ -173,6 +189,8 @@ namespace {
         : virtual public virual_base
     {
     public:
+        virtual ~test_base_3_with_virtual_base() = default;
+
         double get_test_base3() const
         {
             return val_;
@@ -192,6 +210,8 @@ namespace {
         : virtual public virual_base
     {
     public:
+        virtual ~test_base_4_with_virtual_base() = default;
+
         double get_test_base_4_with_virtual_base() const
         {
             return val_;
@@ -210,6 +230,9 @@ namespace {
     class test_class_with_one_base
         : public test_base_1
     {
+    public:
+        virtual ~test_class_with_one_base() = default;
+
         int val_ = 0;
     };
 
@@ -217,6 +240,9 @@ namespace {
         : public test_base_1
         , public test_base_2
     {
+    public:
+        virtual ~test_class_with_two_base() = default;
+
     private:
         char buf[5];
     };
@@ -225,6 +251,9 @@ namespace {
         : public test_base_3_with_virtual_base
         , public test_base_4_with_virtual_base
     {
+    public:
+        virtual ~test_class_with_two_base_with_virtual_base() = default;
+
     private:
         char buf[5];
     };
@@ -234,7 +263,24 @@ namespace {
         , public test_class_with_two_base_with_virtual_base
     {
     public:
+        ~super_test_class() override
+        {
+            ++destroyed_times;
+        }
+
+        double get_super_test_class() const
+        {
+            return val_;
+        }
+
+        void set_super_test_class(double val) const
+        {
+            val_ = val;
+        }
+
         char buff_[78];
+        mutable double val_ = 0;
+        inline static int destroyed_times = 0;
     };
 
     class test_class_with_parameteraized_ctor
@@ -279,6 +325,7 @@ protected:
     {
         life_cycle_tracker::drop_counters();
         test_allocator::clear();
+        super_test_class::destroyed_times = 0;
     }
 
     void TearDown() override
@@ -643,4 +690,24 @@ TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithRRefParameter)
 TEST_F(UniquePtr, PerformsNoMemoryLeakIfObjectConstructorThrowsException)
 {
     EXPECT_ANY_THROW(make_test_unique<throw_ctor_class>());
+}
+
+TEST_F(UniquePtr, DestroysDerivedObjectWhenHoldingBaseClassPtr)
+{
+    test_unique_ptr<test_base_1> ptr(make_test_unique<super_test_class>());
+
+    ptr.reset();
+
+    ASSERT_EQ(super_test_class::destroyed_times, 1);
+}
+
+TEST_F(UniquePtr, AllowsToConvertRawPointerToDerivedType)
+{
+    test_unique_ptr<test_base_1> ptr(make_test_unique<super_test_class>());
+
+    auto down_casted_ptr = dynamic_cast<super_test_class *>(ptr.get());
+    ASSERT_TRUE(down_casted_ptr != nullptr );
+
+    down_casted_ptr->set_super_test_class(34);
+    ASSERT_EQ(down_casted_ptr->get_super_test_class(), 34);
 }
