@@ -84,7 +84,7 @@ protected:
 
 TEST_F(UniquePtr, MayBeCreated)
 {
-    make_unique<test_class, default_allocator>();
+    make_unique<test_class>();
 
     EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
     EXPECT_EQ(life_cycle_tracker::dtor_called, 1);
@@ -96,7 +96,7 @@ TEST_F(UniquePtr, MayBeCreated)
 
 TEST_F(UniquePtr, MayBeDereferenced)
 {
-    auto sut = make_unique<test_class, default_allocator>();
+    auto sut = make_unique<test_class>();
     (*sut).call_method();
 
     ASSERT_TRUE(test_class::method_called == 1);
@@ -104,7 +104,7 @@ TEST_F(UniquePtr, MayBeDereferenced)
 
 TEST_F(UniquePtr, ConstMayBeDereferenced)
 {
-    const auto sut = make_unique<test_class, default_allocator>();
+    const auto sut = make_unique<test_class>();
     (*sut).call_method();
 
     ASSERT_TRUE(test_class::method_called == 1);
@@ -112,7 +112,7 @@ TEST_F(UniquePtr, ConstMayBeDereferenced)
 
 TEST_F(UniquePtr, MayBeIndirectAccessed)
 {
-    auto sut = make_unique<test_class, default_allocator>();
+    auto sut = make_unique<test_class>();
     sut->call_method();
 
     ASSERT_TRUE(test_class::method_called == 1);
@@ -120,7 +120,7 @@ TEST_F(UniquePtr, MayBeIndirectAccessed)
 
 TEST_F(UniquePtr, ConstMayBeIndirectAccessed)
 {
-    const auto sut = make_unique<test_class, default_allocator>();
+    const auto sut = make_unique<test_class>();
     sut->call_method();
 
     ASSERT_TRUE(test_class::method_called == 1);
@@ -135,7 +135,7 @@ TEST_F(UniquePtr, ConvertsToFalseIfEmpty)
 
 TEST_F(UniquePtr, ConvertsToTrueIfNotEmpty)
 {
-    auto sut = make_unique<test_class, default_allocator>();
+    auto sut = make_unique<test_class>();
 
     ASSERT_TRUE(sut);
 }
@@ -143,9 +143,9 @@ TEST_F(UniquePtr, ConvertsToTrueIfNotEmpty)
 TEST_F(UniquePtr, MayBeMoved)
 {
     {
-        auto ptr1 = make_unique<test_class, default_allocator>();
+        auto ptr1 = make_unique<test_class>();
 
-        unique_ptr<test_class, default_allocator> ptr2(std::move(ptr1));
+        unique_ptr<test_class> ptr2(std::move(ptr1));
         ptr2->call_method();
     }
 
@@ -161,10 +161,10 @@ TEST_F(UniquePtr, MayBeMoved)
 TEST_F(UniquePtr, MayBeMoveAssigned)
 {
     {
-        auto ptr1 = make_unique<test_class, default_allocator>();
+        auto ptr1 = make_unique<test_class>();
         auto ptr1_inner = ptr1.get();
 
-        unique_ptr<test_class, default_allocator> ptr2 = make_unique<test_class, default_allocator>();
+        auto ptr2 = make_unique<test_class>();
         ptr2 = std::move(ptr1);
 
         EXPECT_EQ(ptr2.get(), ptr1_inner);
@@ -180,14 +180,14 @@ TEST_F(UniquePtr, MayBeMoveAssigned)
 
 TEST_F(UniquePtr, ReturnsNullptrOnGetOperationIsObjectIsEmpty)
 {
-    unique_ptr<test_class, default_allocator> sut;
+    unique_ptr<test_class> sut;
 
     ASSERT_EQ(sut.get(), nullptr);
 }
 
 TEST_F(UniquePtr, ReturnsValidPointerOnGetOperation)
 {
-    auto sut = make_unique<test_class, default_allocator>();
+    auto sut = make_unique<test_class>();
     
     sut.get()->call_method();
 
@@ -196,7 +196,7 @@ TEST_F(UniquePtr, ReturnsValidPointerOnGetOperation)
 
 TEST_F(UniquePtr, DestroysObjectAfterResetOperation)
 {
-    auto ptr = make_unique<test_class, default_allocator>();
+    auto ptr = make_unique<test_class>();
 
     ptr.reset();
 
