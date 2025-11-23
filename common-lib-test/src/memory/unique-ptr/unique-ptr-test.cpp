@@ -2,10 +2,47 @@
 
 #include <gtest/gtest.h>
 
+#include <set>
+
 using namespace vsh::common_lib;
 using namespace testing;
 
 namespace {
+    //TODO move to common test library
+    class test_allocator
+    {
+    public:
+        template<typename T>
+        T *allocate() const
+        {
+            once_allocated = true;
+            auto ans = allocator.allocate<T>();
+            allocated_memory.insert(static_cast<void *>(ans));
+            return ans;
+        }
+
+        void deallocate(void *ptr) const noexcept
+        {
+            auto it = allocated_memory.find(ptr);
+            ASSERT_TRUE(it != allocated_memory.end());
+            allocated_memory.erase(it);
+
+            allocator.deallocate(ptr);
+        }
+
+        inline static std::set<void *> allocated_memory;
+        inline static bool once_allocated = false;
+
+        inline static void clear()
+        {
+            allocated_memory.clear();
+            once_allocated = true;
+        }
+
+    private:
+        default_allocator allocator;
+    };
+
     //TODO move to common test library
     class life_cycle_tracker
     {
@@ -25,14 +62,14 @@ namespace {
             ++copy_called;
         }
 
-        life_cycle_tracker &operator=(life_cycle_tracker &)
+        life_cycle_tracker &operator=(const life_cycle_tracker &)
         {
-            ++copy_called;
+            ++copy_assign_called;
         }
 
         life_cycle_tracker(life_cycle_tracker &&)
         {
-            ++copy_assign_called;
+            ++move_called;
         }
 
         life_cycle_tracker &operator=(life_cycle_tracker &&)
@@ -58,17 +95,180 @@ namespace {
         }
     };
 
-    class test_class
-        : private life_cycle_tracker
+    class virual_base
     {
     public:
-        void call_method() const
+        void set_virual_base(int val)
         {
-            ++method_called;
+            val_ = val;
         }
 
-        inline static int method_called = 0;
+        int get_virual_base()
+        {
+            return val_;
+        }
+
+    private:
+        char buf_[121];
+        int val_ = 0;
     };
+
+    class test_base
+        : public virtual life_cycle_tracker
+    {
+    public:
+        void set_test_base(int val) const
+        {
+            val_ = val;
+        }
+
+        int get_test_base()  const
+        {
+            return val_;
+        }
+
+    private:
+        char buf_[99];
+        mutable int val_ = 0;
+    };
+
+    class test_base_1
+        : public test_base
+    {
+    public:
+        void set_test_base1(int val) const
+        {
+            val_ = val;
+        }
+
+        int get_test_base1() const
+        {
+            return val_;
+        }
+
+    private:
+        mutable int val_ = 0;
+    };
+
+    class test_base_2
+        : public test_base
+    {
+    public:
+        double get_test_base2() const
+        {
+            return val_;
+        }
+
+        void set_test_base2(double val) const
+        {
+            val_ = val;
+        }
+
+    private:
+        char block[100];
+        mutable double val_ = 0;
+    };
+
+    class test_base_3_with_virtual_base
+        : virtual public virual_base
+    {
+    public:
+        double get_test_base3() const
+        {
+            return val_;
+        }
+
+        void set_test_base3(double val) const
+        {
+            val_ = val;
+        }
+
+    private:
+        char block[103];
+        mutable double val_ = 0;
+    };
+
+    class test_base_4_with_virtual_base
+        : virtual public virual_base
+    {
+    public:
+        double get_test_base_4_with_virtual_base() const
+        {
+            return val_;
+        }
+
+        void set_test_base_4_with_virtual_base(double val) const
+        {
+            val_ = val;
+        }
+
+    private:
+        char block[104];
+        mutable double val_ = 0;
+    };
+
+    class test_class_with_one_base
+        : public test_base_1
+    {
+        int val_ = 0;
+    };
+
+    class test_class_with_two_base
+        : public test_base_1
+        , public test_base_2
+    {
+    private:
+        char buf[5];
+    };
+
+    class test_class_with_two_base_with_virtual_base
+        : public test_base_3_with_virtual_base
+        , public test_base_4_with_virtual_base
+    {
+    private:
+        char buf[5];
+    };
+
+    class super_test_class
+        : public test_class_with_two_base
+        , public test_class_with_two_base_with_virtual_base
+    {
+    public:
+        char buff_[78];
+    };
+
+    class test_class_with_parameteraized_ctor
+    {
+    public:
+        explicit test_class_with_parameteraized_ctor(test_base &&m)
+            : member_(std::move(m))
+        {}
+
+        explicit test_class_with_parameteraized_ctor(const test_base &m)
+            : member_(m)
+        {}
+
+    private:
+        test_base member_;
+    };
+
+    class throw_ctor_class
+    {
+    public:
+        throw_ctor_class()
+        {
+            throw std::exception();
+        }
+    };
+
+    template<typename T>
+    using test_unique_ptr = unique_ptr<T, test_allocator>;
+
+    template<typename T, typename...Args>
+    test_unique_ptr<T> make_test_unique(Args&&...args)
+    {
+        return make_unique_alloc<T, test_allocator>(test_allocator(), std::forward<Args>(args)...);
+    }
 }
 
 class UniquePtr
@@ -78,13 +278,19 @@ protected:
     void SetUp() override
     {
         life_cycle_tracker::drop_counters();
-        test_class::method_called = 0;
+        test_allocator::clear();
+    }
+
+    void TearDown() override
+    {
+        ASSERT_TRUE(test_allocator::allocated_memory.empty());
+        ASSERT_TRUE(test_allocator::once_allocated);
     }
 };
 
 TEST_F(UniquePtr, MayBeCreated)
 {
-    make_unique<test_class>();
+    make_test_unique<test_base>();
 
     EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
     EXPECT_EQ(life_cycle_tracker::dtor_called, 1);
@@ -96,46 +302,50 @@ TEST_F(UniquePtr, MayBeCreated)
 
 TEST_F(UniquePtr, MayBeDereferenced)
 {
-    auto sut = make_unique<test_class>();
-    (*sut).call_method();
+    auto sut = make_test_unique<test_base>();
+    (*sut).set_test_base(34);
 
-    ASSERT_TRUE(test_class::method_called == 1);
+    int expected = (*sut).get_test_base();
+    ASSERT_TRUE(expected == 34);
 }
 
 TEST_F(UniquePtr, ConstMayBeDereferenced)
 {
-    const auto sut = make_unique<test_class>();
-    (*sut).call_method();
+    const auto sut = make_test_unique<test_base>();
+    (*sut).set_test_base(34);
 
-    ASSERT_TRUE(test_class::method_called == 1);
+    int expected = (*sut).get_test_base();
+    ASSERT_TRUE(expected == 34);
 }
 
 TEST_F(UniquePtr, MayBeIndirectAccessed)
 {
-    auto sut = make_unique<test_class>();
-    sut->call_method();
+    auto sut = make_test_unique<test_base>();
+    sut->set_test_base(34);
 
-    ASSERT_TRUE(test_class::method_called == 1);
+    int expected = (*sut).get_test_base();
+    ASSERT_TRUE(expected == 34);
 }
 
 TEST_F(UniquePtr, ConstMayBeIndirectAccessed)
 {
-    const auto sut = make_unique<test_class>();
-    sut->call_method();
+    const auto sut = make_test_unique<test_base>();
+    sut->set_test_base(34);
 
-    ASSERT_TRUE(test_class::method_called == 1);
+    int expected = (*sut).get_test_base();
+    ASSERT_TRUE(expected == 34);
 }
 
 TEST_F(UniquePtr, ConvertsToFalseIfEmpty)
 {
-    unique_ptr<test_class> sut;
+    test_unique_ptr<test_base> sut;
 
     ASSERT_FALSE(sut);
 }
 
 TEST_F(UniquePtr, ConvertsToTrueIfNotEmpty)
 {
-    auto sut = make_unique<test_class>();
+    auto sut = make_test_unique<test_base>();
 
     ASSERT_TRUE(sut);
 }
@@ -143,10 +353,10 @@ TEST_F(UniquePtr, ConvertsToTrueIfNotEmpty)
 TEST_F(UniquePtr, MayBeMoved)
 {
     {
-        auto ptr1 = make_unique<test_class>();
+        auto ptr1 = make_test_unique<test_base>();
 
-        unique_ptr<test_class> ptr2(std::move(ptr1));
-        ptr2->call_method();
+        test_unique_ptr<test_base> ptr2(std::move(ptr1));
+        ptr2->set_test_base(34);
     }
 
     EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
@@ -155,16 +365,15 @@ TEST_F(UniquePtr, MayBeMoved)
     EXPECT_EQ(life_cycle_tracker::move_called, 0);
     EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
-    EXPECT_EQ(test_class::method_called, 1);
 }
 
 TEST_F(UniquePtr, MayBeMoveAssigned)
 {
     {
-        auto ptr1 = make_unique<test_class>();
+        auto ptr1 = make_test_unique<test_base>();
         auto ptr1_inner = ptr1.get();
 
-        auto ptr2 = make_unique<test_class>();
+        auto ptr2 = make_test_unique<test_base>();
         ptr2 = std::move(ptr1);
 
         EXPECT_EQ(ptr2.get(), ptr1_inner);
@@ -180,23 +389,24 @@ TEST_F(UniquePtr, MayBeMoveAssigned)
 
 TEST_F(UniquePtr, ReturnsNullptrOnGetOperationIsObjectIsEmpty)
 {
-    unique_ptr<test_class> sut;
+    test_unique_ptr<test_base> sut;
 
     ASSERT_EQ(sut.get(), nullptr);
 }
 
 TEST_F(UniquePtr, ReturnsValidPointerOnGetOperation)
 {
-    auto sut = make_unique<test_class>();
+    auto sut = make_test_unique<test_base>();
     
-    sut.get()->call_method();
+    sut.get()->set_test_base(34);
 
-    ASSERT_EQ(test_class::method_called, 1);
+    int expected = (*sut).get_test_base();
+    ASSERT_TRUE(expected == 34);
 }
 
 TEST_F(UniquePtr, DestroysObjectAfterResetOperation)
 {
-    auto ptr = make_unique<test_class>();
+    auto ptr = make_test_unique<test_base>();
 
     ptr.reset();
 
@@ -207,4 +417,230 @@ TEST_F(UniquePtr, DestroysObjectAfterResetOperation)
     EXPECT_EQ(life_cycle_tracker::move_called, 0);
     EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
+}
+
+TEST_F(UniquePtr, DoesNothingIfResetOperationCalledForEmptyObject)
+{
+    test_unique_ptr<test_base> ptr;
+
+    ptr.reset();
+
+    EXPECT_EQ(life_cycle_tracker::ctor_called, 0);
+    EXPECT_EQ(life_cycle_tracker::dtor_called, 0);
+    EXPECT_EQ(life_cycle_tracker::copy_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_called, 0);
+    EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
+}
+
+TEST_F(UniquePtr, MayBeConvertedToBaseTypeIfObjectWithOneBase)
+{
+    auto ptr = make_test_unique<test_class_with_one_base>();
+    test_unique_ptr<test_base_1> ptr1(std::move(ptr));
+
+    ptr1->set_test_base1(34);
+
+    EXPECT_EQ(ptr1->get_test_base1(), 34);
+}
+
+TEST_F(UniquePtr, DoesNotCreateAnotherObjectAfterConversationFromOneTypeToAnother)
+{
+    auto ptr = make_test_unique<test_class_with_one_base>();
+    test_unique_ptr<test_base_1> ptr1(std::move(ptr));
+
+    ptr.reset();
+    ptr1.reset();
+
+    EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
+    EXPECT_EQ(life_cycle_tracker::dtor_called, 1);
+    EXPECT_EQ(life_cycle_tracker::copy_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_called, 0);
+    EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
+}
+
+
+
+TEST_F(UniquePtr, MayBeConvertedToTheFirstBaseType)
+{
+    auto ptr = make_test_unique<test_class_with_two_base>();
+    test_unique_ptr<test_base_1> ptr1(std::move(ptr));
+
+    ptr1->set_test_base1(35);
+
+    EXPECT_EQ(ptr1->get_test_base1(), 35);
+}
+
+TEST_F(UniquePtr, IsEmptyAfterMoving)
+{
+    auto ptr = make_test_unique<test_class_with_two_base>();
+    test_unique_ptr<test_base_1>(std::move(ptr));
+
+    EXPECT_FALSE(ptr);
+}
+
+TEST_F(UniquePtr, MayBeConvertedToTheSecondBaseType)
+{
+    auto ptr = make_test_unique<test_class_with_two_base>();
+    test_unique_ptr<test_base_2> ptr1(std::move(ptr));
+
+    ptr1->set_test_base2(36);
+
+    EXPECT_EQ(ptr1->get_test_base2(), 36);
+}
+
+TEST_F(UniquePtr, MayBeConvertedTwiceToBaseTypes)
+{
+    auto ptr = make_test_unique<test_class_with_two_base>();
+    test_unique_ptr<test_base_2> ptr1(std::move(ptr));
+    test_unique_ptr<test_base> ptr2(std::move(ptr1));
+
+    ptr2->set_test_base(36);
+
+    EXPECT_EQ(ptr2->get_test_base(), 36);
+}
+
+TEST_F(UniquePtr, MayBeConvertedToBaseTypeWithInIndirectPath)
+{
+    auto ptr = make_test_unique<super_test_class>();
+    test_unique_ptr<test_class_with_two_base_with_virtual_base> ptr1(std::move(ptr));
+    test_unique_ptr<test_base_4_with_virtual_base> ptr2(std::move(ptr1));
+
+    ptr2->set_test_base_4_with_virtual_base(36);
+
+    EXPECT_EQ(ptr2->get_test_base_4_with_virtual_base(), 36);
+}
+
+TEST_F(UniquePtr, MayBeConvertedToVirtualBase)
+{
+    auto ptr = make_test_unique<super_test_class>();
+    test_unique_ptr<virual_base> ptr1(std::move(ptr));
+
+    ptr1->set_virual_base(34);
+
+    EXPECT_EQ(ptr1->get_virual_base(), 34);
+}
+
+TEST_F(UniquePtr, MayBeMoveAssignedToBaseTypeIfObjectWithOneBase)
+{
+    test_unique_ptr<test_base_1> ptr;
+    ptr = make_test_unique<test_class_with_one_base>();
+
+    ptr->set_test_base1(34);
+
+    EXPECT_EQ(ptr->get_test_base1(), 34);
+}
+
+TEST_F(UniquePtr, DoesNotCreateAnotherObjectAfterMoveAssignedFromOneTypeToAnother)
+{
+    test_unique_ptr<test_base_1> ptr;
+    ptr = make_test_unique<test_class_with_one_base>();
+
+    ptr.reset();
+    ptr.reset();
+
+    EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
+    EXPECT_EQ(life_cycle_tracker::dtor_called, 1);
+    EXPECT_EQ(life_cycle_tracker::copy_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_called, 0);
+    EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
+}
+
+TEST_F(UniquePtr, MayBeMoveAssignedToTheFirstBaseType)
+{
+    test_unique_ptr<test_base_1> ptr1;
+    ptr1 = make_test_unique<test_class_with_two_base>();
+
+    ptr1->set_test_base1(35);
+
+    EXPECT_EQ(ptr1->get_test_base1(), 35);
+}
+
+TEST_F(UniquePtr, IsEmptyAfterMoveAssigned)
+{
+    auto ptr = make_test_unique<test_class_with_two_base>();
+    test_unique_ptr<test_base_1> ptr1;
+    ptr1 = std::move(ptr);
+
+    EXPECT_FALSE(ptr);
+}
+
+TEST_F(UniquePtr, MayBeMoveAssignedToTheSecondBaseType)
+{
+    test_unique_ptr<test_base_2> ptr1;
+    ptr1 = make_test_unique<test_class_with_two_base>();
+
+    ptr1->set_test_base2(36);
+
+    EXPECT_EQ(ptr1->get_test_base2(), 36);
+}
+
+TEST_F(UniquePtr, MayBeMoveAssignedTwiceToBaseTypes)
+{
+    test_unique_ptr<test_base_2> ptr1;
+    ptr1 = make_test_unique<test_class_with_two_base>();
+    test_unique_ptr<test_base> ptr2;
+    ptr2 = std::move(ptr1);
+
+    ptr2->set_test_base(36);
+
+    EXPECT_EQ(ptr2->get_test_base(), 36);
+}
+
+TEST_F(UniquePtr, MayBeMoveAssignedToBaseTypeWithInIndirectPath)
+{
+    test_unique_ptr<test_class_with_two_base_with_virtual_base> ptr1;
+    ptr1 = make_test_unique<super_test_class>();
+    test_unique_ptr<test_base_4_with_virtual_base> ptr2;
+    ptr2 = std::move(ptr1);
+
+    ptr2->set_test_base_4_with_virtual_base(36);
+
+    EXPECT_EQ(ptr2->get_test_base_4_with_virtual_base(), 36);
+}
+
+TEST_F(UniquePtr, MayBeMoveAssignedToVirtualBase)
+{
+    test_unique_ptr<virual_base> ptr1;
+    ptr1 = make_test_unique<super_test_class>();
+
+    ptr1->set_virual_base(34);
+
+    EXPECT_EQ(ptr1->get_virual_base(), 34);
+}
+
+TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithConstLRefParameter)
+{
+    {
+        test_base param;
+        make_test_unique<test_class_with_parameteraized_ctor>(param);
+    }
+
+    EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
+    EXPECT_EQ(life_cycle_tracker::dtor_called, 2);
+    EXPECT_EQ(life_cycle_tracker::copy_called, 1);
+    EXPECT_EQ(life_cycle_tracker::move_called, 0);
+    EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
+}
+
+TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithRRefParameter)
+{
+    {
+        test_base param;
+        make_test_unique<test_class_with_parameteraized_ctor>(std::move(param));
+    }
+
+    EXPECT_EQ(life_cycle_tracker::ctor_called, 1);
+    EXPECT_EQ(life_cycle_tracker::dtor_called, 2);
+    EXPECT_EQ(life_cycle_tracker::copy_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_called, 1);
+    EXPECT_EQ(life_cycle_tracker::copy_assign_called, 0);
+    EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
+}
+
+TEST_F(UniquePtr, PerformsNoMemoryLeakIfObjectConstructorThrowsException)
+{
+    EXPECT_ANY_THROW(make_test_unique<throw_ctor_class>());
 }

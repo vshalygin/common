@@ -28,6 +28,9 @@
     <Filter Include="memory\unique-ptr">
       <UniqueIdentifier>{0926c359-cea5-4e7b-9c95-7f930581c207}</UniqueIdentifier>
     </Filter>
+    <Filter Include="memory\allocator">
+      <UniqueIdentifier>{a7622fbf-a8c5-431a-967a-87c051fa713b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\event\event.h">
@@ -56,6 +59,9 @@
     </ClInclude>
     <ClInclude Include="common-lib\memory\unique-ptr\unique-ptr.h">
       <Filter>memory\unique-ptr</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
+      <Filter>memory\allocator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

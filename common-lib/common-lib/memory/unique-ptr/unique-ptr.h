@@ -1,24 +1,10 @@
 #pragma once
+#include <common-lib/memory/allocator/default-allocator.h>
+
 #include <utility>
-#include <cstdlib>
+#include <type_traits>
 
 namespace vsh::common_lib {
-    class default_allocator
-    {
-    public:
-        //TODO fix MSVC specific
-        template<typename T>
-        T *allocate() const
-        {
-            return static_cast<T *>(_aligned_malloc(alignof(T), sizeof(T)));
-        }
-
-        void deallocate(void *ptr) const noexcept
-        {
-            _aligned_free(ptr);
-        }
-    };
-
     template<typename T, typename Allocator = default_allocator>
     class unique_ptr;
 
@@ -28,19 +14,40 @@ namespace vsh::common_lib {
     template<typename T, typename Allocator>
     class unique_ptr final
     {
-        //TODO add checking for Allocator
+        static_assert(std::is_nothrow_copy_constructible_v<Allocator>,
+                      "allocator is not noexcept copyable");
 
         template<typename T, typename Allocator, typename...Args>
         friend unique_ptr<T, Allocator> make_unique_alloc(
             const Allocator &allocator, Args&&...args);
 
+        template<typename T, typename Allocator>
+        friend class unique_ptr;
+
     public:
         explicit unique_ptr(const Allocator &alloc = Allocator()) noexcept
             : ptr_(nullptr)
             , alloc_(alloc)
+        {}
+
+        template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
+        unique_ptr(unique_ptr<Y, Allocator> &&other) noexcept
+            : ptr_(other.ptr_)
+            , alloc_(other.alloc_)
         {
-            static_assert(std::is_nothrow_constructible_v<Allocator, decltype(alloc)>,
-                          "allocator is not nothrow copyable");
+            if(!ptr_) {
+                return;
+            }
+
+            Y *other_ptr = other.get();
+            std::ptrdiff_t additional_offset =
+                reinterpret_cast<std::byte *>(static_cast<T *>(other_ptr)) -
+                reinterpret_cast<std::byte *>(other_ptr);
+
+            std::ptrdiff_t &offset = *reinterpret_cast<std::ptrdiff_t *>(ptr_);
+            offset += additional_offset;
+
+            other.ptr_ = nullptr;
         }
 
         ~unique_ptr()
@@ -55,8 +62,6 @@ namespace vsh::common_lib {
             : ptr_(nullptr)
             , alloc_(other.alloc_)
         {
-            static_assert(std::is_nothrow_constructible_v<Allocator, decltype(other.alloc_)>,
-                          "allocator is not nothrow copyable");
             static_assert(noexcept(std::swap(ptr_, other.ptr_)),
                           "std::swap is not noexcept");
 
@@ -72,10 +77,17 @@ namespace vsh::common_lib {
             return *this;
         }
 
+        template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
+        unique_ptr& operator=(unique_ptr<Y, Allocator> &&other) noexcept
+        {
+            *this = unique_ptr(std::move(other));
+            return *this;
+        }
+
         void reset() noexcept
         {
             if(ptr_) {
-                get_object_ptr()->~T();
+                get()->~T();
                 alloc_.deallocate(ptr_);
                 ptr_ = nullptr;
             }
@@ -83,41 +95,10 @@ namespace vsh::common_lib {
 
         T *get() noexcept
         {
-            return get_object_ptr();
+            return const_cast<T *>(static_cast<const unique_ptr &>(*this).get());
         }
 
         const T *get() const noexcept
-        {
-            return get_object_ptr();
-        }
-
-        T *operator->() noexcept
-        {
-            return get_object_ptr();
-        }
-
-        const T *operator->() const
-        {
-            return get_object_ptr();
-        }
-
-        T &operator*() noexcept
-        {
-            return *get_object_ptr();
-        }
-
-        const T &operator*() const noexcept
-        {
-            return *get_object_ptr();
-        }
-
-        operator bool() const noexcept
-        {
-            return get_object_ptr();
-        }
-
-    private:
-        const T *get_object_ptr() const noexcept
         {
             if(!ptr_) {
                 return nullptr;
@@ -127,9 +108,29 @@ namespace vsh::common_lib {
             return reinterpret_cast<T *>(static_cast<std::byte *>(ptr_) + offset);
         }
 
-        T *get_object_ptr() noexcept
+        T *operator->() noexcept
         {
-            return const_cast<T *>(static_cast<const unique_ptr &>(*this).get_object_ptr());
+            return get();
+        }
+
+        const T *operator->() const
+        {
+            return get();
+        }
+
+        T &operator*() noexcept
+        {
+            return *get();
+        }
+
+        const T &operator*() const noexcept
+        {
+            return *get();
+        }
+
+        operator bool() const noexcept
+        {
+            return get();
         }
 
     private:
