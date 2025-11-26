@@ -6,32 +6,32 @@
 
 namespace vsh::cl {
     template<typename T, typename Allocator = default_allocator>
-    class unique_ptr;
+    class unique_ptr2;
 
     template<typename T, typename Allocator, typename...Args>
-    unique_ptr<T, Allocator> make_unique_alloc(const Allocator &allocator, Args&&...args);
+    unique_ptr2<T, Allocator> make_unique2(const Allocator &allocator, Args&&...args);
 
     template<typename T, typename Allocator>
-    class unique_ptr final
+    class unique_ptr2 final
     {
         static_assert(std::is_nothrow_copy_constructible_v<Allocator>,
                       "allocator is not noexcept copyable");
 
         template<typename T, typename Allocator, typename...Args>
-        friend unique_ptr<T, Allocator> make_unique_alloc(
+        friend unique_ptr2<T, Allocator> make_unique2(
             const Allocator &allocator, Args&&...args);
 
         template<typename T, typename Allocator>
-        friend class unique_ptr;
+        friend class unique_ptr2;
 
     public:
-        explicit unique_ptr(const Allocator &alloc = Allocator()) noexcept
+        explicit unique_ptr2(const Allocator &alloc = Allocator()) noexcept
             : m_ptr(nullptr)
             , m_alloc(alloc)
         {}
 
         template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
-        unique_ptr(unique_ptr<Y, Allocator> &&other) noexcept
+        unique_ptr2(unique_ptr2<Y, Allocator> &&other) noexcept
             : m_ptr(other.m_ptr)
             , m_alloc(other.m_alloc)
         {
@@ -50,15 +50,15 @@ namespace vsh::cl {
             other.m_ptr = nullptr;
         }
 
-        ~unique_ptr()
+        ~unique_ptr2()
         {
             reset();
         }
 
-        unique_ptr(unique_ptr &) = delete;
-        unique_ptr &operator=(unique_ptr &) = delete;
+        unique_ptr2(unique_ptr2 &) = delete;
+        unique_ptr2 &operator=(unique_ptr2 &) = delete;
 
-        unique_ptr(unique_ptr &&other) noexcept
+        unique_ptr2(unique_ptr2 &&other) noexcept
             : m_ptr(nullptr)
             , m_alloc(other.m_alloc)
         {
@@ -68,7 +68,7 @@ namespace vsh::cl {
             std::swap(m_ptr, other.m_ptr);
         }
 
-        unique_ptr &operator=(unique_ptr &&other) noexcept
+        unique_ptr2 &operator=(unique_ptr2 &&other) noexcept
         {
             static_assert(noexcept(std::swap(m_ptr, other.m_ptr)),
                           "std::swap is not noexcept");
@@ -78,9 +78,9 @@ namespace vsh::cl {
         }
 
         template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
-        unique_ptr& operator=(unique_ptr<Y, Allocator> &&other) noexcept
+        unique_ptr2 & operator=(unique_ptr2<Y, Allocator> &&other) noexcept
         {
-            *this = unique_ptr(std::move(other));
+            *this = unique_ptr2(std::move(other));
             return *this;
         }
 
@@ -95,7 +95,7 @@ namespace vsh::cl {
 
         T *get() noexcept
         {
-            return const_cast<T *>(static_cast<const unique_ptr &>(*this).get());
+            return const_cast<T *>(static_cast<const unique_ptr2 &>(*this).get());
         }
 
         const T *get() const noexcept
@@ -139,8 +139,8 @@ namespace vsh::cl {
     };
 
     template<typename T, typename Allocator, typename...Args>
-    unique_ptr<T, Allocator> make_unique_alloc(
-        const Allocator &allocator, Args&&...args)
+    unique_ptr2<T, Allocator> make_unique2(const Allocator &allocator,
+                                           Args&&...args)
     {
         struct unique_ptr_content
         {
@@ -159,16 +159,9 @@ namespace vsh::cl {
             throw;
         }
 
-        unique_ptr<T, Allocator> ans{ allocator };
+        unique_ptr2<T, Allocator> ans{ allocator };
         ans.m_ptr = ptr;
 
         return ans;
-    }
-
-    template<typename T, typename...Args>
-    unique_ptr<T> make_unique(Args&&...args)
-    {
-        return make_unique_alloc<T, default_allocator, Args...>(
-            default_allocator{}, std::forward<Args>(args)...);
     }
 }

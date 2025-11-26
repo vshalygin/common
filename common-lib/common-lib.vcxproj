@@ -13,7 +13,7 @@
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h" />
     <ClInclude Include="common-lib\memory\safe-ptr\safe-ptr.h" />
-    <ClInclude Include="common-lib\memory\unique-ptr\unique-ptr.h" />
+    <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
     <ClInclude Include="common-lib\thread-pool\ithread-pool.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
     <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h" />
