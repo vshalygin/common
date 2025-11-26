@@ -10,8 +10,8 @@ namespace vsh::cl {
     public:
         safe_ptr_proxy(std::unique_lock<std::recursive_mutex> lock,
                        T *ptr)
-            : lock_(std::move(lock))
-            , ptr_(ptr)
+            : m_lock(std::move(lock))
+            , m_ptr(ptr)
         {}
 
         safe_ptr_proxy(safe_ptr_proxy &) = delete;
@@ -22,17 +22,17 @@ namespace vsh::cl {
 
         T *operator->()
         {
-            return ptr_;
+            return m_ptr;
         }
 
         const T *operator->() const
         {
-            return ptr_;
+            return m_ptr;
         }
 
     private:
-        std::unique_lock<std::recursive_mutex> lock_;
-        T *ptr_;
+        std::unique_lock<std::recursive_mutex> m_lock;
+        T *m_ptr;
     };
 
     template<typename T>
@@ -55,30 +55,30 @@ namespace vsh::cl {
 
         void reset() noexcept
         {
-            mval_.reset();
+            m_mval.reset();
         }
 
         template<typename Y>
         void reset(Y *p)
         {
-            mval_.reset(new mutexed_val{{}, std::unique_ptr<T>(p)});
+            m_mval.reset(new mutexed_val{{}, std::unique_ptr<T>(p)});
         }
 
         void swap(safe_ptr<T> &other)
         {
-            mval_.swap(other.mval_);
+            m_mval.swap(other.m_mval);
         }
 
         safe_ptr_proxy<T> operator->()
         {
-            std::unique_lock lock(mval_->mtx);
-            return safe_ptr_proxy<T>(std::move(lock), mval_->val.get());
+            std::unique_lock lock(m_mval->mtx);
+            return safe_ptr_proxy<T>(std::move(lock), m_mval->val.get());
         }
 
         const safe_ptr_proxy<T> operator->() const
         {
-            std::unique_lock lock(mval_->mtx);
-            return safe_ptr_proxy<T>(std::move(lock), mval_->val.get());
+            std::unique_lock lock(m_mval->mtx);
+            return safe_ptr_proxy<T>(std::move(lock), m_mval->val.get());
         }
 
     private:
@@ -87,7 +87,7 @@ namespace vsh::cl {
             mutable std::recursive_mutex mtx;
             std::unique_ptr<T> val;
         };
-        std::shared_ptr<mutexed_val> mval_;
+        std::shared_ptr<mutexed_val> m_mval;
     };
 
     template<typename T, typename...Args>

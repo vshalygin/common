@@ -25,10 +25,10 @@ namespace vsh::rpc {
         bool listen();
 
     private:
-        std::shared_ptr<irecv_handler> recv_handler_;
-        std::shared_ptr<itransport> transport_;
-        std::shared_ptr<cl::ithread_pool> thread_pool_;
+        std::shared_ptr<irecv_handler> m_recv_handler;
+        std::shared_ptr<itransport> m_transport;
+        std::shared_ptr<cl::ithread_pool> m_thread_pool;
 
-        std::jthread listen_thread_;
+        std::jthread m_listen_thread;
     };
 }

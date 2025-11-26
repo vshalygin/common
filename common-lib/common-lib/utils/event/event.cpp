@@ -14,46 +14,46 @@ namespace vsh::cl {
         void set()
         {
             {
-                std::lock_guard guard(mtx_);
-                is_set_ = true;
+                std::lock_guard guard(m_mtx);
+                m_is_set = true;
             }
 
-            cv_.notify_all();
+            m_cv.notify_all();
         }
 
         bool is_set() const
         {
-            std::lock_guard guard(mtx_);
-            return is_set_;
+            std::lock_guard guard(m_mtx);
+            return m_is_set;
         }
 
         void clear()
         {
-            std::lock_guard guard(mtx_);
-            is_set_ = false;
+            std::lock_guard guard(m_mtx);
+            m_is_set = false;
         }
 
         void wait()
         {
-            std::unique_lock lock(mtx_);
-            cv_.wait(lock, [this]() { return is_set_; });
+            std::unique_lock lock(m_mtx);
+            m_cv.wait(lock, [this]() { return m_is_set; });
         }
 
         bool wait_for(const std::chrono::microseconds &mcs)
         {
-            std::unique_lock lock(mtx_);
-            return cv_.wait_for(lock, mcs, [this]() { return is_set_; });
+            std::unique_lock lock(m_mtx);
+            return m_cv.wait_for(lock, mcs, [this]() { return m_is_set; });
         }
 
     private:
-        mutable std::mutex mtx_;
-        bool is_set_ = false;
+        mutable std::mutex m_mtx;
+        bool m_is_set = false;
 
-        std::condition_variable cv_;
+        std::condition_variable m_cv;
     };
 
     event::event()
-        : impl_(std::make_unique<impl>())
+        : m_impl(std::make_unique<impl>())
     {}
 
     event::~event() = default;
@@ -63,26 +63,26 @@ namespace vsh::cl {
 
     void event::set()
     {
-        impl_->set();
+        m_impl->set();
     }
 
     bool event::is_set() const
     {
-        return impl_->is_set();
+        return m_impl->is_set();
     }
 
     void event::clear()
     {
-        impl_->clear();
+        m_impl->clear();
     }
 
     void event::wait()
     {
-        impl_->wait();
+        m_impl->wait();
     }
 
     bool event::wait_for(const std::chrono::microseconds &mcs)
     {
-        return impl_->wait_for(mcs);
+        return m_impl->wait_for(mcs);
     }
 }

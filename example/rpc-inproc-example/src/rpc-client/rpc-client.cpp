@@ -16,20 +16,20 @@ namespace vsh::example {
     rpc_client::rpc_client(std::shared_ptr<cl::ithread_pool> thread_pool,
                            std::shared_ptr<rpc_client_transport> rpc_client_transport)
         : rpc::client_base(std::move(thread_pool), rpc_client_transport, rpc_client_transport)
-        , service_stub_(get_channel())
+        , m_service_stub(get_channel())
     {}
 
     std::unique_ptr<proto::GetUserResponse> rpc_client::get_user(const proto::GetUserRequest &req)
     {
         return call_method<proto::GetUserRequest, proto::GetUserResponse>(req,
-                                                                          service_stub_,
+                                                                          m_service_stub,
                                                                           &proto::Service_Stub::GetUser);
     }
 
     std::unique_ptr<proto::GetUserResponse> rpc_client::get_user2(const proto::GetUserRequest &req)
     {
         return call_method<proto::GetUserRequest, proto::GetUserResponse>(req,
-                                                                          service_stub_,
+                                                                          m_service_stub,
                                                                           &proto::Service_Stub::GetUser2);
     }
 }

@@ -35,7 +35,7 @@ namespace vsh::cl {
             difference_type operator-(iterator other) const noexcept;
 
         private:
-            const unsigned char *buffer_;
+            const unsigned char *m_buffer;
         };
 
         using const_iterator = iterator;
@@ -69,8 +69,8 @@ namespace vsh::cl {
         const_reverse_iterator crend() const noexcept;
 
     private:
-        const unsigned char *buffer_;
-        size_t size_;
+        const unsigned char *m_buffer;
+        size_t m_size;
     };
 
     cbuffer_view::iterator operator+(cbuffer_view::iterator::difference_type offset,

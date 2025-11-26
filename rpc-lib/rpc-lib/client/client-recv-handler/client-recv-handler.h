@@ -25,6 +25,6 @@ namespace vsh::rpc {
         int process_res(const cl::buffer &buffer);
 
     private:
-        std::shared_ptr<guarded_cb_map> cb_map_;
+        std::shared_ptr<guarded_cb_map> m_cb_map;
     };
 }

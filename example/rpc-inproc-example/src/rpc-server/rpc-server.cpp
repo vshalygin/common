@@ -6,8 +6,8 @@
 namespace vsh::example {
     rpc_server::rpc_server(std::unique_ptr<rpc::iserver_transport> transport,
                            std::unique_ptr<proto::Service> service)
-        : transport_(std::move(transport))
-        , service_(std::move(service))
+        : m_transport(std::move(transport))
+        , m_service(std::move(service))
     {}
 
     rpc_server::~rpc_server() = default;
@@ -16,12 +16,12 @@ namespace vsh::example {
     {
         while(true) {
             cl::buffer buff;
-            transport_->recv(buff);
+            m_transport->recv(buff);
             cl::cbuffer_view cbv(buff.data(), buff.size());
             auto method_idx = static_cast<int>(rpc::get_method_idx_req(cbv));
 
-            auto req_descr = service_->descriptor()->method(method_idx)->input_type();
-            auto res_descr = service_->descriptor()->method(method_idx)->output_type();
+            auto req_descr = m_service->descriptor()->method(method_idx)->input_type();
+            auto res_descr = m_service->descriptor()->method(method_idx)->output_type();
             const auto serialized_message = rpc::get_serialized_message(cbv);
             const auto entry_number = rpc::get_entry_number_req(cbv);
 
@@ -33,14 +33,14 @@ namespace vsh::example {
             auto res = google::protobuf::MessageFactory::generated_factory()->GetPrototype(res_descr)->New();
             std::unique_ptr<google::protobuf::Message> response(res);
 
-            service_->CallMethod(service_->descriptor()->method(method_idx),
-                                 nullptr,
-                                 request.get(),
-                                 response.get(),
-                                 nullptr);
+            m_service->CallMethod(m_service->descriptor()->method(method_idx),
+                                  nullptr,
+                                  request.get(),
+                                  response.get(),
+                                  nullptr);
 
             auto transfer_entry = rpc::create_transfer_entry_res(entry_number, response.get());
-            transport_->send(std::move(transfer_entry));
+            m_transport->send(std::move(transfer_entry));
         }
     }
 }

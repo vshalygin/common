@@ -32,6 +32,6 @@ namespace vsh::example {
         std::unique_ptr<proto::GetUserResponse> get_user2(const proto::GetUserRequest &req);
 
     private:
-        proto::Service_Stub service_stub_;
+        proto::Service_Stub m_service_stub;
     };
 }

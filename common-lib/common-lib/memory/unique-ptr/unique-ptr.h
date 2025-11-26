@@ -26,16 +26,16 @@ namespace vsh::cl {
 
     public:
         explicit unique_ptr(const Allocator &alloc = Allocator()) noexcept
-            : ptr_(nullptr)
-            , alloc_(alloc)
+            : m_ptr(nullptr)
+            , m_alloc(alloc)
         {}
 
         template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
         unique_ptr(unique_ptr<Y, Allocator> &&other) noexcept
-            : ptr_(other.ptr_)
-            , alloc_(other.alloc_)
+            : m_ptr(other.m_ptr)
+            , m_alloc(other.m_alloc)
         {
-            if(!ptr_) {
+            if(!m_ptr) {
                 return;
             }
 
@@ -44,10 +44,10 @@ namespace vsh::cl {
                 reinterpret_cast<std::byte *>(static_cast<T *>(other_ptr)) -
                 reinterpret_cast<std::byte *>(other_ptr);
 
-            std::ptrdiff_t &offset = *reinterpret_cast<std::ptrdiff_t *>(ptr_);
+            std::ptrdiff_t &offset = *reinterpret_cast<std::ptrdiff_t *>(m_ptr);
             offset += additional_offset;
 
-            other.ptr_ = nullptr;
+            other.m_ptr = nullptr;
         }
 
         ~unique_ptr()
@@ -59,21 +59,21 @@ namespace vsh::cl {
         unique_ptr &operator=(unique_ptr &) = delete;
 
         unique_ptr(unique_ptr &&other) noexcept
-            : ptr_(nullptr)
-            , alloc_(other.alloc_)
+            : m_ptr(nullptr)
+            , m_alloc(other.m_alloc)
         {
-            static_assert(noexcept(std::swap(ptr_, other.ptr_)),
+            static_assert(noexcept(std::swap(m_ptr, other.m_ptr)),
                           "std::swap is not noexcept");
 
-            std::swap(ptr_, other.ptr_);
+            std::swap(m_ptr, other.m_ptr);
         }
 
         unique_ptr &operator=(unique_ptr &&other) noexcept
         {
-            static_assert(noexcept(std::swap(ptr_, other.ptr_)),
+            static_assert(noexcept(std::swap(m_ptr, other.m_ptr)),
                           "std::swap is not noexcept");
 
-            std::swap(ptr_, other.ptr_);
+            std::swap(m_ptr, other.m_ptr);
             return *this;
         }
 
@@ -86,10 +86,10 @@ namespace vsh::cl {
 
         void reset() noexcept
         {
-            if(ptr_) {
+            if(m_ptr) {
                 get()->~T();
-                alloc_.deallocate(ptr_);
-                ptr_ = nullptr;
+                m_alloc.deallocate(m_ptr);
+                m_ptr = nullptr;
             }
         }
 
@@ -100,12 +100,12 @@ namespace vsh::cl {
 
         const T *get() const noexcept
         {
-            if(!ptr_) {
+            if(!m_ptr) {
                 return nullptr;
             }
 
-            std::ptrdiff_t offset = *reinterpret_cast<const std::ptrdiff_t *>(ptr_);
-            return reinterpret_cast<T *>(static_cast<std::byte *>(ptr_) + offset);
+            std::ptrdiff_t offset = *reinterpret_cast<const std::ptrdiff_t *>(m_ptr);
+            return reinterpret_cast<T *>(static_cast<std::byte *>(m_ptr) + offset);
         }
 
         T *operator->() noexcept
@@ -134,8 +134,8 @@ namespace vsh::cl {
         }
 
     private:
-        void *ptr_;
-        Allocator alloc_;
+        void *m_ptr;
+        Allocator m_alloc;
     };
 
     template<typename T, typename Allocator, typename...Args>
@@ -160,7 +160,7 @@ namespace vsh::cl {
         }
 
         unique_ptr<T, Allocator> ans{ allocator };
-        ans.ptr_ = ptr;
+        ans.m_ptr = ptr;
 
         return ans;
     }

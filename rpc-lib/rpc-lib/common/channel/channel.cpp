@@ -7,10 +7,10 @@ namespace vsh::rpc {
                      std::shared_ptr<ithread_pool> thread_pool,
                      std::shared_ptr<guarded_cb_map> cb_map,
                      std::unique_ptr<itransfer_entry_creator> entry_creator)
-        : transport_(std::move(transport))
-        , thread_pool_(std::move(thread_pool))
-        , cb_map_(std::move(cb_map))
-        , entry_creator_(std::move(entry_creator))
+        : m_transport(std::move(transport))
+        , m_thread_pool(std::move(thread_pool))
+        , m_cb_map(std::move(cb_map))
+        , m_entry_creator(std::move(entry_creator))
     {}
 
     void channel::CallMethod(const MethodDescriptor *method,
@@ -25,7 +25,7 @@ namespace vsh::rpc {
         assert(done);
 
         uint64_t transfer_entry_number = 0;
-        auto transfer_entry = entry_creator_->create_entry(method, request, transfer_entry_number);
+        auto transfer_entry = m_entry_creator->create_entry(method, request, transfer_entry_number);
 
         auto callback = [this, response, done](const cl::buffer &answer_entry)
         {
@@ -35,8 +35,8 @@ namespace vsh::rpc {
             done->Run();
         };
 
-        auto task = [cb_map = cb_map_, callback = std::move(callback),
-                     transfer_entry_number, transport = transport_,
+        auto task = [cb_map = m_cb_map, callback = std::move(callback),
+                     transfer_entry_number, transport = m_transport,
                      transfer_entry = std::move(transfer_entry)]() mutable
         {
             {
@@ -47,6 +47,6 @@ namespace vsh::rpc {
             transport->send(std::move(transfer_entry));
         };
 
-        thread_pool_->post(std::move(task));
+        m_thread_pool->post(std::move(task));
     }
 }

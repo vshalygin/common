@@ -22,9 +22,9 @@ namespace vsh::example {
         int recv(cl::buffer &buff);
 
     private:
-        std::queue<cl::buffer> queue_;
+        std::queue<cl::buffer> m_queue;
 
-        std::mutex mtx_;
-        std::condition_variable cv_;
+        std::mutex m_mtx;
+        std::condition_variable m_cv;
     };
 }

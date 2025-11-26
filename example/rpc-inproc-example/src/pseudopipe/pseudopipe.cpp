@@ -16,26 +16,26 @@ namespace vsh::example {
     int pseudopipe::send(cl::buffer &&buff)
     {
         {
-            std::lock_guard guard(mtx_);
-            queue_.push(std::move(buff));
+            std::lock_guard guard(m_mtx);
+            m_queue.push(std::move(buff));
         }
 
-        cv_.notify_all();
+        m_cv.notify_all();
 
         return 0;
     }
 
     int pseudopipe::recv(cl::buffer &buff)
     {
-        std::unique_lock lock(mtx_);
-        if(!queue_.empty()) {
-            buff = std::move(queue_.front());
-            queue_.pop();
+        std::unique_lock lock(m_mtx);
+        if(!m_queue.empty()) {
+            buff = std::move(m_queue.front());
+            m_queue.pop();
         } else {
-            cv_.wait(lock, [this]() { return !queue_.empty(); });
+            m_cv.wait(lock, [this]() { return !m_queue.empty(); });
 
-            buff = std::move(queue_.front());
-            queue_.pop();
+            buff = std::move(m_queue.front());
+            m_queue.pop();
         }
 
         return 0;

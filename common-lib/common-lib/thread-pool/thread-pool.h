@@ -31,9 +31,12 @@ namespace vsh::cl {
         void post_impl(Func &&func) const;
 
     private:
-        const unsigned thread_num_;
-        boost::asio::io_context io_context_;
-        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
+        using io_context = boost::asio::io_context;
+        using executor_work_guard = boost::asio::executor_work_guard<io_context::executor_type>;
+
+        const unsigned m_thread_num;
+        io_context m_io_context;
+        executor_work_guard m_executor_work_guard;
 
         std::once_flag join_threads_flag_;
         boost::thread_group thread_group_;

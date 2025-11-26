@@ -5,30 +5,30 @@
 
 namespace vsh::cl {
     buffer::iterator::iterator(unsigned char *buffer) noexcept
-        : buffer_(buffer)
+        : m_buffer(buffer)
     {}
 
     buffer::iterator &buffer::iterator::operator++() noexcept
     {
-        ++buffer_;
+        ++m_buffer;
         return *this;
     }
 
     buffer::iterator buffer::iterator::operator++(int) noexcept
     {
-        auto prev = buffer_++;
+        auto prev = m_buffer++;
         return buffer::iterator(prev);
     }
 
     buffer::iterator &buffer::iterator::operator--() noexcept
     {
-        --buffer_;
+        --m_buffer;
         return *this;
     }
 
     buffer::iterator buffer::iterator::operator--(int) noexcept
     {
-        auto prev = buffer_--;
+        auto prev = m_buffer--;
         return iterator(prev);
     }
 
@@ -39,12 +39,12 @@ namespace vsh::cl {
 
     const unsigned char &buffer::iterator::operator*() const noexcept
     {
-        return *buffer_;
+        return *m_buffer;
     }
 
     bool buffer::iterator::operator==(const iterator &other) const noexcept
     {
-        return buffer_ == other.buffer_;
+        return m_buffer == other.m_buffer;
     }
 
     bool buffer::iterator::operator!=(const iterator &other) const noexcept
@@ -54,55 +54,55 @@ namespace vsh::cl {
 
     buffer::iterator buffer::iterator::operator+(difference_type offset) const noexcept
     {
-        return iterator(buffer_ + offset);
+        return iterator(m_buffer + offset);
     }
 
     buffer::iterator buffer::iterator::operator-(difference_type offset) const noexcept
     {
-        return iterator(buffer_ - offset);
+        return iterator(m_buffer - offset);
     }
 
     buffer::iterator::difference_type buffer::iterator::operator-(iterator other) const noexcept
     {
-        return buffer_ - other.buffer_;
+        return m_buffer - other.m_buffer;
     }
 
     buffer::const_iterator::const_iterator(const unsigned char *buffer) noexcept
-        : buffer_(buffer)
+        : m_buffer(buffer)
     {}
 
     buffer::const_iterator &buffer::const_iterator::operator++() noexcept
     {
-        ++buffer_;
+        ++m_buffer;
         return *this;
     }
 
     buffer::const_iterator buffer::const_iterator::operator++(int) noexcept
     {
-        auto prev = buffer_++;
+        auto prev = m_buffer++;
         return const_iterator(prev);
     }
 
     buffer::const_iterator &buffer::const_iterator::operator--() noexcept
     {
-        --buffer_;
+        --m_buffer;
         return *this;
     }
 
     buffer::const_iterator buffer::const_iterator::operator--(int) noexcept
     {
-        auto prev = buffer_--;
+        auto prev = m_buffer--;
         return const_iterator(prev);
     }
 
     const unsigned char &buffer::const_iterator::operator*() const noexcept
     {
-        return *buffer_;
+        return *m_buffer;
     }
 
     bool buffer::const_iterator::operator==(const const_iterator &other) const noexcept
     {
-        return buffer_ == other.buffer_;
+        return m_buffer == other.m_buffer;
     }
 
     bool buffer::const_iterator::operator!=(const const_iterator &other) const noexcept
@@ -112,42 +112,42 @@ namespace vsh::cl {
 
     buffer::const_iterator buffer::const_iterator::operator+(difference_type offset) const noexcept
     {
-        return const_iterator(buffer_ + offset);
+        return const_iterator(m_buffer + offset);
     }
 
     buffer::const_iterator buffer::const_iterator::operator-(difference_type offset) const noexcept
     {
-        return const_iterator(buffer_ - offset);
+        return const_iterator(m_buffer - offset);
     }
 
     buffer::const_iterator::difference_type buffer::const_iterator::operator-(const_iterator other) const noexcept
     {
-        return buffer_ - other.buffer_;
+        return m_buffer - other.m_buffer;
     }
 
     buffer::buffer() noexcept
-        : buffer_(nullptr)
-        , size_(0)
+        : m_buffer(nullptr)
+        , m_size(0)
     {}
 
     buffer::buffer(size_t size)
-        : buffer_(new unsigned char[size])
-        , size_(size)
+        : m_buffer(new unsigned char[size])
+        , m_size(size)
     {}
 
     buffer::~buffer()
     {
-        delete[] buffer_;
+        delete[] m_buffer;
     }
 
     buffer::buffer(const buffer &other)
         : buffer()
     {
-        buffer_ = new unsigned char[other.size_];
-        size_ = other.size_;
+        m_buffer = new unsigned char[other.m_size];
+        m_size = other.m_size;
 
-        for(size_t i = 0; i < size_; ++i) {
-            buffer_[i] = other[i];
+        for(size_t i = 0; i < m_size; ++i) {
+            m_buffer[i] = other[i];
         }
     }
 
@@ -157,14 +157,14 @@ namespace vsh::cl {
             return *this;
         }
 
-        auto new_buf = new unsigned char[other.size_];
-        for(size_t i = 0; i < other.size_; ++i) {
+        auto new_buf = new unsigned char[other.m_size];
+        for(size_t i = 0; i < other.m_size; ++i) {
             new_buf[i] = other[i];
         }
 
-        delete[] buffer_;
-        buffer_ = new_buf;
-        size_ = other.size_;
+        delete[] m_buffer;
+        m_buffer = new_buf;
+        m_size = other.m_size;
 
         return *this;
     }
@@ -172,14 +172,14 @@ namespace vsh::cl {
     buffer::buffer(buffer &&other) noexcept
         : buffer()
     {
-        std::swap(buffer_, other.buffer_);
-        std::swap(size_, other.size_);
+        std::swap(m_buffer, other.m_buffer);
+        std::swap(m_size, other.m_size);
     }
 
     buffer &buffer::operator=(buffer &&other) noexcept
     {
-        std::swap(buffer_, other.buffer_);
-        std::swap(size_, other.size_);
+        std::swap(m_buffer, other.m_buffer);
+        std::swap(m_size, other.m_size);
 
         return *this;
     }
@@ -191,12 +191,12 @@ namespace vsh::cl {
 
     const unsigned char *buffer::data() const noexcept
     {
-        return buffer_;
+        return m_buffer;
     }
 
     size_t buffer::size() const noexcept
     {
-        return size_;
+        return m_size;
     }
 
     unsigned char &buffer::operator[](size_t pos) noexcept
@@ -206,12 +206,12 @@ namespace vsh::cl {
 
     const unsigned char &buffer::operator[](size_t pos) const noexcept
     {
-        return *(buffer_ + pos);
+        return *(m_buffer + pos);
     }
 
     buffer::operator bool() const noexcept
     {
-        return buffer_;
+        return m_buffer;
     }
 
     unsigned char &buffer::at(size_t pos)
@@ -221,7 +221,7 @@ namespace vsh::cl {
 
     const unsigned char &buffer::at(size_t pos) const
     {
-        if(pos >= size_) {
+        if(pos >= m_size) {
             throw std::out_of_range("attempt to access an element out of the buffer");
         }
 
@@ -230,42 +230,42 @@ namespace vsh::cl {
 
     buffer::iterator buffer::begin() noexcept
     {
-        return iterator(buffer_);
+        return iterator(m_buffer);
     }
 
     buffer::iterator buffer::end() noexcept
     {
-        return iterator(buffer_ + size_);
+        return iterator(m_buffer + m_size);
     }
 
     buffer::const_iterator buffer::cbegin() const noexcept
     {
-        return const_iterator(buffer_);
+        return const_iterator(m_buffer);
     }
 
     buffer::const_iterator buffer::cend() const noexcept
     {
-        return const_iterator(buffer_ + size_);
+        return const_iterator(m_buffer + m_size);
     }
 
     buffer::reverse_iterator buffer::rbegin() noexcept
     {
-        return reverse_iterator(buffer_ + size_);
+        return reverse_iterator(m_buffer + m_size);
     }
 
     buffer::reverse_iterator buffer::rend() noexcept
     {
-        return reverse_iterator(buffer_);
+        return reverse_iterator(m_buffer);
     }
 
     buffer::const_reverse_iterator buffer::crbegin() const noexcept
     {
-        return const_reverse_iterator(buffer_ + size_);
+        return const_reverse_iterator(m_buffer + m_size);
     }
 
     buffer::const_reverse_iterator buffer::crend() const noexcept
     {
-        return const_reverse_iterator(buffer_);
+        return const_reverse_iterator(m_buffer);
     }
 
     buffer::iterator operator+(buffer::iterator::difference_type offset,

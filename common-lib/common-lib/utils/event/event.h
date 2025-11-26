@@ -24,6 +24,6 @@ namespace vsh::cl {
 
     private:
         class impl;
-        std::unique_ptr<impl> impl_;
+        std::unique_ptr<impl> m_impl;
     };
 }

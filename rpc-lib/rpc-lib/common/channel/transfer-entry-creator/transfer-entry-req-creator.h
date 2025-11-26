@@ -23,7 +23,7 @@ namespace vsh::rpc {
                                 uint64_t &transfer_entry_number) override;
 
     private:
-        const std::string client_id_;
-        std::atomic_uint64_t counter_ = 0;
+        const std::string m_client_id;
+        std::atomic_uint64_t m_counter = 0;
     };
 }

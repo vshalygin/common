@@ -75,13 +75,13 @@ namespace vsh::rpc {
         }
 
     private:
-        const std::string client_id_;
+        const std::string m_client_id;
 
-        std::shared_ptr<guarded_cb_map> cb_map_;
+        std::shared_ptr<guarded_cb_map> m_cb_map;
 
-        std::shared_ptr<cl::ithread_pool> thread_pool_;
-        std::shared_ptr<iclient_connection> connection_;
-        std::unique_ptr<::google::protobuf::RpcChannel> channel_;
-        std::unique_ptr<ilistener> server_listener_;
+        std::shared_ptr<cl::ithread_pool> m_thread_pool;
+        std::shared_ptr<iclient_connection> m_connection;
+        std::unique_ptr<::google::protobuf::RpcChannel> m_channel;
+        std::unique_ptr<ilistener> m_server_listener;
     };
 }

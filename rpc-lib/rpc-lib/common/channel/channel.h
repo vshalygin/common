@@ -43,9 +43,9 @@ namespace vsh::rpc {
                         Closure *done) override;
 
     private:
-        std::shared_ptr<itransport> transport_;
-        std::shared_ptr<ithread_pool> thread_pool_;
-        std::shared_ptr<guarded_cb_map> cb_map_;
-        std::unique_ptr<itransfer_entry_creator> entry_creator_;
+        std::shared_ptr<itransport> m_transport;
+        std::shared_ptr<ithread_pool> m_thread_pool;
+        std::shared_ptr<guarded_cb_map> m_cb_map;
+        std::unique_ptr<itransfer_entry_creator> m_entry_creator;
     };
 }

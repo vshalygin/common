@@ -3,14 +3,14 @@
 
 namespace vsh::cl {
     thread_pool::thread_pool(unsigned thread_num)
-        : thread_num_(thread_num)
-        , executor_work_guard_(boost::asio::make_work_guard(io_context_))
+        : m_thread_num(thread_num)
+        , m_executor_work_guard(boost::asio::make_work_guard(m_io_context))
     {
         while(thread_num--) {
             thread_group_.create_thread([this]() {
-                                            while(!io_context_.stopped()) {
+                                            while(!m_io_context.stopped()) {
                                                 try {
-                                                    io_context_.run();
+                                                    m_io_context.run();
                                                     break;
                                                 }catch(...) {
                                                 }
@@ -39,29 +39,29 @@ namespace vsh::cl {
 
     void thread_pool::stop()
     {
-        io_context_.stop();
+        m_io_context.stop();
 
         std::call_once(join_threads_flag_, [this]() { thread_group_.join_all(); });
     }
 
     bool thread_pool::is_stopped() const
     {
-        return io_context_.stopped();
+        return m_io_context.stopped();
     }
 
     unsigned thread_pool::get_num() const
     {
-        return thread_num_;
+        return m_thread_num;
     }
 
     boost::asio::io_context *thread_pool::get_io_context()
     {
-        return &io_context_;
+        return &m_io_context;
     }
 
     const boost::asio::io_context *thread_pool::get_io_context() const
     {
-        return &io_context_;
+        return &m_io_context;
     }
 
     template<typename Func>

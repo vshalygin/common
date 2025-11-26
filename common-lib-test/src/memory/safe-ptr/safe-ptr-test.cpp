@@ -24,23 +24,23 @@ namespace {
 
         void call()
         {
-            is_called_ = true;
+            m_is_called = true;
         }
 
         void call_const() const
         {
-            is_called_ = true;
+            m_is_called = true;
         }
 
         bool is_called() const
         {
-            return is_called_;
+            return m_is_called;
         }
 
         inline static bool is_instance_exists;
 
     private:
-        mutable bool is_called_ = false;
+        mutable bool m_is_called = false;
     };
 
     class derived_call_type

@@ -26,7 +26,7 @@ namespace vsh::example {
         void run() override;
 
     private:
-        std::unique_ptr<rpc::iserver_transport> transport_;
-        std::unique_ptr<proto::Service> service_;
+        std::unique_ptr<rpc::iserver_transport> m_transport;
+        std::unique_ptr<proto::Service> m_service;
     };
 }

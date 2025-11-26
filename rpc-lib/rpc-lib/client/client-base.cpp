@@ -34,12 +34,12 @@ namespace vsh::rpc {
                              std::shared_ptr<iclient_connection> connection,
                              std::shared_ptr<itransport> transport,
                              std::unique_ptr<ilistener> server_listener)
-        : client_id_("5B576C99271E4516BD509B9B8C363327") //TODO generate
-        , cb_map_(std::make_shared<guarded_cb_map>())
-        , thread_pool_(std::move(thread_pool))
-        , connection_(std::move(connection))
-        , channel_(create_channel(transport, thread_pool_, cb_map_, client_id_))
-        , server_listener_(std::move(server_listener))
+        : m_client_id("5B576C99271E4516BD509B9B8C363327") //TODO generate
+        , m_cb_map(std::make_shared<guarded_cb_map>())
+        , m_thread_pool(std::move(thread_pool))
+        , m_connection(std::move(connection))
+        , m_channel(create_channel(transport, m_thread_pool, m_cb_map, m_client_id))
+        , m_server_listener(std::move(server_listener))
     {}
 
     client_base::client_base(std::shared_ptr<cl::ithread_pool> thread_pool,
@@ -47,22 +47,22 @@ namespace vsh::rpc {
                              std::shared_ptr<itransport> transport)
         : client_base(thread_pool, connection, transport, nullptr)
     {
-        server_listener_ = create_listener(cb_map_, transport, thread_pool);
+        m_server_listener = create_listener(m_cb_map, transport, thread_pool);
     }
 
     int client_base::connect()
     {
-        server_listener_->start(); //TODO think about it later
-        return connection_->connect();
+        m_server_listener->start(); //TODO think about it later
+        return m_connection->connect();
     }
 
     int client_base::disconnect()
     {
-        return connection_->close();
+        return m_connection->close();
     }
 
     ::google::protobuf::RpcChannel *client_base::get_channel() const
     {
-        return channel_.get();
+        return m_channel.get();
     }
 }

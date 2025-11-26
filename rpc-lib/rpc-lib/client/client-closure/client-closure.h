@@ -25,6 +25,6 @@ namespace vsh::rpc {
         void Run() override;
 
     private:
-        std::function<void()> on_success_;
+        std::function<void()> m_on_success;
     };
 }

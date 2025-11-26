@@ -4,41 +4,41 @@
 
 namespace vsh::cl {
     cbuffer_view::iterator::iterator(const unsigned char *buffer) noexcept
-        : buffer_(buffer)
+        : m_buffer(buffer)
     {}
 
     cbuffer_view::iterator &cbuffer_view::iterator::operator++() noexcept
     {
-        ++buffer_;
+        ++m_buffer;
         return *this;
     }
 
     cbuffer_view::iterator cbuffer_view::iterator::operator++(int) noexcept
     {
-        auto prev = buffer_++;
+        auto prev = m_buffer++;
         return iterator(prev);
     }
 
     cbuffer_view::iterator &cbuffer_view::iterator::operator--() noexcept
     {
-        --buffer_;
+        --m_buffer;
         return *this;
     }
 
     cbuffer_view::iterator cbuffer_view::iterator::operator--(int) noexcept
     {
-        auto prev = buffer_--;
+        auto prev = m_buffer--;
         return iterator(prev);
     }
 
     const unsigned char &cbuffer_view::iterator::operator*() const noexcept
     {
-        return *buffer_;
+        return *m_buffer;
     }
 
     bool cbuffer_view::iterator::operator==(const iterator &other) const noexcept
     {
-        return buffer_ == other.buffer_;
+        return m_buffer == other.m_buffer;
     }
 
     bool cbuffer_view::iterator::operator!=(const iterator &other) const noexcept
@@ -48,17 +48,17 @@ namespace vsh::cl {
 
     cbuffer_view::iterator cbuffer_view::iterator::operator+(difference_type offset) const noexcept
     {
-        return iterator(buffer_ + offset);
+        return iterator(m_buffer + offset);
     }
 
     cbuffer_view::iterator cbuffer_view::iterator::operator-(difference_type offset) const noexcept
     {
-        return iterator(buffer_ - offset);
+        return iterator(m_buffer - offset);
     }
 
     cbuffer_view::iterator::difference_type cbuffer_view::iterator::operator-(iterator other) const noexcept
     {
-        return buffer_ - other.buffer_;
+        return m_buffer - other.m_buffer;
     }
 
     cbuffer_view::cbuffer_view() noexcept
@@ -66,8 +66,8 @@ namespace vsh::cl {
     {}
 
     cbuffer_view::cbuffer_view(const unsigned char *buffer, size_t size) noexcept
-        : buffer_(buffer)
-        , size_(size)
+        : m_buffer(buffer)
+        , m_size(size)
     {}
 
     cbuffer_view::cbuffer_view(const buffer &buf) noexcept
@@ -76,28 +76,28 @@ namespace vsh::cl {
 
     const unsigned char *cbuffer_view::data() const noexcept
     {
-        return buffer_;
+        return m_buffer;
     }
 
     size_t cbuffer_view::size() const noexcept
     {
-        return size_;
+        return m_size;
     }
 
     const unsigned char &cbuffer_view::operator[](size_t pos) const noexcept
     {
-        return *(buffer_ + pos);
+        return *(m_buffer + pos);
     }
 
     cbuffer_view::operator bool() const noexcept
     {
-        return buffer_;
+        return m_buffer;
     }
 
 
     const unsigned char &cbuffer_view::at(size_t pos) const
     {
-        if(pos >= size_) {
+        if(pos >= m_size) {
             throw std::out_of_range("attempt to access an element out of the buffer");
         }
 
@@ -106,42 +106,42 @@ namespace vsh::cl {
 
     cbuffer_view::iterator cbuffer_view::begin() const noexcept
     {
-        return iterator(buffer_);
+        return iterator(m_buffer);
     }
 
     cbuffer_view::iterator cbuffer_view::end() const noexcept
     {
-        return iterator(buffer_ + size_);
+        return iterator(m_buffer + m_size);
     }
 
     cbuffer_view::const_iterator cbuffer_view::cbegin() const noexcept
     {
-        return const_iterator(buffer_);
+        return const_iterator(m_buffer);
     }
 
     cbuffer_view::const_iterator cbuffer_view::cend() const noexcept
     {
-        return const_iterator(buffer_ + size_);
+        return const_iterator(m_buffer + m_size);
     }
 
     cbuffer_view::reverse_iterator cbuffer_view::rbegin() const noexcept
     {
-        return reverse_iterator(buffer_ + size_);
+        return reverse_iterator(m_buffer + m_size);
     }
 
     cbuffer_view::reverse_iterator cbuffer_view::rend() const noexcept
     {
-        return reverse_iterator(buffer_);
+        return reverse_iterator(m_buffer);
     }
 
     cbuffer_view::const_reverse_iterator cbuffer_view::crbegin() const noexcept
     {
-        return const_reverse_iterator(buffer_ + size_);
+        return const_reverse_iterator(m_buffer + m_size);
     }
 
     cbuffer_view::const_reverse_iterator cbuffer_view::crend() const noexcept
     {
-        return const_reverse_iterator(buffer_);
+        return const_reverse_iterator(m_buffer);
     }
 
     cbuffer_view::iterator operator+(cbuffer_view::iterator::difference_type offset,

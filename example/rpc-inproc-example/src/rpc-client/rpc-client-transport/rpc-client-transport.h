@@ -27,6 +27,6 @@ namespace vsh::example {
         bool is_active() const override;
 
     private:
-        std::atomic_bool is_connected_ = false;
+        std::atomic_bool m_is_connected = false;
     };
 }

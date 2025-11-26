@@ -4,7 +4,7 @@
 
 namespace vsh::rpc {
     transfer_entry_req_creator::transfer_entry_req_creator(const std::string &client_id)
-        : client_id_(client_id)
+        : m_client_id(client_id)
     {}
 
 
@@ -12,11 +12,11 @@ namespace vsh::rpc {
                                                         const Message *request,
                                                         uint64_t &transfer_entry_number)
     {
-        transfer_entry_number = counter_.fetch_add(1);
+        transfer_entry_number = m_counter.fetch_add(1);
         auto method_idx = static_cast<unsigned>(method->index());
 
         return create_transfer_entry_req(transfer_entry_number,
-                                         client_id_,
+                                         m_client_id,
                                          method_idx,
                                          request);
     }

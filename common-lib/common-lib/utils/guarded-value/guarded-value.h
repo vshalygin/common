@@ -8,12 +8,12 @@ namespace vsh::cl {
     {
     public:
         guarded_value(T &&value)
-            : value_(std::move(value))
+            : m_value(std::move(value))
         {}
 
         template<typename...Args>
         guarded_value(Args&&...args)
-            : value_(std::forward<Args>(args)...)
+            : m_value(std::forward<Args>(args)...)
         {}
 
         guarded_value(guarded_value &) = delete;
@@ -21,16 +21,16 @@ namespace vsh::cl {
 
         std::pair<std::unique_lock<std::mutex>, T &> get()
         {
-            return { std::unique_lock(mtx_), value_ };
+            return { std::unique_lock(m_mtx), m_value };
         }
 
         std::pair<std::unique_lock<std::mutex>, const T &> get() const
         {
-            return { std::unique_lock(mtx_), value_ };
+            return { std::unique_lock(m_mtx), m_value };
         }
 
     private:
-        mutable std::mutex mtx_;
-        T value_;
+        mutable std::mutex m_mtx;
+        T m_value;
     };
 }
