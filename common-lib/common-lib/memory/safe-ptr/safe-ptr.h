@@ -3,7 +3,7 @@
 #include <mutex>
 #include <utility>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     template<typename T>
     class safe_ptr_proxy
     {

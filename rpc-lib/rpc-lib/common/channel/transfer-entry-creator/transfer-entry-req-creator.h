@@ -18,9 +18,9 @@ namespace vsh::rpc {
         transfer_entry_req_creator(transfer_entry_req_creator &) = delete;
         transfer_entry_req_creator &operator=(transfer_entry_req_creator) = delete;
 
-        common_lib::buffer create_entry(const MethodDescriptor *method,
-                                        const Message *request,
-                                        uint64_t &transfer_entry_number) override;
+        cl::buffer create_entry(const MethodDescriptor *method,
+                                const Message *request,
+                                uint64_t &transfer_entry_number) override;
 
     private:
         const std::string client_id_;

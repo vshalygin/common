@@ -27,7 +27,7 @@ namespace vsh::rpc {
         uint64_t transfer_entry_number = 0;
         auto transfer_entry = entry_creator_->create_entry(method, request, transfer_entry_number);
 
-        auto callback = [this, response, done](const common_lib::buffer &answer_entry)
+        auto callback = [this, response, done](const cl::buffer &answer_entry)
         {
             auto serialized_message = get_serialized_message(answer_entry);
             response->ParseFromArray(serialized_message.data(), static_cast<int>(serialized_message.size()));

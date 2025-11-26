@@ -18,10 +18,10 @@ namespace vsh::rpc {
     class channel
         : public ::google::protobuf::RpcChannel
     {
-        using callback_type = std::function<void(const common_lib::buffer &)>;
-        using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
+        using callback_type = std::function<void(const cl::buffer &)>;
+        using guarded_cb_map = cl::guarded_value<std::unordered_map<uint64_t, callback_type>>;
 
-        using ithread_pool = common_lib::ithread_pool;
+        using ithread_pool = cl::ithread_pool;
         using MethodDescriptor = google::protobuf::MethodDescriptor;
         using RpcController = google::protobuf::RpcController;
         using Message = google::protobuf::Message;

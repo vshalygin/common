@@ -15,9 +15,9 @@ namespace vsh::example {
     void rpc_server::run()
     {
         while(true) {
-            common_lib::buffer buff;
+            cl::buffer buff;
             transport_->recv(buff);
-            common_lib::cbuffer_view cbv(buff.data(), buff.size());
+            cl::cbuffer_view cbv(buff.data(), buff.size());
             auto method_idx = static_cast<int>(rpc::get_method_idx_req(cbv));
 
             auto req_descr = service_->descriptor()->method(method_idx)->input_type();

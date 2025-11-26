@@ -2,7 +2,7 @@
 #include <chrono>
 #include <memory>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     class event
     {
     public:

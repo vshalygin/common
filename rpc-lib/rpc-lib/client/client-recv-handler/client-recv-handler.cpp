@@ -6,7 +6,7 @@ namespace vsh::rpc {
         : cb_map_(std::move(cb_map))
     {}
 
-    int client_recv_handler::process(const common_lib::buffer &buffer)
+    int client_recv_handler::process(const cl::buffer &buffer)
     {
         auto entry_type = get_transfer_entry_type(buffer);
         switch(entry_type) {
@@ -19,7 +19,7 @@ namespace vsh::rpc {
 
     }
 
-    int client_recv_handler::process_res(const common_lib::buffer &buffer)
+    int client_recv_handler::process_res(const cl::buffer &buffer)
     {
         auto entry_number = get_entry_number_res(buffer);
         callback_type callback;

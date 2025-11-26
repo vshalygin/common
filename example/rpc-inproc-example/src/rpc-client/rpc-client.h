@@ -7,7 +7,7 @@
 
 #include <memory>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     class ithread_pool;
 }
 
@@ -19,11 +19,11 @@ namespace vsh::example {
     {
         using RpcChannel = google::protobuf::RpcChannel;
 
-        rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+        rpc_client(std::shared_ptr<cl::ithread_pool> thread_pool,
                    std::shared_ptr<rpc_client_transport> rpc_client_transport);
 
     public:
-        explicit rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool);
+        explicit rpc_client(std::shared_ptr<cl::ithread_pool> thread_pool);
 
         rpc_client(rpc_client &) = delete;
         rpc_client &operator=(rpc_client &) = delete;

@@ -3,7 +3,7 @@
 #include <utility>
 #include <stdexcept>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     buffer::iterator::iterator(unsigned char *buffer) noexcept
         : buffer_(buffer)
     {}

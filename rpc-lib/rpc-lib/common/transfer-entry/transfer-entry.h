@@ -38,34 +38,34 @@ namespace vsh::rpc {
         ack = 3
     };
 
-    transfer_type get_transfer_entry_type(common_lib::cbuffer_view entry);
-    common_lib::cbuffer_view get_serialized_message(common_lib::cbuffer_view entry);
+    transfer_type get_transfer_entry_type(cl::cbuffer_view entry);
+    cl::cbuffer_view get_serialized_message(cl::cbuffer_view entry);
 
-    uint64_t get_entry_number_req(common_lib::cbuffer_view entry);
-    common_lib::cbuffer_view get_client_id_req(common_lib::cbuffer_view entry);
-    unsigned get_method_idx_req(common_lib::cbuffer_view entry);
+    uint64_t get_entry_number_req(cl::cbuffer_view entry);
+    cl::cbuffer_view get_client_id_req(cl::cbuffer_view entry);
+    unsigned get_method_idx_req(cl::cbuffer_view entry);
 
-    uint64_t get_entry_number_res(common_lib::cbuffer_view entry);
+    uint64_t get_entry_number_res(cl::cbuffer_view entry);
     
-    uint64_t get_entry_number_evt(common_lib::cbuffer_view entry);
-    unsigned get_method_idx_evt(common_lib::cbuffer_view entry);
+    uint64_t get_entry_number_evt(cl::cbuffer_view entry);
+    unsigned get_method_idx_evt(cl::cbuffer_view entry);
 
-    uint64_t get_entry_number_ack(common_lib::cbuffer_view entry);
-    common_lib::cbuffer_view get_client_id_ack(common_lib::cbuffer_view entry);
+    uint64_t get_entry_number_ack(cl::cbuffer_view entry);
+    cl::cbuffer_view get_client_id_ack(cl::cbuffer_view entry);
 
-    common_lib::buffer create_transfer_entry_req(uint64_t entry_number,
-                                                 const std::string &client_id,
-                                                 unsigned method_idx,
-                                                 const google::protobuf::Message *message);
+    cl::buffer create_transfer_entry_req(uint64_t entry_number,
+                                         const std::string &client_id,
+                                         unsigned method_idx,
+                                         const google::protobuf::Message *message);
 
-    common_lib::buffer create_transfer_entry_res(uint64_t entry_number,
-                                                 google::protobuf::Message *message);
+    cl::buffer create_transfer_entry_res(uint64_t entry_number,
+                                         google::protobuf::Message *message);
 
-    common_lib::buffer create_transfer_entry_evt(uint64_t entry_number,
-                                                 unsigned method_idx,
-                                                 google::protobuf::Message *message);
+    cl::buffer create_transfer_entry_evt(uint64_t entry_number,
+                                         unsigned method_idx,
+                                         google::protobuf::Message *message);
 
-    common_lib::buffer create_transfer_entry_ack(uint64_t entry_number,
-                                                 const std::string &client_id,
-                                                 const google::protobuf::Message *message);
+    cl::buffer create_transfer_entry_ack(uint64_t entry_number,
+                                         const std::string &client_id,
+                                         const google::protobuf::Message *message);
 }

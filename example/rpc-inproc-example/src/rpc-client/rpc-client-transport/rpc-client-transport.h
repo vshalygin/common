@@ -20,9 +20,9 @@ namespace vsh::example {
         int connect() override;
         int close() override;
 
-        int send(common_lib::buffer &&buff) override;
+        int send(cl::buffer &&buff) override;
 
-        int recv(common_lib::buffer &buff) override;
+        int recv(cl::buffer &buff) override;
 
         bool is_active() const override;
 

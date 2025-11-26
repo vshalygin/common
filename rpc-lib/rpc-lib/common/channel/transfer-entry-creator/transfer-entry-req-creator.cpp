@@ -8,9 +8,9 @@ namespace vsh::rpc {
     {}
 
 
-    common_lib::buffer transfer_entry_req_creator::create_entry(const MethodDescriptor *method,
-                                                                const Message *request,
-                                                                uint64_t &transfer_entry_number)
+    cl::buffer transfer_entry_req_creator::create_entry(const MethodDescriptor *method,
+                                                        const Message *request,
+                                                        uint64_t &transfer_entry_number)
     {
         transfer_entry_number = counter_.fetch_add(1);
         auto method_idx = static_cast<unsigned>(method->index());

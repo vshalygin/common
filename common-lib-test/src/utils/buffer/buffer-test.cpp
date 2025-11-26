@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-using namespace vsh::common_lib;
+using namespace vsh::cl;
 using namespace testing;
 
 TEST(Buffer, MakesDeepCopyOnCopeCreation)

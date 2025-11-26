@@ -13,8 +13,8 @@ namespace vsh::example {
         rpc_server_transport(rpc_server_transport &) = delete;
         rpc_server_transport &operator=(rpc_server_transport &) = delete;
 
-        int send(common_lib::buffer &&buff) override;
-        int recv(common_lib::buffer &buff) override;
+        int send(cl::buffer &&buff) override;
+        int recv(cl::buffer &buff) override;
 
         void listen() override;
         void close() override;

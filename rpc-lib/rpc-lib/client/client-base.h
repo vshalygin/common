@@ -12,7 +12,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     class ithread_pool;
 }
 
@@ -28,16 +28,16 @@ namespace vsh::rpc {
     class client_base
         : public iclient
     {
-        using callback_type = std::function<void(const common_lib::buffer &)>;
-        using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
+        using callback_type = std::function<void(const cl::buffer &)>;
+        using guarded_cb_map = cl::guarded_value<std::unordered_map<uint64_t, callback_type>>;
 
     protected:
-        client_base(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+        client_base(std::shared_ptr<cl::ithread_pool> thread_pool,
                     std::shared_ptr<iclient_connection> connection,
                     std::shared_ptr<itransport> transport,
                     std::unique_ptr<ilistener> server_listener);
 
-        client_base(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+        client_base(std::shared_ptr<cl::ithread_pool> thread_pool,
                     std::shared_ptr<iclient_connection> connection,
                     std::shared_ptr<itransport> transport);
 
@@ -57,7 +57,7 @@ namespace vsh::rpc {
             auto response = std::make_unique<Response>();
             auto response_ptr = response.get();
 
-            common_lib::event sync_event;
+            cl::event sync_event;
             auto callback = [&sync_event]() {
                 sync_event.set();
             };
@@ -79,7 +79,7 @@ namespace vsh::rpc {
 
         std::shared_ptr<guarded_cb_map> cb_map_;
 
-        std::shared_ptr<common_lib::ithread_pool> thread_pool_;
+        std::shared_ptr<cl::ithread_pool> thread_pool_;
         std::shared_ptr<iclient_connection> connection_;
         std::unique_ptr<::google::protobuf::RpcChannel> channel_;
         std::unique_ptr<ilistener> server_listener_;

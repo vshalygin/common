@@ -9,11 +9,11 @@
 #include <google/protobuf/service.h>
 
 namespace vsh::example {
-    rpc_client::rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool)
+    rpc_client::rpc_client(std::shared_ptr<cl::ithread_pool> thread_pool)
         : rpc_client(std::move(thread_pool), std::make_shared<rpc_client_transport>())
     {}
 
-    rpc_client::rpc_client(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+    rpc_client::rpc_client(std::shared_ptr<cl::ithread_pool> thread_pool,
                            std::shared_ptr<rpc_client_transport> rpc_client_transport)
         : rpc::client_base(std::move(thread_pool), rpc_client_transport, rpc_client_transport)
         , service_stub_(get_channel())

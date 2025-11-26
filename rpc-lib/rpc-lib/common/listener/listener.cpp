@@ -3,7 +3,7 @@
 namespace vsh::rpc {
     listener::listener(std::shared_ptr<irecv_handler> recv_handler,
                        std::shared_ptr<itransport> transport,
-                       std::shared_ptr<common_lib::ithread_pool> thread_pool)
+                       std::shared_ptr<cl::ithread_pool> thread_pool)
         : recv_handler_(std::move(recv_handler))
         , transport_(std::move(transport))
         , thread_pool_(std::move(thread_pool))
@@ -22,7 +22,7 @@ namespace vsh::rpc {
 
     bool listener::listen()
     {
-        common_lib::buffer buffer;
+        cl::buffer buffer;
         transport_->recv(buffer); //TODO check fail
 
         auto task = [buffer = std::move(buffer), recv_handler = recv_handler_]() {

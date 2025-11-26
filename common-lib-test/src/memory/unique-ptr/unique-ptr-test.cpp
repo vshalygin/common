@@ -4,7 +4,7 @@
 
 #include <set>
 
-using namespace vsh::common_lib;
+using namespace vsh::cl;
 using namespace testing;
 
 namespace {

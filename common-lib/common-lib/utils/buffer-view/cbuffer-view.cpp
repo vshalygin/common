@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     cbuffer_view::iterator::iterator(const unsigned char *buffer) noexcept
         : buffer_(buffer)
     {}

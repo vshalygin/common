@@ -27,7 +27,7 @@ namespace vsh::rpc {
         constexpr const unsigned s_ack_trailer_bytes_num = s_entry_number_bytes_num +
                                                            s_client_id_bytes_num;
 
-        unsigned to_unsigned_big_endian(common_lib::cbuffer_view bytes)
+        unsigned to_unsigned_big_endian(cl::cbuffer_view bytes)
         {
             assert(bytes.size() <= sizeof(unsigned));
 
@@ -41,7 +41,7 @@ namespace vsh::rpc {
             return ans;
         }
 
-        uint64_t to_uint64_big_endian(common_lib::cbuffer_view bytes)
+        uint64_t to_uint64_big_endian(cl::cbuffer_view bytes)
         {
             assert(bytes.size() <= sizeof(uint64_t));
 
@@ -83,19 +83,19 @@ namespace vsh::rpc {
             return ans;
         }
 
-        unsigned extract_message_size(common_lib::cbuffer_view entry)
+        unsigned extract_message_size(cl::cbuffer_view entry)
         {
             const auto begin = entry.data() + s_entry_type_bytes_num;
 
-            return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_entry_message_size_bytes_num });
+            return to_unsigned_big_endian(cl::cbuffer_view{ begin, s_entry_message_size_bytes_num });
         }
 
-        void fill_entry_type_byte(common_lib::buffer &buff, size_t &pos, transfer_type type)
+        void fill_entry_type_byte(cl::buffer &buff, size_t &pos, transfer_type type)
         {
             buff[pos++] = static_cast<unsigned char>(type);
         }
         
-        void fill_serialized_message_size_bytes(common_lib::buffer &buff,
+        void fill_serialized_message_size_bytes(cl::buffer &buff,
                                                 size_t &pos,
                                                 unsigned serialized_message_size)
         {
@@ -106,7 +106,7 @@ namespace vsh::rpc {
             }
         }
 
-        void fill_serialized_message_bytes(common_lib::buffer &buff,
+        void fill_serialized_message_bytes(cl::buffer &buff,
                                            size_t &pos,
                                            const google::protobuf::Message *message,
                                            unsigned serialized_message_size)
@@ -116,7 +116,7 @@ namespace vsh::rpc {
             pos += serialized_message_size;
         }
 
-        void fill_entry_number_bytes(common_lib::buffer &buff,
+        void fill_entry_number_bytes(cl::buffer &buff,
                                      size_t &pos,
                                      uint64_t entry_number)
         {
@@ -127,7 +127,7 @@ namespace vsh::rpc {
             }
         }
 
-        void fill_client_id_bytes(common_lib::buffer &buff,
+        void fill_client_id_bytes(cl::buffer &buff,
                                   size_t &pos,
                                   const std::string &client_id)
         {
@@ -137,7 +137,7 @@ namespace vsh::rpc {
             }
         }
 
-        void fill_method_idx_bytes(common_lib::buffer &buff,
+        void fill_method_idx_bytes(cl::buffer &buff,
                                    size_t &pos,
                                    unsigned method_idx)
         {
@@ -148,28 +148,28 @@ namespace vsh::rpc {
             }
         }
 
-        void assert_entry_req([[maybe_unused]] const common_lib::cbuffer_view &entry)
+        void assert_entry_req([[maybe_unused]] const cl::cbuffer_view &entry)
         {
             assert(entry.data());
             assert(entry.size() >= s_header_bytes_num);
             assert(s_header_bytes_num + extract_message_size(entry) + s_req_trailer_bytes_num <= entry.size());
         }
 
-        void assert_entry_res([[maybe_unused]] const common_lib::cbuffer_view &entry)
+        void assert_entry_res([[maybe_unused]] const cl::cbuffer_view &entry)
         {
             assert(entry.data());
             assert(entry.size() >= s_header_bytes_num);
             assert(s_header_bytes_num + extract_message_size(entry) + s_res_trailer_bytes_num <= entry.size());
         }
 
-        void assert_entry_evt([[maybe_unused]] const common_lib::cbuffer_view &entry)
+        void assert_entry_evt([[maybe_unused]] const cl::cbuffer_view &entry)
         {
             assert(entry.data());
             assert(entry.size() >= s_header_bytes_num);
             assert(s_header_bytes_num + extract_message_size(entry) + s_evt_trailer_bytes_num <= entry.size());
         }
 
-        void assert_entry_ack([[maybe_unused]] const common_lib::cbuffer_view &entry)
+        void assert_entry_ack([[maybe_unused]] const cl::cbuffer_view &entry)
         {
             assert(entry.data());
             assert(entry.size() >= s_header_bytes_num);
@@ -177,7 +177,7 @@ namespace vsh::rpc {
         }
     }
 
-    transfer_type get_transfer_entry_type(common_lib::cbuffer_view entry)
+    transfer_type get_transfer_entry_type(cl::cbuffer_view entry)
     {
         assert(entry.data());
         assert(entry.size() > 0);
@@ -185,33 +185,33 @@ namespace vsh::rpc {
         return static_cast<transfer_type>(entry[0]);
     }
 
-    common_lib::cbuffer_view get_serialized_message(common_lib::cbuffer_view entry)
+    cl::cbuffer_view get_serialized_message(cl::cbuffer_view entry)
     {
         assert(entry.data());
         assert(s_header_bytes_num <= entry.size());
         assert(s_header_bytes_num + extract_message_size(entry) <= entry.size());
 
         auto begin = entry.data() + s_header_bytes_num;
-        return common_lib::cbuffer_view(begin, extract_message_size(entry));
+        return cl::cbuffer_view(begin, extract_message_size(entry));
     }
 
-    uint64_t get_entry_number_req(common_lib::cbuffer_view entry)
+    uint64_t get_entry_number_req(cl::cbuffer_view entry)
     {
         assert_entry_req(entry);
 
         auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry);
-        return to_uint64_big_endian(common_lib::cbuffer_view{ begin, s_entry_number_bytes_num });
+        return to_uint64_big_endian(cl::cbuffer_view{ begin, s_entry_number_bytes_num });
     }
 
-    common_lib::cbuffer_view get_client_id_req(common_lib::cbuffer_view entry)
+    cl::cbuffer_view get_client_id_req(cl::cbuffer_view entry)
     {
         assert_entry_req(entry);
 
         auto begin = entry.data() + s_header_bytes_num + extract_message_size(entry) + s_entry_number_bytes_num;
-        return common_lib::cbuffer_view(begin, s_client_id_bytes_num);
+        return cl::cbuffer_view(begin, s_client_id_bytes_num);
     }
 
-    unsigned get_method_idx_req(common_lib::cbuffer_view entry)
+    unsigned get_method_idx_req(cl::cbuffer_view entry)
     {
         assert_entry_req(entry);
 
@@ -220,10 +220,10 @@ namespace vsh::rpc {
                                     s_entry_number_bytes_num +
                                     s_client_id_bytes_num;
 
-        return to_unsigned_big_endian(common_lib::cbuffer_view{ begin, s_method_idx_bytes_num });
+        return to_unsigned_big_endian(cl::cbuffer_view{ begin, s_method_idx_bytes_num });
     }
 
-    uint64_t get_entry_number_res(common_lib::cbuffer_view entry)
+    uint64_t get_entry_number_res(cl::cbuffer_view entry)
     {
         assert_entry_res(entry);
 
@@ -231,7 +231,7 @@ namespace vsh::rpc {
         return to_uint64_big_endian({ begin, s_entry_number_bytes_num });
     }
 
-    uint64_t get_entry_number_evt(common_lib::cbuffer_view entry)
+    uint64_t get_entry_number_evt(cl::cbuffer_view entry)
     {
         assert_entry_evt(entry);
 
@@ -239,7 +239,7 @@ namespace vsh::rpc {
         return to_uint64_big_endian({ begin, s_entry_number_bytes_num });
     }
 
-    unsigned get_method_idx_evt(common_lib::cbuffer_view entry)
+    unsigned get_method_idx_evt(cl::cbuffer_view entry)
     {
         assert_entry_evt(entry);
 
@@ -249,7 +249,7 @@ namespace vsh::rpc {
         return to_unsigned_big_endian({ begin, s_method_idx_bytes_num });
     }
 
-    uint64_t get_entry_number_ack(common_lib::cbuffer_view entry)
+    uint64_t get_entry_number_ack(cl::cbuffer_view entry)
     {
         assert_entry_ack(entry);
 
@@ -257,27 +257,27 @@ namespace vsh::rpc {
         return to_uint64_big_endian({ begin, s_entry_number_bytes_num });
     }
 
-    common_lib::cbuffer_view get_client_id_ack(common_lib::cbuffer_view entry)
+    cl::cbuffer_view get_client_id_ack(cl::cbuffer_view entry)
     {
         assert_entry_ack(entry);
 
         auto begin = entry.data() + s_header_bytes_num +
                                     extract_message_size(entry) +
                                     s_entry_number_bytes_num;
-        return common_lib::cbuffer_view(begin, s_client_id_bytes_num);
+        return cl::cbuffer_view(begin, s_client_id_bytes_num);
     }
 
-    common_lib::buffer create_transfer_entry_req(uint64_t entry_number,
-                                                 const std::string &client_id,
-                                                 unsigned method_idx,
-                                                 const google::protobuf::Message *message)
+    cl::buffer create_transfer_entry_req(uint64_t entry_number,
+                                         const std::string &client_id,
+                                         unsigned method_idx,
+                                         const google::protobuf::Message *message)
     {
         assert(message);
 
         const unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
         const unsigned buf_size = s_header_bytes_num + serialized_message_size + s_req_trailer_bytes_num;
 
-        common_lib::buffer ans(buf_size);
+        cl::buffer ans(buf_size);
         size_t curr_pos = 0;
 
         fill_entry_type_byte(ans, curr_pos, transfer_type::req);
@@ -291,15 +291,15 @@ namespace vsh::rpc {
         return ans;
     }
 
-    common_lib::buffer create_transfer_entry_res(uint64_t entry_number,
-                                                 google::protobuf::Message *message)
+    cl::buffer create_transfer_entry_res(uint64_t entry_number,
+                                         google::protobuf::Message *message)
     {
         assert(message);
 
         const unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
         const unsigned buf_size = s_header_bytes_num + serialized_message_size + s_res_trailer_bytes_num;
 
-        common_lib::buffer ans(buf_size);
+        cl::buffer ans(buf_size);
         size_t curr_pos = 0;
 
         fill_entry_type_byte(ans, curr_pos, transfer_type::res);
@@ -311,7 +311,7 @@ namespace vsh::rpc {
         return ans;
     }
 
-    common_lib::buffer create_transfer_entry_evt(uint64_t entry_number,
+    cl::buffer create_transfer_entry_evt(uint64_t entry_number,
                                                  unsigned method_idx,
                                                  google::protobuf::Message *message)
     {
@@ -320,7 +320,7 @@ namespace vsh::rpc {
         const unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
         const unsigned buf_size = s_header_bytes_num + serialized_message_size + s_evt_trailer_bytes_num;
 
-        common_lib::buffer ans(buf_size);
+        cl::buffer ans(buf_size);
         size_t curr_pos = 0;
 
         fill_entry_type_byte(ans, curr_pos, transfer_type::evt);
@@ -333,7 +333,7 @@ namespace vsh::rpc {
         return ans;
     }
 
-    common_lib::buffer create_transfer_entry_ack(uint64_t entry_number,
+    cl::buffer create_transfer_entry_ack(uint64_t entry_number,
                                                  const std::string &client_id,
                                                  const google::protobuf::Message *message)
     {
@@ -342,7 +342,7 @@ namespace vsh::rpc {
         const unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
         const unsigned buf_size = s_header_bytes_num + serialized_message_size + s_ack_trailer_bytes_num;
 
-        common_lib::buffer ans(buf_size);
+        cl::buffer ans(buf_size);
         size_t curr_pos = 0;
 
         fill_entry_type_byte(ans, curr_pos, transfer_type::ack);

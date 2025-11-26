@@ -3,12 +3,12 @@
 #include "pseudopipe/pseudopipe.h"
 
 namespace vsh::example {
-    int rpc_server_transport::send(common_lib::buffer &&buff)
+    int rpc_server_transport::send(cl::buffer &&buff)
     {
         return pseudopipe::instance_sc().send(std::move(buff));
     }
 
-    int rpc_server_transport::recv(common_lib::buffer &buff)
+    int rpc_server_transport::recv(cl::buffer &buff)
     {
         return pseudopipe::instance_cs().recv(buff);
     }

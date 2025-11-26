@@ -4,7 +4,7 @@
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/thread/thread.hpp>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     class thread_pool final
         : public ithread_pool
     {

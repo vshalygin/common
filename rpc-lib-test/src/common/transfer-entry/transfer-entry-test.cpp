@@ -8,7 +8,7 @@
 #include <string>
 
 using namespace vsh::rpc;
-using namespace vsh::common_lib;
+using namespace vsh::cl;
 
 using namespace testing;
 

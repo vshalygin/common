@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace vsh::common_lib;
+using namespace vsh::cl;
 using namespace testing;
 
 TEST(BufferView, MayBeCreatedFromBuffer)

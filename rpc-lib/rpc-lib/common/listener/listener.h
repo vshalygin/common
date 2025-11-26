@@ -14,7 +14,7 @@ namespace vsh::rpc {
     public:
         listener(std::shared_ptr<irecv_handler> recv_handler,
                  std::shared_ptr<itransport> transport,
-                 std::shared_ptr<common_lib::ithread_pool> thread_pool);
+                 std::shared_ptr<cl::ithread_pool> thread_pool);
 
         listener(listener &) = delete;
         listener &operator=(listener &) = delete;
@@ -27,7 +27,7 @@ namespace vsh::rpc {
     private:
         std::shared_ptr<irecv_handler> recv_handler_;
         std::shared_ptr<itransport> transport_;
-        std::shared_ptr<common_lib::ithread_pool> thread_pool_;
+        std::shared_ptr<cl::ithread_pool> thread_pool_;
 
         std::jthread listen_thread_;
     };

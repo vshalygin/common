@@ -30,7 +30,7 @@ namespace vsh::rpc {
         }
     }
 
-    client_base::client_base(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+    client_base::client_base(std::shared_ptr<cl::ithread_pool> thread_pool,
                              std::shared_ptr<iclient_connection> connection,
                              std::shared_ptr<itransport> transport,
                              std::unique_ptr<ilistener> server_listener)
@@ -42,7 +42,7 @@ namespace vsh::rpc {
         , server_listener_(std::move(server_listener))
     {}
 
-    client_base::client_base(std::shared_ptr<common_lib::ithread_pool> thread_pool,
+    client_base::client_base(std::shared_ptr<cl::ithread_pool> thread_pool,
                              std::shared_ptr<iclient_connection> connection,
                              std::shared_ptr<itransport> transport)
         : client_base(thread_pool, connection, transport, nullptr)

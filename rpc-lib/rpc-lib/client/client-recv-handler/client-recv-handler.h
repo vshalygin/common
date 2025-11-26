@@ -10,8 +10,8 @@ namespace vsh::rpc {
     class client_recv_handler final
         : public irecv_handler
     {
-        using callback_type = std::function<void(const common_lib::buffer &)>;
-        using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
+        using callback_type = std::function<void(const cl::buffer &)>;
+        using guarded_cb_map = cl::guarded_value<std::unordered_map<uint64_t, callback_type>>;
 
     public:
         explicit client_recv_handler(std::shared_ptr<guarded_cb_map> cb_map);
@@ -19,10 +19,10 @@ namespace vsh::rpc {
         client_recv_handler(client_recv_handler &) = delete;
         client_recv_handler &operator=(client_recv_handler) = delete;
 
-        int process(const common_lib::buffer &buffer) override;
+        int process(const cl::buffer &buffer) override;
 
     private:
-        int process_res(const common_lib::buffer &buffer);
+        int process_res(const cl::buffer &buffer);
 
     private:
         std::shared_ptr<guarded_cb_map> cb_map_;

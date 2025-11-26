@@ -18,14 +18,14 @@ using namespace vsh::example;
 using namespace vsh::rpc;
 using namespace vsh;
 
-using callback_type = std::function<void(const common_lib::buffer &)>;
-using guarded_cb_map = common_lib::guarded_value<std::unordered_map<uint64_t, callback_type>>;
+using callback_type = std::function<void(const cl::buffer &)>;
+using guarded_cb_map = cl::guarded_value<std::unordered_map<uint64_t, callback_type>>;
 
 int main()
 {
     auto map = std::make_shared<guarded_cb_map>();
 
-    auto thread_pool = std::make_shared<vsh::common_lib::thread_pool>(4);
+    auto thread_pool = std::make_shared<vsh::cl::thread_pool>(4);
 
     auto server_transport = std::make_unique<rpc_server_transport>();
     auto service = std::make_unique<rpc_service>();

@@ -4,7 +4,7 @@
 #include <utility>
 #include <type_traits>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     template<typename T, typename Allocator = default_allocator>
     class unique_ptr;
 

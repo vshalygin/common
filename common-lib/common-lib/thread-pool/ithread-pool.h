@@ -3,7 +3,7 @@
 
 #include <functional>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     class ithread_pool
     {
     public:

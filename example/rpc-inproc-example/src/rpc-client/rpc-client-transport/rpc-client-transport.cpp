@@ -20,12 +20,12 @@ namespace vsh::example {
         return 0;
     }
 
-    int rpc_client_transport::send(common_lib::buffer &&buff)
+    int rpc_client_transport::send(cl::buffer &&buff)
     {
         return pseudopipe::instance_cs().send(std::move(buff));
     }
 
-    int rpc_client_transport::recv(common_lib::buffer &buff)
+    int rpc_client_transport::recv(cl::buffer &buff)
     {
         return pseudopipe::instance_sc().recv(buff);
     }

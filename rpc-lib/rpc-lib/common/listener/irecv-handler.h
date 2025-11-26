@@ -8,6 +8,6 @@ namespace vsh::rpc {
     public:
         virtual ~irecv_handler() = default;
 
-        virtual int process(const common_lib::buffer &buffer) = 0;//TODO add error ret code
+        virtual int process(const cl::buffer &buffer) = 0;//TODO add error ret code
     };
 }

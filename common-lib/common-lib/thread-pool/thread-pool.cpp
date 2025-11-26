@@ -1,7 +1,7 @@
 #include "thread-pool.h"
 #include <boost/asio/post.hpp>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     thread_pool::thread_pool(unsigned thread_num)
         : thread_num_(thread_num)
         , executor_work_guard_(boost::asio::make_work_guard(io_context_))

@@ -2,7 +2,7 @@
 #include "common-lib/utils/buffer/buffer.h"
 #include <iterator>
 
-namespace vsh::common_lib {
+namespace vsh::cl {
     class cbuffer_view
     {
     public:

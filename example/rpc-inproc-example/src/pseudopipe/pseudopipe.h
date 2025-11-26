@@ -18,11 +18,11 @@ namespace vsh::example {
         static pseudopipe &instance_cs(); //info from client to server;
         static pseudopipe &instance_sc(); //info from server to client;
 
-        int send(common_lib::buffer &&buff);
-        int recv(common_lib::buffer &buff);
+        int send(cl::buffer &&buff);
+        int recv(cl::buffer &buff);
 
     private:
-        std::queue<common_lib::buffer> queue_;
+        std::queue<cl::buffer> queue_;
 
         std::mutex mtx_;
         std::condition_variable cv_;
