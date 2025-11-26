@@ -163,7 +163,7 @@ TEST(TransferEntryReq, CreateTransferEntry)
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
     proto::some_message test_message;
     test_message.ParseFromArray(get_serialized_message(expected_entry_view).data(),
-                                get_serialized_message(expected_entry_view).size());
+                                (int)get_serialized_message(expected_entry_view).size());
     std::string client_id(reinterpret_cast<const char *>(get_client_id_req(expected_entry_view).data()),
                           get_client_id_req(expected_entry_view).size());
 
@@ -199,7 +199,7 @@ TEST(TransferEntryRes, CreateTransferEntry)
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
     proto::some_message test_message;
     test_message.ParseFromArray(get_serialized_message(expected_entry_view).data(),
-                                get_serialized_message(expected_entry_view).size());
+                                (int)get_serialized_message(expected_entry_view).size());
 
     auto entry = create_transfer_entry_res(get_entry_number_res(expected_entry_view),
                                            &test_message);
@@ -245,7 +245,7 @@ TEST(TransferEntryEvt, CreateTransferEntry)
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
     proto::some_message test_message;
     test_message.ParseFromArray(get_serialized_message(expected_entry_view).data(),
-                                get_serialized_message(expected_entry_view).size());
+                                (int)get_serialized_message(expected_entry_view).size());
 
     auto entry = create_transfer_entry_evt(get_entry_number_evt(expected_entry_view),
                                            get_method_idx_evt(expected_entry_view),
@@ -294,7 +294,7 @@ TEST(TransferEntryAck, CreateTransferEntry)
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
     proto::some_message test_message;
     test_message.ParseFromArray(get_serialized_message(expected_entry_view).data(),
-                                get_serialized_message(expected_entry_view).size());
+                                (int)get_serialized_message(expected_entry_view).size());
     std::string client_id(reinterpret_cast<const char *>(get_client_id_ack(expected_entry_view).data()),
                           get_client_id_ack(expected_entry_view).size());
 
