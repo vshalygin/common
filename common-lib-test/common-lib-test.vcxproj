@@ -72,6 +72,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeaderFile />
       <AdditionalIncludeDirectories>$(SolutionDir)\common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,6 +93,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <PrecompiledHeaderFile />
       <AdditionalIncludeDirectories>$(SolutionDir)\common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

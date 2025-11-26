@@ -10,7 +10,7 @@ TEST(ThreadPool, CreatesPoolWithSpecifiedNumberOfThreads)
 {
     std::unique_ptr<ithread_pool> sut = std::make_unique<thread_pool>(2);
 
-    ASSERT_EQ(sut->get_num(), 2);
+    ASSERT_EQ(sut->get_num(), 2u);
 }
 
 TEST(ThreadPool, ExecutesTaskInAnotherThread)
