@@ -20,7 +20,7 @@
     <ClCompile Include="src\utils\guarded-value\guarded-value-test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\common-lib\common-lib.vcxproj">
+    <ProjectReference Include="..\..\common-lib\common-lib.vcxproj">
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
     </ProjectReference>
   </ItemGroup>
