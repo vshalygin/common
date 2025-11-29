@@ -1,111 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="common">
-      <UniqueIdentifier>{b42ec19e-91c4-415f-8a16-89127ea75c19}</UniqueIdentifier>
+    <Filter Include="types">
+      <UniqueIdentifier>{ff53786e-d7b9-47f9-a014-17c8a20e20e1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="client">
-      <UniqueIdentifier>{1ead717e-857b-4114-9b23-beae2274ba1e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="server">
-      <UniqueIdentifier>{d2b977be-2334-4693-b825-044df23c21ec}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\transfer-entry">
-      <UniqueIdentifier>{7b24c5d3-d2e5-41f8-95e9-2310642d2212}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="client\client-closure">
-      <UniqueIdentifier>{0298ecbd-9fc0-4602-8ea8-f3fd3a8fcde0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="server\server-transport">
-      <UniqueIdentifier>{f4533616-2535-4987-9d54-75b37787207b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\listener">
-      <UniqueIdentifier>{491b3cf5-b878-45d2-99e5-30699baecf8b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\transport">
-      <UniqueIdentifier>{02942ba8-d4cd-49fb-bbc0-84d4d5c11e0c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\channel">
-      <UniqueIdentifier>{703e2666-2c54-42fa-afc9-51a4c1710651}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\channel\transfer-entry-creator">
-      <UniqueIdentifier>{00163c91-1f9b-49bb-9106-3aa69611740f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="client\client-connection">
-      <UniqueIdentifier>{0feb2183-dde2-4bb3-b05a-45c24cd3191d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="client\client-recv-handler">
-      <UniqueIdentifier>{5d452014-ec37-424b-86ae-9bc09de0ee87}</UniqueIdentifier>
+    <Filter Include="transfer-message">
+      <UniqueIdentifier>{deae0289-982c-49d2-b63f-16cca15c77c5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp">
-      <Filter>common\transfer-entry</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp">
-      <Filter>client\client-closure</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\common\listener\listener.cpp">
-      <Filter>common\listener</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\common\channel\channel.cpp">
-      <Filter>common\channel</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.cpp">
-      <Filter>common\channel\transfer-entry-creator</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\client\client-base.cpp">
-      <Filter>client</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\client\client-recv-handler\client-recv-handler.cpp">
-      <Filter>client\client-recv-handler</Filter>
+    <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
+      <Filter>transfer-message</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h">
-      <Filter>common\transfer-entry</Filter>
+    <ClInclude Include="rpc-lib\types\result-code.h">
+      <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-closure\client-closure.h">
-      <Filter>client\client-closure</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\server\server-transport\iserver-connection.h">
-      <Filter>server\server-transport</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h">
-      <Filter>server\server-transport</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\listener\ilistener.h">
-      <Filter>common\listener</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\listener\listener.h">
-      <Filter>common\listener</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\listener\irecv-handler.h">
-      <Filter>common\listener</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\transport\itransport.h">
-      <Filter>common\transport</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\channel\channel.h">
-      <Filter>common\channel</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\itransfer-entry-creator.h">
-      <Filter>common\channel\transfer-entry-creator</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.h">
-      <Filter>common\channel\transfer-entry-creator</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-base.h">
-      <Filter>client</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\client\iclient.h">
-      <Filter>client</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-connection\iclient-connection.h">
-      <Filter>client\client-connection</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\client\client-recv-handler\client-recv-handler.h">
-      <Filter>client\client-recv-handler</Filter>
+    <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
+      <Filter>transfer-message</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

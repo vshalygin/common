@@ -11,30 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rpc-lib\client\client-base.cpp" />
-    <ClCompile Include="rpc-lib\client\client-closure\client-closure.cpp" />
-    <ClCompile Include="rpc-lib\client\client-recv-handler\client-recv-handler.cpp" />
-    <ClCompile Include="rpc-lib\common\channel\channel.cpp" />
-    <ClCompile Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.cpp" />
-    <ClCompile Include="rpc-lib\common\listener\listener.cpp" />
-    <ClCompile Include="rpc-lib\common\transfer-entry\transfer-entry.cpp" />
+    <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="rpc-lib\client\client-base.h" />
-    <ClInclude Include="rpc-lib\client\client-closure\client-closure.h" />
-    <ClInclude Include="rpc-lib\client\client-connection\iclient-connection.h" />
-    <ClInclude Include="rpc-lib\client\client-recv-handler\client-recv-handler.h" />
-    <ClInclude Include="rpc-lib\client\iclient.h" />
-    <ClInclude Include="rpc-lib\common\channel\channel.h" />
-    <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\itransfer-entry-creator.h" />
-    <ClInclude Include="rpc-lib\common\channel\transfer-entry-creator\transfer-entry-req-creator.h" />
-    <ClInclude Include="rpc-lib\common\listener\ilistener.h" />
-    <ClInclude Include="rpc-lib\common\listener\irecv-handler.h" />
-    <ClInclude Include="rpc-lib\common\listener\listener.h" />
-    <ClInclude Include="rpc-lib\common\transfer-entry\transfer-entry.h" />
-    <ClInclude Include="rpc-lib\common\transport\itransport.h" />
-    <ClInclude Include="rpc-lib\server\server-transport\iserver-connection.h" />
-    <ClInclude Include="rpc-lib\server\server-transport\iserver-transport.h" />
+    <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
+    <ClInclude Include="rpc-lib\types\result-code.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">
