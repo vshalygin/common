@@ -31,6 +31,12 @@
     <Filter Include="memory\unique-ptr2">
       <UniqueIdentifier>{0926c359-cea5-4e7b-9c95-7f930581c207}</UniqueIdentifier>
     </Filter>
+    <Filter Include="timer">
+      <UniqueIdentifier>{d65c15c0-a64d-47d2-be98-da146e873b45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="timer\multiple-timer">
+      <UniqueIdentifier>{872ad871-352a-47d0-9da4-49cf53f80a27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\event\event.h">
@@ -63,6 +69,12 @@
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h">
       <Filter>memory\unique-ptr2</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\timer\multiple-timer\imultiple-timer.h">
+      <Filter>timer\multiple-timer</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h">
+      <Filter>timer\multiple-timer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\event\event.cpp">
@@ -79,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\utils\buffer-view\cbuffer-view.cpp">
       <Filter>utils\buffer-view</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
+      <Filter>timer\multiple-timer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
