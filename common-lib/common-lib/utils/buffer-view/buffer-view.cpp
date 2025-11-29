@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 namespace vsh::cl {
-    buffer_view::iterator::iterator(unsigned char *buffer) noexcept
+    buffer_view::iterator::iterator(std::byte *buffer) noexcept
         : m_buffer(buffer)
     {}
 
@@ -31,12 +31,12 @@ namespace vsh::cl {
         return iterator(prev);
     }
 
-    unsigned char &buffer_view::iterator::operator*() noexcept
+    std::byte &buffer_view::iterator::operator*() noexcept
     {
-        return const_cast<unsigned char &>(*static_cast<const iterator &>(*this));
+        return const_cast<std::byte &>(*static_cast<const iterator &>(*this));
     }
 
-    const unsigned char &buffer_view::iterator::operator*() const noexcept
+    const std::byte &buffer_view::iterator::operator*() const noexcept
     {
         return *m_buffer;
     }
@@ -66,7 +66,7 @@ namespace vsh::cl {
         return m_buffer - other.m_buffer;
     }
 
-    buffer_view::const_iterator::const_iterator(const unsigned char *buffer) noexcept
+    buffer_view::const_iterator::const_iterator(const std::byte *buffer) noexcept
         : m_buffer(buffer)
     {}
 
@@ -94,7 +94,7 @@ namespace vsh::cl {
         return const_iterator(prev);
     }
 
-    const unsigned char &buffer_view::const_iterator::operator*() const noexcept
+    const std::byte &buffer_view::const_iterator::operator*() const noexcept
     {
         return *m_buffer;
     }
@@ -128,7 +128,7 @@ namespace vsh::cl {
         : buffer_view(nullptr, 0)
     {}
 
-    buffer_view::buffer_view(unsigned char *buffer, size_t size) noexcept
+    buffer_view::buffer_view(std::byte *buffer, size_t size) noexcept
         : m_buffer(buffer)
         , m_size(size)
     {}
@@ -137,12 +137,12 @@ namespace vsh::cl {
         : buffer_view(buf.data(), buf.size())
     {}
 
-    unsigned char *buffer_view::data() noexcept
+    std::byte *buffer_view::data() noexcept
     {
-        return const_cast<unsigned char *>(static_cast<const buffer_view &>(*this).data());
+        return const_cast<std::byte *>(static_cast<const buffer_view &>(*this).data());
     }
 
-    const unsigned char *buffer_view::data() const noexcept
+    const std::byte *buffer_view::data() const noexcept
     {
         return m_buffer;
     }
@@ -152,14 +152,14 @@ namespace vsh::cl {
         return m_size;
     }
 
-    const unsigned char &buffer_view::operator[](size_t pos) const noexcept
+    const std::byte &buffer_view::operator[](size_t pos) const noexcept
     {
         return *(m_buffer + pos);
     }
 
-    unsigned char &buffer_view::operator[](size_t pos) noexcept
+    std::byte &buffer_view::operator[](size_t pos) noexcept
     {
-        return const_cast<unsigned char &>(static_cast<const buffer_view &>(*this)[pos]);
+        return const_cast<std::byte &>(static_cast<const buffer_view &>(*this)[pos]);
     }
 
     buffer_view::operator bool() const noexcept
@@ -167,12 +167,12 @@ namespace vsh::cl {
         return m_buffer;
     }
 
-    unsigned char &buffer_view::at(size_t pos)
+    std::byte &buffer_view::at(size_t pos)
     {
-        return const_cast<unsigned char &>(static_cast<const buffer_view &>(*this).at(pos));
+        return const_cast<std::byte &>(static_cast<const buffer_view &>(*this).at(pos));
     }
 
-    const unsigned char &buffer_view::at(size_t pos) const
+    const std::byte &buffer_view::at(size_t pos) const
     {
         if(pos >= m_size) {
             throw std::out_of_range("attempt to access an element out of the buffer");

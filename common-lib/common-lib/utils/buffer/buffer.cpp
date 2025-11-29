@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 namespace vsh::cl {
-    buffer::iterator::iterator(unsigned char *buffer) noexcept
+    buffer::iterator::iterator(std::byte *buffer) noexcept
         : m_buffer(buffer)
     {}
 
@@ -32,12 +32,12 @@ namespace vsh::cl {
         return iterator(prev);
     }
 
-    unsigned char &buffer::iterator::operator*() noexcept
+    std::byte &buffer::iterator::operator*() noexcept
     {
-        return const_cast<unsigned char &>(*static_cast<const iterator &>(*this));
+        return const_cast<std::byte &>(*static_cast<const iterator &>(*this));
     }
 
-    const unsigned char &buffer::iterator::operator*() const noexcept
+    const std::byte &buffer::iterator::operator*() const noexcept
     {
         return *m_buffer;
     }
@@ -67,7 +67,7 @@ namespace vsh::cl {
         return m_buffer - other.m_buffer;
     }
 
-    buffer::const_iterator::const_iterator(const unsigned char *buffer) noexcept
+    buffer::const_iterator::const_iterator(const std::byte *buffer) noexcept
         : m_buffer(buffer)
     {}
 
@@ -95,7 +95,7 @@ namespace vsh::cl {
         return const_iterator(prev);
     }
 
-    const unsigned char &buffer::const_iterator::operator*() const noexcept
+    const std::byte &buffer::const_iterator::operator*() const noexcept
     {
         return *m_buffer;
     }
@@ -131,7 +131,7 @@ namespace vsh::cl {
     {}
 
     buffer::buffer(size_t size)
-        : m_buffer(new unsigned char[size])
+        : m_buffer(new std::byte[size])
         , m_size(size)
     {}
 
@@ -158,7 +158,7 @@ namespace vsh::cl {
     buffer buffer::copy() const
     {
         buffer buf;
-        buf.m_buffer = new unsigned char[m_size];
+        buf.m_buffer = new std::byte[m_size];
         buf.m_size = m_size;
         for(size_t i = 0; i < buf.m_size; ++i) {
             buf.m_buffer[i] = m_buffer[i];
@@ -167,12 +167,12 @@ namespace vsh::cl {
         return buf;
     }
 
-    unsigned char *buffer::data() noexcept
+    std::byte *buffer::data() noexcept
     {
-        return const_cast<unsigned char *>(static_cast<const buffer &>(*this).data());
+        return const_cast<std::byte *>(static_cast<const buffer &>(*this).data());
     }
 
-    const unsigned char *buffer::data() const noexcept
+    const std::byte *buffer::data() const noexcept
     {
         return m_buffer;
     }
@@ -182,12 +182,12 @@ namespace vsh::cl {
         return m_size;
     }
 
-    unsigned char &buffer::operator[](size_t pos) noexcept
+    std::byte &buffer::operator[](size_t pos) noexcept
     {
-        return const_cast<unsigned char &>(static_cast<const buffer &>(*this)[pos]);
+        return const_cast<std::byte &>(static_cast<const buffer &>(*this)[pos]);
     }
 
-    const unsigned char &buffer::operator[](size_t pos) const noexcept
+    const std::byte &buffer::operator[](size_t pos) const noexcept
     {
         return *(m_buffer + pos);
     }
@@ -197,12 +197,12 @@ namespace vsh::cl {
         return m_buffer;
     }
 
-    unsigned char &buffer::at(size_t pos)
+    std::byte &buffer::at(size_t pos)
     {
-        return const_cast<unsigned char &>(static_cast<const buffer &>(*this).at(pos));
+        return const_cast<std::byte &>(static_cast<const buffer &>(*this).at(pos));
     }
 
-    const unsigned char &buffer::at(size_t pos) const
+    const std::byte &buffer::at(size_t pos) const
     {
         if(pos >= m_size) {
             throw std::out_of_range("attempt to access an element out of the buffer");

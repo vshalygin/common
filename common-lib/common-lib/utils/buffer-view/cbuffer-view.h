@@ -10,13 +10,13 @@ namespace vsh::cl {
         {
             friend cbuffer_view;
 
-            iterator(const unsigned char *buffer) noexcept;
+            iterator(const std::byte *buffer) noexcept;
 
         public:
             using difference_type = std::ptrdiff_t;
-            using value_type = unsigned char;
-            using pointer = const unsigned char *;
-            using reference = const unsigned char &;
+            using value_type = std::byte;
+            using pointer = const std::byte *;
+            using reference = const std::byte &;
             using iterator_category = std::random_access_iterator_tag;
 
             iterator &operator++() noexcept;
@@ -24,7 +24,7 @@ namespace vsh::cl {
             iterator &operator--() noexcept;
             iterator operator--(int) noexcept;
 
-            const unsigned char &operator*() const noexcept;
+            const std::byte &operator*() const noexcept;
 
             bool operator==(const iterator &other) const noexcept;
             bool operator!=(const iterator &other) const noexcept;
@@ -35,7 +35,7 @@ namespace vsh::cl {
             difference_type operator-(iterator other) const noexcept;
 
         private:
-            const unsigned char *m_buffer;
+            const std::byte *m_buffer;
         };
 
         using const_iterator = iterator;
@@ -43,18 +43,18 @@ namespace vsh::cl {
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
         cbuffer_view() noexcept;
-        cbuffer_view(const unsigned char *buffer, size_t size) noexcept;
+        cbuffer_view(const std::byte *buffer, size_t size) noexcept;
         cbuffer_view(const buffer &buf) noexcept;
 
-        const unsigned char *data() const noexcept;
+        const std::byte *data() const noexcept;
 
         size_t size() const noexcept;
 
-        const unsigned char &operator[](size_t pos) const noexcept;
+        const std::byte &operator[](size_t pos) const noexcept;
 
         operator bool() const noexcept;
 
-        const unsigned char &at(size_t pos) const;
+        const std::byte &at(size_t pos) const;
 
         iterator begin() const noexcept;
         iterator end() const noexcept;
@@ -69,7 +69,7 @@ namespace vsh::cl {
         const_reverse_iterator crend() const noexcept;
 
     private:
-        const unsigned char *m_buffer;
+        const std::byte *m_buffer;
         size_t m_size;
     };
 

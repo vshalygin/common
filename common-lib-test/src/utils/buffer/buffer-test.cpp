@@ -9,8 +9,8 @@ using namespace testing;
 TEST(Buffer, CopiesContentToAnotherInstanc)
 {
     buffer buf1(2);
-    buf1[0] = 0x1;
-    buf1[1] = 0x2;
+    buf1[0] = (std::byte)0x1;
+    buf1[1] = (std::byte)0x2;
 
     buffer buf2 = buf1.copy();
 
@@ -59,7 +59,7 @@ TEST(Buffer, MovesToAnotherObjectByCopying)
     ASSERT_EQ(buf2.size(), 3);
 }
 
-TEST(Buffer, MovesToAnotherObjectByAssignment)
+TEST(Buffer, MovesToAnotherObjectByMoveAssignment)
 {
     buffer buf1(3);
     auto data_ptr = buf1.data();
@@ -74,11 +74,11 @@ TEST(Buffer, MovesToAnotherObjectByAssignment)
 TEST(Buffer, GivesAccessToTheElementByIndex)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
-    *(buf.data() + 2) = 0x3;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
+    *(buf.data() + 2) = (std::byte)0x3;
 
-    ASSERT_EQ(buf[2], 0x3);
+    ASSERT_EQ(buf[2], (std::byte)0x3);
 }
 
 TEST(Buffer, ConvertsToFalseIfEmpty)
@@ -98,11 +98,11 @@ TEST(Buffer, ConvertsToTrueIfNotEmpty)
 TEST(Buffer, GivesAccessToTheElementByIndexWithBoundaryCheck)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
-    *(buf.data() + 2) = 0x3;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
+    *(buf.data() + 2) = (std::byte)0x3;
 
-    ASSERT_EQ(buf.at(2), 0x3);
+    ASSERT_EQ(buf.at(2), (std::byte)0x3);
 }
 
 TEST(Buffer, ThrowsExceptionOnAttemptToGetElementByIndexWithBoundaryCheck)
@@ -115,61 +115,61 @@ TEST(Buffer, ThrowsExceptionOnAttemptToGetElementByIndexWithBoundaryCheck)
 TEST(Buffer, IsAbleToIterateElementsLikeStandartContainer)
 {
     buffer buf(3);
-    unsigned char byte_val = 0x0;
-    *(buf.data()) = byte_val;
-    *(buf.data() + 1) = byte_val + 1;
-    *(buf.data() + 2) = byte_val + 2;
+    *(buf.data()) = (std::byte)0x0;
+    *(buf.data() + 1) = (std::byte)(0x1);
+    *(buf.data() + 2) = (std::byte)(0x2);
 
+    unsigned char byte_val = 0x0;
     for(auto byte : buf) {
-        ASSERT_EQ(byte_val++, byte);
+        ASSERT_EQ((std::byte)(byte_val++), byte);
     }
 }
 
 TEST(Buffer, HasConstIterators)
 {
     buffer buf(3);
-    unsigned char byte_val = 0x0;
-    *(buf.data()) = byte_val;
-    *(buf.data() + 1) = byte_val + 1;
-    *(buf.data() + 2) = byte_val + 2;
+    *(buf.data()) = (std::byte)0x0;
+    *(buf.data() + 1) = (std::byte)(0x1);
+    *(buf.data() + 2) = (std::byte)(0x2);
 
+    unsigned char byte_val = 0x0;
     for(auto it = buf.cbegin(); it != buf.cend(); ++it) {
-        ASSERT_EQ(byte_val++, *it);
+        ASSERT_EQ((std::byte)(byte_val++), *it);
     }
 }
 
 TEST(Buffer, HasReverseIterators)
 {
     buffer buf(3);
-    unsigned char byte_val = 0x0;
-    *(buf.data()) = byte_val;
-    *(buf.data() + 1) = ++byte_val;
-    *(buf.data() + 2) = ++byte_val;
+    *(buf.data()) = (std::byte)0x0;
+    *(buf.data() + 1) = (std::byte)(0x1);
+    *(buf.data() + 2) = (std::byte)(0x2);
 
+    unsigned char byte_val = 0x2;
     for(auto it = buf.rbegin(); it != buf.rend(); ++it, --byte_val) {
-        ASSERT_EQ(byte_val, *it);
+        ASSERT_EQ((std::byte)byte_val, *it);
     }
 }
 
 TEST(Buffer, HasConstReverseIterators)
 {
     buffer buf(3);
-    unsigned char byte_val = 0x0;
-    *(buf.data()) = byte_val;
-    *(buf.data() + 1) = ++byte_val;
-    *(buf.data() + 2) = ++byte_val;
+    *(buf.data()) = (std::byte)0x0;
+    *(buf.data() + 1) = (std::byte)(0x1);
+    *(buf.data() + 2) = (std::byte)(0x2);
 
+    unsigned char byte_val = 0x2;
     for(auto it = buf.crbegin(); it != buf.crend(); ++it, --byte_val) {
-        ASSERT_EQ(byte_val, *it);
+        ASSERT_EQ((std::byte)byte_val, *it);
     }
 }
 
 TEST(BufferIterator, HasIteratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<buffer::iterator::difference_type, std::ptrdiff_t>;
-    bool is_value_type_type = std::is_same_v<buffer::iterator::value_type, unsigned char>;
-    bool is_pointer_type_same = std::is_same_v<buffer::iterator::pointer, unsigned char *>;
-    bool is_reference_type_same = std::is_same_v<buffer::iterator::reference, unsigned char &>;
+    bool is_value_type_type = std::is_same_v<buffer::iterator::value_type, std::byte>;
+    bool is_pointer_type_same = std::is_same_v<buffer::iterator::pointer, std::byte *>;
+    bool is_reference_type_same = std::is_same_v<buffer::iterator::reference, std::byte &>;
     bool is_iterator_category_same = std::is_same_v<buffer::iterator::iterator_category,
                                                     std::random_access_iterator_tag>;
     
@@ -183,55 +183,55 @@ TEST(BufferIterator, HasIteratorTraits)
 TEST(BufferIterator, IncrementsIteratorWithPrefixIncrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.begin();
-    ASSERT_EQ(*++iter, 0x2);
+    ASSERT_EQ(*++iter, (std::byte)0x2);
 }
 
 TEST(BufferIterator, IncrementsIteratorWithPostfixIncrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.begin();
     auto prev_iter = iter++;
 
-    ASSERT_EQ(*prev_iter, 0x1);
-    ASSERT_EQ(*iter, 0x2);
+    ASSERT_EQ(*prev_iter, (std::byte)0x1);
+    ASSERT_EQ(*iter, (std::byte)0x2);
 }
 
 TEST(BufferIterator, DecrementsIteratorWithPrefixDecrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.begin();
-    ASSERT_EQ(*--iter, 0x1);
+    ASSERT_EQ(*--iter, (std::byte)0x1);
 }
 
 TEST(BufferIterator, DecrementsIteratorWithPostfixDecrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.begin();
     auto prev_iter = iter--;
 
-    ASSERT_EQ(*prev_iter, 0x2);
-    ASSERT_EQ(*iter, 0x1);
+    ASSERT_EQ(*prev_iter, (std::byte)0x2);
+    ASSERT_EQ(*iter, (std::byte)0x1);
 }
 
 TEST(BufferIterator, AllowsDereferencing)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
+    *(buf.data()) = (std::byte)0x1;
 
-    ASSERT_EQ(*buf.begin(), 0x1);
+    ASSERT_EQ(*buf.begin(), (std::byte)0x1);
 }
 
 TEST(BufferIterator, DetermineEqualIterators)
@@ -273,9 +273,9 @@ TEST(BufferIterator, SummarizeAnIteratorWithANumber)
 TEST(BufferConstIterator, HasIteratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<buffer::const_iterator::difference_type, std::ptrdiff_t>;
-    bool is_value_type_type = std::is_same_v<buffer::const_iterator::value_type, unsigned char>;
-    bool is_pointer_type_same = std::is_same_v<buffer::const_iterator::pointer, const unsigned char *>;
-    bool is_reference_type_same = std::is_same_v<buffer::const_iterator::reference, const unsigned char &>;
+    bool is_value_type_type = std::is_same_v<buffer::const_iterator::value_type, std::byte>;
+    bool is_pointer_type_same = std::is_same_v<buffer::const_iterator::pointer, const std::byte *>;
+    bool is_reference_type_same = std::is_same_v<buffer::const_iterator::reference, const std::byte &>;
     bool is_iterator_category_same = std::is_same_v<buffer::const_iterator::iterator_category,
                                                     std::random_access_iterator_tag>;
 
@@ -289,55 +289,55 @@ TEST(BufferConstIterator, HasIteratorTraits)
 TEST(BufferConstIterator, IncrementsIteratorWithPrefixIncrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.cbegin();
-    ASSERT_EQ(*++iter, 0x2);
+    ASSERT_EQ(*++iter, (std::byte)0x2);
 }
 
 TEST(BufferConstIterator, IncrementsIteratorWithPostfixIncrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.cbegin();
     auto prev_iter = iter++;
 
-    ASSERT_EQ(*prev_iter, 0x1);
-    ASSERT_EQ(*iter, 0x2);
+    ASSERT_EQ(*prev_iter, (std::byte)0x1);
+    ASSERT_EQ(*iter, (std::byte)0x2);
 }
 
 TEST(BufferConstIterator, DecrementsIteratorWithPrefixDecrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.cbegin();
-    ASSERT_EQ(*--iter, 0x1);
+    ASSERT_EQ(*--iter, (std::byte)0x1);
 }
 
 TEST(BufferConstIterator, DecrementsIteratorWithPostfixDecrementation)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.cbegin();
     auto prev_iter = iter--;
 
-    ASSERT_EQ(*prev_iter, 0x2);
-    ASSERT_EQ(*iter, 0x1);
+    ASSERT_EQ(*prev_iter, (std::byte)0x2);
+    ASSERT_EQ(*iter, (std::byte)0x1);
 }
 
 TEST(BufferConstIterator, AllowsDereferencing)
 {
     buffer buf(3);
-    *(buf.data()) = 0x1;
+    *(buf.data()) = (std::byte)0x1;
 
-    ASSERT_EQ(*buf.cbegin(), 0x1);
+    ASSERT_EQ(*buf.cbegin(), (std::byte)0x1);
 }
 
 TEST(BufferConstIterator, DetermineEqualIterators)
@@ -379,9 +379,9 @@ TEST(BufferConstIterator, SummarizeAnIteratorWithANumber)
 TEST(BufferReverseIterator, HasIteratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<buffer::reverse_iterator::difference_type, std::ptrdiff_t>;
-    bool is_value_type_type = std::is_same_v<buffer::reverse_iterator::value_type, unsigned char>;
-    bool is_pointer_type_same = std::is_same_v<buffer::reverse_iterator::pointer, unsigned char *>;
-    bool is_reference_type_same = std::is_same_v<buffer::reverse_iterator::reference, unsigned char &>;
+    bool is_value_type_type = std::is_same_v<buffer::reverse_iterator::value_type, std::byte>;
+    bool is_pointer_type_same = std::is_same_v<buffer::reverse_iterator::pointer, std::byte *>;
+    bool is_reference_type_same = std::is_same_v<buffer::reverse_iterator::reference, std::byte &>;
     bool is_iterator_category_same = std::is_same_v<buffer::reverse_iterator::iterator_category,
                                                     std::random_access_iterator_tag>;
 
@@ -395,55 +395,55 @@ TEST(BufferReverseIterator, HasIteratorTraits)
 TEST(BufferReverseIterator, IncrementsIteratorWithPrefixIncrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.rbegin();
-    ASSERT_EQ(*++iter, 0x1);
+    ASSERT_EQ(*++iter, (std::byte)0x1);
 }
 
 TEST(BufferReverseIterator, IncrementsIteratorWithPostfixIncrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.rbegin();
     auto prev_iter = iter++;
 
-    ASSERT_EQ(*prev_iter, 0x2);
-    ASSERT_EQ(*iter, 0x1);
+    ASSERT_EQ(*prev_iter, (std::byte)0x2);
+    ASSERT_EQ(*iter, (std::byte)0x1);
 }
 
 TEST(BufferReverseIterator, DecrementsIteratorWithPrefixDecrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.rbegin();
-    ASSERT_EQ(*--iter, 0x2);
+    ASSERT_EQ(*--iter, (std::byte)0x2);
 }
 
 TEST(BufferReverseIterator, DecrementsIteratorWithPostfixDecrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.rbegin();
     auto prev_iter = iter--;
 
-    ASSERT_EQ(*prev_iter, 0x1);
-    ASSERT_EQ(*iter, 0x2);
+    ASSERT_EQ(*prev_iter, (std::byte)0x1);
+    ASSERT_EQ(*iter, (std::byte)0x2);
 }
 
 TEST(BufferReverseIterator, AllowsDereferencing)
 {
     buffer buf(1);
-    *(buf.data()) = 0x1;
+    *(buf.data()) = (std::byte)0x1;
 
-    ASSERT_EQ(*buf.rbegin(), 0x1);
+    ASSERT_EQ(*buf.rbegin(), (std::byte)0x1);
 }
 
 TEST(BufferReverseIterator, DetermineEqualIterators)
@@ -492,9 +492,9 @@ TEST(BufferReverseIterator, ConvertsToIterator)
 TEST(BufferConstReverseIterator, HasIteratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<buffer::const_reverse_iterator::difference_type, std::ptrdiff_t>;
-    bool is_value_type_type = std::is_same_v<buffer::const_reverse_iterator::value_type, unsigned char>;
-    bool is_pointer_type_same = std::is_same_v<buffer::const_reverse_iterator::pointer, const unsigned char *>;
-    bool is_reference_type_same = std::is_same_v<buffer::const_reverse_iterator::reference, const unsigned char &>;
+    bool is_value_type_type = std::is_same_v<buffer::const_reverse_iterator::value_type, std::byte>;
+    bool is_pointer_type_same = std::is_same_v<buffer::const_reverse_iterator::pointer, const std::byte *>;
+    bool is_reference_type_same = std::is_same_v<buffer::const_reverse_iterator::reference, const std::byte &>;
     bool is_iterator_category_same = std::is_same_v<buffer::const_reverse_iterator::iterator_category,
                                                     std::random_access_iterator_tag>;
 
@@ -508,55 +508,55 @@ TEST(BufferConstReverseIterator, HasIteratorTraits)
 TEST(BufferConstReverseIterator, IncrementsIteratorWithPrefixIncrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.crbegin();
-    ASSERT_EQ(*++iter, 0x1);
+    ASSERT_EQ(*++iter, (std::byte)0x1);
 }
 
 TEST(BufferConstReverseIterator, IncrementsIteratorWithPostfixIncrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = buf.crbegin();
     auto prev_iter = iter++;
 
-    ASSERT_EQ(*prev_iter, 0x2);
-    ASSERT_EQ(*iter, 0x1);
+    ASSERT_EQ(*prev_iter, (std::byte)0x2);
+    ASSERT_EQ(*iter, (std::byte)0x1);
 }
 
 TEST(BufferConstReverseIterator, DecrementsIteratorWithPrefixDecrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.crbegin();
-    ASSERT_EQ(*--iter, 0x2);
+    ASSERT_EQ(*--iter, (std::byte)0x2);
 }
 
 TEST(BufferConstReverseIterator, DecrementsIteratorWithPostfixDecrementation)
 {
     buffer buf(2);
-    *(buf.data()) = 0x1;
-    *(buf.data() + 1) = 0x2;
+    *(buf.data()) = (std::byte)0x1;
+    *(buf.data() + 1) = (std::byte)0x2;
 
     auto iter = ++buf.crbegin();
     auto prev_iter = iter--;
 
-    ASSERT_EQ(*prev_iter, 0x1);
-    ASSERT_EQ(*iter, 0x2);
+    ASSERT_EQ(*prev_iter, (std::byte)0x1);
+    ASSERT_EQ(*iter, (std::byte)0x2);
 }
 
 TEST(BufferConstReverseIterator, AllowsDereferencing)
 {
     buffer buf(1);
-    *(buf.data()) = 0x1;
+    *(buf.data()) = (std::byte)0x1;
 
-    ASSERT_EQ(*buf.crbegin(), 0x1);
+    ASSERT_EQ(*buf.crbegin(), (std::byte)0x1);
 }
 
 TEST(BufferConstReverseIterator, DetermineEqualIterators)
