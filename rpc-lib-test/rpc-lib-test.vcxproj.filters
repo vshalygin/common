@@ -10,25 +10,22 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\transfer-entry\transfer-entry-test.cpp">
-      <Filter>common\transfer-entry</Filter>
-    </ClCompile>
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <Filter>proto</Filter>
+    </ClCompile>
+    <ClCompile Include="src\transfer-message\transfer-message-test.cpp">
+      <Filter>transfer-message</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
       <UniqueIdentifier>{742bb53f-ea8e-4d63-81f9-b1f8e8d75516}</UniqueIdentifier>
     </Filter>
-    <Filter Include="common">
-      <UniqueIdentifier>{65d01a42-4a4d-48e7-bfcb-56f8de6b9a8e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="common\transfer-entry">
-      <UniqueIdentifier>{3089d65e-3e3f-4b66-bdaf-22258b37221c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="proto">
       <UniqueIdentifier>{aeef9d66-6699-4ccf-8d64-26a35721cffe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="transfer-message">
+      <UniqueIdentifier>{3246df77-c1b2-44b2-b01e-67fa375db2df}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

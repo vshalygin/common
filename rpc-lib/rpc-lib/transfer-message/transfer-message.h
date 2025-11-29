@@ -24,7 +24,7 @@
 
     Every type has its own trailer:
     req: 8 bytes message number + 4 bytes method idx
-    res: 8 bytes message number + 1 byte result_code
+    res: 8 bytes message number + 1 byte result code
 */
 
 namespace vsh::rpc {
@@ -35,13 +35,13 @@ namespace vsh::rpc {
     };
 
     transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message);
-    cl::cbuffer_view get_proto_message(cl::cbuffer_view message);
+    cl::cbuffer_view get_serialized_proto_message(cl::cbuffer_view message);
 
-    uint64_t get_transfer_msg_number_req(cl::cbuffer_view message);
-    unsigned get_transfer_msg_method_idx_req(cl::cbuffer_view message);
+    uint64_t get_msg_number_req(cl::cbuffer_view message);
+    unsigned get_msg_method_idx_req(cl::cbuffer_view message);
 
-    uint64_t get_transfer_msg_number_res(cl::cbuffer_view message);
-    result_code get_transfer_msg_result_code_res(cl::cbuffer_view message);
+    uint64_t get_msg_number_res(cl::cbuffer_view message);
+    result_code get_msg_result_code_res(cl::cbuffer_view message);
 
     cl::buffer create_transfer_msg_req(uint64_t message_number,
                                        unsigned method_idx,
