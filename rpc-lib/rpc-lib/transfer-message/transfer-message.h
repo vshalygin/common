@@ -1,5 +1,6 @@
 #pragma once
-#include "rpc-lib/types/result-code.h"
+#include "rpc-lib/types/request-result.h"
+#include "rpc-lib/types/response-result.h"
 
 #include <common-lib/utils/buffer-view/cbuffer-view.h>
 #include <common-lib/utils/buffer/buffer.h>
@@ -24,7 +25,7 @@
 
     Every type has its own trailer:
     req: 8 bytes message number + 4 bytes method idx
-    res: 8 bytes message number + 1 byte result code
+    res: 8 bytes message number + 1 byte response result code
 */
 
 namespace vsh::rpc {
@@ -41,13 +42,13 @@ namespace vsh::rpc {
     unsigned get_msg_method_idx_req(cl::cbuffer_view message);
 
     uint64_t get_msg_number_res(cl::cbuffer_view message);
-    result_code get_msg_result_code_res(cl::cbuffer_view message);
+    response_result get_msg_response_code_res(cl::cbuffer_view message);
 
     cl::buffer create_transfer_msg_req(uint64_t message_number,
                                        unsigned method_idx,
                                        const google::protobuf::Message *proto_message);
 
     cl::buffer create_transfer_msg_res(uint64_t message_number,
-                                       result_code rc,
+                                       response_result rc,
                                        google::protobuf::Message *proto_message);
 }

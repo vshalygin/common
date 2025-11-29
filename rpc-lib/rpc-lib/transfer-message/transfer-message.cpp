@@ -134,9 +134,9 @@ namespace vsh::rpc {
             }
         }
 
-        void fill_result_code_bytes(cl::buffer &buff,
-                                    size_t &pos,
-                                    result_code rc)
+        void fill_response_result_bytes(cl::buffer &buff,
+                                        size_t &pos,
+                                        response_result rc)
         {
             buff[pos++] = static_cast<std::byte>(rc);
         }
@@ -204,7 +204,7 @@ namespace vsh::rpc {
         return to_uint64_big_endian({ begin, s_message_number_bytes_count });
     }
 
-    result_code get_msg_result_code_res(cl::cbuffer_view message)
+    response_result get_msg_response_code_res(cl::cbuffer_view message)
     {
         assert_message_res(message);
 
@@ -213,7 +213,7 @@ namespace vsh::rpc {
                     extract_message_size(message) +
                     s_message_number_bytes_count;
 
-        return static_cast<result_code>(*iter);
+        return static_cast<response_result>(*iter);
     }
 
     cl::buffer create_transfer_msg_req(uint64_t message_number,
@@ -241,7 +241,7 @@ namespace vsh::rpc {
     }
 
     cl::buffer create_transfer_msg_res(uint64_t message_number,
-                                       result_code rc,
+                                       response_result rc,
                                        google::protobuf::Message *message)
     {
         assert(message);
@@ -258,7 +258,7 @@ namespace vsh::rpc {
         fill_serialized_message_size_bytes(ans, curr_pos, serialized_message_size);
         fill_serialized_message_bytes(ans, curr_pos, message, serialized_message_size);
         fill_message_number_bytes(ans, curr_pos, message_number);
-        fill_result_code_bytes(ans, curr_pos, rc);
+        fill_response_result_bytes(ans, curr_pos, rc);
 
         assert(curr_pos == buf_size);
         return ans;

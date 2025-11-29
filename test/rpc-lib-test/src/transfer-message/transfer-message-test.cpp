@@ -34,7 +34,7 @@ namespace {
     constexpr const unsigned s_method_idx = 4091900406; //0xF3E571F6
     const std::vector<std::byte> s_method_idx_bytes = { (std::byte)0xF3, (std::byte)0xE5,
                                                         (std::byte)0x71, (std::byte)0xF6 };
-    const result_code s_result_code = result_code::timeout;
+    const response_result s_response_code = response_result::rejected;
 
     std::vector<std::byte> to_bytes(const std::string &str)
     {
@@ -86,7 +86,7 @@ namespace {
         res.insert(res.cend(), serialized_message_size_bytes.begin(), serialized_message_size_bytes.end());
         res.insert(res.cend(), serialized_test_msg_bytes.begin(), serialized_test_msg_bytes.end());
         res.insert(res.cend(), s_entry_number_bytes.begin(), s_entry_number_bytes.end());
-        res.push_back(static_cast<std::byte>(s_result_code));
+        res.push_back(static_cast<std::byte>(s_response_code));
         return res;
     }
 
@@ -156,11 +156,11 @@ TEST(TransferEntryRes, ResolveEntryNumber)
     ASSERT_EQ(s_entry_number, get_msg_number_res({ entry.data(), entry.size() }));
 }
 
-TEST(TransferEntryRes, ResolveResultCode)
+TEST(TransferEntryRes, ResolveResponseCode)
 {
     const auto entry = create_transfer_msg_res();
 
-    ASSERT_EQ(s_result_code, get_msg_result_code_res({ entry.data(), entry.size() }));
+    ASSERT_EQ(s_response_code, get_msg_response_code_res({ entry.data(), entry.size() }));
 }
 
 TEST(TransferEntryRes, ResolveSerializedMessage)
@@ -183,7 +183,7 @@ TEST(TransferEntryRes, CreateTransferEntry)
                                 (int)get_serialized_proto_message(expected_entry_view).size());
 
     auto entry = create_transfer_msg_res(get_msg_number_res(expected_entry_view),
-                                         get_msg_result_code_res(expected_entry_view),
+                                         get_msg_response_code_res(expected_entry_view),
                                          &test_message);
 
     ASSERT_THAT(expected_entry.data(),
