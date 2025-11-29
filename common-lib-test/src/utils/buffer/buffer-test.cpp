@@ -6,28 +6,13 @@
 using namespace vsh::cl;
 using namespace testing;
 
-TEST(Buffer, MakesDeepCopyOnCopeCreation)
+TEST(Buffer, CopiesContentToAnotherInstanc)
 {
     buffer buf1(2);
     buf1[0] = 0x1;
     buf1[1] = 0x2;
 
-    buffer buf2 = buf1;
-
-    ASSERT_EQ(buf1.size(), buf2.size());
-    ASSERT_NE(buf1.data(), buf2.data());
-    ASSERT_EQ(buf1[0], buf2[0]);
-    ASSERT_EQ(buf1[1], buf2[1]);
-}
-
-TEST(Buffer, MakesDeepCopyOnAssignment)
-{
-    buffer buf1(2);
-    buf1[0] = 0x1;
-    buf1[1] = 0x2;
-
-    buffer buf2;
-    buf2 = buf1;
+    buffer buf2 = buf1.copy();
 
     ASSERT_EQ(buf1.size(), buf2.size());
     ASSERT_NE(buf1.data(), buf2.data());

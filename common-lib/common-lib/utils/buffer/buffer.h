@@ -79,11 +79,13 @@ namespace vsh::cl {
 
         ~buffer();
 
-        buffer(const buffer &); //TODO make copy explicit
-        buffer &operator=(const buffer &);
+        buffer(const buffer &) = delete;
+        buffer &operator=(const buffer &) = delete;
 
         buffer(buffer &&) noexcept;
         buffer &operator=(buffer &&) noexcept;
+
+        buffer copy() const;
 
         unsigned char *data() noexcept;
         const unsigned char *data() const noexcept;

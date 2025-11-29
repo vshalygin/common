@@ -140,35 +140,6 @@ namespace vsh::cl {
         delete[] m_buffer;
     }
 
-    buffer::buffer(const buffer &other)
-        : buffer()
-    {
-        m_buffer = new unsigned char[other.m_size];
-        m_size = other.m_size;
-
-        for(size_t i = 0; i < m_size; ++i) {
-            m_buffer[i] = other[i];
-        }
-    }
-
-    buffer &buffer::operator=(const buffer &other)
-    {
-        if(this == &other) {
-            return *this;
-        }
-
-        auto new_buf = new unsigned char[other.m_size];
-        for(size_t i = 0; i < other.m_size; ++i) {
-            new_buf[i] = other[i];
-        }
-
-        delete[] m_buffer;
-        m_buffer = new_buf;
-        m_size = other.m_size;
-
-        return *this;
-    }
-
     buffer::buffer(buffer &&other) noexcept
         : buffer()
     {
@@ -182,6 +153,18 @@ namespace vsh::cl {
         std::swap(m_size, other.m_size);
 
         return *this;
+    }
+
+    buffer buffer::copy() const
+    {
+        buffer buf;
+        buf.m_buffer = new unsigned char[m_size];
+        buf.m_size = m_size;
+        for(size_t i = 0; i < buf.m_size; ++i) {
+            buf.m_buffer[i] = m_buffer[i];
+        }
+
+        return buf;
     }
 
     unsigned char *buffer::data() noexcept
