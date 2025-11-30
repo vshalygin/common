@@ -14,6 +14,7 @@
     <ClCompile Include="src\memory\safe-ptr\safe-ptr-test.cpp" />
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp" />
+    <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer\buffer-test.cpp" />

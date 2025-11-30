@@ -11,8 +11,6 @@ namespace vsh::cl {
         : public imultiple_timer
     {
     public:
-        using callback_t = std::function<void()>;
-
         explicit multiple_timer(boost::asio::io_context &io_context);
 
         multiple_timer(multiple_timer &) = delete;
@@ -23,6 +21,8 @@ namespace vsh::cl {
         uint64_t start(callback_t &&callback, const std::chrono::microseconds &microseconds) override;
         void cancel(uint64_t id) override;
         void cancel_all() override;
+
+        size_t get_active_timers_count() const override;
 
     private:
         boost::asio::io_context &m_io_context;

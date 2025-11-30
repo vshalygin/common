@@ -31,6 +31,9 @@
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp">
       <Filter>memory\unique-ptr2</Filter>
     </ClCompile>
+    <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp">
+      <Filter>timer\multiple-timer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -59,6 +62,12 @@
     </Filter>
     <Filter Include="memory\unique-ptr2">
       <UniqueIdentifier>{db266bdf-b269-480b-9d55-145ef0d62621}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="timer">
+      <UniqueIdentifier>{6590e062-a557-48c4-af9f-c758e9b16705}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="timer\multiple-timer">
+      <UniqueIdentifier>{cc56a4e7-25da-4835-b0a5-157ce4c2e2c0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
