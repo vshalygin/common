@@ -19,5 +19,7 @@ namespace vsh::rpc {
         virtual void set_disconnect_handler(std::function<void()> &&handler) = 0;
 
         virtual bool is_connected() const = 0;
+
+        virtual size_t get_processing_requests_count() const = 0;
     };
 }

@@ -26,6 +26,8 @@ namespace vsh::rpc {
         void set_disconnect_handler(std::function<void()> &&handler) override;
         bool is_connected() const override;
 
+        size_t get_processing_requests_count() const override;
+
     private:
         class impl;
         std::shared_ptr<impl> m_impl;

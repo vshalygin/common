@@ -43,8 +43,5 @@
     <ClInclude Include="src\mocks\multiple-timer-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
-    <ClInclude Include="src\mocks\transport-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

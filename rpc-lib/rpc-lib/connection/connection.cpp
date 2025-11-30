@@ -16,6 +16,22 @@ namespace vsh::rpc {
         class creator
         {};
 
+        using request_callback_t = std::function<void(request_result, cl::buffer &&)>;
+
+        struct request_data
+        {
+            request_data(request_callback_t &&cb,
+                        uint64_t id)
+                : callback(std::move(cb))
+                , timer_id(id)
+            {}
+
+            request_callback_t callback;
+            uint64_t timer_id;
+        };
+
+        using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
+
     public:
         static std::shared_ptr<impl> create(std::unique_ptr<itransport> transport,
                                             std::unique_ptr<cl::imultiple_timer> multiple_timer)
@@ -44,7 +60,6 @@ namespace vsh::rpc {
             try {
                 add_request_handler_to_map(msg_number, std::move(handler));
 
-                m_multiple_timer->start(create_request_timout_handler(msg_number), s_timeout);
                 m_transport->send_async(std::move(message), create_send_error_handler(msg_number));
             } catch (...){
                 remove_request_handler_from_map(msg_number);
@@ -74,6 +89,12 @@ namespace vsh::rpc {
             return !m_transport->is_stopped();
         }
 
+        size_t get_processing_requests_count() const
+        {
+            auto [guard, map] = m_request_map.get();
+            return map.size();
+        }
+
     private:
         std::function<void()> create_send_error_handler(uint64_t msg_number)
         {
@@ -98,14 +119,25 @@ namespace vsh::rpc {
         {
             auto [guard, map] = m_request_map.get();
             assert(map.count(msg_number) == 0);
-            map[msg_number] = std::move(handler);
+            auto timer_id = m_multiple_timer->start(create_request_timout_handler(msg_number), s_timeout);
+            map[msg_number] = std::make_shared<request_data>(std::move(handler), timer_id);
         }
 
         void remove_request_handler_from_map(uint64_t msg_number) noexcept
         {
             try {
-                auto [guard, map] = m_request_map.get();
-                map.erase(msg_number);
+                std::shared_ptr<request_data> req_data;
+                {
+                    auto [guard, map] = m_request_map.get();
+                    auto it = map.find(msg_number);
+                    if(it != map.end()) {
+                        req_data = std::move(it->second);
+                        map.erase(it);
+                    }
+                }
+                if(req_data) {
+                    m_multiple_timer->cancel(req_data->timer_id);
+                }
             } catch (...) {
                 //TODO safe log
             }
@@ -141,58 +173,59 @@ namespace vsh::rpc {
                     s->m_transport->send_async(std::move(message), {});
                 }
             };
-            try {
-                auto [guard, response_handler] = m_response_processor.get();
-                if(response_handler) {
-                    response_handler(std::move(message), std::move(callback));
-                }
+
+            auto [guard, response_handler] = m_response_processor.get();
+            if(response_handler) try {
+                response_handler(std::move(message), std::move(callback));
             } catch (...) {
-                //TODO log
+                    //TODO log
             }
+        }
+
+        bool complete_request(uint64_t req_msg_number,
+                              request_result result,
+                              cl::buffer &&res_msg)
+        {
+            std::shared_ptr<request_data> req_data;
+
+            {
+                auto [guard, map] = m_request_map.get();
+                auto it = map.find(req_msg_number);
+                if(it != map.end()) {
+                    req_data = std::move(it->second);
+                    map.erase(it);
+                }
+            }
+
+            if(req_data) {
+                auto &callback = req_data->callback;
+                if(callback) try {
+                    callback(result, std::move(res_msg));
+                } catch(...) {
+                    //TODO log
+                }
+                m_multiple_timer->cancel(req_data->timer_id);
+                return true;
+            }
+            return false;
         }
 
         void handle_response(cl::buffer &&message)
         {
-            auto message_number = get_msg_number_res(message);
-
-            auto [guard, map] = m_request_map.get();
-            auto it = map.find(message_number);
-            if(it != map.end()) {
-                auto &callback = it->second;
-                try {
-                    if(callback) {
-                        callback(request_result::ok, std::move(message));
-                    }
-                } catch (...) {
-                    //TODO log
-                }
-            }
+            const auto message_number = get_msg_number_res(message);
+            complete_request(message_number, request_result::ok, std::move(message));
         }
 
         void handle_send_request_error(uint64_t msg_number)
         {
-            auto [guard, map] = m_request_map.get();
-            auto it = map.find(msg_number);
-            if(it != map.end()) {
-                auto &callback = it->second;
-                callback(request_result::send_error, {});
-
-                map.erase(it);
-            } else {
-                //TODO log warn
+            if(!complete_request(msg_number, request_result::send_error, {})) {
+                //TODO log error
             }
         }
 
         void handle_request_timeout(uint64_t msg_number)
         {
-            auto [guard, map] = m_request_map.get();
-            auto it = map.find(msg_number);
-            if(it != map.end()) {
-                auto &callback = it->second;
-                callback(request_result::timeout, {});
-
-                map.erase(it);
-            }
+            complete_request(msg_number, request_result::timeout, {});
         }
 
     private:
@@ -202,7 +235,6 @@ namespace vsh::rpc {
         using response_processor = std::function<void(cl::buffer &&, response_result_callback &&)>;
         cl::guarded_value<response_processor> m_response_processor;
 
-        using request_map = std::unordered_map<uint64_t, std::function<void(request_result, cl::buffer &&)>>;
         cl::guarded_value<request_map> m_request_map;
     };
 
@@ -235,5 +267,10 @@ namespace vsh::rpc {
     bool connection::is_connected() const
     {
         return m_impl->is_connected();
+    }
+
+    size_t connection::get_processing_requests_count() const
+    {
+        return m_impl->get_processing_requests_count();
     }
 }
