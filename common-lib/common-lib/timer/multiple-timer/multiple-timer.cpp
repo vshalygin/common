@@ -25,6 +25,19 @@ namespace vsh::cl {
         timer_structure->timer.async_wait([this, timer_id,
                                            callback = std::move(callback)]
                                            (const boost::system::error_code &ec) {
+            std::shared_ptr<timer_struct> timer_struct;
+            {
+                auto [guard, timers_map] = m_timers_map.get();
+                auto it = timers_map.find(timer_id);
+                if(it != timers_map.end()) {
+                    timer_struct = std::move(it->second);
+                    timers_map.erase(it);
+                } else {
+                    //TODO log error
+                }
+            }
+
+
             if(!ec) {
                 try {
                     callback();
@@ -35,11 +48,7 @@ namespace vsh::cl {
                 //TODO log. something unexpected
             }
 
-            auto [guard, timers_map] = m_timers_map.get();
-            auto it = timers_map.find(timer_id);
-            if(it != timers_map.end()) {
-                auto timer_struct = it->second;
-                timers_map.erase(it);
+            if(timer_struct) {
                 timer_struct->wait_event.set();
             }
         });
