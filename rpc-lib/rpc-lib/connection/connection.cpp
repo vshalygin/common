@@ -143,7 +143,9 @@ namespace vsh::rpc {
             };
             try {
                 auto [guard, response_handler] = m_response_processor.get();
-                response_handler(std::move(message), std::move(callback));
+                if(response_handler) {
+                    response_handler(std::move(message), std::move(callback));
+                }
             } catch (...) {
                 //TODO log
             }
@@ -158,7 +160,9 @@ namespace vsh::rpc {
             if(it != map.end()) {
                 auto &callback = it->second;
                 try {
-                    callback(request_result::ok, std::move(message));
+                    if(callback) {
+                        callback(request_result::ok, std::move(message));
+                    }
                 } catch (...) {
                     //TODO log
                 }
