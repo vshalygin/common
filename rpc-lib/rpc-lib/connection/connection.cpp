@@ -6,6 +6,10 @@
 #include <unordered_map>
 
 namespace vsh::rpc {
+    namespace {
+        const std::chrono::seconds s_timeout(10);
+    }
+
     class connection::impl
         : public std::enable_shared_from_this<impl>
     {
@@ -13,13 +17,19 @@ namespace vsh::rpc {
         {};
 
     public:
-        static std::shared_ptr<impl> create(std::unique_ptr<itransport> transport)
+        static std::shared_ptr<impl> create(std::unique_ptr<itransport> transport,
+                                            std::unique_ptr<cl::imultiple_timer> multiple_timer)
         {
-            return std::make_shared<impl>(std::move(transport), creator());
+            return std::make_shared<impl>(std::move(transport),
+                                          std::move(multiple_timer),
+                                          creator());
         }
 
-        impl(std::unique_ptr<itransport> transport, creator)
+        impl(std::unique_ptr<itransport> transport,
+             std::unique_ptr<cl::imultiple_timer> multiple_timer,
+             creator)
             : m_transport(std::move(transport))
+            , m_multiple_timer(std::move(multiple_timer))
         {}
 
         impl(impl &) = delete;
@@ -31,9 +41,15 @@ namespace vsh::rpc {
             assert(get_transfer_msg_type(message) == transfer_msg_type::req);
             const auto msg_number = get_msg_number_req(message);
 
-            add_request_handler_to_map(msg_number, std::move(handler));
+            try {
+                add_request_handler_to_map(msg_number, std::move(handler));
 
-            m_transport->send_async(std::move(message), create_send_error_handler(msg_number));
+                m_multiple_timer->start(create_request_timout_handler(msg_number), s_timeout);
+                m_transport->send_async(std::move(message), create_send_error_handler(msg_number));
+            } catch (...){
+                remove_request_handler_from_map(msg_number);
+                throw;
+            }
         }
 
         void start_receive_async()
@@ -68,12 +84,31 @@ namespace vsh::rpc {
             };
         }
 
+        std::function<void()> create_request_timout_handler(uint64_t msg_number)
+        {
+            return [self = weak_from_this(), msg_number]() {
+                if(auto s = self.lock()) {
+                    s->handle_request_timeout(msg_number);
+                }
+            };
+        }
+
         void add_request_handler_to_map(uint64_t msg_number,
                                         std::function<void(request_result, cl::buffer &&)> &&handler)
         {
             auto [guard, map] = m_request_map.get();
             assert(map.count(msg_number) == 0);
             map[msg_number] = std::move(handler);
+        }
+
+        void remove_request_handler_from_map(uint64_t msg_number) noexcept
+        {
+            try {
+                auto [guard, map] = m_request_map.get();
+                map.erase(msg_number);
+            } catch (...) {
+                //TODO safe log
+            }
         }
 
         void receive_async()
@@ -92,51 +127,74 @@ namespace vsh::rpc {
         {
             const auto message_type = get_transfer_msg_type(message);
             assert(message_type == transfer_msg_type::req || message_type == transfer_msg_type::res);
-            if(transfer_msg_type::res == message_type) {
-                process_response(std::move(message));
-            } else if(transfer_msg_type::req == message_type) {
-                process_request(std::move(message));
+            if(transfer_msg_type::req == message_type) {
+                handle_request(std::move(message));
+            } else if(transfer_msg_type::res == message_type) {
+                handle_response(std::move(message));
             }
         }
 
-        void process_request(cl::buffer &&message)
+        void handle_request(cl::buffer &&message)
         {
             auto callback = [self = weak_from_this()](cl::buffer &&message) {
                 if(auto s = self.lock()) {
                     s->m_transport->send_async(std::move(message), {});
                 }
             };
-            auto [guard, response_handler] = m_response_processor.get();
-            response_handler(std::move(message), std::move(callback));
+            try {
+                auto [guard, response_handler] = m_response_processor.get();
+                response_handler(std::move(message), std::move(callback));
+            } catch (...) {
+                //TODO log
+            }
         }
 
-        void process_response(cl::buffer &&message)
+        void handle_response(cl::buffer &&message)
         {
             auto message_number = get_msg_number_res(message);
 
             auto [guard, map] = m_request_map.get();
             auto it = map.find(message_number);
-            assert(it != map.end());
-
-            auto &callback = it->second;
-            callback(request_result::ok, std::move(message));
+            if(it != map.end()) {
+                auto &callback = it->second;
+                try {
+                    callback(request_result::ok, std::move(message));
+                } catch (...) {
+                    //TODO log
+                }
+            }
         }
 
         void handle_send_request_error(uint64_t msg_number)
         {
             auto [guard, map] = m_request_map.get();
             auto it = map.find(msg_number);
-            assert(it != map.end());
+            if(it != map.end()) {
+                auto &callback = it->second;
+                callback(request_result::send_error, {});
 
-            auto &callback = it->second;
-            callback(request_result::send_error, {});
+                map.erase(it);
+            } else {
+                //TODO log warn
+            }
+        }
 
-            map.erase(it);
+        void handle_request_timeout(uint64_t msg_number)
+        {
+            auto [guard, map] = m_request_map.get();
+            auto it = map.find(msg_number);
+            if(it != map.end()) {
+                auto &callback = it->second;
+                callback(request_result::timeout, {});
+
+                map.erase(it);
+            }
         }
 
     private:
         std::unique_ptr<itransport> m_transport;
-        
+        std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
+
         using response_processor = std::function<void(cl::buffer &&, response_result_callback &&)>;
         cl::guarded_value<response_processor> m_response_processor;
 
@@ -144,8 +202,9 @@ namespace vsh::rpc {
         cl::guarded_value<request_map> m_request_map;
     };
 
-    connection::connection(std::unique_ptr<itransport> transport)
-        : m_impl(impl::create(std::move(transport)))
+    connection::connection(std::unique_ptr<itransport> transport,
+                           std::unique_ptr<cl::imultiple_timer> multiple_timer)
+        : m_impl(impl::create(std::move(transport), std::move(multiple_timer)))
     {
         m_impl->start_receive_async();
     }

@@ -26,21 +26,26 @@ namespace vsh::cl {
                                            callback = std::move(callback)]
                                            (const boost::system::error_code &ec) {
             if(!ec) {
-                callback();
+                try {
+                    callback();
+                } catch (...) {
+                    //TODO log
+                }
             } else if(ec != boost::asio::error::operation_aborted) {
                 //TODO log. something unexpected
             }
 
             auto [guard, timers_map] = m_timers_map.get();
             auto it = timers_map.find(timer_id);
-            assert(it != timers_map.end());
-            auto timer_struct = it->second;
-            timers_map.erase(it);
-            timer_struct->wait_event.set();
+            if(it != timers_map.end()) {
+                auto timer_struct = it->second;
+                timers_map.erase(it);
+                timer_struct->wait_event.set();
+            }
         });
 
         assert(timers_map.count(timer_id) == 0);
-        timers_map[timer_id] = std::move(timer_structure);
+        timers_map.insert(std::make_pair(timer_id, std::move(timer_structure)));
 
         return timer_id;
     }
@@ -59,7 +64,9 @@ namespace vsh::cl {
         
         if(timer_struct) {
             timer_struct->timer.cancel();
-            timer_struct->wait_event.wait();
+            if(!timer_struct->wait_event.wait_for(std::chrono::seconds(10))) {
+                //TODO log
+            }
         }
     }
 
@@ -75,7 +82,11 @@ namespace vsh::cl {
         }
 
         for(auto id : ids) {
-            cancel(id);
+            try {
+                cancel(id);
+            } catch(...) {
+                //TODO log
+            }
         }
     }
 

@@ -2,12 +2,15 @@
 #include "iconnection.h"
 #include "itransport.h"
 
+#include <common-lib/timer/multiple-timer/imultiple-timer.h>
+
 namespace vsh::rpc {
     class connection
         : public iconnection
     {
     public:
-        explicit connection(std::unique_ptr<itransport> transport);
+        explicit connection(std::unique_ptr<itransport> transport,
+                            std::unique_ptr<cl::imultiple_timer> multiple_timer);
 
         connection(connection &) = delete;
         connection &operator=(connection &) = delete;
