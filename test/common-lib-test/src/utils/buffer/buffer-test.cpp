@@ -125,6 +125,38 @@ TEST(Buffer, IsAbleToIterateElementsLikeStandartContainer)
     }
 }
 
+TEST(Buffer, MayBeCheckedForEquality)
+{
+    buffer buf1(3);
+    *(buf1.data()) = (std::byte)0x0;
+    *(buf1.data() + 1) = (std::byte)(0x1);
+    *(buf1.data() + 2) = (std::byte)(0x2);
+
+    buffer buf2 = buf1.copy();
+
+    ASSERT_TRUE(buf1 == buf2);
+    ASSERT_TRUE(buf2 == buf1);
+}
+
+TEST(Buffer, MayBeCheckedForInequality)
+{
+    buffer buf1(1);
+    buf1[0] = (std::byte)0x0;
+
+    buffer buf2(2);
+    buf2[0] = (std::byte)0x0;
+    buf2[1] = (std::byte)0x1;
+    buffer buf3(1);
+    buf2[0] = (std::byte)0x1;
+
+    ASSERT_TRUE(buf1 != buf2);
+    ASSERT_TRUE(buf1 != buf3);
+    ASSERT_TRUE(buf2 != buf3);
+    ASSERT_TRUE(buf2 != buf1);
+    ASSERT_TRUE(buf3 != buf1);
+    ASSERT_TRUE(buf3 != buf2);
+}
+
 TEST(Buffer, HasConstIterators)
 {
     buffer buf(3);

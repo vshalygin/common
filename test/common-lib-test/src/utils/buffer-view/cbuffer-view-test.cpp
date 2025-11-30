@@ -118,6 +118,34 @@ TEST(CBufferView, HasConstReverseIterators)
     }
 }
 
+TEST(CBufferView, MayBeCheckedForEquality)
+{
+    std::vector<std::byte> buffer1{ (std::byte)0x0, (std::byte)0x1, (std::byte)0x2 };
+    std::vector<std::byte> buffer2{ (std::byte)0x0, (std::byte)0x1, (std::byte)0x2 };
+    cbuffer_view buf1(buffer1.data(), buffer1.size());
+    cbuffer_view buf2(buffer2.data(), buffer2.size());
+
+    ASSERT_TRUE(buf1 == buf2);
+    ASSERT_TRUE(buf2 == buf1);
+}
+
+TEST(CBufferView, MayBeCheckedForInequality)
+{
+    std::vector<std::byte> buffer1{ (std::byte)0x0 };
+    std::vector<std::byte> buffer2{ (std::byte)0x0, (std::byte)0x1 };
+    std::vector<std::byte> buffer3{ (std::byte)0x1 };
+    cbuffer_view buf1(buffer1.data(), buffer1.size());
+    cbuffer_view buf2(buffer2.data(), buffer2.size());
+    cbuffer_view buf3(buffer3.data(), buffer3.size());
+
+    ASSERT_TRUE(buf1 != buf2);
+    ASSERT_TRUE(buf1 != buf3);
+    ASSERT_TRUE(buf2 != buf3);
+    ASSERT_TRUE(buf2 != buf1);
+    ASSERT_TRUE(buf3 != buf1);
+    ASSERT_TRUE(buf3 != buf2);
+}
+
 TEST(CBufferViewIterator, CBufferVieweratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<cbuffer_view::iterator::difference_type, std::ptrdiff_t>;

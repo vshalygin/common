@@ -77,4 +77,7 @@ namespace vsh::cl {
                                      const cbuffer_view::iterator &rhs) noexcept;
     cbuffer_view::reverse_iterator operator+(cbuffer_view::reverse_iterator::difference_type offset,
                                              const cbuffer_view::reverse_iterator &rhs) noexcept;
+
+    bool operator==(const cbuffer_view &lhs, const cbuffer_view &rhs) noexcept;
+    bool operator!=(const cbuffer_view &lhs, const cbuffer_view &rhs) noexcept;
 }

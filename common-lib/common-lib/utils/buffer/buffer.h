@@ -125,4 +125,7 @@ namespace vsh::cl {
                                        const buffer::reverse_iterator &rhs) noexcept;
     buffer::const_reverse_iterator operator+(buffer::const_reverse_iterator::difference_type offset,
                                              const buffer::const_reverse_iterator &rhs) noexcept;
+
+    bool operator==(const buffer &lhs, const buffer &rhs) noexcept;
+    bool operator!=(const buffer &lhs, const buffer &rhs) noexcept;
 }

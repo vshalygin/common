@@ -155,4 +155,22 @@ namespace vsh::cl {
     {
         return rhs + offset;
     }
+
+    bool operator==(const cbuffer_view &lhs, const cbuffer_view &rhs) noexcept
+    {
+        if(lhs.size() != rhs.size()) {
+            return false;
+        }
+        for(size_t i = 0; i < lhs.size(); ++i) {
+            if(lhs[i] != rhs[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator!=(const cbuffer_view &lhs, const cbuffer_view &rhs) noexcept
+    {
+        return !(lhs == rhs);
+    }
 }
