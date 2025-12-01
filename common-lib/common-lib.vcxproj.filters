@@ -19,9 +19,6 @@
     <Filter Include="memory">
       <UniqueIdentifier>{7840e649-abb3-464c-a00d-dca379f24b1b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="memory\safe-ptr">
-      <UniqueIdentifier>{9d59c992-fe46-448d-aa73-53a4bdb8ab0f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="memory\allocator">
       <UniqueIdentifier>{a7622fbf-a8c5-431a-967a-87c051fa713b}</UniqueIdentifier>
     </Filter>
@@ -59,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\utils\guarded-value\guarded-value.h">
       <Filter>utils\guarded-value</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\memory\safe-ptr\safe-ptr.h">
-      <Filter>memory\safe-ptr</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
       <Filter>memory\allocator</Filter>

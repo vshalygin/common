@@ -25,9 +25,6 @@
     <ClCompile Include="src\utils\guarded-value\guarded-value-test.cpp">
       <Filter>utils\guarded-value</Filter>
     </ClCompile>
-    <ClCompile Include="src\memory\safe-ptr\safe-ptr-test.cpp">
-      <Filter>memory\safe-ptr</Filter>
-    </ClCompile>
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp">
       <Filter>memory\unique-ptr2</Filter>
     </ClCompile>
@@ -56,9 +53,6 @@
     </Filter>
     <Filter Include="memory">
       <UniqueIdentifier>{465acbd0-1231-4b6d-ac9b-2b56e4aa2633}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="memory\safe-ptr">
-      <UniqueIdentifier>{2645c3e9-28a7-4cd6-9da0-48c773a5d60e}</UniqueIdentifier>
     </Filter>
     <Filter Include="memory\unique-ptr2">
       <UniqueIdentifier>{db266bdf-b269-480b-9d55-145ef0d62621}</UniqueIdentifier>
