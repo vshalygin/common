@@ -3,6 +3,7 @@
 #include "itransport.h"
 
 #include <common-lib/timer/multiple-timer/imultiple-timer.h>
+#include <common-lib/thread-pool/ithread-pool.h>
 
 namespace vsh::rpc {
     class connection
@@ -10,7 +11,8 @@ namespace vsh::rpc {
     {
     public:
         explicit connection(std::unique_ptr<itransport> transport,
-                            std::unique_ptr<cl::imultiple_timer> multiple_timer);
+                            std::unique_ptr<cl::imultiple_timer> multiple_timer,
+                            std::shared_ptr<cl::ithread_pool> thread_pool);
 
         connection(connection &) = delete;
         connection &operator=(connection &) = delete;
@@ -20,11 +22,11 @@ namespace vsh::rpc {
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler) override;
 
-        void set_response_async_processor(
-            std::function<void(cl::buffer &&, response_result_callback &&)> &&processor) override;
+        void set_request_processor(std::function<cl::buffer(cl::buffer &&)> &&processor) override;
 
         void set_disconnect_handler(std::function<void()> &&handler) override;
         bool is_connected() const override;
+        void disconnect() override;
 
         size_t get_processing_requests_count() const override;
 

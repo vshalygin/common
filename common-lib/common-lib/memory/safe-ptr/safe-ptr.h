@@ -47,6 +47,7 @@ namespace vsh::cl {
             reset(p);
         }
 
+        //TODO thing about safity here
         safe_ptr(const safe_ptr &) = default;
         safe_ptr& operator=(const safe_ptr &) = default;
 

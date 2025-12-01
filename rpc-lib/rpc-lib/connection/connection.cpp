@@ -21,7 +21,7 @@ namespace vsh::rpc {
         struct request_data
         {
             request_data(request_callback_t &&cb,
-                        uint64_t id)
+                         uint64_t id)
                 : callback(std::move(cb))
                 , timer_id(id)
             {}
@@ -34,18 +34,22 @@ namespace vsh::rpc {
 
     public:
         static std::shared_ptr<impl> create(std::unique_ptr<itransport> transport,
-                                            std::unique_ptr<cl::imultiple_timer> multiple_timer)
+                                            std::unique_ptr<cl::imultiple_timer> multiple_timer,
+                                            std::shared_ptr<cl::ithread_pool> thread_pool)
         {
             return std::make_shared<impl>(std::move(transport),
                                           std::move(multiple_timer),
+                                          std::move(thread_pool),
                                           creator());
         }
 
         impl(std::unique_ptr<itransport> transport,
              std::unique_ptr<cl::imultiple_timer> multiple_timer,
+             std::shared_ptr<cl::ithread_pool> thread_pool,
              creator)
             : m_transport(std::move(transport))
             , m_multiple_timer(std::move(multiple_timer))
+            , m_thread_pool(std::move(thread_pool))
         {}
 
         impl(impl &) = delete;
@@ -72,11 +76,10 @@ namespace vsh::rpc {
             receive_async();
         }
 
-        void set_response_async_processor(
-            std::function<void(cl::buffer &&, response_result_callback &&)> &&result_processor)
+        void set_request_processor(std::function<cl::buffer(cl::buffer &&)> &&processor)
         {
-            auto [guard, response_processor] = m_response_processor.get();
-            response_processor = std::move(result_processor);
+            auto [guard, request_processor] = m_request_processor.get();
+            request_processor = std::move(processor);
         }
 
         void set_disconnect_handler(std::function<void()> &&handler)
@@ -87,6 +90,11 @@ namespace vsh::rpc {
         bool is_connected() const
         {
             return !m_transport->is_stopped();
+        }
+
+        void disconnect()
+        {
+            m_transport->stop();
         }
 
         size_t get_processing_requests_count() const
@@ -152,7 +160,11 @@ namespace vsh::rpc {
                 }
             };
 
-            m_transport->recv_async(std::move(handler));
+            try {
+                m_transport->recv_async(std::move(handler));
+            } catch (...) {
+                //TODO log;
+            }
         }
 
         void dispatch_receive_event(cl::buffer &&message)
@@ -168,18 +180,20 @@ namespace vsh::rpc {
 
         void handle_request(cl::buffer &&message)
         {
-            auto callback = [self = weak_from_this()](cl::buffer &&message) {
+            auto sp_message = std::make_shared<cl::buffer>(std::move(message));
+            auto processor = [self = weak_from_this(), sp_message]() {
                 if(auto s = self.lock()) {
-                    s->m_transport->send_async(std::move(message), {});
+                    auto [guard, request_handler] = s->m_request_processor.get();
+                    if(request_handler) try {
+                        auto ans = request_handler(std::move(*sp_message));
+                        s->m_transport->send_async(std::move(ans), {});
+                    } catch (...) {
+                        //TODO log
+                    }
                 }
             };
 
-            auto [guard, response_handler] = m_response_processor.get();
-            if(response_handler) try {
-                response_handler(std::move(message), std::move(callback));
-            } catch (...) {
-                    //TODO log
-            }
+            m_thread_pool->post(std::move(processor));
         }
 
         bool complete_request(uint64_t req_msg_number,
@@ -198,11 +212,15 @@ namespace vsh::rpc {
             }
 
             if(req_data) {
-                auto &callback = req_data->callback;
-                if(callback) try {
-                    callback(result, std::move(res_msg));
-                } catch(...) {
-                    //TODO log
+                if(req_data->callback) {
+                    auto sp_res_msg = std::make_shared<cl::buffer>(std::move(res_msg));
+                    m_thread_pool->post([req_data, result, sp_res_msg]() {
+                        try {
+                            req_data->callback(result, std::move(*sp_res_msg));
+                        } catch (...) {
+                            //TODO log
+                        }
+                    });
                 }
                 m_multiple_timer->cancel(req_data->timer_id);
                 return true;
@@ -231,16 +249,18 @@ namespace vsh::rpc {
     private:
         std::unique_ptr<itransport> m_transport;
         std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
+        std::shared_ptr<cl::ithread_pool> m_thread_pool;
 
-        using response_processor = std::function<void(cl::buffer &&, response_result_callback &&)>;
-        cl::guarded_value<response_processor> m_response_processor;
+        using request_processor_t = std::function<cl::buffer(cl::buffer &&)>;
+        cl::guarded_value<request_processor_t> m_request_processor;
 
         cl::guarded_value<request_map> m_request_map;
     };
 
     connection::connection(std::unique_ptr<itransport> transport,
-                           std::unique_ptr<cl::imultiple_timer> multiple_timer)
-        : m_impl(impl::create(std::move(transport), std::move(multiple_timer)))
+                           std::unique_ptr<cl::imultiple_timer> multiple_timer,
+                           std::shared_ptr<cl::ithread_pool> thread_pool)
+        : m_impl(impl::create(std::move(transport), std::move(multiple_timer), std::move(thread_pool)))
     {
         m_impl->start_receive_async();
     }
@@ -253,10 +273,9 @@ namespace vsh::rpc {
         m_impl->request_async(std::move(message), std::move(handler));
     }
 
-    void connection::set_response_async_processor(
-        std::function<void(cl::buffer &&, response_result_callback &&)> &&processor)
+    void connection::set_request_processor(std::function<cl::buffer(cl::buffer &&)> &&processor)
     {
-        m_impl->set_response_async_processor(std::move(processor));
+        m_impl->set_request_processor(std::move(processor));
     }
 
     void connection::set_disconnect_handler(std::function<void()> &&handler)
@@ -267,6 +286,11 @@ namespace vsh::rpc {
     bool connection::is_connected() const
     {
         return m_impl->is_connected();
+    }
+
+    void connection::disconnect()
+    {
+        return m_impl->disconnect();
     }
 
     size_t connection::get_processing_requests_count() const

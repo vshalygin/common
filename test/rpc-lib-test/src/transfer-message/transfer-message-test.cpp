@@ -34,7 +34,7 @@ namespace {
     constexpr const unsigned s_method_idx = 4091900406; //0xF3E571F6
     const std::vector<std::byte> s_method_idx_bytes = { (std::byte)0xF3, (std::byte)0xE5,
                                                         (std::byte)0x71, (std::byte)0xF6 };
-    const response_result s_response_code = response_result::rejected;
+    const response_result s_response_code = response_result::unknown_error;
 
     std::vector<std::byte> to_bytes(const std::string &str)
     {

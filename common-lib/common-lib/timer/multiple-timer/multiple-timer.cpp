@@ -37,7 +37,6 @@ namespace vsh::cl {
                 }
             }
 
-
             if(!ec) {
                 try {
                     callback();
