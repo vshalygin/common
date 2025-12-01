@@ -4,9 +4,6 @@
     <Filter Include="utils">
       <UniqueIdentifier>{d9212874-65ac-4e90-81fa-8c73fd921bbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils\event">
-      <UniqueIdentifier>{4cafff36-4ab0-4ca8-ba5d-832d051a0e59}</UniqueIdentifier>
-    </Filter>
     <Filter Include="thread-pool">
       <UniqueIdentifier>{72468f17-1487-406e-9029-e0cbd6f63c9c}</UniqueIdentifier>
     </Filter>
@@ -22,9 +19,6 @@
     <Filter Include="memory\allocator">
       <UniqueIdentifier>{a7622fbf-a8c5-431a-967a-87c051fa713b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils\guarded-value">
-      <UniqueIdentifier>{01e26060-2a49-4514-9333-cfb174f1a80e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="memory\unique-ptr2">
       <UniqueIdentifier>{0926c359-cea5-4e7b-9c95-7f930581c207}</UniqueIdentifier>
     </Filter>
@@ -34,11 +28,17 @@
     <Filter Include="timer\multiple-timer">
       <UniqueIdentifier>{872ad871-352a-47d0-9da4-49cf53f80a27}</UniqueIdentifier>
     </Filter>
+    <Filter Include="syncronization">
+      <UniqueIdentifier>{d475a531-5d3e-4661-a1d0-7bb4ecb276e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="syncronization\guarded-value">
+      <UniqueIdentifier>{27d223b0-c866-4a25-81e3-f0119cb49e5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="syncronization\event">
+      <UniqueIdentifier>{d449d5a9-b683-46bc-97f5-5e5a887a2b10}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common-lib\utils\event\event.h">
-      <Filter>utils\event</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread-pool\ithread-pool.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
@@ -54,9 +54,6 @@
     <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h">
       <Filter>utils\buffer-view</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\utils\guarded-value\guarded-value.h">
-      <Filter>utils\guarded-value</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
       <Filter>memory\allocator</Filter>
     </ClInclude>
@@ -69,11 +66,14 @@
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h">
       <Filter>timer\multiple-timer</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\syncronization\event\event.h">
+      <Filter>syncronization\event</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h">
+      <Filter>syncronization\guarded-value</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="common-lib\utils\event\event.cpp">
-      <Filter>utils\event</Filter>
-    </ClCompile>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
       <Filter>thread-pool</Filter>
     </ClCompile>
@@ -88,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
       <Filter>timer\multiple-timer</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\syncronization\event\event.cpp">
+      <Filter>syncronization\event</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 #pragma once
 #include "imultiple-timer.h"
-#include <common-lib/utils/guarded-value/guarded-value.h>
-#include <common-lib/utils/event/event.h>
+#include <common-lib/syncronization/guarded-value/guarded-value.h>
+#include <common-lib/syncronization/event/event.h>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <atomic>

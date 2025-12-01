@@ -1,5 +1,5 @@
 #include "common-lib/thread-pool/thread-pool.h"
-#include "common-lib/utils/event/event.h"
+#include "common-lib/syncronization/event/event.h"
 
 #include "gtest/gtest.h"
 

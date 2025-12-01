@@ -1,4 +1,4 @@
-#include <common-lib/utils/guarded-value/guarded-value.h>
+#include <common-lib/syncronization/guarded-value/guarded-value.h>
 
 #include <gtest/gtest.h>
 

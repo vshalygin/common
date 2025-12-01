@@ -22,14 +22,14 @@
     <ClCompile Include="src\utils\buffer\buffer-test.cpp">
       <Filter>utils\buffer</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\guarded-value\guarded-value-test.cpp">
-      <Filter>utils\guarded-value</Filter>
-    </ClCompile>
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp">
       <Filter>memory\unique-ptr2</Filter>
     </ClCompile>
     <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp">
       <Filter>timer\multiple-timer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\syncronization\guarded-value\guarded-value-test.cpp">
+      <Filter>syncronization\guarded-value</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -48,9 +48,6 @@
     <Filter Include="utils\buffer-view">
       <UniqueIdentifier>{0439f935-ed95-433d-af54-e1312d88586c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils\guarded-value">
-      <UniqueIdentifier>{93a0c065-d19e-4661-964c-5b70348e03ef}</UniqueIdentifier>
-    </Filter>
     <Filter Include="memory">
       <UniqueIdentifier>{465acbd0-1231-4b6d-ac9b-2b56e4aa2633}</UniqueIdentifier>
     </Filter>
@@ -62,6 +59,12 @@
     </Filter>
     <Filter Include="timer\multiple-timer">
       <UniqueIdentifier>{cc56a4e7-25da-4835-b0a5-157ce4c2e2c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="syncronization">
+      <UniqueIdentifier>{76cb35ef-3b6e-45fb-baac-1fbd2849b537}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="syncronization\guarded-value">
+      <UniqueIdentifier>{6a9e4291-f5cb-4bb2-9a48-640a3bc4aaf7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

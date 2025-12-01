@@ -1,7 +1,7 @@
 #include "connection.h"
 #include "rpc-lib/transfer-message/transfer-message.h"
 
-#include <common-lib/utils/guarded-value/guarded-value.h>
+#include <common-lib/syncronization/guarded-value/guarded-value.h>
 
 #include <unordered_map>
 
