@@ -55,6 +55,15 @@ namespace vsh::rpc {
         impl(impl &) = delete;
         impl &operator=(impl &) = delete;
 
+        ~impl()
+        {
+            try {
+                stop_transport_and_cancel_requests();
+            } catch (...) {
+                //TODO safe log
+            }
+        }
+
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler)
         {
@@ -244,6 +253,22 @@ namespace vsh::rpc {
         void handle_request_timeout(uint64_t msg_number)
         {
             complete_request(msg_number, request_result::timeout, {});
+        }
+
+        void stop_transport_and_cancel_requests()
+        {
+            m_transport->stop();
+
+            std::vector<uint64_t> request_ids;
+            {
+                auto [guard, request_map] = m_request_map.get();
+                for(const auto &request_info : request_map) {
+                    request_ids.push_back(request_info.first);
+                }
+            }
+            for(auto id : request_ids) {
+                complete_request(id, request_result::canceled, {});
+            }
         }
 
     private:

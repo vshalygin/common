@@ -193,19 +193,24 @@ TEST_F(Connection, ProcessesResponseToRequestAsync)
 
 TEST_F(Connection, CallsRequestCallbackOnlyOnCorrespondingResponse)
 {
+    event sync_event;
     const uint64_t num = 34;
-
     auto transfer_req_message = create_transfer_msg_req(num, 7, &m_request_message);
     auto transfer_res_message = create_transfer_msg_res(
         num+1, response_result::unknown_error, &m_response_message);
     MockFunction<void(request_result, buffer &&)> mock_function;
-    EXPECT_CALL(mock_function, Call)
+    EXPECT_CALL(mock_function, Call(request_result::ok, _))
         .Times(0);
+    EXPECT_CALL(mock_function, Call(request_result::canceled, _))
+        .Times(1)
+        .WillOnce([&sync_event]() { sync_event.set(); });
 
     auto sut = create_sut();
     sut->request_async(std::move(transfer_req_message), mock_function.AsStdFunction());
     m_transport_ptr->emit_recv_event(std::move(transfer_res_message));
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    sut.reset();
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
 TEST_F(Connection, CatchesExceptionsThrownByRequestCallback)
@@ -442,7 +447,7 @@ TEST_F(Connection, SetsDisconnectHandler)
 {
     MockFunction<void()> disconnect_handler;
     EXPECT_CALL(disconnect_handler, Call)
-        .Times(1);
+        .Times(2);
 
     auto sut = create_sut();
     sut->set_disconnect_handler(disconnect_handler.AsStdFunction());
@@ -459,4 +464,35 @@ TEST_F(Connection, CheckIfConnected)
 
     ASSERT_FALSE(sut->is_connected());
     ASSERT_TRUE(m_transport_ptr->is_stopped());
+}
+
+TEST_F(Connection, CallsTransportStopBeforeDestruction)
+{
+    MockFunction<void()> stop_handler;
+    EXPECT_CALL(stop_handler, Call)
+        .Times(1);
+
+    auto sut = create_sut();
+    sut->set_disconnect_handler(stop_handler.AsStdFunction());
+
+    sut.reset();
+    
+    Mock::VerifyAndClearExpectations(&stop_handler);
+}
+
+TEST_F(Connection, CancelsUnfinishedRequestOnDestroy)
+{
+    event sync_event;
+    const uint64_t num = 34;
+    auto transfer_req_message = create_transfer_msg_req(num, 7, &m_request_message);
+    MockFunction<void(request_result, buffer &&)> mock_function;
+    EXPECT_CALL(mock_function, Call(request_result::canceled, _))
+        .Times(1)
+        .WillOnce([&sync_event]() { sync_event.set(); });
+
+    auto sut = create_sut();
+    sut->request_async(std::move(transfer_req_message), mock_function.AsStdFunction());
+
+    sut.reset();
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }

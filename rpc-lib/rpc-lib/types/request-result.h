@@ -5,6 +5,7 @@ namespace vsh::rpc {
         ok = 0,
         timeout,
         send_error,
+        canceled,
         unknown_error
     };
 
