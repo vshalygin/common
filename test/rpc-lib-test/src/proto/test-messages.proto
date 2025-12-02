@@ -3,5 +3,6 @@ syntax = "proto3";
 package proto;
 
 message some_message {
-  int32 some_data = 1;
+    int32 some_data = 1;
+    string string_data = 2;
 }

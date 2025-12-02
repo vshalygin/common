@@ -4,6 +4,8 @@
 
 namespace vsh::rpc {
     namespace {
+        constexpr uint32_t s_max_transfer_message_size = 8 * 1024 * 1024; //1 MB
+
         constexpr const unsigned s_bits_in_byte = 8;
 
         constexpr const unsigned s_message_type_bytes_count = 1;
@@ -223,6 +225,10 @@ namespace vsh::rpc {
         assert(message);
 
         const auto serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+        if(serialized_message_size > s_max_transfer_message_size) {
+            throw std::runtime_error("message is too big");
+        }
+
         const uint32_t buf_size = s_header_bytes_count +
                                   serialized_message_size +
                                   s_req_trailer_bytes_count;
@@ -247,6 +253,10 @@ namespace vsh::rpc {
         assert(message);
 
         const auto serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+        if(serialized_message_size > s_max_transfer_message_size) {
+            throw std::runtime_error("message is too big");
+        }
+
         const uint32_t buf_size = s_header_bytes_count +
                                   serialized_message_size +
                                   s_res_trailer_bytes_count;

@@ -101,28 +101,28 @@ namespace {
     }
 }
 
-TEST(TransferEntryReq, ResolveEntryType)
+TEST(TransferMessageReq, ResolveEntryType)
 {
     const auto entry = create_transfer_msg_req();
 
     ASSERT_EQ(transfer_msg_type::req, get_transfer_msg_type({ entry.data(), entry.size()} ));
 }
 
-TEST(TransferEntryReq, ResolveEntryNumber)
+TEST(TransferMessageReq, ResolveEntryNumber)
 {
     const auto entry = create_transfer_msg_req();
 
     ASSERT_EQ(s_entry_number, get_msg_number_req({ entry.data(), entry.size() }));
 }
 
-TEST(TransferEntryReq, ResolveMethodIdx)
+TEST(TransferMessageReq, ResolveMethodIdx)
 {
     const auto entry = create_transfer_msg_req();
 
     ASSERT_EQ(s_method_idx, get_msg_method_idx_req({ entry.data(), entry.size() }));
 }
 
-TEST(TransferEntryReq, ResolveSerializedMessage)
+TEST(TransferMessageReq, ResolveSerializedMessage)
 {
     const auto entry = create_transfer_msg_req();
     const auto expected_serialized_message = get_test_message().SerializeAsString();
@@ -133,7 +133,7 @@ TEST(TransferEntryReq, ResolveSerializedMessage)
                 ArrayEq(serialize_message.data(), serialize_message.size()));
 }
 
-TEST(TransferEntryReq, CreateTransferEntry)
+TEST(TransferMessageReq, CreatesTransferEntry)
 {
     const auto expected_entry = create_transfer_msg_req();
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
@@ -149,21 +149,29 @@ TEST(TransferEntryReq, CreateTransferEntry)
                 ArrayEq(entry.data(), entry.size()));
 }
 
-TEST(TransferEntryRes, ResolveEntryNumber)
+TEST(TransferMessageReq, ThrowsExceptionOnCreateTransferEntryIsMessageTwoBig)
+{
+    proto::some_message test_message;
+    test_message.set_string_data(std::string(8 * 1024 * 1024 + 1, 'a'));
+
+    ASSERT_ANY_THROW(create_transfer_msg_req(1, 1, &test_message));
+}
+
+TEST(TransferMessageRes, ResolveEntryNumber)
 {
     const auto entry = create_transfer_msg_res();
 
     ASSERT_EQ(s_entry_number, get_msg_number_res({ entry.data(), entry.size() }));
 }
 
-TEST(TransferEntryRes, ResolveResponseCode)
+TEST(TransferMessageRes, ResolveResponseCode)
 {
     const auto entry = create_transfer_msg_res();
 
     ASSERT_EQ(s_response_code, get_msg_response_code_res({ entry.data(), entry.size() }));
 }
 
-TEST(TransferEntryRes, ResolveSerializedMessage)
+TEST(TransferMessageRes, ResolveSerializedMessage)
 {
     const auto entry = create_transfer_msg_res();
     const auto expected_serialized_message = get_test_message().SerializeAsString();
@@ -174,7 +182,7 @@ TEST(TransferEntryRes, ResolveSerializedMessage)
                 ArrayEq(serialize_message.data(), serialize_message.size()));
 }
 
-TEST(TransferEntryRes, CreateTransferEntry)
+TEST(TransferMessageRes, CreatesTransferEntry)
 {
     const auto expected_entry = create_transfer_msg_res();
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
@@ -188,4 +196,12 @@ TEST(TransferEntryRes, CreateTransferEntry)
 
     ASSERT_THAT(expected_entry.data(),
                 ArrayEq(entry.data(), entry.size()));
+}
+
+TEST(TransferMessageRes, ThrowsExceptionOnCreateTransferEntryIsMessageTwoBig)
+{
+    proto::some_message test_message;
+    test_message.set_string_data(std::string(8 * 1024 * 1024 + 1, 'a'));
+
+    ASSERT_ANY_THROW(create_transfer_msg_res(1, response_result::ok, &test_message));
 }
