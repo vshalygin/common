@@ -19,6 +19,9 @@
     <Filter Include="channel\closure-guard">
       <UniqueIdentifier>{2d50b1cc-371d-4dff-91b7-89efa8a05318}</UniqueIdentifier>
     </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{ce807528-bc90-4955-88f3-63593c9d16c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -37,9 +40,6 @@
   <ItemGroup>
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
       <Filter>transfer-message</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connection\itransport.h">
-      <Filter>connection</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\connection\iconnection.h">
       <Filter>connection</Filter>
@@ -64,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h">
       <Filter>channel\request-callback</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\interface\itransport.h">
+      <Filter>interface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

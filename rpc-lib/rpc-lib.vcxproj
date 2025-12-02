@@ -23,7 +23,7 @@
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
-    <ClInclude Include="rpc-lib\connection\itransport.h" />
+    <ClInclude Include="rpc-lib\interface\itransport.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />

@@ -113,7 +113,6 @@ namespace vsh::rpc {
             } else {
                 disconnect_handler = std::move(handler);
             }
-
         }
 
         bool is_connected() const
