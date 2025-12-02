@@ -28,6 +28,9 @@
     <ClCompile Include="src\channel\closure-guard\closure-guard-test.cpp">
       <Filter>channel\closure-guard</Filter>
     </ClCompile>
+    <ClCompile Include="src\channel\request-callback\request-callback-test.cpp">
+      <Filter>channel\request-callback</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -53,6 +56,9 @@
     </Filter>
     <Filter Include="channel\closure-guard">
       <UniqueIdentifier>{07d5400c-5185-48f2-82b1-caa4c04f71e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="channel\request-callback">
+      <UniqueIdentifier>{bc067c6c-6fda-4e7a-bc3c-0c15859fe53f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

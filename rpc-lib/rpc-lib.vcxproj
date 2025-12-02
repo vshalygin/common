@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\channel\closure-guard\closure-guard.h" />
+    <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
     <ClInclude Include="rpc-lib\connection\itransport.h" />

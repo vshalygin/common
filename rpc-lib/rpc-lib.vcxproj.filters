@@ -13,6 +13,9 @@
     <Filter Include="channel">
       <UniqueIdentifier>{8f097237-e0ba-4a25-b530-4827d577e1c3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="channel\request-callback">
+      <UniqueIdentifier>{53278c45-60d6-40d8-85ea-2892885164bc}</UniqueIdentifier>
+    </Filter>
     <Filter Include="channel\closure-guard">
       <UniqueIdentifier>{2d50b1cc-371d-4dff-91b7-89efa8a05318}</UniqueIdentifier>
     </Filter>
@@ -49,6 +52,9 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\channel\closure-guard\closure-guard.h">
       <Filter>channel\closure-guard</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h">
+      <Filter>channel\request-callback</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

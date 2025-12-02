@@ -15,11 +15,17 @@ namespace vsh::rpc {
 
         ~impl()
         {
+            reset();
+        }
+
+        void reset() noexcept
+        {
             try {
                 if(m_closure) {
                     m_closure->Run();
+                    m_closure = nullptr;
                 }
-            } catch (...) {
+            } catch(...) {
                 //TODO log fatal
                 std::terminate();
             }
@@ -32,4 +38,9 @@ namespace vsh::rpc {
     closure_guard::closure_guard(Closure *closure)
         : m_impl(std::make_shared<impl>(closure))
     {}
+
+    void closure_guard::reset() noexcept
+    {
+        m_impl->reset();
+    }
 }

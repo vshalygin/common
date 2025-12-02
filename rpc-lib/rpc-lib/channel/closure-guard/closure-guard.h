@@ -19,6 +19,8 @@ namespace vsh::rpc {
         closure_guard(closure_guard &&) = default;
         closure_guard &operator=(closure_guard &&) = default;
 
+        void reset() noexcept;
+
     private:
         class impl;
         std::shared_ptr<impl> m_impl;
