@@ -109,8 +109,10 @@ namespace vsh::rpc {
                                            const google::protobuf::Message *message,
                                            uint32_t serialized_message_size)
         {
-            //TODO check if failed
-            message->SerializeToArray(buff.data() + pos, static_cast<int>(buff.size() - pos));
+            assert(buff.size() - pos >= serialized_message_size);
+            if(!message->SerializeToArray(buff.data() + pos, static_cast<int>(buff.size() - pos))) {
+                throw std::runtime_error("failed to serialize message");
+            }
             pos += serialized_message_size;
         }
 
