@@ -41,6 +41,8 @@ namespace vsh::rpc {
 
     void closure_guard::reset() noexcept
     {
-        m_impl->reset();
+        if(m_impl) {
+            m_impl->reset();
+        }
     }
 }

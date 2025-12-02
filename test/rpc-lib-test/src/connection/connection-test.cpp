@@ -3,7 +3,9 @@
 
 #include "mocks/multiple-timer-mock.h"
 
+#pragma warning(push, 0)
 #include "proto/test-messages.pb.h"
+#pragma warning(pop)
 
 #include <common-lib/thread-pool/thread-pool.h>
 #include <common-lib/syncronization/event/event.h>

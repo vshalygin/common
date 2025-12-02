@@ -128,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\channel\closure-guard\closure-guard-test.cpp" />
+    <ClCompile Include="src\channel\request-callback\channel-test.cpp" />
     <ClCompile Include="src\channel\request-callback\request-callback-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
@@ -148,7 +149,10 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\mocks\closure-mock.h" />
+    <ClInclude Include="src\mocks\connection-mock.h" />
     <ClInclude Include="src\mocks\multiple-timer-mock.h" />
+    <ClInclude Include="src\mocks\rpc-controller-mock.h" />
     <ClInclude Include="src\proto\test-messages.pb.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -2,7 +2,25 @@ syntax = "proto3";
 
 package proto;
 
+option cc_generic_services = true;
+
 message some_message {
     int32 some_data = 1;
     string string_data = 2;
+    string string_data2 = 50;
+}
+
+message request_message {
+    int32 data = 1;
+}
+
+message response_message {
+    int64 data = 1;
+    int32 data2 = 2;
+
+    some_message data3 = 50;
+}
+
+service Service {
+    rpc Method (request_message) returns (response_message);
 }

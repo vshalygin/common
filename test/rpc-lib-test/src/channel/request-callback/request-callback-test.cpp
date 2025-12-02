@@ -15,8 +15,8 @@ class RequestCallback
     : public Test
 {
 protected:
-    using Request = proto::some_message;
-    using Response = proto::some_message;
+    using Request = proto::request_message;
+    using Response = proto::response_message;
 
 protected:
     RequestCallback()

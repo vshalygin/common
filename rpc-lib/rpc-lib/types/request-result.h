@@ -9,7 +9,8 @@ namespace vsh::rpc {
         timeout,
         send_error,
         canceled,
-        res_parse_error,
+        request_not_processed,
+        response_parse_error,
         unknown_error
     };
 
@@ -34,8 +35,10 @@ namespace vsh::rpc {
                 return "send_error";
             case request_result::canceled:
                 return "canceled";
-            case request_result::res_parse_error:
-                return "res_parse_error";
+            case request_result::request_not_processed:
+                return "request_not_processed";
+            case request_result::response_parse_error:
+                return "response_parse_error";
             case request_result::unknown_error:
                 return "unknown_error";
             default:
@@ -55,8 +58,10 @@ namespace vsh::rpc {
             ans = request_result::send_error;
         } else if(rc == "canceled") {
             ans = request_result::canceled;
-        } else if(rc == "res_parse_error") {
-            ans = request_result::res_parse_error;
+        } else if (rc == "request_not_processed") {
+            ans = request_result::request_not_processed;
+        } else if(rc == "response_parse_error") {
+            ans = request_result::response_parse_error;
         } else if(rc == "unknown_error") {
             ans = request_result::unknown_error;
         } else {

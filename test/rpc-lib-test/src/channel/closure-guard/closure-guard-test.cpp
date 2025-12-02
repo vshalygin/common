@@ -1,21 +1,12 @@
 #include <rpc-lib/channel/closure-guard/closure-guard.h>
 
+#include "mocks/closure-mock.h"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 using namespace vsh::rpc;
 using namespace testing;
-
-namespace {
-    class closure_mock
-        : public google::protobuf::Closure
-    {
-    public:
-        MOCK_METHOD(void, Run, (), (override));
-    };
-
-    using closure_nice_mock = NiceMock<closure_mock>;
-}
 
 class ClosureGuard
     : public Test
@@ -83,4 +74,12 @@ TEST_F(ClosureGuard, CallsRunMethodOnResetOperationOnlyOnce)
     sut.reset();
 
     Mock::VerifyAndClearExpectations(&m_closure);
+}
+
+TEST_F(ClosureGuard, DoesNothingOnResetOperationAfterMoving)
+{
+    auto sut = closure_guard(m_closure.get());
+    closure_guard other(std::move(sut));
+
+    sut.reset();
 }

@@ -31,6 +31,9 @@
     <ClCompile Include="src\channel\request-callback\request-callback-test.cpp">
       <Filter>channel\request-callback</Filter>
     </ClCompile>
+    <ClCompile Include="src\channel\request-callback\channel-test.cpp">
+      <Filter>channel</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -71,6 +74,15 @@
       <Filter>proto</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\multiple-timer-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\connection-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\closure-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\rpc-controller-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
   </ItemGroup>

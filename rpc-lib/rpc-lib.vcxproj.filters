@@ -27,6 +27,9 @@
     <ClCompile Include="rpc-lib\connection\connection.cpp">
       <Filter>connection</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\channel\channel.cpp">
+      <Filter>channel</Filter>
+    </ClCompile>
     <ClCompile Include="rpc-lib\channel\closure-guard\closure-guard.cpp">
       <Filter>channel\closure-guard</Filter>
     </ClCompile>
@@ -49,6 +52,12 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\connection\connection.h">
       <Filter>connection</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\channel\ichannel.h">
+      <Filter>channel</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\channel\channel.h">
+      <Filter>channel</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\channel\closure-guard\closure-guard.h">
       <Filter>channel\closure-guard</Filter>
