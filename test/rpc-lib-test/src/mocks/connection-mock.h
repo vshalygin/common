@@ -10,8 +10,8 @@ public:
                 (vsh::cl::buffer &&, std::function<void(vsh::rpc::request_result, vsh::cl::buffer &&)> &&),
                 (override));
 
-    MOCK_METHOD(void, set_request_processor,
-                (std::function<vsh::cl::buffer(vsh::cl::buffer &&)> &&processor), (override));
+    MOCK_METHOD(void, set_request_handler,
+                (std::function<vsh::cl::buffer(vsh::cl::buffer &&)> &&handler), (override));
 
     MOCK_METHOD(void, set_disconnect_handler, (std::function<void()> &&handler), (override));
 

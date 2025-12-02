@@ -22,7 +22,7 @@ namespace vsh::rpc {
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler) override;
 
-        void set_request_processor(std::function<cl::buffer(cl::buffer &&)> &&processor) override;
+        void set_request_handler(std::function<cl::buffer(cl::buffer &&)> &&handler) override;
 
         void set_disconnect_handler(std::function<void()> &&handler) override;
         bool is_connected() const override;

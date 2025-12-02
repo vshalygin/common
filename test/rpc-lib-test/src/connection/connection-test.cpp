@@ -426,7 +426,7 @@ TEST_F(Connection, MakesRecvAsyncAfterRecvAsyncCallbackCalled)
     ASSERT_EQ(m_transport_ptr->get_recv_async_called(), 2);
 }
 
-TEST_F(Connection, DoesNothingOnRequestIfRequestProcessorIsNotSet)
+TEST_F(Connection, DoesNothingOnRequestIfRequestHandlerIsNotSet)
 {
     auto transfer_req_message = create_transfer_msg_req(34, 7, &m_request_message);
 
@@ -441,8 +441,8 @@ TEST_F(Connection, SendsAnswerOnRequest)
     auto transfer_req_message = create_transfer_msg_req(num, 7, &m_request_message);
     auto transfer_res_message = create_transfer_msg_res(
         num, response_result::unknown_error, &m_response_message);
-    MockFunction<buffer(buffer &&)> request_processor;
-    EXPECT_CALL(request_processor, Call)
+    MockFunction<buffer(buffer &&)> request_handler;
+    EXPECT_CALL(request_handler, Call)
         .Times(1)
         .WillOnce([&](buffer &&buf) {
                       EXPECT_EQ(buf, transfer_req_message);
@@ -450,7 +450,7 @@ TEST_F(Connection, SendsAnswerOnRequest)
                       return transfer_res_message.copy();
                   });
     auto sut = create_sut();
-    sut->set_request_processor(request_processor.AsStdFunction());
+    sut->set_request_handler(request_handler.AsStdFunction());
 
     m_transport_ptr->emit_recv_event(transfer_req_message.copy());
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));

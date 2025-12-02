@@ -99,10 +99,10 @@ namespace vsh::rpc {
             m_transport->set_stop_handler(std::move(handler));
         }
 
-        void set_request_processor(std::function<cl::buffer(cl::buffer &&)> &&processor)
+        void set_request_handler(std::function<cl::buffer(cl::buffer &&)> &&handler)
         {
-            auto [guard, request_processor] = m_request_processor.get();
-            request_processor = std::move(processor);
+            auto [guard, request_handler] = m_request_handler.get();
+            request_handler = std::move(handler);
         }
 
         void set_disconnect_handler(std::function<void()> &&handler)
@@ -209,9 +209,9 @@ namespace vsh::rpc {
         void handle_request(cl::buffer &&message)
         {
             auto sp_message = std::make_shared<cl::buffer>(std::move(message));
-            auto processor = [self = weak_from_this(), sp_message]() {
+            auto handler = [self = weak_from_this(), sp_message]() {
                 if(auto s = self.lock()) {
-                    auto [guard, request_handler] = s->m_request_processor.get();
+                    auto [guard, request_handler] = s->m_request_handler.get();
                     if(request_handler) try {
                         auto ans = request_handler(std::move(*sp_message));
                         s->m_transport->send_async(std::move(ans), {});
@@ -221,7 +221,7 @@ namespace vsh::rpc {
                 }
             };
 
-            m_thread_pool->post(std::move(processor));
+            m_thread_pool->post(std::move(handler));
         }
 
         bool complete_request(uint64_t req_msg_number,
@@ -302,8 +302,8 @@ namespace vsh::rpc {
         std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
         std::shared_ptr<cl::ithread_pool> m_thread_pool;
 
-        using request_processor_t = std::function<cl::buffer(cl::buffer &&)>;
-        cl::guarded_value<request_processor_t> m_request_processor;
+        using request_handler_t = std::function<cl::buffer(cl::buffer &&)>;
+        cl::guarded_value<request_handler_t> m_request_handler;
 
         cl::guarded_value<request_map> m_request_map;
         cl::guarded_value<std::function<void()>> m_disconnect_handler;
@@ -326,9 +326,9 @@ namespace vsh::rpc {
         m_impl->request_async(std::move(message), std::move(handler));
     }
 
-    void connection::set_request_processor(std::function<cl::buffer(cl::buffer &&)> &&processor)
+    void connection::set_request_handler(std::function<cl::buffer(cl::buffer &&)> &&handler)
     {
-        m_impl->set_request_processor(std::move(processor));
+        m_impl->set_request_handler(std::move(handler));
     }
 
     void connection::set_disconnect_handler(std::function<void()> &&handler)
