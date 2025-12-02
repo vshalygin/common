@@ -39,13 +39,13 @@ namespace vsh::rpc {
     cl::cbuffer_view get_serialized_proto_message(cl::cbuffer_view message);
 
     uint64_t get_msg_number_req(cl::cbuffer_view message);
-    unsigned get_msg_method_idx_req(cl::cbuffer_view message);
+    uint32_t get_msg_method_idx_req(cl::cbuffer_view message);
 
     uint64_t get_msg_number_res(cl::cbuffer_view message);
     response_result get_msg_response_code_res(cl::cbuffer_view message);
 
     cl::buffer create_transfer_msg_req(uint64_t message_number,
-                                       unsigned method_idx,
+                                       uint32_t method_idx,
                                        const google::protobuf::Message *proto_message);
 
     cl::buffer create_transfer_msg_res(uint64_t message_number,

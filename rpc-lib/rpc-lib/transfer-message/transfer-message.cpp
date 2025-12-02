@@ -22,14 +22,14 @@ namespace vsh::rpc {
         constexpr const unsigned s_res_trailer_bytes_count = s_message_number_bytes_count +
                                                              s_result_code_bytes_count;
 
-        unsigned to_unsigned_big_endian(cl::cbuffer_view bytes)
+        uint32_t to_uint32_t_big_endian(cl::cbuffer_view bytes)
         {
-            assert(bytes.size() <= sizeof(unsigned));
+            assert(bytes.size() == sizeof(uint32_t));
 
-            unsigned ans = 0;
+            uint32_t ans = 0;
             for(size_t i = 0; i < bytes.size(); ++i) {
-                unsigned offset = static_cast<unsigned>(bytes.size() - i - 1) * s_bits_in_byte;
-                unsigned add_bits = static_cast<unsigned>(bytes[i]) << offset;
+                uint32_t offset = static_cast<uint32_t>(bytes.size() - i - 1) * s_bits_in_byte;
+                uint32_t add_bits = static_cast<uint32_t>(bytes[i]) << offset;
                 ans |= add_bits;
             }
 
@@ -38,7 +38,7 @@ namespace vsh::rpc {
 
         uint64_t to_uint64_big_endian(cl::cbuffer_view bytes)
         {
-            assert(bytes.size() <= sizeof(uint64_t));
+            assert(bytes.size() == sizeof(uint64_t));
 
             uint64_t ans = 0;
             for(size_t i = 0; i < bytes.size(); ++i) {
@@ -50,13 +50,13 @@ namespace vsh::rpc {
             return ans;
         }
 
-        std::array<std::byte, 4> from_unsigned_big_endian(unsigned number)
+        std::array<std::byte, sizeof(uint32_t)> from_uint32_t_big_endian(uint32_t number)
         {
-            std::array<std::byte, 4> ans;
+            std::array<std::byte, sizeof(uint32_t)> ans;
 
-            const auto max_size = static_cast<unsigned>(ans.max_size());
-            for(unsigned i = 0; i < max_size; ++i) {
-                unsigned offset = (max_size - i - 1) * s_bits_in_byte;
+            const auto max_size = static_cast<uint32_t>(ans.max_size());
+            for(uint32_t i = 0; i < max_size; ++i) {
+                uint32_t offset = (max_size - i - 1) * s_bits_in_byte;
                 auto byte = static_cast<std::byte>((number >> offset) & 0xFF);
                 ans[i] = byte;
             }
@@ -68,9 +68,9 @@ namespace vsh::rpc {
         {
             std::array<std::byte, 8> ans;
 
-            const auto max_size = static_cast<unsigned>(ans.max_size());
-            for(unsigned i = 0; i < max_size; ++i) {
-                unsigned offset = (max_size - i - 1) * s_bits_in_byte;
+            const auto max_size = static_cast<uint32_t>(ans.max_size());
+            for(uint32_t i = 0; i < max_size; ++i) {
+                uint32_t offset = (max_size - i - 1) * s_bits_in_byte;
                 auto byte = static_cast<std::byte>((number >> offset) & 0xFF);
                 ans[i] = byte;
             }
@@ -78,11 +78,11 @@ namespace vsh::rpc {
             return ans;
         }
 
-        unsigned extract_message_size(cl::cbuffer_view message)
+        uint32_t extract_message_size(cl::cbuffer_view message)
         {
             const auto begin = message.data() + s_message_type_bytes_count;
 
-            return to_unsigned_big_endian(
+            return to_uint32_t_big_endian(
                 cl::cbuffer_view{ begin, s_serialized_proto_message_size_bytes_count });
         }
 
@@ -93,9 +93,9 @@ namespace vsh::rpc {
         
         void fill_serialized_message_size_bytes(cl::buffer &buff,
                                                 size_t &pos,
-                                                unsigned serialized_message_size)
+                                                uint32_t serialized_message_size)
         {
-            auto serialized_message_size_bytes = from_unsigned_big_endian(serialized_message_size);
+            auto serialized_message_size_bytes = from_uint32_t_big_endian(serialized_message_size);
             assert(serialized_message_size_bytes.size() == s_serialized_proto_message_size_bytes_count);
             for(int i = 0; i < serialized_message_size_bytes.size(); ++i) {
                 buff[pos++] = serialized_message_size_bytes[i];
@@ -105,10 +105,10 @@ namespace vsh::rpc {
         void fill_serialized_message_bytes(cl::buffer &buff,
                                            size_t &pos,
                                            const google::protobuf::Message *message,
-                                           unsigned serialized_message_size)
+                                           uint32_t serialized_message_size)
         {
             //TODO check if failed
-            message->SerializeToArray(buff.data() + pos, static_cast<unsigned>(buff.size() - pos));
+            message->SerializeToArray(buff.data() + pos, static_cast<int>(buff.size() - pos));
             pos += serialized_message_size;
         }
 
@@ -125,9 +125,9 @@ namespace vsh::rpc {
 
         void fill_method_idx_bytes(cl::buffer &buff,
                                    size_t &pos,
-                                   unsigned method_idx)
+                                   uint32_t method_idx)
         {
-            auto method_idx_bytes = from_unsigned_big_endian(method_idx);
+            auto method_idx_bytes = from_uint32_t_big_endian(method_idx);
             assert(method_idx_bytes.size() == s_method_idx_bytes_count);
             for(int i = 0; i < method_idx_bytes.size(); ++i) {
                 buff[pos++] = method_idx_bytes[i];
@@ -185,7 +185,7 @@ namespace vsh::rpc {
         return to_uint64_big_endian(cl::cbuffer_view{ begin, s_message_number_bytes_count });
     }
 
-    unsigned get_msg_method_idx_req(cl::cbuffer_view message)
+    uint32_t get_msg_method_idx_req(cl::cbuffer_view message)
     {
         assert_message_req(message);
 
@@ -193,7 +193,7 @@ namespace vsh::rpc {
                                       extract_message_size(message) +
                                       s_message_number_bytes_count;
 
-        return to_unsigned_big_endian(cl::cbuffer_view{ begin, s_method_idx_bytes_count });
+        return to_uint32_t_big_endian(cl::cbuffer_view{ begin, s_method_idx_bytes_count });
     }
 
     uint64_t get_msg_number_res(cl::cbuffer_view message)
@@ -217,13 +217,13 @@ namespace vsh::rpc {
     }
 
     cl::buffer create_transfer_msg_req(uint64_t message_number,
-                                       unsigned method_idx,
+                                       uint32_t method_idx,
                                        const google::protobuf::Message *message)
     {
         assert(message);
 
-        const unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
-        const unsigned buf_size = s_header_bytes_count +
+        const auto serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+        const uint32_t buf_size = s_header_bytes_count +
                                   serialized_message_size +
                                   s_req_trailer_bytes_count;
 
@@ -246,8 +246,8 @@ namespace vsh::rpc {
     {
         assert(message);
 
-        const unsigned serialized_message_size = static_cast<unsigned>(message->ByteSizeLong());
-        const unsigned buf_size = s_header_bytes_count +
+        const auto serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+        const uint32_t buf_size = s_header_bytes_count +
                                   serialized_message_size +
                                   s_res_trailer_bytes_count;
 
