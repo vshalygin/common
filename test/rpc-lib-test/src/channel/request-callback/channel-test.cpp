@@ -160,6 +160,23 @@ TEST_F(Channel, SetsControllerFailedWithRequestNotProcessedCodeIfResponseHasFail
 
     m_callback(request_result::ok,
                create_transfer_msg_res(0, response_result::unknown_error, &response_message));
+
+    ASSERT_FALSE(MessageDifferencer::Equals(m_response_message, response_message));
+}
+
+TEST_F(Channel, SetsControllerFailedWithUnknownErrorCodeIfExceptionHappen)
+{
+    EXPECT_CALL(*m_rpc_controller, SetFailed(to_string(request_result::request_not_processed)))
+        .Times(1)
+        .WillOnce(Throw(std::exception()));
+    EXPECT_CALL(*m_rpc_controller, SetFailed(to_string(request_result::unknown_error)))
+        .Times(1);
+
+    set_connection_and_call_method();
+
+    proto::response_message response_message;
+    m_callback(request_result::ok,
+               create_transfer_msg_res(0, response_result::unknown_error, &response_message));
 }
 
 TEST_F(Channel, ParsesResponse)

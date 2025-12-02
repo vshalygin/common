@@ -22,26 +22,11 @@ namespace vsh::rpc {
         closure_guard cg(done);
         auto handler = [cg = std::move(cg), controller, response, req_id]
                        (request_result rc, cl::buffer &&buffer) {
-            if(is_success(rc)) {
-                assert(get_transfer_msg_type(buffer) == transfer_msg_type::res);
-                assert(get_msg_number_res(buffer) == req_id);
-                response->Clear();
-
-                if(auto res_code = get_msg_response_code_res(buffer); is_fail(res_code)) {
-                    controller->SetFailed(to_string(request_result::request_not_processed));
-                    return;
-                }
-
-                const auto serialized_response = get_serialized_proto_message(buffer);
-                const auto parse_result = response->ParseFromArray
-                    (static_cast<const void *>(serialized_response.data()),
-                     static_cast<int>(serialized_response.size()));
-
-                if(!parse_result) {
-                    controller->SetFailed(to_string(request_result::response_parse_error));
-                }
-            } else {
-                controller->SetFailed(to_string(rc));
+            try {
+                handler_response_event_unsafe(req_id, controller, response, rc, std::move(buffer));
+            } catch (...) {
+                //TODO log
+                controller->SetFailed(to_string(request_result::unknown_error));
             }
         };
 
@@ -63,5 +48,34 @@ namespace vsh::rpc {
     {
         auto [guard, connect] = m_connection.get();
         connect.reset();
+    }
+
+    void channel::handler_response_event_unsafe([[maybe_unused]] uint64_t req_id,
+                                                RpcController *controller,
+                                                Message *response,
+                                                request_result rc,
+                                                cl::buffer &&buffer)
+    {
+        if(is_success(rc)) {
+            assert(get_transfer_msg_type(buffer) == transfer_msg_type::res);
+            assert(get_msg_number_res(buffer) == req_id);
+            response->Clear();
+
+            if(auto res_code = get_msg_response_code_res(buffer); is_fail(res_code)) {
+                controller->SetFailed(to_string(request_result::request_not_processed));
+                return;
+            }
+
+            const auto serialized_response = get_serialized_proto_message(buffer);
+            const auto parse_result = response->ParseFromArray
+                (static_cast<const void *>(serialized_response.data()),
+                 static_cast<int>(serialized_response.size()));
+
+            if(!parse_result) {
+                controller->SetFailed(to_string(request_result::response_parse_error));
+            }
+        } else {
+            controller->SetFailed(to_string(rc));
+        }
     }
 }
