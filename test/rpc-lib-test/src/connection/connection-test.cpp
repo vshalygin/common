@@ -19,6 +19,11 @@ namespace {
         : public itransport
     {
     public:
+        transport_mock()
+        {
+            was_stopped = false;
+        }
+
         MOCK_METHOD(void, send_async, (buffer &&message,
                                        std::function<void()> &&error_handler), (const, override));
 
@@ -30,7 +35,7 @@ namespace {
 
         void stop() override
         {
-            m_is_stopped = true;
+            was_stopped = true;
             if(m_stop_handler) {
                 m_stop_handler();
             }
@@ -38,7 +43,7 @@ namespace {
 
         bool is_stopped() const override
         {
-            return m_is_stopped;
+            return was_stopped;
         }
 
         void set_stop_handler(std::function<void()> &&handler) override
@@ -63,8 +68,9 @@ namespace {
             return m_recv_async_called;
         }
 
+        inline static bool was_stopped = false;
+
     private:
-        bool m_is_stopped = false;
         mutable std::function<void(buffer &&)> m_recv_handler;
         std::function<void()> m_stop_handler;
         mutable int m_recv_async_called = 0;
@@ -88,6 +94,11 @@ protected:
 
         m_request_message.set_some_data(34);
         m_response_message.set_some_data(43);
+    }
+
+    void TearDown() override
+    {
+        m_thread_pool->stop();
     }
 
     std::unique_ptr<iconnection> create_sut()
@@ -445,14 +456,17 @@ TEST_F(Connection, SendsAnswerOnRequest)
 
 TEST_F(Connection, SetsDisconnectHandler)
 {
+    event sync_event;
     MockFunction<void()> disconnect_handler;
     EXPECT_CALL(disconnect_handler, Call)
-        .Times(2);
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
 
     auto sut = create_sut();
     sut->set_disconnect_handler(disconnect_handler.AsStdFunction());
 
     m_transport_ptr->emit_disconnect_event();
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
 TEST_F(Connection, CheckIfConnected)
@@ -468,16 +482,10 @@ TEST_F(Connection, CheckIfConnected)
 
 TEST_F(Connection, CallsTransportStopBeforeDestruction)
 {
-    MockFunction<void()> stop_handler;
-    EXPECT_CALL(stop_handler, Call)
-        .Times(1);
-
     auto sut = create_sut();
-    sut->set_disconnect_handler(stop_handler.AsStdFunction());
-
     sut.reset();
     
-    Mock::VerifyAndClearExpectations(&stop_handler);
+    ASSERT_TRUE(transport_mock::was_stopped);
 }
 
 TEST_F(Connection, CancelsUnfinishedRequestOnDestroy)
@@ -495,4 +503,61 @@ TEST_F(Connection, CancelsUnfinishedRequestOnDestroy)
 
     sut.reset();
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+}
+
+TEST_F(Connection, CancelsActiveRequestsWhenDisconnectedEventReceived)
+{
+    event sync_event;
+    auto transfer_req_message = create_transfer_msg_req(34, 7, &m_request_message);
+    MockFunction<void(request_result, buffer &&)> request_callback;
+    EXPECT_CALL(request_callback, Call(request_result::canceled, _))
+        .Times(1)
+        .WillOnce([&sync_event]() { sync_event.set(); });
+
+    auto sut = create_sut();
+    sut->request_async(std::move(transfer_req_message), request_callback.AsStdFunction());
+    EXPECT_EQ(sut->get_processing_requests_count(), 1);
+    m_transport_ptr->emit_disconnect_event();
+
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+}
+
+TEST_F(Connection, ProcessCorrectlyDisconnectedEventIfHandlerIsNotSet)
+{
+    auto sut = create_sut();
+    m_transport_ptr->emit_disconnect_event();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+}
+
+TEST_F(Connection, CallsDisconnectedHandlerImmediatlyOnSettingIfTransportAlreadyStopped)
+{
+    event sync_event;
+    MockFunction<void()> disconnect_callback;
+    EXPECT_CALL(disconnect_callback, Call)
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+
+    auto sut = create_sut();
+    sut->disconnect();
+    sut->set_disconnect_handler(disconnect_callback.AsStdFunction());
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+}
+
+TEST_F(Connection, DoesNotCallSameDisconnectCallbackTwiceOnTransportStopEvent)
+{
+    event sync_event;
+    MockFunction<void()> disconnect_callback;
+    EXPECT_CALL(disconnect_callback, Call)
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+
+    auto sut = create_sut();
+    sut->set_disconnect_handler(disconnect_callback.AsStdFunction());
+
+    m_transport_ptr->emit_disconnect_event();
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+
+    m_transport_ptr->emit_disconnect_event();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
