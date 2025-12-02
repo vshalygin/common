@@ -126,7 +126,7 @@ namespace vsh::rpc {
             m_transport->stop();
         }
 
-        size_t get_processing_requests_count() const
+        size_t get_active_requests_count() const
         {
             auto [guard, map] = m_request_map.get();
             return map.size();
@@ -347,8 +347,8 @@ namespace vsh::rpc {
         return m_impl->disconnect();
     }
 
-    size_t connection::get_processing_requests_count() const
+    size_t connection::get_active_requests_count() const
     {
-        return m_impl->get_processing_requests_count();
+        return m_impl->get_active_requests_count();
     }
 }

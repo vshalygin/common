@@ -19,6 +19,6 @@ namespace vsh::rpc {
         virtual bool is_connected() const = 0;
         virtual void disconnect() = 0;
 
-        virtual size_t get_processing_requests_count() const = 0;
+        virtual size_t get_active_requests_count() const = 0;
     };
 }

@@ -28,7 +28,7 @@ namespace vsh::rpc {
         bool is_connected() const override;
         void disconnect() override;
 
-        size_t get_processing_requests_count() const override;
+        size_t get_active_requests_count() const override;
 
     private:
         class impl;

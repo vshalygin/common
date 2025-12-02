@@ -146,7 +146,7 @@ TEST_F(Connection, ProcessesZeroRequestAfterCreation)
 {
     auto sut = create_sut();
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, AddsProcessingRequestAfterReqAsyncCalled)
@@ -155,7 +155,7 @@ TEST_F(Connection, AddsProcessingRequestAfterReqAsyncCalled)
     auto sut = create_sut();
     sut->request_async(std::move(req_message), {});
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 1);
+    ASSERT_EQ(sut->get_active_requests_count(), 1);
 }
 
 TEST_F(Connection, DoNotCallEmptyCallbackOnRequestAsyncOperation)
@@ -179,7 +179,7 @@ TEST_F(Connection, ClearsRequestAsyncOperationAfterItsCompleted)
     sut->request_async(std::move(transfer_req_message), {});
     m_transport_ptr->emit_recv_event(std::move(transfer_res_message));
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, ProcessesResponseToRequestAsync)
@@ -241,7 +241,7 @@ TEST_F(Connection, CatchesExceptionsThrownByRequestCallback)
     
     m_transport_ptr->emit_recv_event(std::move(transfer_res_message));
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, CancelsTimerAfterRequestCallbackInvoked)
@@ -308,7 +308,7 @@ TEST_F(Connection, ClearsRequestAsyncOperationAfterItsCanceledByTimer)
     sut->request_async(std::move(transfer_req_message), mock_function.AsStdFunction());
     sync_event.wait_for(std::chrono::seconds(10));
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, ClearsRequestAsyncOperationAfterItsCanceledByTimerIfCallbackThrowsException)
@@ -330,7 +330,7 @@ TEST_F(Connection, ClearsRequestAsyncOperationAfterItsCanceledByTimerIfCallbackT
     sync_event.wait_for(std::chrono::seconds(10));
     pool->stop();
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, ProcessedRequestSendError)
@@ -369,7 +369,7 @@ TEST_F(Connection, ClearsRequestAsyncOperationAfterItsCanceledBySendingError)
     sut->request_async(std::move(transfer_req_message), mock_function.AsStdFunction());
     sync_event.wait_for(std::chrono::seconds(10));
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, ClearsRequestAsyncOperationAfterSendingErrorIfCallbackThrowsException)
@@ -388,7 +388,7 @@ TEST_F(Connection, ClearsRequestAsyncOperationAfterSendingErrorIfCallbackThrowsE
     sync_event.wait_for(std::chrono::seconds(10));
     pool->stop();
 
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, ClearsRequestAsyncOperationIfSendAsyncThrowsException)
@@ -407,7 +407,7 @@ TEST_F(Connection, ClearsRequestAsyncOperationIfSendAsyncThrowsException)
     auto sut = create_sut();
     ASSERT_ANY_THROW(sut->request_async(std::move(transfer_req_message), {}));
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, MakesRecvAsyncAfterRecvAsyncCallbackCalled)
@@ -516,11 +516,11 @@ TEST_F(Connection, CancelsActiveRequestsWhenDisconnectedEventReceived)
 
     auto sut = create_sut();
     sut->request_async(std::move(transfer_req_message), request_callback.AsStdFunction());
-    EXPECT_EQ(sut->get_processing_requests_count(), 1);
+    EXPECT_EQ(sut->get_active_requests_count(), 1);
     m_transport_ptr->emit_disconnect_event();
 
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
-    ASSERT_EQ(sut->get_processing_requests_count(), 0);
+    ASSERT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, ProcessCorrectlyDisconnectedEventIfHandlerIsNotSet)
