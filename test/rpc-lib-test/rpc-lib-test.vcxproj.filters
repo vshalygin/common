@@ -25,6 +25,9 @@
     <ClCompile Include="src\types\response-result-test.cpp">
       <Filter>types</Filter>
     </ClCompile>
+    <ClCompile Include="src\channel\closure-guard\closure-guard-test.cpp">
+      <Filter>channel\closure-guard</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -44,6 +47,12 @@
     </Filter>
     <Filter Include="types">
       <UniqueIdentifier>{1322983f-2740-4c80-9eb9-139779fe17c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="channel">
+      <UniqueIdentifier>{8c33604d-bfbf-4c3a-8881-89e7ad932f06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="channel\closure-guard">
+      <UniqueIdentifier>{07d5400c-5185-48f2-82b1-caa4c04f71e7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

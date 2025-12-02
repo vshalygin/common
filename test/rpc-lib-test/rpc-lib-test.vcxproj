@@ -127,6 +127,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\channel\closure-guard\closure-guard-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
