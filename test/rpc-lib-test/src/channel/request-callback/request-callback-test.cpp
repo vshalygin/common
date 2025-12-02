@@ -31,6 +31,11 @@ protected:
         m_guard = closure_guard(m_request_callback);
     }
 
+    void TearDown() override
+    {
+        m_guard.reset();
+    }
+
 protected:
     NiceMock<MockFunction<void(request_result, std::unique_ptr<Response>)>> *m_callback_ptr;
 
