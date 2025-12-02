@@ -133,6 +133,8 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="src\transfer-message\transfer-message-test.cpp" />
+    <ClCompile Include="src\types\request-result-test.cpp" />
+    <ClCompile Include="src\types\response-result-test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\proto\test-messages.proto">

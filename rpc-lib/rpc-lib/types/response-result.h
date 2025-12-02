@@ -11,7 +11,7 @@ namespace vsh::rpc {
         return rc == response_result::ok;
     }
 
-    inline bool is_error(response_result rc)
+    inline bool is_fail(response_result rc)
     {
         return !is_success(rc);
     }

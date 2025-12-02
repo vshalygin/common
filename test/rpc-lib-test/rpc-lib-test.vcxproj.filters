@@ -19,6 +19,12 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
+    <ClCompile Include="src\types\request-result-test.cpp">
+      <Filter>types</Filter>
+    </ClCompile>
+    <ClCompile Include="src\types\response-result-test.cpp">
+      <Filter>types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -35,6 +41,9 @@
     </Filter>
     <Filter Include="mocks">
       <UniqueIdentifier>{d635bd13-39fe-4537-bc4d-97e4b2224b35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="types">
+      <UniqueIdentifier>{1322983f-2740-4c80-9eb9-139779fe17c0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

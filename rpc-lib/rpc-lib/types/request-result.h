@@ -1,4 +1,7 @@
 #pragma once
+#include <string>
+#include <cassert>
+
 namespace vsh::rpc {
     enum class request_result : unsigned char
     {
@@ -6,6 +9,7 @@ namespace vsh::rpc {
         timeout,
         send_error,
         canceled,
+        res_parse_error,
         unknown_error
     };
 
@@ -14,8 +18,50 @@ namespace vsh::rpc {
         return rc == request_result::ok;
     }
 
-    inline bool is_error(request_result rc)
+    inline bool is_fail(request_result rc)
     {
         return !is_success(rc);
+    }
+
+    inline std::string to_string(request_result rc)
+    {
+        switch(rc) {
+            case request_result::ok:
+                return "ok";
+            case request_result::timeout:
+                return "timeout";
+            case request_result::send_error:
+                return "send_error";
+            case request_result::canceled:
+                return "canceled";
+            case request_result::res_parse_error:
+                return "res_parse_error";
+            case request_result::unknown_error:
+                return "unknown_error";
+            default:
+                assert(!"unexpected request result");
+                return "unknown_error";
+        }
+    }
+
+    inline request_result request_result_from_string(const std::string &rc)
+    {
+        auto ans = request_result::unknown_error;
+        if(rc == "ok") {
+            ans = request_result::ok;
+        } else if(rc == "timeout") {
+            ans = request_result::timeout;
+        } else if(rc == "send_error") {
+            ans = request_result::send_error;
+        } else if(rc == "canceled") {
+            ans = request_result::canceled;
+        } else if(rc == "res_parse_error") {
+            ans = request_result::res_parse_error;
+        } else if(rc == "unknown_error") {
+            ans = request_result::unknown_error;
+        } else {
+            assert(!"unexpected request result string");
+        }
+        return ans;
     }
 }
