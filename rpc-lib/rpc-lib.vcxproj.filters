@@ -22,6 +22,9 @@
     <Filter Include="closure-guard">
       <UniqueIdentifier>{88cf588e-f103-4431-9808-42f8cd6f2fc0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="service\response-callback">
+      <UniqueIdentifier>{2bfde795-8c01-42d8-80e9-86bff9771fce}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -35,6 +38,9 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp">
       <Filter>closure-guard</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp">
+      <Filter>service\response-callback</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -67,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h">
       <Filter>closure-guard</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\service\response-callback\response-callback.h">
+      <Filter>service\response-callback</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

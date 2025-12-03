@@ -88,6 +88,6 @@ namespace vsh::rpc {
         request_result m_request_result = request_result::ok;
 
         std::unique_ptr<Response> m_response;
-        std::function<void(request_result, std::unique_ptr<Response>)> m_callback;
+        callback_t m_callback;
     };
 }

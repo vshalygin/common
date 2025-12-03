@@ -14,6 +14,7 @@
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
+    <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -24,6 +25,7 @@
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
     <ClInclude Include="rpc-lib\interface\itransport.h" />
+    <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
