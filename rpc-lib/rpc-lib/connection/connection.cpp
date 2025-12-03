@@ -216,7 +216,7 @@ namespace vsh::rpc {
                         auto ans = request_handler(std::move(*sp_message));
                         s->m_transport->send_async(std::move(ans), {});
                     } catch (...) {
-                        //TODO log
+                        //TODO safe log
                     }
                 }
             };

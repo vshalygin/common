@@ -1,5 +1,5 @@
 #include <rpc-lib/channel/request-callback/request-callback.h>
-#include <rpc-lib/channel/closure-guard/closure-guard.h>
+#include <rpc-lib/closure-guard/closure-guard.h>
 
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"

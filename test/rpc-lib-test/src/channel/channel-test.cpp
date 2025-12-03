@@ -102,7 +102,7 @@ TEST_F(Channel, CallsClosureDoneAfterCallbackDestroyed)
 
     m_callback = std::function<void(request_result, buffer &&)>();
 
-    Mock::VerifyAndClearExpectations(&m_closure);
+    Mock::VerifyAndClearExpectations(m_closure.get());
 }
 
 TEST_F(Channel, MakesRequestWithCorrectRequestMessage)

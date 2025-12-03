@@ -16,11 +16,11 @@
     <Filter Include="channel\request-callback">
       <UniqueIdentifier>{53278c45-60d6-40d8-85ea-2892885164bc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="channel\closure-guard">
-      <UniqueIdentifier>{2d50b1cc-371d-4dff-91b7-89efa8a05318}</UniqueIdentifier>
-    </Filter>
     <Filter Include="interface">
       <UniqueIdentifier>{ce807528-bc90-4955-88f3-63593c9d16c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="closure-guard">
+      <UniqueIdentifier>{88cf588e-f103-4431-9808-42f8cd6f2fc0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -33,8 +33,8 @@
     <ClCompile Include="rpc-lib\channel\channel.cpp">
       <Filter>channel</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\channel\closure-guard\closure-guard.cpp">
-      <Filter>channel\closure-guard</Filter>
+    <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp">
+      <Filter>closure-guard</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,14 +59,14 @@
     <ClInclude Include="rpc-lib\channel\channel.h">
       <Filter>channel</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\channel\closure-guard\closure-guard.h">
-      <Filter>channel\closure-guard</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h">
       <Filter>channel\request-callback</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\interface\itransport.h">
       <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\closure-guard\closure-guard.h">
+      <Filter>closure-guard</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -12,15 +12,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
-    <ClCompile Include="rpc-lib\channel\closure-guard\closure-guard.cpp" />
+    <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\channel\channel.h" />
-    <ClInclude Include="rpc-lib\channel\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\channel\ichannel.h" />
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
+    <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
     <ClInclude Include="rpc-lib\interface\itransport.h" />

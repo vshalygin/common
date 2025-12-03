@@ -1,5 +1,5 @@
 #include "channel.h"
-#include "closure-guard/closure-guard.h"
+#include "rpc-lib/closure-guard/closure-guard.h"
 #include "rpc-lib/transfer-message/transfer-message.h"
 #include "rpc-lib/connection/iconnection.h"
 
@@ -16,11 +16,13 @@ namespace vsh::rpc {
         assert(response);
         assert(done);
 
+        closure_guard cg(done);
+        auto cg_sp = std::make_shared<closure_guard>(std::move(cg));
+
         const auto req_id = m_next_req_id.fetch_add(1);
         const auto method_idx = static_cast<uint32_t>(method->index());
         auto req_transfer_message = create_transfer_msg_req(req_id, method_idx, request);
-        closure_guard cg(done);
-        auto handler = [cg = std::move(cg), controller, response, req_id]
+        auto handler = [cg = std::move(cg_sp), controller, response, req_id]
                        (request_result rc, cl::buffer &&buffer) {
             try {
                 handler_response_event_unsafe(req_id, controller, response, rc, std::move(buffer));

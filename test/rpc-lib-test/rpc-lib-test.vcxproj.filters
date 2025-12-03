@@ -25,14 +25,14 @@
     <ClCompile Include="src\types\response-result-test.cpp">
       <Filter>types</Filter>
     </ClCompile>
-    <ClCompile Include="src\channel\closure-guard\closure-guard-test.cpp">
-      <Filter>channel\closure-guard</Filter>
-    </ClCompile>
     <ClCompile Include="src\channel\request-callback\request-callback-test.cpp">
       <Filter>channel\request-callback</Filter>
     </ClCompile>
-    <ClCompile Include="src\channel\request-callback\channel-test.cpp">
+    <ClCompile Include="src\channel\channel-test.cpp">
       <Filter>channel</Filter>
+    </ClCompile>
+    <ClCompile Include="src\closure-guard\closure-guard-test.cpp">
+      <Filter>closure-guard</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -57,11 +57,11 @@
     <Filter Include="channel">
       <UniqueIdentifier>{8c33604d-bfbf-4c3a-8881-89e7ad932f06}</UniqueIdentifier>
     </Filter>
-    <Filter Include="channel\closure-guard">
-      <UniqueIdentifier>{07d5400c-5185-48f2-82b1-caa4c04f71e7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="channel\request-callback">
       <UniqueIdentifier>{bc067c6c-6fda-4e7a-bc3c-0c15859fe53f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="closure-guard">
+      <UniqueIdentifier>{4586649e-9f16-44de-a4ed-8037d1c19fd8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
