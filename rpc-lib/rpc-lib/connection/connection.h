@@ -10,8 +10,7 @@ namespace vsh::rpc {
         : public iconnection
     {
     public:
-        explicit connection(std::unique_ptr<itransport> transport,
-                            std::unique_ptr<cl::imultiple_timer> multiple_timer,
+        explicit connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
                             std::shared_ptr<cl::ithread_pool> thread_pool);
 
         connection(connection &) = delete;
@@ -19,13 +18,15 @@ namespace vsh::rpc {
 
         ~connection();
 
+        void set_transport(std::unique_ptr<itransport> transport) override;
+
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler) override;
 
         void set_request_handler
             (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler) override;
 
-        void set_disconnect_handler(std::function<void()> &&handler) override;
+        void set_change_state_handler(std::function<void(connection_state)> &&handler) override;
         bool is_connected() const override;
         void disconnect() override;
 

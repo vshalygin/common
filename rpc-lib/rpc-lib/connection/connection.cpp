@@ -33,22 +33,18 @@ namespace vsh::rpc {
         using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
 
     public:
-        static std::shared_ptr<impl> create(std::unique_ptr<itransport> transport,
-                                            std::unique_ptr<cl::imultiple_timer> multiple_timer,
+        static std::shared_ptr<impl> create(std::unique_ptr<cl::imultiple_timer> multiple_timer,
                                             std::shared_ptr<cl::ithread_pool> thread_pool)
         {
-            return std::make_shared<impl>(std::move(transport),
-                                          std::move(multiple_timer),
+            return std::make_shared<impl>(std::move(multiple_timer),
                                           std::move(thread_pool),
                                           creator());
         }
 
-        impl(std::unique_ptr<itransport> transport,
-             std::unique_ptr<cl::imultiple_timer> multiple_timer,
+        impl(std::unique_ptr<cl::imultiple_timer> multiple_timer,
              std::shared_ptr<cl::ithread_pool> thread_pool,
              creator)
-            : m_transport(std::move(transport))
-            , m_multiple_timer(std::move(multiple_timer))
+            : m_multiple_timer(std::move(multiple_timer))
             , m_thread_pool(std::move(thread_pool))
         {}
 
@@ -65,6 +61,21 @@ namespace vsh::rpc {
             }
         }
 
+        void set_transport(std::unique_ptr<itransport> transport)
+        {
+            assert(transport);
+            auto connect_handler = create_change_state_handler(connection_state::connected);
+            auto disconnect_handler = create_change_state_handler(connection_state::disconnected);
+
+            auto [guard, curr_transport] = m_transport.get();
+            curr_transport = std::move(transport);
+            curr_transport->set_start_callback(std::move(connect_handler));
+            curr_transport->set_stop_callback(std::move(disconnect_handler));
+
+            curr_transport->start();
+            curr_transport->recv_async(create_receive_handler());
+        }
+
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler)
         {
@@ -74,29 +85,15 @@ namespace vsh::rpc {
             try {
                 add_request_handler_to_map(msg_number, std::move(handler));
 
-                m_transport->send_async(std::move(message), create_send_error_handler(msg_number));
+                auto [guard, transport] = m_transport.get();
+                if(!transport) {
+                    throw std::runtime_error("transport is not set");
+                }
+                transport->send_async(std::move(message), create_send_error_handler(msg_number));
             } catch (...){
                 remove_request_handler_from_map(msg_number);
                 throw;
             }
-        }
-
-        void start_receive_async()
-        {
-            receive_async();
-        }
-
-
-        void start_transport_stop_observation()
-        {
-            auto handler = [self = weak_from_this()]() {
-                if(auto s = self.lock()) {
-                    s->cancel_active_requests();
-                    s->call_disconnected_handler_async();
-                }
-            };
-
-            m_transport->set_stop_handler(std::move(handler));
         }
 
         void set_request_handler
@@ -106,24 +103,24 @@ namespace vsh::rpc {
             request_handler = std::move(handler);
         }
 
-        void set_disconnect_handler(std::function<void()> &&handler)
+        void set_change_state_handler(std::function<void(connection_state)> &&handler)
         {
-            auto [guard, disconnect_handler] = m_disconnect_handler.get();
-            if(m_transport->is_stopped()) {
-                m_thread_pool->post(std::move(handler));
-            } else {
-                disconnect_handler = std::move(handler);
-            }
+            auto [guard, change_state_handler] = m_change_state_handler.get();
+            change_state_handler = std::move(handler);
         }
 
         bool is_connected() const
         {
-            return !m_transport->is_stopped();
+            auto [guard, transport] = m_transport.get();
+            return transport && !transport->is_stopped();
         }
 
         void disconnect()
         {
-            m_transport->stop();
+            auto [guard, transport] = m_transport.get();
+            if(transport) {
+                transport->stop();
+            }
         }
 
         size_t get_active_requests_count() const
@@ -147,6 +144,16 @@ namespace vsh::rpc {
             return [self = weak_from_this(), msg_number]() {
                 if(auto s = self.lock()) {
                     s->handle_request_timeout(msg_number);
+                }
+            };
+        }
+
+        std::function<void(cl::buffer &&)> create_receive_handler()
+        {
+            return [self = weak_from_this()](cl::buffer &&message) {
+                if(auto s = self.lock()) {
+                    s->dispatch_receive_event(std::move(message));
+                    s->receive_async();
                 }
             };
         }
@@ -182,15 +189,10 @@ namespace vsh::rpc {
 
         void receive_async()
         {
-            auto handler = [self = weak_from_this()](cl::buffer &&message) {
-                if(auto s = self.lock()) {
-                    s->dispatch_receive_event(std::move(message));
-                    s->receive_async();
-                }
-            };
-
             try {
-                m_transport->recv_async(std::move(handler));
+                auto [guard, transport] = m_transport.get();
+                assert(transport);
+                transport->recv_async(create_receive_handler());
             } catch (...) {
                 //TODO log;
             }
@@ -209,7 +211,6 @@ namespace vsh::rpc {
             } catch (...) {
                 //TODO safe log
             }
-
         }
 
         void handle_request(cl::buffer &&message)
@@ -217,7 +218,9 @@ namespace vsh::rpc {
             auto response_handler = [self = weak_from_this()](cl::buffer &&res_msg) {
                 if(auto s = self.lock()) {
                     try {
-                        s->m_transport->send_async(std::move(res_msg), {});
+                        auto [guard, transport] = s->m_transport.get();
+                        assert(transport);
+                        transport->send_async(std::move(res_msg), {});
                     } catch(...) {
                         //TODO safe log
                     }
@@ -303,17 +306,28 @@ namespace vsh::rpc {
             }
         }
 
-        void call_disconnected_handler_async()
+        void call_change_state_handler(connection_state new_state)
         {
-            auto [guard, disconnect_handler] = m_disconnect_handler.get();
-            if(disconnect_handler) {
-                m_thread_pool->post(std::move(disconnect_handler));
-                disconnect_handler = std::function<void()>();
+            auto [guard, change_state_handler] = m_change_state_handler.get();
+            if(change_state_handler) {
+                change_state_handler(new_state);
             }
         }
 
+        std::function<void()> create_change_state_handler(connection_state new_state)
+        {
+            return [self = weak_from_this(), new_state]() {
+                if(auto s = self.lock()) {
+                    if(new_state == connection_state::disconnected) {
+                        s->cancel_active_requests();
+                    }
+                    s->call_change_state_handler(new_state);
+                }
+            };
+        }
+
     private:
-        std::unique_ptr<itransport> m_transport;
+        cl::guarded_value<std::unique_ptr<itransport>> m_transport;
         std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
         std::shared_ptr<cl::ithread_pool> m_thread_pool;
 
@@ -321,19 +335,20 @@ namespace vsh::rpc {
         cl::guarded_value<request_handler_t> m_request_handler;
 
         cl::guarded_value<request_map> m_request_map;
-        cl::guarded_value<std::function<void()>> m_disconnect_handler;
+        cl::guarded_value<std::function<void(connection_state)>> m_change_state_handler;
     };
 
-    connection::connection(std::unique_ptr<itransport> transport,
-                           std::unique_ptr<cl::imultiple_timer> multiple_timer,
+    connection::connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
                            std::shared_ptr<cl::ithread_pool> thread_pool)
-        : m_impl(impl::create(std::move(transport), std::move(multiple_timer), std::move(thread_pool)))
-    {
-        m_impl->start_transport_stop_observation();
-        m_impl->start_receive_async();
-    }
+        : m_impl(impl::create(std::move(multiple_timer), std::move(thread_pool)))
+    {}
 
     connection::~connection() = default;
+
+    void connection::set_transport(std::unique_ptr<itransport> transport)
+    {
+        m_impl->set_transport(std::move(transport));
+    }
 
     void connection::request_async(cl::buffer &&message,
                                    std::function<void(request_result, cl::buffer &&)> &&handler)
@@ -347,9 +362,9 @@ namespace vsh::rpc {
         m_impl->set_request_handler(std::move(handler));
     }
 
-    void connection::set_disconnect_handler(std::function<void()> &&handler)
+    void connection::set_change_state_handler(std::function<void(connection_state)> &&handler)
     {
-        m_impl->set_disconnect_handler(std::move(handler));
+        m_impl->set_change_state_handler(std::move(handler));
     }
 
     bool connection::is_connected() const

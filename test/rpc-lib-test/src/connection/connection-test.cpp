@@ -24,6 +24,7 @@ namespace {
         transport_mock()
         {
             was_stopped = false;
+            was_started = false;
         }
 
         MOCK_METHOD(void, send_async, (buffer &&message,
@@ -33,6 +34,14 @@ namespace {
         {
             m_recv_handler = std::move(handler);
             ++m_recv_async_called;
+        }
+
+        void start() override
+        {
+            was_started = true;
+            if(m_start_handler) {
+                m_start_handler();
+            }
         }
 
         void stop() override
@@ -48,7 +57,12 @@ namespace {
             return was_stopped;
         }
 
-        void set_stop_handler(std::function<void()> &&handler) override
+        void set_start_callback(std::function<void()> &&handler) override
+        {
+            m_start_handler = std::move(handler);
+        }
+
+        void set_stop_callback(std::function<void()> &&handler) override
         {
             m_stop_handler = std::move(handler);
         }
@@ -71,9 +85,11 @@ namespace {
         }
 
         inline static bool was_stopped = false;
+        inline static bool was_started = false;
 
     private:
         mutable std::function<void(buffer &&)> m_recv_handler;
+        std::function<void()> m_start_handler;
         std::function<void()> m_stop_handler;
         mutable int m_recv_async_called = 0;
     };
@@ -105,9 +121,17 @@ protected:
 
     std::unique_ptr<iconnection> create_sut()
     {
-        return std::make_unique<connection>(std::move(m_transport),
-                                            std::move(m_multiple_timer),
-                                            m_thread_pool);
+        auto ans = std::make_unique<connection>(std::move(m_multiple_timer),
+                                                m_thread_pool);
+        ans->set_transport(std::move(m_transport));
+        return ans;
+    }
+
+    std::unique_ptr<iconnection> create_sut_without_transport()
+    {
+        auto ans = std::make_unique<connection>(std::move(m_multiple_timer),
+                                                m_thread_pool);
+        return ans;
     }
 
 protected:
@@ -118,8 +142,8 @@ protected:
     proto::some_message m_request_message;
     proto::some_message m_response_message;
 
-private:
     std::unique_ptr<transport_nice_mock> m_transport;
+private:
     std::unique_ptr<multiple_timer_nice_mock> m_multiple_timer;
 };
 
@@ -465,13 +489,13 @@ TEST_F(Connection, SendsAnswerOnRequest)
 TEST_F(Connection, SetsDisconnectHandler)
 {
     event sync_event;
-    MockFunction<void()> disconnect_handler;
-    EXPECT_CALL(disconnect_handler, Call)
+    MockFunction<void(connection_state)> disconnect_handler;
+    EXPECT_CALL(disconnect_handler, Call(connection_state::disconnected))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
     auto sut = create_sut();
-    sut->set_disconnect_handler(disconnect_handler.AsStdFunction());
+    sut->set_change_state_handler(disconnect_handler.AsStdFunction());
 
     m_transport_ptr->emit_disconnect_event();
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
@@ -538,34 +562,69 @@ TEST_F(Connection, ProcessCorrectlyDisconnectedEventIfHandlerIsNotSet)
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
-TEST_F(Connection, CallsDisconnectedHandlerImmediatlyOnSettingIfTransportAlreadyStopped)
+TEST_F(Connection, CallsTransportStartOnSettingTransport)
+{
+    auto sut = create_sut_without_transport();
+    EXPECT_FALSE(transport_mock::was_started);
+
+    sut->set_transport(std::move(m_transport));
+
+    EXPECT_TRUE(transport_mock::was_started);
+}
+
+TEST_F(Connection, CallsTransportStartCallbackOnSettingTransport)
 {
     event sync_event;
-    MockFunction<void()> disconnect_callback;
-    EXPECT_CALL(disconnect_callback, Call)
+    MockFunction<void(connection_state)> connect_handler;
+    EXPECT_CALL(connect_handler, Call(connection_state::connected))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
+    auto sut = create_sut_without_transport();
+    sut->set_change_state_handler(connect_handler.AsStdFunction());
 
-    auto sut = create_sut();
-    sut->disconnect();
-    sut->set_disconnect_handler(disconnect_callback.AsStdFunction());
+    sut->set_transport(std::move(m_transport));
+
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
-TEST_F(Connection, DoesNotCallSameDisconnectCallbackTwiceOnTransportStopEvent)
+TEST_F(Connection, ThrowsExceptionOnRequestAsyncIfNoTransport)
 {
-    event sync_event;
-    MockFunction<void()> disconnect_callback;
-    EXPECT_CALL(disconnect_callback, Call)
-        .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+    auto req_message = create_transfer_msg_req(3, 7, &m_request_message);
 
+    auto sut = create_sut_without_transport();
+
+    ASSERT_ANY_THROW(sut->request_async(std::move(req_message), {}));
+}
+
+TEST_F(Connection, AnswersFalseOnCheckIsConnectedIfNoTransport)
+{
+    auto sut = create_sut_without_transport();
+
+    ASSERT_FALSE(sut->is_connected());
+}
+
+TEST_F(Connection, DoesNothingOnDisconnectIfNoTransport)
+{
+    auto sut = create_sut_without_transport();
+
+    ASSERT_NO_THROW(sut->disconnect());
+}
+
+TEST_F(Connection, DoesNotCallStartCallbackIfItIsNotSet)
+{
+    NiceMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call)
+        .Times(0);
+    m_transport_ptr->set_start_callback(callback.AsStdFunction());
     auto sut = create_sut();
-    sut->set_disconnect_handler(disconnect_callback.AsStdFunction());
+}
 
-    m_transport_ptr->emit_disconnect_event();
-    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
-
-    m_transport_ptr->emit_disconnect_event();
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+TEST_F(Connection, DoesNotCallStopCallbackIfItIsNotSet)
+{
+    NiceMock<MockFunction<void()>> callback;
+    EXPECT_CALL(callback, Call)
+        .Times(0);
+    m_transport_ptr->set_stop_callback(callback.AsStdFunction());
+    auto sut = create_sut();
+    sut->disconnect();
 }
