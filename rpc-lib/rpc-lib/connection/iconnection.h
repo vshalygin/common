@@ -12,7 +12,9 @@ namespace vsh::rpc {
         virtual void request_async(cl::buffer &&message,
                                    std::function<void(request_result, cl::buffer &&)> &&handler) = 0;
 
-        virtual void set_request_handler(std::function<cl::buffer(cl::buffer &&)> &&handler) = 0;
+        using response_handler_t = std::function<void(cl::buffer &&)>;
+        virtual void set_request_handler
+            (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler) = 0;
 
         virtual void set_disconnect_handler(std::function<void()> &&handler) = 0;
 

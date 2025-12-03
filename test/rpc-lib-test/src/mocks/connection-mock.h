@@ -11,7 +11,7 @@ public:
                 (override));
 
     MOCK_METHOD(void, set_request_handler,
-                (std::function<vsh::cl::buffer(vsh::cl::buffer &&)> &&handler), (override));
+                (std::function<void(vsh::cl::buffer &&, response_handler_t &&)> &&handler), (override));
 
     MOCK_METHOD(void, set_disconnect_handler, (std::function<void()> &&handler), (override));
 

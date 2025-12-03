@@ -441,13 +441,19 @@ TEST_F(Connection, SendsAnswerOnRequest)
     auto transfer_req_message = create_transfer_msg_req(num, 7, &m_request_message);
     auto transfer_res_message = create_transfer_msg_res(
         num, response_result::unknown_error, &m_response_message);
-    MockFunction<buffer(buffer &&)> request_handler;
+    MockFunction<void(buffer &&, std::function<void(buffer &&)> &&)> request_handler;
     EXPECT_CALL(request_handler, Call)
         .Times(1)
-        .WillOnce([&](buffer &&buf) {
+        .WillOnce([&](buffer &&buf, auto &&response_handler) {
                       EXPECT_EQ(buf, transfer_req_message);
+                      response_handler(transfer_res_message.copy());
+                  });
+    EXPECT_CALL(*m_transport_ptr, send_async)
+        .Times(1)
+        .WillOnce([&](buffer &&buf, auto &&error_handler) {
+                      EXPECT_EQ(buf, transfer_res_message);
+                      EXPECT_FALSE(error_handler);
                       sync_event.set();
-                      return transfer_res_message.copy();
                   });
     auto sut = create_sut();
     sut->set_request_handler(request_handler.AsStdFunction());

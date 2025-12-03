@@ -99,7 +99,8 @@ namespace vsh::rpc {
             m_transport->set_stop_handler(std::move(handler));
         }
 
-        void set_request_handler(std::function<cl::buffer(cl::buffer &&)> &&handler)
+        void set_request_handler
+            (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler)
         {
             auto [guard, request_handler] = m_request_handler.get();
             request_handler = std::move(handler);
@@ -197,31 +198,46 @@ namespace vsh::rpc {
 
         void dispatch_receive_event(cl::buffer &&message)
         {
-            const auto message_type = get_transfer_msg_type(message);
-            assert(message_type == transfer_msg_type::req || message_type == transfer_msg_type::res);
-            if(transfer_msg_type::req == message_type) {
-                handle_request(std::move(message));
-            } else if(transfer_msg_type::res == message_type) {
-                handle_response(std::move(message));
+            try {
+                const auto message_type = get_transfer_msg_type(message);
+                assert(message_type == transfer_msg_type::req || message_type == transfer_msg_type::res);
+                if(transfer_msg_type::req == message_type) {
+                    handle_request(std::move(message));
+                }
+                else if(transfer_msg_type::res == message_type) {
+                    handle_response(std::move(message));
+                }
+            } catch (...) {
+                //TODO safe log
             }
+
         }
 
         void handle_request(cl::buffer &&message)
         {
+            auto response_handler = [self = weak_from_this()](cl::buffer &&res_msg) {
+                if(auto s = self.lock()) {
+                    try {
+                        s->m_transport->send_async(std::move(res_msg), {});
+                    } catch(...) {
+                        //TODO safe log
+                    }
+                }
+            };
             auto sp_message = std::make_shared<cl::buffer>(std::move(message));
-            auto handler = [self = weak_from_this(), sp_message]() {
+
+            auto task = [self = weak_from_this(), sp_message, response_handler]() {
                 if(auto s = self.lock()) {
                     auto [guard, request_handler] = s->m_request_handler.get();
                     if(request_handler) try {
-                        auto ans = request_handler(std::move(*sp_message));
-                        s->m_transport->send_async(std::move(ans), {});
+                        request_handler(std::move(*sp_message), response_handler);
                     } catch (...) {
                         //TODO safe log
                     }
                 }
             };
 
-            m_thread_pool->post(std::move(handler));
+            m_thread_pool->post(std::move(task));
         }
 
         bool complete_request(uint64_t req_msg_number,
@@ -302,7 +318,7 @@ namespace vsh::rpc {
         std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
         std::shared_ptr<cl::ithread_pool> m_thread_pool;
 
-        using request_handler_t = std::function<cl::buffer(cl::buffer &&)>;
+        using request_handler_t = std::function<void(cl::buffer &&, response_handler_t &&)>;
         cl::guarded_value<request_handler_t> m_request_handler;
 
         cl::guarded_value<request_map> m_request_map;
@@ -326,7 +342,8 @@ namespace vsh::rpc {
         m_impl->request_async(std::move(message), std::move(handler));
     }
 
-    void connection::set_request_handler(std::function<cl::buffer(cl::buffer &&)> &&handler)
+    void connection::set_request_handler
+        (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler)
     {
         m_impl->set_request_handler(std::move(handler));
     }
