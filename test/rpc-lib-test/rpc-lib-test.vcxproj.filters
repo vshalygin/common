@@ -37,6 +37,9 @@
     <ClCompile Include="src\service\response-callback\response-callback-test.cpp">
       <Filter>service\response-callback</Filter>
     </ClCompile>
+    <ClCompile Include="src\service\service-test.cpp">
+      <Filter>service</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

@@ -163,6 +163,12 @@ namespace vsh::rpc {
         }
     }
 
+    bool is_transfer_msg_too_big(const google::protobuf::Message *proto_message)
+    {
+        const auto serialized_message_size = static_cast<uint32_t>(proto_message->ByteSizeLong());
+        return (serialized_message_size > s_max_transfer_message_size);
+    }
+
     transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message)
     {
         assert(message.data());

@@ -136,6 +136,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="src\service\response-callback\response-callback-test.cpp" />
+    <ClCompile Include="src\service\service-test.cpp" />
     <ClCompile Include="src\transfer-message\transfer-message-test.cpp" />
     <ClCompile Include="src\types\request-result-test.cpp" />
     <ClCompile Include="src\types\response-result-test.cpp" />

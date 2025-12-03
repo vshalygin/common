@@ -25,7 +25,9 @@
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
     <ClInclude Include="rpc-lib\interface\itransport.h" />
+    <ClInclude Include="rpc-lib\service\iservice.h" />
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
+    <ClInclude Include="rpc-lib\service\service.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />

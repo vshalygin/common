@@ -103,6 +103,22 @@ namespace {
     }
 }
 
+TEST(TransferMessageReq, IsMessageTooBigReturnFalseIfMessageNotTooBig)
+{
+    proto::some_message test_message;
+    test_message.set_string_data("small string");
+
+    ASSERT_FALSE(is_transfer_msg_too_big(&test_message));
+}
+
+TEST(TransferMessageReq, IsMessageTooBigReturnTrueIfMessageTooBig)
+{
+    proto::some_message test_message;
+    test_message.set_string_data(std::string(8*1024*1024 + 1, 'a'));
+
+    ASSERT_TRUE(is_transfer_msg_too_big(&test_message));
+}
+
 TEST(TransferMessageReq, ResolveEntryType)
 {
     const auto entry = create_transfer_msg_req();

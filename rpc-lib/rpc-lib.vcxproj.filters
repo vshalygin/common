@@ -22,6 +22,9 @@
     <Filter Include="closure-guard">
       <UniqueIdentifier>{88cf588e-f103-4431-9808-42f8cd6f2fc0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="service">
+      <UniqueIdentifier>{64713131-9a37-42fe-8d9e-3863a8ef4989}</UniqueIdentifier>
+    </Filter>
     <Filter Include="service\response-callback">
       <UniqueIdentifier>{2bfde795-8c01-42d8-80e9-86bff9771fce}</UniqueIdentifier>
     </Filter>
@@ -73,6 +76,12 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h">
       <Filter>closure-guard</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\service\iservice.h">
+      <Filter>service</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\service\service.h">
+      <Filter>service</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h">
       <Filter>service\response-callback</Filter>

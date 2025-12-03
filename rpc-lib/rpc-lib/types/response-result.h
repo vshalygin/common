@@ -9,6 +9,7 @@ namespace vsh::rpc {
         canceled,
         insufficient_rights,
         request_parse_error,
+        response_too_big,
         unknown_error
     };
 
@@ -33,6 +34,8 @@ namespace vsh::rpc {
                 return "insufficient_rights";
             case response_result::request_parse_error:
                 return "request_parse_error";
+            case response_result::response_too_big:
+                return "response_too_big";
             case response_result::unknown_error:
                 return "unknown_error";
             default:
@@ -52,6 +55,8 @@ namespace vsh::rpc {
             ans = response_result::insufficient_rights;
         } else if(rc == "request_parse_error") {
             ans = response_result::request_parse_error;
+        } else if(rc == "response_too_big") {
+            ans = response_result::response_too_big;
         } else if(rc == "unknown_error") {
             ans = response_result::unknown_error;
         } else {

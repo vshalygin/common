@@ -203,8 +203,7 @@ namespace vsh::rpc {
                 assert(message_type == transfer_msg_type::req || message_type == transfer_msg_type::res);
                 if(transfer_msg_type::req == message_type) {
                     handle_request(std::move(message));
-                }
-                else if(transfer_msg_type::res == message_type) {
+                } else if(transfer_msg_type::res == message_type) {
                     handle_response(std::move(message));
                 }
             } catch (...) {
