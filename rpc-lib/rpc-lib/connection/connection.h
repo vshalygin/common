@@ -6,7 +6,7 @@
 #include <common-lib/thread-pool/ithread-pool.h>
 
 namespace vsh::rpc {
-    class connection
+    class connection final
         : public iconnection
     {
     public:

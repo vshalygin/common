@@ -13,7 +13,7 @@ namespace vsh::rpc {
     class iconnection;
 
     template<typename Service>
-    class service
+    class service final
         : public iservice
     {
         using Message = google::protobuf::Message;
@@ -22,9 +22,7 @@ namespace vsh::rpc {
     public:
         explicit service(std::unique_ptr<Service> gservice)
             : m_gservice(std::move(gservice))
-        {
-            assert(m_gservice);
-        }
+        {}
 
         service(service &) = delete;
         service &operator=(service &) = delete;
@@ -37,6 +35,14 @@ namespace vsh::rpc {
             const auto message_number = get_msg_number_req(request_message);
             const auto method_idx = get_msg_method_idx_req(request_message);
             const auto serialized_req_message = get_serialized_proto_message(request_message);
+
+            if(!m_gservice || method_idx >= get_methods_count()) {
+                auto raw_response = create_transfer_msg_res(message_number,
+                                                            response_result::not_implemented,
+                                                            nullptr);
+                raw_response_callback(std::move(raw_response));
+                return;
+            }
 
             auto req = create_request_message(method_idx);
             auto res = create_response_message(method_idx);
@@ -78,7 +84,7 @@ namespace vsh::rpc {
         std::shared_ptr<Message> create_request_message(uint32_t method_idx)
         {
             const auto req_desc = m_gservice->descriptor()->method(method_idx)->input_type();
-            std::shared_ptr<Message> req
+            std::unique_ptr<Message> req
                 (MessageFactory::generated_factory()->GetPrototype(req_desc)->New());
             return req;
         }
@@ -86,9 +92,14 @@ namespace vsh::rpc {
         std::shared_ptr<Message> create_response_message(uint32_t method_idx)
         {
             const auto res_desc = m_gservice->descriptor()->method(method_idx)->output_type();
-            std::shared_ptr<Message> res
+            std::unique_ptr<Message> res
                 (MessageFactory::generated_factory()->GetPrototype(res_desc)->New());
             return res;
+        }
+
+        uint32_t get_methods_count() const
+        {
+            return static_cast<uint32_t>(m_gservice->descriptor()->method_count());
         }
 
     private:

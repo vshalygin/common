@@ -132,3 +132,42 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
 
     m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
 }
+
+TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNotSet)
+{
+    service<ProtoServiceMock> sut(nullptr);
+    m_response_message.Clear();
+    auto response_buf = create_transfer_msg_res(34,
+                                                response_result::not_implemented,
+                                                &m_response_message);
+    auto request_buf = create_transfer_msg_req(34,
+                                               1,
+                                               &m_request_message);
+    MockFunction<void(buffer &&)> response_callback;
+    EXPECT_CALL(response_callback, Call)
+        .Times(1)
+        .WillOnce([&](auto &&buf) { EXPECT_EQ(response_buf, buf); });
+    EXPECT_CALL(*m_gservice, Method2)
+        .Times(0);
+
+    sut.process_request(std::move(request_buf), response_callback.AsStdFunction());
+}
+
+TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqualsToMethodsCounst)
+{
+    m_response_message.Clear();
+    auto response_buf = create_transfer_msg_res(34,
+                                                response_result::not_implemented,
+                                                &m_response_message);
+    auto request_buf = create_transfer_msg_req(34,
+                                               m_gservice->descriptor()->method_count(),
+                                               &m_request_message);
+    MockFunction<void(buffer &&)> response_callback;
+    EXPECT_CALL(response_callback, Call)
+        .Times(1)
+        .WillOnce([&](auto &&buf) { EXPECT_EQ(response_buf, buf); });
+    EXPECT_CALL(*m_gservice, Method2)
+        .Times(0);
+
+    m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
+}

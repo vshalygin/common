@@ -12,6 +12,7 @@ TEST(ResponseResult, TestIsSucceess)
     EXPECT_FALSE(is_success(response_result::insufficient_rights));
     EXPECT_FALSE(is_success(response_result::request_parse_error));
     EXPECT_FALSE(is_success(response_result::response_too_big));
+    EXPECT_FALSE(is_success(response_result::not_implemented));
     EXPECT_FALSE(is_success(response_result::unknown_error));
 }
 
@@ -22,6 +23,7 @@ TEST(ResponseResult, TestIsFail)
     EXPECT_TRUE(is_fail(response_result::insufficient_rights));
     EXPECT_TRUE(is_fail(response_result::request_parse_error));
     EXPECT_TRUE(is_fail(response_result::response_too_big));
+    EXPECT_TRUE(is_fail(response_result::not_implemented));
     EXPECT_TRUE(is_fail(response_result::unknown_error));
 }
 
@@ -37,6 +39,8 @@ TEST(ResponseResult, TestStringConversation)
               response_result_from_string(to_string(response_result::request_parse_error)));
     EXPECT_EQ(response_result::response_too_big,
               response_result_from_string(to_string(response_result::response_too_big)));
+    EXPECT_EQ(response_result::not_implemented,
+              response_result_from_string(to_string(response_result::not_implemented)));
     EXPECT_EQ(response_result::unknown_error,
               response_result_from_string(to_string(response_result::unknown_error)));
 }

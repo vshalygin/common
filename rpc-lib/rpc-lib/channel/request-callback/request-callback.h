@@ -9,7 +9,7 @@
 
 namespace vsh::rpc {
     template<typename Response>
-    class request_callback
+    class request_callback final
         : public google::protobuf::RpcController
         , public google::protobuf::Closure
     {

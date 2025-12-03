@@ -3,7 +3,7 @@
 #include <iterator>
 
 namespace vsh::cl {
-    class buffer_view
+    class buffer_view final
     {
     public:
         class iterator

@@ -3,7 +3,7 @@
 #include <memory>
 
 namespace vsh::cl {
-    class event
+    class event final
     {
     public:
         event();

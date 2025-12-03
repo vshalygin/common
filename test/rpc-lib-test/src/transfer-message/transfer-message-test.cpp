@@ -119,14 +119,14 @@ TEST(TransferMessageReq, IsMessageTooBigReturnTrueIfMessageTooBig)
     ASSERT_TRUE(is_transfer_msg_too_big(&test_message));
 }
 
-TEST(TransferMessageReq, ResolveEntryType)
+TEST(TransferMessageReq, ResolveMessageType)
 {
     const auto entry = create_transfer_msg_req();
 
     ASSERT_EQ(transfer_msg_type::req, get_transfer_msg_type({ entry.data(), entry.size()} ));
 }
 
-TEST(TransferMessageReq, ResolveEntryNumber)
+TEST(TransferMessageReq, ResolveMessageNumber)
 {
     const auto entry = create_transfer_msg_req();
 
@@ -151,7 +151,7 @@ TEST(TransferMessageReq, ResolveSerializedMessage)
                 ArrayEq(serialize_message.data(), serialize_message.size()));
 }
 
-TEST(TransferMessageReq, CreatesTransferEntry)
+TEST(TransferMessageReq, CreatesTransferMessage)
 {
     const auto expected_entry = create_transfer_msg_req();
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
@@ -167,7 +167,16 @@ TEST(TransferMessageReq, CreatesTransferEntry)
                 ArrayEq(entry.data(), entry.size()));
 }
 
-TEST(TransferMessageReq, ThrowsExceptionOnCreateTransferEntryIsMessageTwoBig)
+TEST(TransferMessageReq, CreatesTransferMessageWithNullptrMessage)
+{
+    auto entry = create_transfer_msg_req(34,
+                                         8,
+                                         nullptr);
+
+    ASSERT_EQ(get_serialized_proto_message(entry).size(), 0);
+}
+
+TEST(TransferMessageReq, ThrowsExceptionOnCreateTransferMessageIsMessageTwoBig)
 {
     proto::some_message test_message;
     test_message.set_string_data(std::string(8 * 1024 * 1024 + 1, 'a'));
@@ -175,7 +184,7 @@ TEST(TransferMessageReq, ThrowsExceptionOnCreateTransferEntryIsMessageTwoBig)
     ASSERT_ANY_THROW(create_transfer_msg_req(1, 1, &test_message));
 }
 
-TEST(TransferMessageRes, ResolveEntryNumber)
+TEST(TransferMessageRes, ResolveMessageNumber)
 {
     const auto entry = create_transfer_msg_res();
 
@@ -200,7 +209,7 @@ TEST(TransferMessageRes, ResolveSerializedMessage)
                 ArrayEq(serialize_message.data(), serialize_message.size()));
 }
 
-TEST(TransferMessageRes, CreatesTransferEntry)
+TEST(TransferMessageRes, CreatesTransferMessage)
 {
     const auto expected_entry = create_transfer_msg_res();
     const auto expected_entry_view = cbuffer_view{ expected_entry.data(), expected_entry.size() };
@@ -216,10 +225,19 @@ TEST(TransferMessageRes, CreatesTransferEntry)
                 ArrayEq(entry.data(), entry.size()));
 }
 
-TEST(TransferMessageRes, ThrowsExceptionOnCreateTransferEntryIsMessageTwoBig)
+TEST(TransferMessageRes, ThrowsExceptionOnCreateTransferMessageIsMessageTwoBig)
 {
     proto::some_message test_message;
     test_message.set_string_data(std::string(8 * 1024 * 1024 + 1, 'a'));
 
     ASSERT_ANY_THROW(create_transfer_msg_res(1, response_result::ok, &test_message));
+}
+
+TEST(TransferMessageRes, CreatesTransferMessageWithNullptrMessage)
+{
+    auto entry = create_transfer_msg_res(34,
+                                         response_result::not_implemented,
+                                         nullptr);
+
+    ASSERT_EQ(get_serialized_proto_message(entry).size(), 0);
 }

@@ -7,7 +7,7 @@
 #include <atomic>
 
 namespace vsh::cl {
-    class multiple_timer
+    class multiple_timer final
         : public imultiple_timer
     {
     public:

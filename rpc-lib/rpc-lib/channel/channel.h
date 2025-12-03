@@ -6,7 +6,7 @@
 #include <atomic>
 
 namespace vsh::rpc {
-    class channel
+    class channel final
         : public ichannel
     {
         using MethodDescriptor = google::protobuf::MethodDescriptor;

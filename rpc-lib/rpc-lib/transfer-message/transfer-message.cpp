@@ -109,6 +109,10 @@ namespace vsh::rpc {
                                            const google::protobuf::Message *message,
                                            uint32_t serialized_message_size)
         {
+            if(!message) {
+                return;
+            }
+
             assert(buff.size() - pos >= serialized_message_size);
             if(!message->SerializeToArray(buff.data() + pos, static_cast<int>(buff.size() - pos))) {
                 throw std::runtime_error("failed to serialize message");
@@ -230,9 +234,11 @@ namespace vsh::rpc {
                                        uint32_t method_idx,
                                        const google::protobuf::Message *message)
     {
-        assert(message);
+        uint32_t serialized_message_size = 0;
+        if(message) {
+            serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+        }
 
-        const auto serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
         if(serialized_message_size > s_max_transfer_message_size) {
             throw std::runtime_error("message is too big");
         }
@@ -258,9 +264,11 @@ namespace vsh::rpc {
                                        response_result rc,
                                        google::protobuf::Message *message)
     {
-        assert(message);
+        uint32_t serialized_message_size = 0;
+        if(message) {
+            serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+        }
 
-        const auto serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
         if(serialized_message_size > s_max_transfer_message_size) {
             throw std::runtime_error("message is too big");
         }

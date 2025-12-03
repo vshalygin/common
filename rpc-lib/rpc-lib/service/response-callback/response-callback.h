@@ -9,7 +9,7 @@
 #include <memory>
 
 namespace vsh::rpc {
-    class response_callback
+    class response_callback final
         : public google::protobuf::RpcController
         , public google::protobuf::Closure
     {
