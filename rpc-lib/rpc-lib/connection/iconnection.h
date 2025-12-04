@@ -4,6 +4,11 @@
 #include <common-lib/utils/buffer/buffer.h>
 #include <functional>
 
+namespace vsh::cl {
+    class imultiple_timer;
+    class ithread_pool;
+}
+
 namespace vsh::rpc {
     class itransport;
 
@@ -28,4 +33,7 @@ namespace vsh::rpc {
 
         virtual size_t get_active_requests_count() const = 0;
     };
+
+    std::unique_ptr<iconnection> create_connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
+                                                   std::shared_ptr<cl::ithread_pool> thread_pool);
 }

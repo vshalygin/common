@@ -15,6 +15,7 @@ namespace vsh::rpc {
         virtual ~ichannel() = default;
 
         virtual void set_connection(std::shared_ptr<iconnection> connection) = 0;
+        virtual std::shared_ptr<iconnection> get_connection() const = 0;
         virtual void drop_connection() = 0;
     };
 }

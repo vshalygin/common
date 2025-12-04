@@ -13,6 +13,8 @@ namespace vsh::rpc {
         explicit connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
                             std::shared_ptr<cl::ithread_pool> thread_pool);
 
+        explicit connection(std::shared_ptr<cl::ithread_pool> thread_pool);
+
         connection(connection &) = delete;
         connection &operator=(connection &) = delete;
 

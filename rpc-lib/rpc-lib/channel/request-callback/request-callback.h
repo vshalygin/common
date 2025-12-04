@@ -15,9 +15,10 @@ namespace vsh::rpc {
     {
         using callback_t = std::function<void(request_result, std::unique_ptr<Response>)>;
 
-        request_callback(callback_t &&callback)
+        template<typename Callback>
+        request_callback(Callback &&callback)
             : m_response(std::make_unique<Response>())
-            , m_callback(std::move(callback))
+            , m_callback(std::forward<Callback>(callback))
         {
             assert(m_response);
             assert(m_callback);
@@ -27,9 +28,10 @@ namespace vsh::rpc {
         request_callback(request_callback &) = delete;
         request_callback &operator=(request_callback &) = delete;
 
-        inline static request_callback *create_on_heap(callback_t &&callback)
+        template<typename Callback>
+        inline static request_callback *create_on_heap(Callback &&callback)
         {
-            return new request_callback(std::move(callback));
+            return new request_callback(std::forward<Callback>(callback));
         }
 
         Response *get_response_ptr() const

@@ -27,6 +27,7 @@ namespace vsh::rpc {
                         Closure *done) override;
 
         void set_connection(std::shared_ptr<iconnection> connection) override;
+        std::shared_ptr<iconnection> get_connection() const override;
         void drop_connection() override;
 
     private:

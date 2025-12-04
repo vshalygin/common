@@ -12,8 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
+    <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
+    <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp" />
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
   </ItemGroup>
@@ -21,14 +23,22 @@
     <ClInclude Include="rpc-lib\channel\channel.h" />
     <ClInclude Include="rpc-lib\channel\ichannel.h" />
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
+    <ClInclude Include="rpc-lib\client-endpoint\client-endpoint.h" />
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
+    <ClInclude Include="rpc-lib\interface\iconnector.h" />
+    <ClInclude Include="rpc-lib\interface\ilistener.h" />
     <ClInclude Include="rpc-lib\interface\itransport.h" />
+    <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h" />
     <ClInclude Include="rpc-lib\service\iservice.h" />
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
     <ClInclude Include="rpc-lib\service\service.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
+    <ClInclude Include="rpc-lib\types\connection-state.h" />
+    <ClInclude Include="rpc-lib\types\constants.h" />
+    <ClInclude Include="rpc-lib\types\listener-state.h" />
+    <ClInclude Include="rpc-lib\types\request-exception.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
   </ItemGroup>

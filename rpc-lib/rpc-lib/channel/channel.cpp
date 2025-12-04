@@ -46,6 +46,12 @@ namespace vsh::rpc {
         connect = std::move(connection);
     }
 
+    std::shared_ptr<iconnection> channel::get_connection() const
+    {
+        auto [guard, connection] = m_connection.get();
+        return connection;
+    }
+
     void channel::drop_connection()
     {
         auto [guard, connect] = m_connection.get();

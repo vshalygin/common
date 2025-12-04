@@ -3,6 +3,7 @@
 #include "rpc-lib/types/constants.h"
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
+#include <common-lib/timer/multiple-timer/multiple-timer.h>
 
 #include <unordered_map>
 
@@ -342,6 +343,10 @@ namespace vsh::rpc {
         : m_impl(impl::create(std::move(multiple_timer), std::move(thread_pool)))
     {}
 
+    connection::connection(std::shared_ptr<cl::ithread_pool> thread_pool)
+        : connection(std::make_unique<cl::multiple_timer>(*thread_pool->get_io_context()), thread_pool)
+    {}
+
     connection::~connection() = default;
 
     void connection::set_and_start_transport(std::unique_ptr<itransport> transport)
@@ -379,5 +384,11 @@ namespace vsh::rpc {
     size_t connection::get_active_requests_count() const
     {
         return m_impl->get_active_requests_count();
+    }
+
+    std::unique_ptr<iconnection> create_connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
+                                                   std::shared_ptr<cl::ithread_pool> thread_pool)
+    {
+        return std::make_unique<connection>(std::move(multiple_timer), std::move(thread_pool));
     }
 }

@@ -28,6 +28,12 @@
     <Filter Include="service\response-callback">
       <UniqueIdentifier>{2bfde795-8c01-42d8-80e9-86bff9771fce}</UniqueIdentifier>
     </Filter>
+    <Filter Include="client-endpoint">
+      <UniqueIdentifier>{487281f9-4992-4e26-a2a9-b5bea3580856}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server-endpoint">
+      <UniqueIdentifier>{cdb19d86-cbcf-48f7-b5aa-3463fbd41bd2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -44,6 +50,12 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp">
       <Filter>service\response-callback</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp">
+      <Filter>client-endpoint</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
+      <Filter>server-endpoint</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -85,6 +97,30 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h">
       <Filter>service\response-callback</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\interface\iconnector.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client-endpoint\client-endpoint.h">
+      <Filter>client-endpoint</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\types\connection-state.h">
+      <Filter>types</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\types\request-exception.h">
+      <Filter>types</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\types\constants.h">
+      <Filter>types</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\interface\ilistener.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\types\listener-state.h">
+      <Filter>types</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
+      <Filter>server-endpoint</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

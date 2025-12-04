@@ -25,6 +25,7 @@ namespace vsh::rpc {
         требуется
     */
 
+    //TODO write requesties
     class itransport
     {
     public:
