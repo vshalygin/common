@@ -37,6 +37,9 @@
     <Filter Include="syncronization\event">
       <UniqueIdentifier>{d449d5a9-b683-46bc-97f5-5e5a887a2b10}</UniqueIdentifier>
     </Filter>
+    <Filter Include="syncronization\latch">
+      <UniqueIdentifier>{702e0636-e998-4fab-9a86-bbe0aec579b6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\ithread-pool.h">
@@ -72,6 +75,9 @@
     <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h">
       <Filter>syncronization\guarded-value</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\syncronization\latch\latch.h">
+      <Filter>syncronization\latch</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -91,6 +97,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\syncronization\event\event.cpp">
       <Filter>syncronization\event</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\syncronization\latch\latch.cpp">
+      <Filter>syncronization\latch</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
