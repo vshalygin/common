@@ -76,6 +76,17 @@ TEST_F(Channel, ThrowsExceptionOnAttemptToCallMethodIfConnectionIsNotSet)
                                       m_closure.get()));
 }
 
+TEST_F(Channel, AnswerNullptrConnectionIfItIsNotSet)
+{
+    ASSERT_THAT(m_sut.get_connection(), IsNull());
+}
+
+TEST_F(Channel, AnswerSetConnection)
+{
+    m_sut.set_connection(m_connection);
+    ASSERT_EQ(m_sut.get_connection().get(), m_connection.get());
+}
+
 TEST_F(Channel, DoesNotThrowExceptionOnAttemptToCallMethodIfConnectionIsSet)
 {
     m_sut.set_connection(m_connection);
