@@ -6,7 +6,7 @@ class connection_mock
     : public vsh::rpc::iconnection
 {
 public:
-    MOCK_METHOD(void, set_transport, (std::unique_ptr<vsh::rpc::itransport> transport), (override));
+    MOCK_METHOD(void, set_and_start_transport, (std::unique_ptr<vsh::rpc::itransport> transport), (override));
 
     MOCK_METHOD(void, request_async,
                 (vsh::cl::buffer &&, std::function<void(vsh::rpc::request_result, vsh::cl::buffer &&)> &&),

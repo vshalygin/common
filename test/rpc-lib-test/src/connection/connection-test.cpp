@@ -39,6 +39,7 @@ namespace {
         void start() override
         {
             was_started = true;
+            m_stopped = false;
             if(m_start_handler) {
                 m_start_handler();
             }
@@ -47,6 +48,7 @@ namespace {
         void stop() override
         {
             was_stopped = true;
+            m_stopped = true;
             if(m_stop_handler) {
                 m_stop_handler();
             }
@@ -54,7 +56,7 @@ namespace {
 
         bool is_stopped() const override
         {
-            return was_stopped;
+            return m_stopped;
         }
 
         void set_start_callback(std::function<void()> &&handler) override
@@ -92,6 +94,7 @@ namespace {
         std::function<void()> m_start_handler;
         std::function<void()> m_stop_handler;
         mutable int m_recv_async_called = 0;
+        bool m_stopped = true;
     };
 
     using transport_nice_mock = ::NiceMock<transport_mock>;
@@ -123,7 +126,7 @@ protected:
     {
         auto ans = std::make_unique<connection>(std::move(m_multiple_timer),
                                                 m_thread_pool);
-        ans->set_transport(std::move(m_transport));
+        ans->set_and_start_transport(std::move(m_transport));
         return ans;
     }
 
@@ -503,9 +506,10 @@ TEST_F(Connection, SetsDisconnectHandler)
 
 TEST_F(Connection, CheckIfConnected)
 {
+    EXPECT_TRUE(m_transport_ptr->is_stopped());
+    auto sut = create_sut();
     EXPECT_FALSE(m_transport_ptr->is_stopped());
 
-    auto sut = create_sut();
     sut->disconnect();
 
     ASSERT_FALSE(sut->is_connected());
@@ -567,7 +571,7 @@ TEST_F(Connection, CallsTransportStartOnSettingTransport)
     auto sut = create_sut_without_transport();
     EXPECT_FALSE(transport_mock::was_started);
 
-    sut->set_transport(std::move(m_transport));
+    sut->set_and_start_transport(std::move(m_transport));
 
     EXPECT_TRUE(transport_mock::was_started);
 }
@@ -582,18 +586,25 @@ TEST_F(Connection, CallsTransportStartCallbackOnSettingTransport)
     auto sut = create_sut_without_transport();
     sut->set_change_state_handler(connect_handler.AsStdFunction());
 
-    sut->set_transport(std::move(m_transport));
+    sut->set_and_start_transport(std::move(m_transport));
 
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
-TEST_F(Connection, ThrowsExceptionOnRequestAsyncIfNoTransport)
+TEST_F(Connection, CallsRequestHandlerWithSendErrorCodeIfNoTransport)
 {
+    event sync_event;
+    MockFunction<void(request_result, buffer &&)> request_callback;
+    EXPECT_CALL(request_callback, Call(request_result::send_error, _))
+        .Times(1)
+        .WillOnce([&sync_event]() { sync_event.set(); });
     auto req_message = create_transfer_msg_req(3, 7, &m_request_message);
 
     auto sut = create_sut_without_transport();
 
-    ASSERT_ANY_THROW(sut->request_async(std::move(req_message), {}));
+    sut->request_async(std::move(req_message), request_callback.AsStdFunction());
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+    EXPECT_EQ(sut->get_active_requests_count(), 0);
 }
 
 TEST_F(Connection, AnswersFalseOnCheckIsConnectedIfNoTransport)

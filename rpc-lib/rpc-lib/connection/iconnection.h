@@ -1,23 +1,18 @@
 #pragma once
 #include "rpc-lib/types/request-result.h"
+#include "rpc-lib/types/connection-state.h"
 #include <common-lib/utils/buffer/buffer.h>
 #include <functional>
 
 namespace vsh::rpc {
     class itransport;
 
-    enum class connection_state
-    {
-        connected,
-        disconnected
-    };
-
     class iconnection
     {
     public:
         virtual ~iconnection() = default;
 
-        virtual void set_transport(std::unique_ptr<itransport> transport) = 0;
+        virtual void set_and_start_transport(std::unique_ptr<itransport> transport) = 0;
 
         virtual void request_async(cl::buffer &&message,
                                    std::function<void(request_result, cl::buffer &&)> &&handler) = 0;

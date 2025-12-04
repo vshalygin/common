@@ -1,15 +1,12 @@
 #include "connection.h"
 #include "rpc-lib/transfer-message/transfer-message.h"
+#include "rpc-lib/types/constants.h"
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 
 #include <unordered_map>
 
 namespace vsh::rpc {
-    namespace {
-        const std::chrono::seconds s_timeout(10);
-    }
-
     class connection::impl
         : public std::enable_shared_from_this<impl>
     {
@@ -61,7 +58,7 @@ namespace vsh::rpc {
             }
         }
 
-        void set_transport(std::unique_ptr<itransport> transport)
+        void set_and_start_transport(std::unique_ptr<itransport> transport)
         {
             assert(transport);
             auto connect_handler = create_change_state_handler(connection_state::connected);
@@ -86,10 +83,12 @@ namespace vsh::rpc {
                 add_request_handler_to_map(msg_number, std::move(handler));
 
                 auto [guard, transport] = m_transport.get();
-                if(!transport) {
-                    throw std::runtime_error("transport is not set");
+                if(transport) {
+                    transport->send_async(std::move(message), create_send_error_handler(msg_number));
+                } else {
+                    m_thread_pool->post(create_send_error_handler(msg_number));
                 }
-                transport->send_async(std::move(message), create_send_error_handler(msg_number));
+                
             } catch (...){
                 remove_request_handler_from_map(msg_number);
                 throw;
@@ -163,7 +162,7 @@ namespace vsh::rpc {
         {
             auto [guard, map] = m_request_map.get();
             assert(map.count(msg_number) == 0);
-            auto timer_id = m_multiple_timer->start(create_request_timout_handler(msg_number), s_timeout);
+            auto timer_id = m_multiple_timer->start(create_request_timout_handler(msg_number), RequestTimeout);
             map[msg_number] = std::make_shared<request_data>(std::move(handler), timer_id);
         }
 
@@ -345,9 +344,9 @@ namespace vsh::rpc {
 
     connection::~connection() = default;
 
-    void connection::set_transport(std::unique_ptr<itransport> transport)
+    void connection::set_and_start_transport(std::unique_ptr<itransport> transport)
     {
-        m_impl->set_transport(std::move(transport));
+        m_impl->set_and_start_transport(std::move(transport));
     }
 
     void connection::request_async(cl::buffer &&message,
