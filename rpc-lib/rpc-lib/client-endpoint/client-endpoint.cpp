@@ -3,7 +3,7 @@
 namespace vsh::rpc {
     client_endpoint::client_endpoint(std::shared_ptr<iservice> service,
                                      std::unique_ptr<ichannel> channel,
-                                     std::unique_ptr<iconnection> connection,
+                                     std::shared_ptr<iconnection> connection,
                                      std::unique_ptr<iconnector> connector)
         : m_channel(std::move(channel))
         , m_connection(std::move(connection))
@@ -32,12 +32,12 @@ namespace vsh::rpc {
 
     void client_endpoint::disconnect()
     {
-        m_connection->disconnect();
+        m_connection->stop_transport();
     }
 
     bool client_endpoint::is_connected() const
     {
-        return m_connection->is_connected();
+        return m_connection->is_active();
     }
 
     void client_endpoint::set_connection_change_state_handler

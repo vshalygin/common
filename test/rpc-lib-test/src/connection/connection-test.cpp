@@ -510,9 +510,9 @@ TEST_F(Connection, CheckIfConnected)
     auto sut = create_sut();
     EXPECT_FALSE(m_transport_ptr->is_stopped());
 
-    sut->disconnect();
+    sut->stop_transport();
 
-    ASSERT_FALSE(sut->is_connected());
+    ASSERT_FALSE(sut->is_active());
     ASSERT_TRUE(m_transport_ptr->is_stopped());
 }
 
@@ -611,14 +611,14 @@ TEST_F(Connection, AnswersFalseOnCheckIsConnectedIfNoTransport)
 {
     auto sut = create_sut_without_transport();
 
-    ASSERT_FALSE(sut->is_connected());
+    ASSERT_FALSE(sut->is_active());
 }
 
 TEST_F(Connection, DoesNothingOnDisconnectIfNoTransport)
 {
     auto sut = create_sut_without_transport();
 
-    ASSERT_NO_THROW(sut->disconnect());
+    ASSERT_NO_THROW(sut->stop_transport());
 }
 
 TEST_F(Connection, DoesNotCallStartCallbackIfItIsNotSet)
@@ -637,5 +637,5 @@ TEST_F(Connection, DoesNotCallStopCallbackIfItIsNotSet)
         .Times(0);
     m_transport_ptr->set_stop_callback(callback.AsStdFunction());
     auto sut = create_sut();
-    sut->disconnect();
+    sut->stop_transport();
 }

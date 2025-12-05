@@ -40,6 +40,9 @@
     <ClCompile Include="src\service\service-test.cpp">
       <Filter>service</Filter>
     </ClCompile>
+    <ClCompile Include="src\client-endpoint\client-endpoint-test.cpp">
+      <Filter>client-endpoint</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -75,6 +78,9 @@
     <Filter Include="service\response-callback">
       <UniqueIdentifier>{2d803733-265d-44a7-894b-73edf12ca61a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="client-endpoint">
+      <UniqueIdentifier>{5378f013-d467-4c2f-b646-5f7cc71d1fbd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\proto\test-messages.proto">
@@ -95,6 +101,18 @@
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\rpc-controller-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\service-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\channel-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\connector-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\transport-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
   </ItemGroup>

@@ -52,7 +52,7 @@ namespace vsh::rpc {
         ~impl()
         {
             try {
-                disconnect();
+                stop_transport();
                 cancel_active_requests();
             } catch (...) {
                 //TODO safe log
@@ -109,13 +109,13 @@ namespace vsh::rpc {
             change_state_handler = std::move(handler);
         }
 
-        bool is_connected() const
+        bool is_active() const
         {
             auto [guard, transport] = m_transport.get();
             return transport && !transport->is_stopped();
         }
 
-        void disconnect()
+        void stop_transport()
         {
             auto [guard, transport] = m_transport.get();
             if(transport) {
@@ -371,14 +371,14 @@ namespace vsh::rpc {
         m_impl->set_change_state_handler(std::move(handler));
     }
 
-    bool connection::is_connected() const
+    bool connection::is_active() const
     {
-        return m_impl->is_connected();
+        return m_impl->is_active();
     }
 
-    void connection::disconnect()
+    void connection::stop_transport()
     {
-        return m_impl->disconnect();
+        return m_impl->stop_transport();
     }
 
     size_t connection::get_active_requests_count() const

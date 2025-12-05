@@ -12,9 +12,9 @@ namespace vsh::rpc {
         , m_service(std::move(service))
         , m_thread_pool(std::move(thread_pool))
     {
-        assert(listener);
-        assert(service);
-        assert(thread_pool);
+        assert(m_listener);
+        assert(m_service);
+        assert(m_thread_pool);
     }
 
     void server_endpoint::impl::start_listen()
@@ -59,7 +59,7 @@ namespace vsh::rpc {
         }
 
         if(channel) {
-            channel->get_connection()->disconnect();
+            channel->get_connection()->stop_transport();
         }
     }
 
@@ -76,7 +76,7 @@ namespace vsh::rpc {
         }
 
         for(auto &channel : channels) {
-            channel->get_connection()->disconnect();
+            channel->get_connection()->stop_transport();
         }
     }
 
@@ -166,7 +166,7 @@ namespace vsh::rpc {
     }
 
     std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>>
-        server_endpoint::impl::get_all_channels() const
+        server_endpoint::impl::get_all_channels_with_id() const
     {
         std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>> ans;
         auto [guard, map] = m_channel_map.get();

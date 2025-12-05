@@ -161,7 +161,7 @@ namespace vsh::rpc {
                                                       const auto &create_stub,
                                                       auto method)
         {
-            auto channels_with_id = get_all_channels();
+            auto channels_with_id = get_all_channels_with_id();
             std::vector<std::shared_ptr<req_result_data<Response>>> result_data_v(channels_with_id.size());
             for(size_t i = 0; i < result_data_v.size(); ++i) {
                 result_data_v[i] = std::make_shared<req_result_data<Response>>();
@@ -216,17 +216,17 @@ namespace vsh::rpc {
                                       auto method,
                                       const request_callback_t<Response> &req_callback)
         {
-            auto channels = get_all_channels();
-            for(auto &channel : channels) {
-                make_request_async<Request, Response>(channel.first,
-                                                      channel.second,
+            auto channels_with_id = get_all_channels_with_id();
+            for(auto &channel_with_id : channels_with_id) {
+                make_request_async<Request, Response>(channel_with_id.first,
+                                                      channel_with_id.second,
                                                       req,
                                                       create_stub,
                                                       method,
                                                       req_callback);
             }
 
-            return channels.size();
+            return channels_with_id.size();
         }
 
     private:
@@ -258,7 +258,7 @@ namespace vsh::rpc {
             (std::shared_ptr<req_result_data<Response>> result_data,
              std::shared_ptr<cl::latch> latch)
         {
-            return [result_data, latch = std::move(latch)]
+            return [result_data = std::move(latch), latch = std::move(latch)]
                    (uint64_t connection_id,
                     request_result rc,
                     std::unique_ptr<Response> response) {
@@ -272,14 +272,14 @@ namespace vsh::rpc {
         void handle_new_connection(std::unique_ptr<itransport> transport,
                                    std::weak_ptr<impl> self);
 
-        std::function<void(connection_state)> create_connection_change_state_handler
-            (std::weak_ptr<impl> self, uint64_t connection_id) const;
+        std::function<void(connection_state)>
+            create_connection_change_state_handler(std::weak_ptr<impl> self, uint64_t connection_id) const;
 
         std::function<void(cl::buffer &&, iconnection::response_handler_t &&)>
             create_request_handler() const;
 
         std::shared_ptr<ichannel> find_channel_or_throw(uint64_t connection_id) const;
-        std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>> get_all_channels() const;
+        std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>> get_all_channels_with_id() const;
 
     private:
         std::atomic_uint64_t m_next_connection_id = 0;

@@ -28,8 +28,8 @@ namespace vsh::rpc {
 
         virtual void set_change_state_handler(std::function<void(connection_state)> &&handler) = 0;
 
-        virtual bool is_connected() const = 0;
-        virtual void disconnect() = 0;
+        virtual bool is_active() const = 0;
+        virtual void stop_transport() = 0;
 
         virtual size_t get_active_requests_count() const = 0;
     };

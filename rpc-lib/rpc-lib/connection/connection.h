@@ -29,8 +29,8 @@ namespace vsh::rpc {
             (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler) override;
 
         void set_change_state_handler(std::function<void(connection_state)> &&handler) override;
-        bool is_connected() const override;
-        void disconnect() override;
+        bool is_active() const override;
+        void stop_transport() override;
 
         size_t get_active_requests_count() const override;
 

@@ -20,8 +20,8 @@ public:
                 (std::function<void(vsh::rpc::connection_state)> &&),
                 (override));
 
-    MOCK_METHOD(bool, is_connected, (), (const, override));
-    MOCK_METHOD(void, disconnect, (), (override));
+    MOCK_METHOD(bool, is_active, (), (const, override));
+    MOCK_METHOD(void, stop_transport, (), (override));
 
     MOCK_METHOD(size_t, get_active_requests_count, (), (const, override));
 };
