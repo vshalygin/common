@@ -43,6 +43,9 @@
     <ClCompile Include="src\client-endpoint\client-endpoint-test.cpp">
       <Filter>client-endpoint</Filter>
     </ClCompile>
+    <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp">
+      <Filter>server-endpoint</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -81,6 +84,9 @@
     <Filter Include="client-endpoint">
       <UniqueIdentifier>{5378f013-d467-4c2f-b646-5f7cc71d1fbd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="server-endpoint">
+      <UniqueIdentifier>{04329da9-a1ec-4d97-9f37-e8b4e98ddc4d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\proto\test-messages.proto">
@@ -113,6 +119,9 @@
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\transport-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\listener-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
   </ItemGroup>

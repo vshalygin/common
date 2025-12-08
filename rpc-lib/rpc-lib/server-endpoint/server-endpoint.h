@@ -49,27 +49,30 @@ namespace vsh::rpc {
         void drop_connection(uint64_t id);
         void drop_all_connections();
 
+        size_t get_inactive_connections_count() const;
+        size_t get_channels_count() const;
+
         template<typename Request, typename Response>
         std::unique_ptr<Response> make_request(uint64_t connection_id,
                                                const Request &req,
-                                               auto &service_stub,
+                                               const auto &create_stub,
                                                auto method);
 
         template<typename Request, typename Response>
         response_results_t<Response> make_request_all(const Request &req,
-                                                      auto &service_stub,
+                                                      const auto &create_stub,
                                                       auto method);
 
         template<typename Request, typename Response>
         void make_request_async(uint64_t connection_id,
                                 const Request &req,
-                                auto &service_stub,
+                                const auto &create_stub,
                                 auto method,
                                 request_callback_t<Response> &&req_callback);
 
         template<typename Request, typename Response>
         size_t make_request_all_async(const Request &req,
-                                      auto &service_stub,
+                                      const auto &create_stub,
                                       auto method,
                                       request_callback_t<Response> &&req_callback);
 
@@ -78,7 +81,7 @@ namespace vsh::rpc {
         std::shared_ptr<impl> m_impl;
     };
 
-    class server_endpoint::impl
+    class server_endpoint::impl final
         : public std::enable_shared_from_this<impl>
     {
         class creator
@@ -127,10 +130,13 @@ namespace vsh::rpc {
 
         void set_new_connection_handler();
 
+        size_t get_inactive_connections_count() const;
+        size_t get_channels_count() const;
+
         template<typename Request, typename Response>
         std::unique_ptr<Response> make_request(uint64_t connection_id,
                                                const Request &req,
-                                               const auto &create_service_stub,
+                                               const auto &create_stub,
                                                auto method)
         {
             auto channel = find_channel_or_throw(connection_id);
@@ -140,7 +146,7 @@ namespace vsh::rpc {
             make_request_async<Request, Response>(connection_id,
                                                   std::move(channel),
                                                   req,
-                                                  create_service_stub,
+                                                  create_stub,
                                                   method,
                                                   req_callback);
 
@@ -184,10 +190,10 @@ namespace vsh::rpc {
             }
 
             response_results_t<Response> ans(result_data_v.size());
-            for(size_t i = 0; result_data_v.size(); ++i) {
-                const auto &req_result = result_data_v[i]->req_result;
+            for(size_t i = 0; i < result_data_v.size(); ++i) {
+                auto req_result = result_data_v[i]->req_result;
                 auto &response = result_data_v[i]->response;
-                ans[i] = std::make_pair<request_result, std::unique_ptr<Response>>
+                ans[i] = std::pair<request_result, std::unique_ptr<Response>>
                     (req_result, std::move(response));
             }
 
@@ -258,10 +264,8 @@ namespace vsh::rpc {
             (std::shared_ptr<req_result_data<Response>> result_data,
              std::shared_ptr<cl::latch> latch)
         {
-            return [result_data = std::move(latch), latch = std::move(latch)]
-                   (uint64_t connection_id,
-                    request_result rc,
-                    std::unique_ptr<Response> response) {
+            return [result_data = std::move(result_data), latch = std::move(latch)]
+                   (uint64_t connection_id, request_result rc, std::unique_ptr<Response> response) {
                 result_data->connection_id = connection_id;
                 result_data->req_result = rc;
                 result_data->response = std::move(response);
@@ -280,6 +284,8 @@ namespace vsh::rpc {
 
         std::shared_ptr<ichannel> find_channel_or_throw(uint64_t connection_id) const;
         std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>> get_all_channels_with_id() const;
+
+        void call_connection_state_change_handler(uint64_t connection_id, connection_state state);
 
     private:
         std::atomic_uint64_t m_next_connection_id = 0;
@@ -300,43 +306,43 @@ namespace vsh::rpc {
     template<typename Request, typename Response>
     std::unique_ptr<Response> server_endpoint::make_request(uint64_t connection_id,
                                                             const Request &req,
-                                                            auto &service_stub,
+                                                            const auto &create_stub,
                                                             auto method)
     {
-        return m_impl->make_request<Request, Response>(connection_id, req, service_stub, method);
+        return m_impl->make_request<Request, Response>(connection_id, req, create_stub, method);
     }
 
     template<typename Request, typename Response>
     server_endpoint::response_results_t<Response> server_endpoint::make_request_all(const Request &req,
-                                                                                    auto &service_stub,
+                                                                                    const auto &create_stub,
                                                                                     auto method)
     {
-        return m_impl->make_request<Request, Response>(req, service_stub, method);
+        return m_impl->make_request_all<Request, Response>(req, create_stub, method);
     }
 
     template<typename Request, typename Response>
     void server_endpoint::make_request_async(uint64_t connection_id,
                                              const Request &req,
-                                             auto &service_stub,
+                                             const auto &create_stub,
                                              auto method,
                                              request_callback_t<Response> &&req_callback)
     {
-        m_impl->make_request<Request, Response>(connection_id,
-                                                req,
-                                                service_stub,
-                                                method,
-                                                std::move(req_callback));
+        m_impl->make_request_async<Request, Response>(connection_id,
+                                                      req,
+                                                      create_stub,
+                                                      method,
+                                                      std::move(req_callback));
     }
 
     template<typename Request, typename Response>
     size_t server_endpoint::make_request_all_async(const Request &req,
-                                                   auto &service_stub,
+                                                   const auto &create_stub,
                                                    auto method,
                                                    request_callback_t<Response> &&req_callback)
     {
-        return m_impl->make_request<Request, Response>(req,
-                                                       service_stub,
-                                                       method,
-                                                       std::move(req_callback));
+        return m_impl->make_request_all_async<Request, Response>(req,
+                                                                 create_stub,
+                                                                 method,
+                                                                 std::move(req_callback));
     }
 }

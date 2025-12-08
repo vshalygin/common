@@ -1,5 +1,6 @@
 #include "server-endpoint.h"
 #include "rpc-lib/connection/connection.h"
+#include "rpc-lib/channel/channel.h"
 
 #include <vector>
 
@@ -47,48 +48,43 @@ namespace vsh::rpc {
 
     void server_endpoint::impl::drop_connection(uint64_t id)
     {
-        std::shared_ptr<ichannel> channel;
-
-        {
-            auto [guard, map] = m_channel_map.get();
-            auto it = map.find(id);
-            if(it != map.end()) {
-                channel = std::move(it->second);
-                map.erase(it);
-            }
-        }
-
-        if(channel) {
-            channel->get_connection()->stop_transport();
+        auto [guard, map] = m_channel_map.get();
+        auto it = map.find(id);
+        if(it != map.end()) {
+            it->second->get_connection()->stop_transport();
         }
     }
 
     void server_endpoint::impl::drop_all_connections()
     {
-        std::vector<std::shared_ptr<ichannel>> channels;
-
-        {
-            auto [guard, map] = m_channel_map.get();
-            for(auto el : map) {
-                channels.push_back(std::move(el.second));
-            }
-            map.clear();
-        }
-
-        for(auto &channel : channels) {
-            channel->get_connection()->stop_transport();
+        auto [guard, map] = m_channel_map.get();
+        for(auto &el : map) {
+            el.second->get_connection()->stop_transport();
         }
     }
 
     void server_endpoint::impl::set_new_connection_handler()
     {
         auto handler = [self = weak_from_this()](std::unique_ptr<itransport> transport) {
+            assert(transport);
             if(auto s = self.lock()) {
                 s->handle_new_connection(std::move(transport), self);
             }
         };
         
         m_listener->set_connect_handler(std::move(handler));
+    }
+
+    size_t server_endpoint::impl::get_inactive_connections_count() const
+    {
+        auto [guard, map] = m_inactive_connection_map.get();
+        return map.size();
+    }
+
+    size_t server_endpoint::impl::get_channels_count() const
+    {
+        auto [guard, map] = m_channel_map.get();
+        return map.size();
     }
 
     void server_endpoint::impl::handle_new_connection(std::unique_ptr<itransport> transport,
@@ -122,28 +118,23 @@ namespace vsh::rpc {
         (std::weak_ptr<impl> self, uint64_t connection_id) const
     {
         return [self, connection_id](connection_state state) mutable {
-                   if(auto s = self.lock()) {
-                       if(state == connection_state::connected) {
-                           auto [guard, map] = s->m_channel_map.get();
-                           auto [guard2, inactive_map] = s->m_inactive_connection_map.get();
-                           assert(map.count(connection_id) == 0);
-                           assert(inactive_map.count(connection_id));
-                           map[connection_id]->set_connection(std::move(inactive_map[connection_id]));
-                           inactive_map.erase(connection_id);
-                       } else if(state == connection_state::disconnected) {
-                           auto [guard, map] = s->m_channel_map.get();
-                           assert(map.count(connection_id));
-                           map.erase(connection_id);
-                       }
-                       auto [guard, handler] = s->m_connection_change_state_handler.get();
-                       if(handler) {
-                           try {
-                               handler(connection_id, state);
-                           } catch(...) {
-                               //TODO log
-                           }
-                       }
-                   }
+            if(auto s = self.lock()) {
+                if(state == connection_state::connected) {
+                    auto [guard, map] = s->m_channel_map.get();
+                    auto [guard2, inactive_map] = s->m_inactive_connection_map.get();
+                    assert(map.count(connection_id) == 0);
+                    assert(inactive_map.count(connection_id));
+                    auto c = std::make_shared<channel>();
+                    c->set_connection(std::move(inactive_map[connection_id]));
+                    map[connection_id] = std::move(c);
+                    inactive_map.erase(connection_id);
+                } else if(state == connection_state::disconnected) {
+                    auto [guard, map] = s->m_channel_map.get();
+                    assert(map.count(connection_id));
+                    map.erase(connection_id);
+                }
+                s->call_connection_state_change_handler(connection_id, state);
+            }
         };
     }
 
@@ -162,6 +153,7 @@ namespace vsh::rpc {
         if(it == map.end()) {
             throw std::runtime_error("no channel with id " + std::to_string(connection_id));
         }
+        assert(it->second);
         return it->second;
     }
 
@@ -170,10 +162,24 @@ namespace vsh::rpc {
     {
         std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>> ans;
         auto [guard, map] = m_channel_map.get();
+        ans.reserve(map.size());
         for(auto el : map) {
             ans.push_back(el);
         }
         return ans;
+    }
+
+    void server_endpoint::impl::call_connection_state_change_handler(uint64_t connection_id,
+                                                                     connection_state state)
+    {
+        auto [guard, handler] = m_connection_change_state_handler.get();
+        if(handler) {
+            try {
+                handler(connection_id, state);
+            } catch(...) {
+                //TODO log
+            }
+        }
     }
 
     server_endpoint::server_endpoint(std::unique_ptr<ilistener> listener,
@@ -219,5 +225,15 @@ namespace vsh::rpc {
     void server_endpoint::drop_all_connections()
     {
         m_impl->drop_all_connections();
+    }
+
+    size_t server_endpoint::get_inactive_connections_count() const
+    {
+        return m_impl->get_inactive_connections_count();
+    }
+
+    size_t server_endpoint::get_channels_count() const
+    {
+        return m_impl->get_channels_count();
     }
 }

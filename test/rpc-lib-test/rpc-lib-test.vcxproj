@@ -136,6 +136,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
+    <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp" />
     <ClCompile Include="src\service\response-callback\response-callback-test.cpp" />
     <ClCompile Include="src\service\service-test.cpp" />
     <ClCompile Include="src\transfer-message\transfer-message-test.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="src\mocks\closure-mock.h" />
     <ClInclude Include="src\mocks\connection-mock.h" />
     <ClInclude Include="src\mocks\connector-mock.h" />
+    <ClInclude Include="src\mocks\listener-mock.h" />
     <ClInclude Include="src\mocks\multiple-timer-mock.h" />
     <ClInclude Include="src\mocks\rpc-controller-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />
