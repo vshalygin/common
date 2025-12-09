@@ -6,14 +6,25 @@ namespace vsh::cl {
         , m_timer(m_io_context.get_executor())
     {}
 
+    periodic_timer::~periodic_timer()
+    {
+        try {
+            cancel();
+        } catch (...) {
+            //TODO safe log
+        }
+    }
+
     void periodic_timer::cancel()
     {
+        if(!m_is_active) {
+            return;
+        }
+
         m_is_canceled = true;
         m_timer.cancel();
 
         m_finish_event.wait();
-
-        clear_state_to_initial();
     }
 
     bool periodic_timer::is_active() const
@@ -42,15 +53,5 @@ namespace vsh::cl {
     void periodic_timer::increment_periods_count()
     {
         ++m_current_periods_count;
-    }
-
-    void periodic_timer::clear_state_to_initial()
-    {
-        m_current_periods_count = 0;
-        m_is_canceled = false;
-        m_finish_event.clear();
-
-        //must be last
-        m_is_active = false;
     }
 }

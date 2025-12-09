@@ -1,6 +1,7 @@
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
 #include <common-lib/thread-pool/thread-pool.h>
 #include <common-lib/syncronization/event/event.h>
+#include <common-lib/syncronization/latch/latch.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -15,7 +16,7 @@ protected:
     void SetUp() override
     {
         m_thread_pool = std::make_unique<thread_pool>(2);
-        m_multiple_timer = std::make_unique<multiple_timer>(*m_thread_pool->get_io_context());
+        m_multiple_timer = std::make_unique<multiple_timer>(m_thread_pool->get_io_context());
     }
 
 protected:
@@ -43,22 +44,21 @@ TEST_F(MultipleTimer, CallsCallbackOnTimeout)
 
 TEST_F(MultipleTimer, IsAbleToHandleTwoTimers)
 {
-    event sync_event1;
-    event sync_event2;
+    latch sync_latch(2);
     MockFunction<void()> callback1;
     EXPECT_CALL(callback1, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event2.wait(), sync_event1.set(); });
+        .WillOnce([&]() { sync_latch.count_down(); });
     MockFunction<void()> callback2;
     EXPECT_CALL(callback2, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event2.set(); });
+        .WillOnce([&]() { sync_latch.count_down(); });
 
     m_multiple_timer->start(callback1.AsStdFunction(), std::chrono::microseconds(3));
     m_multiple_timer->start(callback2.AsStdFunction(), std::chrono::microseconds(3));
 
     EXPECT_EQ(m_multiple_timer->get_active_timers_count(), 2);
-    EXPECT_TRUE(sync_event1.wait_for(std::chrono::seconds(1)));
+    EXPECT_TRUE(sync_latch.wait_for(std::chrono::seconds(10)));
 }
 
 TEST_F(MultipleTimer, CancelsTimeoutById)

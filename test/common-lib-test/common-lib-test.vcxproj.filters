@@ -31,6 +31,9 @@
     <ClCompile Include="src\syncronization\guarded-value\guarded-value-test.cpp">
       <Filter>syncronization\guarded-value</Filter>
     </ClCompile>
+    <ClCompile Include="src\timer\periodic-timer\periodic-timer-test.cpp">
+      <Filter>timer\periodic-timer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -65,6 +68,9 @@
     </Filter>
     <Filter Include="syncronization\guarded-value">
       <UniqueIdentifier>{6a9e4291-f5cb-4bb2-9a48-640a3bc4aaf7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="timer\periodic-timer">
+      <UniqueIdentifier>{fdbc5790-7680-4e3c-a2aa-60d2564838d5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

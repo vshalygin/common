@@ -18,6 +18,8 @@ namespace vsh::cl {
         periodic_timer(periodic_timer &) = delete;
         periodic_timer &operator=(periodic_timer &) = delete;
 
+        ~periodic_timer();
+
         template<typename Callback>
         void start(Callback &&callback, const std::chrono::milliseconds &period);
 
@@ -35,8 +37,6 @@ namespace vsh::cl {
         bool is_all_periods_completed() const;
         void increment_periods_count();
 
-        void clear_state_to_initial();
-
     private:
         boost::asio::io_context &m_io_context;
         boost::asio::steady_timer m_timer;
@@ -52,10 +52,13 @@ namespace vsh::cl {
     template<typename Callback>
     void periodic_timer::start(Callback &&callback, const std::chrono::milliseconds &period)
     {
-        if(!m_is_active.exchange(true)) {
+        if(m_is_active.exchange(true)) {
             throw std::logic_error("periodic timer already started");
         }
 
+        m_finish_event.clear();
+        m_current_periods_count = 0;
+        m_is_canceled = false;
         start_period<Callback>(std::move(callback), period);
     }
 
@@ -76,14 +79,17 @@ namespace vsh::cl {
                 increment_periods_count();
                 if(m_is_canceled || is_all_periods_completed()) {
                     m_finish_event.set();
+                    m_is_active = false;
                 } else {
                     start_period<Callback>(std::move(callback), period);
                 }
             } else if(ec == boost::asio::error::operation_aborted) {
                 m_finish_event.set();
+                m_is_active = false;
             } else {
                 //TODO log something unexpected
                 m_finish_event.set();
+                m_is_active = false;
             }
         });
     }

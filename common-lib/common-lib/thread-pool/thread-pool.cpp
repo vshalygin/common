@@ -46,14 +46,14 @@ namespace vsh::cl {
         return m_thread_num;
     }
 
-    boost::asio::io_context *thread_pool::get_io_context()
+    boost::asio::io_context &thread_pool::get_io_context()
     {
-        return &m_io_context;
+        return m_io_context;
     }
 
-    const boost::asio::io_context *thread_pool::get_io_context() const
+    const boost::asio::io_context &thread_pool::get_io_context() const
     {
-        return &m_io_context;
+        return m_io_context;
     }
 
     std::unique_ptr<strand> thread_pool::create_strand()

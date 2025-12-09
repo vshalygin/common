@@ -44,7 +44,7 @@ namespace vsh::rpc {
              creator)
             : m_timeout(timeout)
             , m_thread_pool(std::move(thread_pool))
-            , m_multiple_timer(std::make_unique<cl::multiple_timer>(*m_thread_pool->get_io_context()))
+            , m_multiple_timer(std::make_unique<cl::multiple_timer>(m_thread_pool->get_io_context()))
         {}
 
         impl(impl &) = delete;

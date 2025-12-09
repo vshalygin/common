@@ -25,8 +25,8 @@ namespace vsh::cl {
 
         unsigned get_num() const;
 
-        boost::asio::io_context *get_io_context();
-        const boost::asio::io_context *get_io_context() const;
+        boost::asio::io_context &get_io_context();
+        const boost::asio::io_context &get_io_context() const;
 
         std::unique_ptr<strand> create_strand();
 
