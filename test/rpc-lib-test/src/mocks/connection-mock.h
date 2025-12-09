@@ -24,6 +24,7 @@ public:
     MOCK_METHOD(void, stop_transport, (), (override));
 
     MOCK_METHOD(size_t, get_active_requests_count, (), (const, override));
+    MOCK_METHOD(size_t, get_active_timers_count, (), (const, override));
 };
 
 using connection_nice_mock = ::testing::NiceMock<connection_mock>;

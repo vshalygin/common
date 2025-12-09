@@ -1,5 +1,4 @@
 #pragma once
-#include "imultiple-timer.h"
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <common-lib/syncronization/event/event.h>
 #include <boost/asio/io_context.hpp>
@@ -8,9 +7,10 @@
 
 namespace vsh::cl {
     class multiple_timer final
-        : public imultiple_timer
     {
     public:
+        using callback_t = std::function<void()>;
+
         explicit multiple_timer(boost::asio::io_context &io_context);
 
         multiple_timer(multiple_timer &) = delete;
@@ -18,11 +18,11 @@ namespace vsh::cl {
 
         ~multiple_timer();
 
-        uint64_t start(callback_t &&callback, const std::chrono::microseconds &microseconds) override;
-        void cancel(uint64_t id) override;
-        void cancel_all() override;
+        uint64_t start(callback_t &&callback, const std::chrono::microseconds &microseconds);
+        void cancel(uint64_t id);
+        void cancel_all();
 
-        size_t get_active_timers_count() const override;
+        size_t get_active_timers_count() const;
 
     private:
         boost::asio::io_context &m_io_context;

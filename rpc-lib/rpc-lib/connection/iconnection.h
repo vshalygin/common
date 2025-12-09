@@ -3,9 +3,10 @@
 #include "rpc-lib/types/connection-state.h"
 #include <common-lib/utils/buffer/buffer.h>
 #include <functional>
+#include <chrono>
 
 namespace vsh::cl {
-    class imultiple_timer;
+    class multiple_timer;
     class thread_pool;
 }
 
@@ -32,8 +33,8 @@ namespace vsh::rpc {
         virtual void stop_transport() = 0;
 
         virtual size_t get_active_requests_count() const = 0;
+        virtual size_t get_active_timers_count() const = 0;
     };
 
-    std::unique_ptr<iconnection> create_connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                                                   std::shared_ptr<cl::thread_pool> thread_pool);
+    std::unique_ptr<iconnection> create_connection(std::shared_ptr<cl::thread_pool> thread_pool);
 }

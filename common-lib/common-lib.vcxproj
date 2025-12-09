@@ -18,7 +18,6 @@
     <ClInclude Include="common-lib\syncronization\latch\latch.h" />
     <ClInclude Include="common-lib\thread-pool\strand.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
-    <ClInclude Include="common-lib\timer\multiple-timer\imultiple-timer.h" />
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h" />
     <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h" />
     <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h" />

@@ -258,6 +258,7 @@ TEST_F(ServerEndpoint, AnswersZeroChannelCountIfTransportWasStopped)
 
 TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
 {
+    event sync_event;
     buffer req_buffer = create_transfer_msg_req(3, 0, &m_req_message);
     buffer res_buffer = create_transfer_msg_res(3, response_result::ok, &m_res_message);
     EXPECT_CALL(*m_service, process_request)
@@ -280,12 +281,19 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
     EXPECT_CALL(*transport, set_start_callback)
         .Times(1)
         .WillOnce(SaveArg<0>(&transport_started_callback));
+    EXPECT_CALL(*transport, send_async)
+        .Times(1)
+        .WillOnce([&](auto &&buf, auto) {
+                      EXPECT_EQ(res_buffer, buf);
+                      sync_event.set();
+                  });
 
     auto sut = create_sut();
     new_connection_handler(std::move(transport));
     transport_started_callback();
  
     recv_handler(req_buffer.copy());
+    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
 TEST_F(ServerEndpoint, StartsListening)

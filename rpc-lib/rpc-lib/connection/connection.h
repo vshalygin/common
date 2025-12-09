@@ -1,8 +1,9 @@
 #pragma once
 #include "iconnection.h"
 #include "rpc-lib/interface/itransport.h"
+#include "rpc-lib/types/constants.h"
 
-#include <common-lib/timer/multiple-timer/imultiple-timer.h>
+#include <common-lib/timer/multiple-timer/multiple-timer.h>
 #include <common-lib/thread-pool/thread-pool.h>
 
 namespace vsh::rpc {
@@ -10,10 +11,8 @@ namespace vsh::rpc {
         : public iconnection
     {
     public:
-        explicit connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                            std::shared_ptr<cl::thread_pool> thread_pool);
-
-        explicit connection(std::shared_ptr<cl::thread_pool> thread_pool);
+        explicit connection(std::shared_ptr<cl::thread_pool> thread_pool,
+                            const std::chrono::microseconds &timeout = RequestTimeout);
 
         connection(connection &) = delete;
         connection &operator=(connection &) = delete;
@@ -33,6 +32,7 @@ namespace vsh::rpc {
         void stop_transport() override;
 
         size_t get_active_requests_count() const override;
+        size_t get_active_timers_count() const override;
 
     private:
         class impl;

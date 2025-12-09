@@ -31,19 +31,20 @@ namespace vsh::rpc {
         using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
 
     public:
-        static std::shared_ptr<impl> create(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                                            std::shared_ptr<cl::thread_pool> thread_pool)
+        static std::shared_ptr<impl> create(std::shared_ptr<cl::thread_pool> thread_pool,
+                                            const std::chrono::microseconds &timeout)
         {
-            return std::make_shared<impl>(std::move(multiple_timer),
-                                          std::move(thread_pool),
+            return std::make_shared<impl>(std::move(thread_pool),
+                                          timeout,
                                           creator());
         }
 
-        impl(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-             std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+             const std::chrono::microseconds &timeout,
              creator)
-            : m_multiple_timer(std::move(multiple_timer))
+            : m_timeout(timeout)
             , m_thread_pool(std::move(thread_pool))
+            , m_multiple_timer(std::make_unique<cl::multiple_timer>(*m_thread_pool->get_io_context()))
         {}
 
         impl(impl &) = delete;
@@ -129,6 +130,11 @@ namespace vsh::rpc {
             return map.size();
         }
 
+        size_t get_active_timers_count() const
+        {
+            return m_multiple_timer->get_active_timers_count();
+        }
+
     private:
         std::function<void()> create_send_error_handler(uint64_t msg_number)
         {
@@ -163,7 +169,7 @@ namespace vsh::rpc {
         {
             auto [guard, map] = m_request_map.get();
             assert(map.count(msg_number) == 0);
-            auto timer_id = m_multiple_timer->start(create_request_timout_handler(msg_number), RequestTimeout);
+            auto timer_id = m_multiple_timer->start(create_request_timout_handler(msg_number), m_timeout);
             map[msg_number] = std::make_shared<request_data>(std::move(handler), timer_id);
         }
 
@@ -226,11 +232,12 @@ namespace vsh::rpc {
                     }
                 }
             };
-            auto task = [self = weak_from_this(), message = std::move(message), response_handler]() mutable {
+            auto task = [self = weak_from_this(), message = std::move(message),
+                         response_handler = std::move(response_handler)]() mutable {
                 if(auto s = self.lock()) {
                     auto [guard, request_handler] = s->m_request_handler.get();
                     if(request_handler) try {
-                        request_handler(std::move(message), response_handler);
+                        request_handler(std::move(message), std::move(response_handler));
                     } catch (...) {
                         //TODO safe log
                     }
@@ -324,9 +331,10 @@ namespace vsh::rpc {
         }
 
     private:
-        cl::guarded_value<std::unique_ptr<itransport>> m_transport;
-        std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
+        const std::chrono::microseconds m_timeout;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::guarded_value<std::unique_ptr<itransport>> m_transport;
+        std::unique_ptr<cl::multiple_timer> m_multiple_timer;
 
         using request_handler_t = std::function<void(cl::buffer &&, response_handler_t &&)>;
         cl::guarded_value<request_handler_t> m_request_handler;
@@ -335,13 +343,9 @@ namespace vsh::rpc {
         cl::guarded_value<std::function<void(connection_state)>> m_change_state_handler;
     };
 
-    connection::connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                           std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_impl(impl::create(std::move(multiple_timer), std::move(thread_pool)))
-    {}
-
-    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool)
-        : connection(std::make_unique<cl::multiple_timer>(*thread_pool->get_io_context()), thread_pool)
+    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
+                           const std::chrono::microseconds &timeout)
+        : m_impl(impl::create(std::move(thread_pool), timeout))
     {}
 
     connection::~connection() = default;
@@ -383,9 +387,13 @@ namespace vsh::rpc {
         return m_impl->get_active_requests_count();
     }
 
-    std::unique_ptr<iconnection> create_connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                                                   std::shared_ptr<cl::thread_pool> thread_pool)
+    size_t connection::get_active_timers_count() const
     {
-        return std::make_unique<connection>(std::move(multiple_timer), std::move(thread_pool));
+        return m_impl->get_active_timers_count();
+    }
+
+    std::unique_ptr<iconnection> create_connection(std::shared_ptr<cl::thread_pool> thread_pool)
+    {
+        return std::make_unique<connection>(std::move(thread_pool));
     }
 }

@@ -158,7 +158,6 @@
     <ClInclude Include="src\mocks\connection-mock.h" />
     <ClInclude Include="src\mocks\connector-mock.h" />
     <ClInclude Include="src\mocks\listener-mock.h" />
-    <ClInclude Include="src\mocks\multiple-timer-mock.h" />
     <ClInclude Include="src\mocks\rpc-controller-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />
     <ClInclude Include="src\mocks\transport-mock.h" />
