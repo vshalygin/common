@@ -6,7 +6,7 @@
 
 namespace vsh::cl {
     class imultiple_timer;
-    class ithread_pool;
+    class thread_pool;
 }
 
 namespace vsh::rpc {
@@ -35,5 +35,5 @@ namespace vsh::rpc {
     };
 
     std::unique_ptr<iconnection> create_connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                                                   std::shared_ptr<cl::ithread_pool> thread_pool);
+                                                   std::shared_ptr<cl::thread_pool> thread_pool);
 }

@@ -7,7 +7,7 @@
 namespace vsh::rpc {
     server_endpoint::impl::impl(std::unique_ptr<ilistener> listener,
                                 std::shared_ptr<iservice> service,
-                                std::shared_ptr<cl::ithread_pool> thread_pool,
+                                std::shared_ptr<cl::thread_pool> thread_pool,
                                 creator)
         : m_listener(std::move(listener))
         , m_service(std::move(service))
@@ -184,7 +184,7 @@ namespace vsh::rpc {
 
     server_endpoint::server_endpoint(std::unique_ptr<ilistener> listener,
                                      std::shared_ptr<iservice> service,
-                                     std::shared_ptr<cl::ithread_pool> thread_pool)
+                                     std::shared_ptr<cl::thread_pool> thread_pool)
         : m_impl(impl::create(std::move(listener), std::move(service), std::move(thread_pool)))
     {
         m_impl->set_new_connection_handler();

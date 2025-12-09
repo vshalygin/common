@@ -33,12 +33,12 @@ namespace vsh::rpc {
         }
     }
 
-    std::shared_ptr<pseudopipe> pseudopipe::create(std::shared_ptr<cl::ithread_pool> thread_pool)
+    std::shared_ptr<pseudopipe> pseudopipe::create(std::shared_ptr<cl::thread_pool> thread_pool)
     {
         return std::make_shared<pseudopipe>(std::move(thread_pool), creator());
     }
 
-    pseudopipe::pseudopipe(std::shared_ptr<cl::ithread_pool> thread_pool, creator)
+    pseudopipe::pseudopipe(std::shared_ptr<cl::thread_pool> thread_pool, creator)
         : m_thread_pool(std::move(thread_pool))
         , m_strand_from_client_to_server(m_thread_pool->create_strand())
         , m_strand_from_server_to_client(m_thread_pool->create_strand())
@@ -106,9 +106,9 @@ namespace vsh::rpc {
 
     void pseudopipe::post_write_to_client_message_queue(cl::buffer &&buffer)
     {
-        auto task = [self = weak_from_this(), buffer = std::make_shared<cl::buffer>(std::move(buffer))]() mutable {
+        auto task = [self = weak_from_this(), buffer = std::move(buffer)]() mutable {
             if(auto s = self.lock()) {
-                s->write_to_client_message_queue(std::move(*buffer));
+                s->write_to_client_message_queue(std::move(buffer));
             }
         };
         m_strand_from_server_to_client->post(std::move(task));
@@ -116,9 +116,9 @@ namespace vsh::rpc {
 
     void pseudopipe::post_write_to_server_message_queue(cl::buffer &&buffer)
     {
-        auto task = [self = weak_from_this(), buffer = std::make_shared<cl::buffer>(std::move(buffer))]() mutable {
+        auto task = [self = weak_from_this(), buffer = std::move(buffer)]() mutable {
             if(auto s = self.lock()) {
-                s->write_to_server_message_queue(std::move(*buffer));
+                s->write_to_server_message_queue(std::move(buffer));
             }
         };
         m_strand_from_client_to_server->post(std::move(task));

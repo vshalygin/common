@@ -19,7 +19,7 @@ protected:
     }
 
 protected:
-    std::unique_ptr<ithread_pool> m_thread_pool;
+    std::unique_ptr<thread_pool> m_thread_pool;
     std::unique_ptr<imultiple_timer> m_multiple_timer;
 };
 

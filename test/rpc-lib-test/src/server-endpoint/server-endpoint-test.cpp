@@ -43,7 +43,7 @@ protected:
 protected:
     proto::request_message m_req_message;
     proto::response_message m_res_message;
-    std::shared_ptr<ithread_pool> m_thread_pool;
+    std::shared_ptr<thread_pool> m_thread_pool;
     std::unique_ptr<listener_nice_mock> m_listener;
     std::shared_ptr<service_nice_mock> m_service;
 

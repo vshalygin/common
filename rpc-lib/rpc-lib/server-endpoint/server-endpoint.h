@@ -10,7 +10,7 @@
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <common-lib/syncronization/latch/latch.h>
-#include <common-lib/thread-pool/ithread-pool.h>
+#include <common-lib/thread-pool/thread-pool.h>
 
 #include <unordered_map>
 #include <vector>
@@ -34,7 +34,7 @@ namespace vsh::rpc {
 
         server_endpoint(std::unique_ptr<ilistener> listener,
                         std::shared_ptr<iservice> service,
-                        std::shared_ptr<cl::ithread_pool> thread_pool);
+                        std::shared_ptr<cl::thread_pool> thread_pool);
 
         server_endpoint(server_endpoint &) = delete;
         server_endpoint &operator=(server_endpoint &) = delete;
@@ -102,7 +102,7 @@ namespace vsh::rpc {
     public:
         inline static std::shared_ptr<impl> create(std::unique_ptr<ilistener> listener,
                                                    std::shared_ptr<iservice> service,
-                                                   std::shared_ptr<cl::ithread_pool> thread_pool)
+                                                   std::shared_ptr<cl::thread_pool> thread_pool)
         {
             return std::make_shared<impl>(std::move(listener),
                                           std::move(service),
@@ -112,7 +112,7 @@ namespace vsh::rpc {
 
         impl(std::unique_ptr<ilistener> listener,
              std::shared_ptr<iservice> service,
-             std::shared_ptr<cl::ithread_pool> thread_pool,
+             std::shared_ptr<cl::thread_pool> thread_pool,
              creator);
 
         impl(impl &) = delete;
@@ -293,7 +293,7 @@ namespace vsh::rpc {
         std::unique_ptr<ilistener> m_listener;
         std::shared_ptr<iservice> m_service;
 
-        std::shared_ptr<cl::ithread_pool> m_thread_pool;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         using channel_map_t = std::unordered_map<uint64_t, std::shared_ptr<ichannel>>;
         using connection_map_t = std::unordered_map<uint64_t, std::shared_ptr<iconnection>>;

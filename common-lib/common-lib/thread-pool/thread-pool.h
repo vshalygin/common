@@ -1,36 +1,34 @@
 #pragma once
-#include "ithread-pool.h"
+#include "strand.h"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/thread/thread.hpp>
 
 namespace vsh::cl {
     class thread_pool final
-        : public ithread_pool
     {
     public:
         explicit thread_pool(unsigned thread_num);
-        ~thread_pool() override;
+        ~thread_pool();
 
         thread_pool(thread_pool &) = delete;
         thread_pool &operator=(thread_pool &) = delete;
 
-        void post(std::function<void()> &&func) const override;
-        void post(const std::function<void()> &func) const override;
+        template<typename Task>
+        void post(Task &&task) const
+        {
+            boost::asio::post(std::forward<Task>(task));
+        }
 
-        void stop() override;
-        bool is_stopped() const override;
+        void stop();
+        bool is_stopped() const;
 
-        unsigned get_num() const override;
+        unsigned get_num() const;
 
-        boost::asio::io_context *get_io_context() override;
-        const boost::asio::io_context *get_io_context() const override;
+        boost::asio::io_context *get_io_context();
+        const boost::asio::io_context *get_io_context() const;
 
-        std::unique_ptr<istrand> create_strand() override;
-
-    private:
-        template<typename Func>
-        void post_impl(Func &&func) const;
+        std::unique_ptr<strand> create_strand();
 
     private:
         using io_context = boost::asio::io_context;

@@ -16,8 +16,6 @@
     <ClInclude Include="common-lib\syncronization\event\event.h" />
     <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\syncronization\latch\latch.h" />
-    <ClInclude Include="common-lib\thread-pool\istrand.h" />
-    <ClInclude Include="common-lib\thread-pool\ithread-pool.h" />
     <ClInclude Include="common-lib\thread-pool\strand.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
     <ClInclude Include="common-lib\timer\multiple-timer\imultiple-timer.h" />

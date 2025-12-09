@@ -32,7 +32,7 @@ namespace vsh::rpc {
 
     public:
         static std::shared_ptr<impl> create(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                                            std::shared_ptr<cl::ithread_pool> thread_pool)
+                                            std::shared_ptr<cl::thread_pool> thread_pool)
         {
             return std::make_shared<impl>(std::move(multiple_timer),
                                           std::move(thread_pool),
@@ -40,7 +40,7 @@ namespace vsh::rpc {
         }
 
         impl(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-             std::shared_ptr<cl::ithread_pool> thread_pool,
+             std::shared_ptr<cl::thread_pool> thread_pool,
              creator)
             : m_multiple_timer(std::move(multiple_timer))
             , m_thread_pool(std::move(thread_pool))
@@ -226,13 +226,11 @@ namespace vsh::rpc {
                     }
                 }
             };
-            auto sp_message = std::make_shared<cl::buffer>(std::move(message));
-
-            auto task = [self = weak_from_this(), sp_message, response_handler]() {
+            auto task = [self = weak_from_this(), message = std::move(message), response_handler]() mutable {
                 if(auto s = self.lock()) {
                     auto [guard, request_handler] = s->m_request_handler.get();
                     if(request_handler) try {
-                        request_handler(std::move(*sp_message), response_handler);
+                        request_handler(std::move(message), response_handler);
                     } catch (...) {
                         //TODO safe log
                     }
@@ -259,10 +257,9 @@ namespace vsh::rpc {
 
             if(req_data) {
                 if(req_data->callback) {
-                    auto sp_res_msg = std::make_shared<cl::buffer>(std::move(res_msg));
-                    m_thread_pool->post([req_data, result, sp_res_msg]() {
+                    m_thread_pool->post([req_data, result, res_msg = std::move(res_msg)]() mutable {
                         try {
-                            req_data->callback(result, std::move(*sp_res_msg));
+                            req_data->callback(result, std::move(res_msg));
                         } catch (...) {
                             //TODO log
                         }
@@ -329,7 +326,7 @@ namespace vsh::rpc {
     private:
         cl::guarded_value<std::unique_ptr<itransport>> m_transport;
         std::unique_ptr<cl::imultiple_timer> m_multiple_timer;
-        std::shared_ptr<cl::ithread_pool> m_thread_pool;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         using request_handler_t = std::function<void(cl::buffer &&, response_handler_t &&)>;
         cl::guarded_value<request_handler_t> m_request_handler;
@@ -339,11 +336,11 @@ namespace vsh::rpc {
     };
 
     connection::connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                           std::shared_ptr<cl::ithread_pool> thread_pool)
+                           std::shared_ptr<cl::thread_pool> thread_pool)
         : m_impl(impl::create(std::move(multiple_timer), std::move(thread_pool)))
     {}
 
-    connection::connection(std::shared_ptr<cl::ithread_pool> thread_pool)
+    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool)
         : connection(std::make_unique<cl::multiple_timer>(*thread_pool->get_io_context()), thread_pool)
     {}
 
@@ -387,7 +384,7 @@ namespace vsh::rpc {
     }
 
     std::unique_ptr<iconnection> create_connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                                                   std::shared_ptr<cl::ithread_pool> thread_pool)
+                                                   std::shared_ptr<cl::thread_pool> thread_pool)
     {
         return std::make_unique<connection>(std::move(multiple_timer), std::move(thread_pool));
     }

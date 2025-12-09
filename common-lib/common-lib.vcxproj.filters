@@ -42,9 +42,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common-lib\thread-pool\ithread-pool.h">
-      <Filter>thread-pool</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
@@ -77,9 +74,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\syncronization\latch\latch.h">
       <Filter>syncronization\latch</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread-pool\istrand.h">
-      <Filter>thread-pool</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\thread-pool\strand.h">
       <Filter>thread-pool</Filter>

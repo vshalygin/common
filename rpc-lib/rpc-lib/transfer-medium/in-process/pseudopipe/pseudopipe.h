@@ -1,6 +1,6 @@
 #pragma once
 #include <common-lib/utils/buffer/buffer.h>
-#include <common-lib/thread-pool/ithread-pool.h>
+#include <common-lib/thread-pool/thread-pool.h>
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 
 #include <functional>
@@ -15,9 +15,9 @@ namespace vsh::rpc {
         {};
 
     public:
-        static std::shared_ptr<pseudopipe> create(std::shared_ptr<cl::ithread_pool> thread_pool);
+        static std::shared_ptr<pseudopipe> create(std::shared_ptr<cl::thread_pool> thread_pool);
 
-        pseudopipe(std::shared_ptr<cl::ithread_pool> thread_pool, creator);
+        pseudopipe(std::shared_ptr<cl::thread_pool> thread_pool, creator);
 
         pseudopipe(pseudopipe &) = delete;
         pseudopipe &operator=(pseudopipe &) = delete;
@@ -42,9 +42,9 @@ namespace vsh::rpc {
         void post_read_from_server_message_queue();
 
     private:
-        std::shared_ptr<cl::ithread_pool> m_thread_pool;
-        std::unique_ptr<cl::istrand> m_strand_from_client_to_server;
-        std::unique_ptr<cl::istrand> m_strand_from_server_to_client;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        std::unique_ptr<cl::strand> m_strand_from_client_to_server;
+        std::unique_ptr<cl::strand> m_strand_from_server_to_client;
 
         cl::guarded_value<std::queue<cl::buffer>> m_client_message_queue;
         cl::guarded_value<std::queue<cl::buffer>> m_server_message_queue;

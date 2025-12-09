@@ -138,7 +138,7 @@ protected:
     }
 
 protected:
-    std::shared_ptr<ithread_pool> m_thread_pool;
+    std::shared_ptr<thread_pool> m_thread_pool;
     transport_nice_mock *m_transport_ptr;
     multiple_timer_nice_mock  *m_multiple_timer_ptr;
 

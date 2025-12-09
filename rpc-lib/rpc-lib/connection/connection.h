@@ -3,7 +3,7 @@
 #include "rpc-lib/interface/itransport.h"
 
 #include <common-lib/timer/multiple-timer/imultiple-timer.h>
-#include <common-lib/thread-pool/ithread-pool.h>
+#include <common-lib/thread-pool/thread-pool.h>
 
 namespace vsh::rpc {
     class connection final
@@ -11,9 +11,9 @@ namespace vsh::rpc {
     {
     public:
         explicit connection(std::unique_ptr<cl::imultiple_timer> multiple_timer,
-                            std::shared_ptr<cl::ithread_pool> thread_pool);
+                            std::shared_ptr<cl::thread_pool> thread_pool);
 
-        explicit connection(std::shared_ptr<cl::ithread_pool> thread_pool);
+        explicit connection(std::shared_ptr<cl::thread_pool> thread_pool);
 
         connection(connection &) = delete;
         connection &operator=(connection &) = delete;

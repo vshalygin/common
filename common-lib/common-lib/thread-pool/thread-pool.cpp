@@ -29,16 +29,6 @@ namespace vsh::cl {
         }
     }
 
-    void thread_pool::post(std::function<void()> &&func) const
-    {
-        post_impl(std::move(func));
-    }
-
-    void thread_pool::post(const std::function<void()> &func) const
-    {
-        post_impl(func);
-    }
-
     void thread_pool::stop()
     {
         m_io_context.stop();
@@ -66,14 +56,9 @@ namespace vsh::cl {
         return &m_io_context;
     }
 
-    std::unique_ptr<istrand> thread_pool::create_strand()
+    std::unique_ptr<strand> thread_pool::create_strand()
     {
         return std::make_unique<strand>(m_io_context);
     }
 
-    template<typename Func>
-    void thread_pool::post_impl(Func &&func) const
-    {
-        boost::asio::post(std::forward<Func>(func));
-    }
 }
