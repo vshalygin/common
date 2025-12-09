@@ -145,7 +145,7 @@ namespace vsh::rpc {
             };
         }
 
-        std::function<void()> create_request_timout_handler(uint64_t msg_number)
+        auto create_request_timout_handler(uint64_t msg_number)
         {
             return [self = weak_from_this(), msg_number]() {
                 if(auto s = self.lock()) {
@@ -154,7 +154,7 @@ namespace vsh::rpc {
             };
         }
 
-        std::function<void(cl::buffer &&)> create_receive_handler()
+        auto create_receive_handler()
         {
             return [self = weak_from_this()](cl::buffer &&message) {
                 if(auto s = self.lock()) {
@@ -318,7 +318,7 @@ namespace vsh::rpc {
             }
         }
 
-        std::function<void()> create_change_state_handler(connection_state new_state)
+        auto create_change_state_handler(connection_state new_state)
         {
             return [self = weak_from_this(), new_state]() {
                 if(auto s = self.lock()) {
