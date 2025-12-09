@@ -26,6 +26,8 @@ namespace vsh::cl {
         boost::asio::io_context *get_io_context() override;
         const boost::asio::io_context *get_io_context() const override;
 
+        std::unique_ptr<istrand> create_strand() override;
+
     private:
         template<typename Func>
         void post_impl(Func &&func) const;

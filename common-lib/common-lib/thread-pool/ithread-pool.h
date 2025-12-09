@@ -1,4 +1,6 @@
 #pragma once
+#include "istrand.h"
+
 #include <boost/asio/io_context.hpp>
 
 #include <functional>
@@ -19,5 +21,7 @@ namespace vsh::cl {
 
         virtual boost::asio::io_context *get_io_context() = 0;
         virtual const boost::asio::io_context *get_io_context() const = 0;
+
+        virtual std::unique_ptr<istrand> create_strand() = 0;
     };
 }

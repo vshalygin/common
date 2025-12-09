@@ -78,6 +78,12 @@
     <ClInclude Include="common-lib\syncronization\latch\latch.h">
       <Filter>syncronization\latch</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread-pool\istrand.h">
+      <Filter>thread-pool</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread-pool\strand.h">
+      <Filter>thread-pool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -100,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\syncronization\latch\latch.cpp">
       <Filter>syncronization\latch</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\thread-pool\strand.cpp">
+      <Filter>thread-pool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,4 +1,6 @@
 #include "thread-pool.h"
+#include "strand.h"
+
 #include <boost/asio/post.hpp>
 
 namespace vsh::cl {
@@ -62,6 +64,11 @@ namespace vsh::cl {
     const boost::asio::io_context *thread_pool::get_io_context() const
     {
         return &m_io_context;
+    }
+
+    std::unique_ptr<istrand> thread_pool::create_strand()
+    {
+        return std::make_unique<strand>(m_io_context);
     }
 
     template<typename Func>
