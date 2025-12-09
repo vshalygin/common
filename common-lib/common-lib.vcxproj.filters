@@ -40,6 +40,9 @@
     <Filter Include="syncronization\latch">
       <UniqueIdentifier>{702e0636-e998-4fab-9a86-bbe0aec579b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="timer\periodic-timer">
+      <UniqueIdentifier>{7df212d7-73f5-4e34-a2d1-58800efa1e81}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
@@ -75,6 +78,9 @@
     <ClInclude Include="common-lib\thread-pool\strand.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h">
+      <Filter>timer\periodic-timer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -100,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\thread-pool\strand.cpp">
       <Filter>thread-pool</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp">
+      <Filter>timer\periodic-timer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
