@@ -43,6 +43,9 @@
     <Filter Include="timer\periodic-timer">
       <UniqueIdentifier>{7df212d7-73f5-4e34-a2d1-58800efa1e81}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pipe">
+      <UniqueIdentifier>{d1645267-c238-45ca-881a-dff32d44e512}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
@@ -81,6 +84,9 @@
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h">
       <Filter>timer\periodic-timer</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\pipe\pipe-buffer.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -109,6 +115,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp">
       <Filter>timer\periodic-timer</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\pipe\pipe-buffer.cpp">
+      <Filter>pipe</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -17,7 +17,6 @@
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp" />
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
-    <ClCompile Include="rpc-lib\transfer-medium\in-process\pseudopipe\pseudopipe.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -35,7 +34,6 @@
     <ClInclude Include="rpc-lib\service\iservice.h" />
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
     <ClInclude Include="rpc-lib\service\service.h" />
-    <ClInclude Include="rpc-lib\transfer-medium\in-process\pseudopipe\pseudopipe.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\types\connection-state.h" />
     <ClInclude Include="rpc-lib\types\constants.h" />

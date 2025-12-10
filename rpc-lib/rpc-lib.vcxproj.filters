@@ -49,9 +49,6 @@
     <Filter Include="transfer-medium\in-process\listener">
       <UniqueIdentifier>{071937df-e669-43b5-8916-aff3ea345992}</UniqueIdentifier>
     </Filter>
-    <Filter Include="transfer-medium\in-process\pseudopipe">
-      <UniqueIdentifier>{7c345cf8-1bf8-42e4-8e91-2073387cd97d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -74,9 +71,6 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
       <Filter>server-endpoint</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\transfer-medium\in-process\pseudopipe\pseudopipe.cpp">
-      <Filter>transfer-medium\in-process\pseudopipe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,9 +136,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\transfer-medium\in-process\pseudopipe\pseudopipe.h">
-      <Filter>transfer-medium\in-process\pseudopipe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
