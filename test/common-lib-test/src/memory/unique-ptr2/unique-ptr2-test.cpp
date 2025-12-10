@@ -317,7 +317,7 @@ namespace {
     }
 }
 
-class UniquePtr
+class UniquePtr2
     : public Test
 {
 protected:
@@ -335,7 +335,7 @@ protected:
     }
 };
 
-TEST_F(UniquePtr, MayBeCreated)
+TEST_F(UniquePtr2, MayBeCreated)
 {
     make_test_unique2<test_base>();
 
@@ -347,7 +347,7 @@ TEST_F(UniquePtr, MayBeCreated)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, MayBeDereferenced)
+TEST_F(UniquePtr2, MayBeDereferenced)
 {
     auto sut = make_test_unique2<test_base>();
     (*sut).set_test_base(34);
@@ -356,7 +356,7 @@ TEST_F(UniquePtr, MayBeDereferenced)
     ASSERT_TRUE(expected == 34);
 }
 
-TEST_F(UniquePtr, ConstMayBeDereferenced)
+TEST_F(UniquePtr2, ConstMayBeDereferenced)
 {
     const auto sut = make_test_unique2<test_base>();
     (*sut).set_test_base(34);
@@ -365,7 +365,7 @@ TEST_F(UniquePtr, ConstMayBeDereferenced)
     ASSERT_TRUE(expected == 34);
 }
 
-TEST_F(UniquePtr, MayBeIndirectAccessed)
+TEST_F(UniquePtr2, MayBeIndirectAccessed)
 {
     auto sut = make_test_unique2<test_base>();
     sut->set_test_base(34);
@@ -374,7 +374,7 @@ TEST_F(UniquePtr, MayBeIndirectAccessed)
     ASSERT_TRUE(expected == 34);
 }
 
-TEST_F(UniquePtr, ConstMayBeIndirectAccessed)
+TEST_F(UniquePtr2, ConstMayBeIndirectAccessed)
 {
     const auto sut = make_test_unique2<test_base>();
     sut->set_test_base(34);
@@ -383,21 +383,21 @@ TEST_F(UniquePtr, ConstMayBeIndirectAccessed)
     ASSERT_TRUE(expected == 34);
 }
 
-TEST_F(UniquePtr, ConvertsToFalseIfEmpty)
+TEST_F(UniquePtr2, ConvertsToFalseIfEmpty)
 {
     test_unique_ptr2<test_base> sut;
 
     ASSERT_FALSE(sut);
 }
 
-TEST_F(UniquePtr, ConvertsToTrueIfNotEmpty)
+TEST_F(UniquePtr2, ConvertsToTrueIfNotEmpty)
 {
     auto sut = make_test_unique2<test_base>();
 
     ASSERT_TRUE(sut);
 }
 
-TEST_F(UniquePtr, MayBeMoved)
+TEST_F(UniquePtr2, MayBeMoved)
 {
     {
         auto ptr1 = make_test_unique2<test_base>();
@@ -414,7 +414,7 @@ TEST_F(UniquePtr, MayBeMoved)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssigned)
+TEST_F(UniquePtr2, MayBeMoveAssigned)
 {
     {
         auto ptr1 = make_test_unique2<test_base>();
@@ -434,14 +434,14 @@ TEST_F(UniquePtr, MayBeMoveAssigned)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, ReturnsNullptrOnGetOperationIsObjectIsEmpty)
+TEST_F(UniquePtr2, ReturnsNullptrOnGetOperationIsObjectIsEmpty)
 {
     test_unique_ptr2<test_base> sut;
 
     ASSERT_EQ(sut.get(), nullptr);
 }
 
-TEST_F(UniquePtr, ReturnsValidPointerOnGetOperation)
+TEST_F(UniquePtr2, ReturnsValidPointerOnGetOperation)
 {
     auto sut = make_test_unique2<test_base>();
     
@@ -451,7 +451,7 @@ TEST_F(UniquePtr, ReturnsValidPointerOnGetOperation)
     ASSERT_TRUE(expected == 34);
 }
 
-TEST_F(UniquePtr, DestroysObjectAfterResetOperation)
+TEST_F(UniquePtr2, DestroysObjectAfterResetOperation)
 {
     auto ptr = make_test_unique2<test_base>();
 
@@ -466,7 +466,7 @@ TEST_F(UniquePtr, DestroysObjectAfterResetOperation)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, DoesNothingIfResetOperationCalledForEmptyObject)
+TEST_F(UniquePtr2, DoesNothingIfResetOperationCalledForEmptyObject)
 {
     test_unique_ptr2<test_base> ptr;
 
@@ -480,7 +480,7 @@ TEST_F(UniquePtr, DoesNothingIfResetOperationCalledForEmptyObject)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, MayBeConvertedToBaseTypeIfObjectWithOneBase)
+TEST_F(UniquePtr2, MayBeConvertedToBaseTypeIfObjectWithOneBase)
 {
     auto ptr = make_test_unique2<test_class_with_one_base>();
     test_unique_ptr2<test_base_1> ptr1(std::move(ptr));
@@ -490,7 +490,7 @@ TEST_F(UniquePtr, MayBeConvertedToBaseTypeIfObjectWithOneBase)
     EXPECT_EQ(ptr1->get_test_base1(), 34);
 }
 
-TEST_F(UniquePtr, DoesNotCreateAnotherObjectAfterConversationFromOneTypeToAnother)
+TEST_F(UniquePtr2, DoesNotCreateAnotherObjectAfterConversationFromOneTypeToAnother)
 {
     auto ptr = make_test_unique2<test_class_with_one_base>();
     test_unique_ptr2<test_base_1> ptr1(std::move(ptr));
@@ -508,7 +508,7 @@ TEST_F(UniquePtr, DoesNotCreateAnotherObjectAfterConversationFromOneTypeToAnothe
 
 
 
-TEST_F(UniquePtr, MayBeConvertedToTheFirstBaseType)
+TEST_F(UniquePtr2, MayBeConvertedToTheFirstBaseType)
 {
     auto ptr = make_test_unique2<test_class_with_two_base>();
     test_unique_ptr2<test_base_1> ptr1(std::move(ptr));
@@ -518,7 +518,7 @@ TEST_F(UniquePtr, MayBeConvertedToTheFirstBaseType)
     EXPECT_EQ(ptr1->get_test_base1(), 35);
 }
 
-TEST_F(UniquePtr, IsEmptyAfterMoving)
+TEST_F(UniquePtr2, IsEmptyAfterMoving)
 {
     auto ptr = make_test_unique2<test_class_with_two_base>();
     test_unique_ptr2<test_base_1>(std::move(ptr));
@@ -526,7 +526,7 @@ TEST_F(UniquePtr, IsEmptyAfterMoving)
     EXPECT_FALSE(ptr);
 }
 
-TEST_F(UniquePtr, MayBeConvertedToTheSecondBaseType)
+TEST_F(UniquePtr2, MayBeConvertedToTheSecondBaseType)
 {
     auto ptr = make_test_unique2<test_class_with_two_base>();
     test_unique_ptr2<test_base_2> ptr1(std::move(ptr));
@@ -536,7 +536,7 @@ TEST_F(UniquePtr, MayBeConvertedToTheSecondBaseType)
     EXPECT_EQ(ptr1->get_test_base2(), 36);
 }
 
-TEST_F(UniquePtr, MayBeConvertedTwiceToBaseTypes)
+TEST_F(UniquePtr2, MayBeConvertedTwiceToBaseTypes)
 {
     auto ptr = make_test_unique2<test_class_with_two_base>();
     test_unique_ptr2<test_base_2> ptr1(std::move(ptr));
@@ -547,7 +547,7 @@ TEST_F(UniquePtr, MayBeConvertedTwiceToBaseTypes)
     EXPECT_EQ(ptr2->get_test_base(), 36);
 }
 
-TEST_F(UniquePtr, MayBeConvertedToBaseTypeWithInIndirectPath)
+TEST_F(UniquePtr2, MayBeConvertedToBaseTypeWithInIndirectPath)
 {
     auto ptr = make_test_unique2<super_test_class>();
     test_unique_ptr2<test_class_with_two_base_with_virtual_base> ptr1(std::move(ptr));
@@ -558,7 +558,7 @@ TEST_F(UniquePtr, MayBeConvertedToBaseTypeWithInIndirectPath)
     EXPECT_EQ(ptr2->get_test_base_4_with_virtual_base(), 36);
 }
 
-TEST_F(UniquePtr, MayBeConvertedToVirtualBase)
+TEST_F(UniquePtr2, MayBeConvertedToVirtualBase)
 {
     auto ptr = make_test_unique2<super_test_class>();
     test_unique_ptr2<virual_base> ptr1(std::move(ptr));
@@ -568,7 +568,7 @@ TEST_F(UniquePtr, MayBeConvertedToVirtualBase)
     EXPECT_EQ(ptr1->get_virual_base(), 34);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssignedToBaseTypeIfObjectWithOneBase)
+TEST_F(UniquePtr2, MayBeMoveAssignedToBaseTypeIfObjectWithOneBase)
 {
     test_unique_ptr2<test_base_1> ptr;
     ptr = make_test_unique2<test_class_with_one_base>();
@@ -578,7 +578,7 @@ TEST_F(UniquePtr, MayBeMoveAssignedToBaseTypeIfObjectWithOneBase)
     EXPECT_EQ(ptr->get_test_base1(), 34);
 }
 
-TEST_F(UniquePtr, DoesNotCreateAnotherObjectAfterMoveAssignedFromOneTypeToAnother)
+TEST_F(UniquePtr2, DoesNotCreateAnotherObjectAfterMoveAssignedFromOneTypeToAnother)
 {
     test_unique_ptr2<test_base_1> ptr;
     ptr = make_test_unique2<test_class_with_one_base>();
@@ -594,7 +594,7 @@ TEST_F(UniquePtr, DoesNotCreateAnotherObjectAfterMoveAssignedFromOneTypeToAnothe
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssignedToTheFirstBaseType)
+TEST_F(UniquePtr2, MayBeMoveAssignedToTheFirstBaseType)
 {
     test_unique_ptr2<test_base_1> ptr1;
     ptr1 = make_test_unique2<test_class_with_two_base>();
@@ -604,7 +604,7 @@ TEST_F(UniquePtr, MayBeMoveAssignedToTheFirstBaseType)
     EXPECT_EQ(ptr1->get_test_base1(), 35);
 }
 
-TEST_F(UniquePtr, IsEmptyAfterMoveAssigned)
+TEST_F(UniquePtr2, IsEmptyAfterMoveAssigned)
 {
     auto ptr = make_test_unique2<test_class_with_two_base>();
     test_unique_ptr2<test_base_1> ptr1;
@@ -613,7 +613,7 @@ TEST_F(UniquePtr, IsEmptyAfterMoveAssigned)
     EXPECT_FALSE(ptr);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssignedToTheSecondBaseType)
+TEST_F(UniquePtr2, MayBeMoveAssignedToTheSecondBaseType)
 {
     test_unique_ptr2<test_base_2> ptr1;
     ptr1 = make_test_unique2<test_class_with_two_base>();
@@ -623,7 +623,7 @@ TEST_F(UniquePtr, MayBeMoveAssignedToTheSecondBaseType)
     EXPECT_EQ(ptr1->get_test_base2(), 36);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssignedTwiceToBaseTypes)
+TEST_F(UniquePtr2, MayBeMoveAssignedTwiceToBaseTypes)
 {
     test_unique_ptr2<test_base_2> ptr1;
     ptr1 = make_test_unique2<test_class_with_two_base>();
@@ -635,7 +635,7 @@ TEST_F(UniquePtr, MayBeMoveAssignedTwiceToBaseTypes)
     EXPECT_EQ(ptr2->get_test_base(), 36);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssignedToBaseTypeWithInIndirectPath)
+TEST_F(UniquePtr2, MayBeMoveAssignedToBaseTypeWithInIndirectPath)
 {
     test_unique_ptr2<test_class_with_two_base_with_virtual_base> ptr1;
     ptr1 = make_test_unique2<super_test_class>();
@@ -647,7 +647,7 @@ TEST_F(UniquePtr, MayBeMoveAssignedToBaseTypeWithInIndirectPath)
     EXPECT_EQ(ptr2->get_test_base_4_with_virtual_base(), 36);
 }
 
-TEST_F(UniquePtr, MayBeMoveAssignedToVirtualBase)
+TEST_F(UniquePtr2, MayBeMoveAssignedToVirtualBase)
 {
     test_unique_ptr2<virual_base> ptr1;
     ptr1 = make_test_unique2<super_test_class>();
@@ -657,7 +657,7 @@ TEST_F(UniquePtr, MayBeMoveAssignedToVirtualBase)
     EXPECT_EQ(ptr1->get_virual_base(), 34);
 }
 
-TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithConstLRefParameter)
+TEST_F(UniquePtr2, MakeUniqueCreatesObjectsWithConstLRefParameter)
 {
     {
         test_base param;
@@ -672,7 +672,7 @@ TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithConstLRefParameter)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithRRefParameter)
+TEST_F(UniquePtr2, MakeUniqueCreatesObjectsWithRRefParameter)
 {
     {
         test_base param;
@@ -687,12 +687,12 @@ TEST_F(UniquePtr, MakeUniqueCreatesObjectsWithRRefParameter)
     EXPECT_EQ(life_cycle_tracker::move_assign_called, 0);
 }
 
-TEST_F(UniquePtr, PerformsNoMemoryLeakIfObjectConstructorThrowsException)
+TEST_F(UniquePtr2, PerformsNoMemoryLeakIfObjectConstructorThrowsException)
 {
     EXPECT_ANY_THROW(make_test_unique2<throw_ctor_class>());
 }
 
-TEST_F(UniquePtr, DestroysDerivedObjectWhenHoldingBaseClassPtr)
+TEST_F(UniquePtr2, DestroysDerivedObjectWhenHoldingBaseClassPtr)
 {
     test_unique_ptr2<test_base_1> ptr(make_test_unique2<super_test_class>());
 
@@ -701,7 +701,7 @@ TEST_F(UniquePtr, DestroysDerivedObjectWhenHoldingBaseClassPtr)
     ASSERT_EQ(super_test_class::destroyed_times, 1);
 }
 
-TEST_F(UniquePtr, AllowsToConvertRawPointerToDerivedType)
+TEST_F(UniquePtr2, AllowsToConvertRawPointerToDerivedType)
 {
     test_unique_ptr2<test_base_1> ptr(make_test_unique2<super_test_class>());
 
