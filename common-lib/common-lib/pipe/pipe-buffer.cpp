@@ -12,7 +12,7 @@ namespace vsh::cl {
                              creator)
         : m_strand(thread_pool->create_strand())
     {
-        assert(thread_pool->get_num() > 1);
+        assert(thread_pool->get_num() > 1); //otherwise will be deadlock
     }
 
     pipe_buffer::~pipe_buffer()

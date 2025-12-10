@@ -34,6 +34,9 @@
     <ClCompile Include="src\timer\periodic-timer\periodic-timer-test.cpp">
       <Filter>timer\periodic-timer</Filter>
     </ClCompile>
+    <ClCompile Include="src\thread-pool\strand-test.cpp">
+      <Filter>thread-pool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
