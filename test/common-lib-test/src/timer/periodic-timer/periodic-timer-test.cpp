@@ -8,6 +8,8 @@
 using namespace vsh::cl;
 using namespace testing;
 
+using callack_ret = periodic_timer::callback_ret;
+
 TEST(PeriodicTimer, DoesNothingOnAttemptToCancelNotActiveTimer)
 {
     thread_pool pool(2);
@@ -21,7 +23,7 @@ TEST(PeriodicTimer, CallsCallbackInSpecifiedTimes)
     thread_pool pool(2);
     periodic_timer sut(pool.get_io_context());
     sut.set_periods_count(2);
-    MockFunction<void()> callback;
+    MockFunction<callack_ret()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2);
 
@@ -39,7 +41,7 @@ TEST(PeriodicTimer, ThrowsExceptionOnAttemptToStartTimerTwiceWhenFirstInNotCompl
     thread_pool pool(2);
     periodic_timer sut(pool.get_io_context());
 
-    MockFunction<void()> callback;
+    MockFunction<callack_ret()> callback;
     sut.start(callback.AsStdFunction(), std::chrono::milliseconds(1));
     ASSERT_ANY_THROW(sut.start(callback.AsStdFunction(), std::chrono::milliseconds(1)));
 }
@@ -59,7 +61,7 @@ TEST(PeriodicTimer, AnwersActiveAfterStart)
     thread_pool pool(2);
     periodic_timer sut(pool.get_io_context());
 
-    sut.start([]() {}, std::chrono::milliseconds(1));
+    sut.start([]() { return callack_ret::Continue; }, std::chrono::milliseconds(1));
     const auto ans = sut.is_active();
 
     ASSERT_TRUE(ans);
@@ -71,10 +73,10 @@ TEST(PeriodicTimer, StartsTimerAfterPreviousWasCanceled)
     periodic_timer sut(pool.get_io_context());
     sut.set_periods_count(2);
 
-    sut.start([]() {}, std::chrono::seconds(10));
+    sut.start([]() { return callack_ret::Continue; }, std::chrono::seconds(10));
     sut.cancel();
 
-    MockFunction<void()> callback;
+    MockFunction<callack_ret()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2);
 
@@ -91,12 +93,12 @@ TEST(PeriodicTimer, StartsTimerAfterPreviousWasCompletedPeriods)
     thread_pool pool(2);
     periodic_timer sut(pool.get_io_context());
     sut.set_periods_count(2);
-    sut.start([]() {}, std::chrono::milliseconds(1));
+    sut.start([]() { return callack_ret::Continue; }, std::chrono::milliseconds(1));
     while(sut.is_active()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    MockFunction<void()> callback;
+    MockFunction<callack_ret()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2);
 
@@ -114,7 +116,7 @@ TEST(PeriodicTimer, CatchesExceptionInCallback)
     periodic_timer sut(pool.get_io_context());
     sut.set_periods_count(2);
 
-    MockFunction<void()> callback;
+    MockFunction<callack_ret()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2);
 
@@ -134,7 +136,7 @@ TEST(PeriodicTimer, ClearsPeriodsCount)
     sut.clear_periods_count();
 
     std::atomic_int counter = 0;
-    sut.start([&]() { ++counter; }, std::chrono::milliseconds(1));
+    sut.start([&]() { ++counter; return callack_ret::Continue; }, std::chrono::milliseconds(1));
 
     while(counter < 3) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -148,8 +150,25 @@ TEST(PeriodicTimer, CancelsTimerOnDestruction)
     {
         thread_pool pool(2);
         periodic_timer sut(pool.get_io_context());
-        sut.start([]() {}, std::chrono::seconds(20));
+        sut.start([]() { return callack_ret::Continue; }, std::chrono::seconds(20));
     }
 
     ASSERT_TRUE(std::chrono::steady_clock::now() - start < std::chrono::seconds(10));
+}
+
+TEST(PeriodicTimer, CancelsTimerInCallback)
+{
+    thread_pool pool(2);
+    periodic_timer sut(pool.get_io_context());
+    sut.set_periods_count(2);
+    sut.clear_periods_count();
+
+    std::atomic_int counter = 0;
+    sut.start([&]() { ++counter; return callack_ret::Abort; }, std::chrono::milliseconds(1));
+
+    while(counter == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    ASSERT_EQ(counter, 1);
+    ASSERT_FALSE(sut.is_active());
 }

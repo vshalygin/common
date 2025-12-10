@@ -45,19 +45,22 @@ TEST_F(MultipleTimer, CallsCallbackOnTimeout)
 TEST_F(MultipleTimer, IsAbleToHandleTwoTimers)
 {
     latch sync_latch(2);
+    event sync_event;
     MockFunction<void()> callback1;
     EXPECT_CALL(callback1, Call)
         .Times(1)
-        .WillOnce([&]() { sync_latch.count_down(); });
+        .WillOnce([&]() { sync_event.wait(); sync_latch.count_down(); });
     MockFunction<void()> callback2;
     EXPECT_CALL(callback2, Call)
         .Times(1)
-        .WillOnce([&]() { sync_latch.count_down(); });
+        .WillOnce([&]() { sync_event.wait(); sync_latch.count_down(); });
 
     m_multiple_timer->start(callback1.AsStdFunction(), std::chrono::microseconds(3));
     m_multiple_timer->start(callback2.AsStdFunction(), std::chrono::microseconds(3));
 
     EXPECT_EQ(m_multiple_timer->get_active_timers_count(), 2);
+    sync_event.set();
+
     EXPECT_TRUE(sync_latch.wait_for(std::chrono::seconds(10)));
 }
 

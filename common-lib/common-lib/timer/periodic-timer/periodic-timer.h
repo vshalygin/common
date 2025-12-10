@@ -13,6 +13,12 @@ namespace vsh::cl {
     class periodic_timer final
     {
     public:
+        enum class callback_ret
+        {
+            Continue,
+            Abort
+        };
+
         explicit periodic_timer(boost::asio::io_context &io_context);
 
         periodic_timer(periodic_timer &) = delete;
@@ -66,18 +72,21 @@ namespace vsh::cl {
     void periodic_timer::start_period(Callback &&callback,
                                       const std::chrono::milliseconds &period)
     {
+        //TODO check Callback signature
+
         m_timer.expires_after(period);
         m_timer.async_wait([this, period, callback = std::move(callback)]
                            (const boost::system::error_code &ec) mutable {
             if(!ec) {
+                auto ret = callback_ret::Abort;
                 try {
-                    callback();
+                    ret = callback();
                 } catch(...) {
                     //TODO log
                 }
 
                 increment_periods_count();
-                if(m_is_canceled || is_all_periods_completed()) {
+                if(ret == callback_ret::Abort || m_is_canceled || is_all_periods_completed()) {
                     m_finish_event.set();
                     m_is_active = false;
                 } else {
