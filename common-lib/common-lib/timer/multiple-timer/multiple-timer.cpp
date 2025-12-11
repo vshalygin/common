@@ -45,12 +45,10 @@ namespace vsh::cl {
             }
         }
 
-        for(auto id : ids) {
-            try {
-                cancel(id);
-            } catch(...) {
-                //TODO log
-            }
+        for(auto id : ids) try {
+            cancel(id);
+        } catch(...) {
+            //TODO log
         }
     }
 

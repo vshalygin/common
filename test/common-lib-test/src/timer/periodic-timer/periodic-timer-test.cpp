@@ -197,3 +197,14 @@ TEST(PeriodicTimer, AllowsToCancelInTwoThreadSimultaneously)
 
     pool.stop();
 }
+
+TEST(PeriodicTimer, IsNotActiveAfterCancelCall)
+{
+    thread_pool pool(4);
+    periodic_timer sut(pool.get_io_context());
+
+    sut.start([]() { return callack_ret::Continue; }, std::chrono::minutes(10));
+    sut.cancel();
+
+    ASSERT_FALSE(sut.is_active());
+}
