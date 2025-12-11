@@ -1,6 +1,5 @@
 #pragma once
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
-#include <common-lib/syncronization/event/event.h>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -8,6 +7,7 @@
 #include <chrono>
 #include <optional>
 #include <atomic>
+#include <condition_variable>
 
 namespace vsh::cl {
     class periodic_timer final
@@ -43,12 +43,17 @@ namespace vsh::cl {
         bool is_all_periods_completed() const;
         void increment_periods_count();
 
+        void set_active_or_throw_if_already();
+        void set_inactive_and_notify();
+
     private:
         boost::asio::io_context &m_io_context;
         boost::asio::steady_timer m_timer;
 
-        cl::event m_finish_event;
-        std::atomic_bool m_is_active = false;
+        mutable std::mutex m_is_active_mtx;
+        std::condition_variable m_is_deactivated_cv;
+        bool m_is_active = false;
+
         std::atomic_bool m_is_canceled = false;
         size_t m_current_periods_count = 0;
 
@@ -58,11 +63,8 @@ namespace vsh::cl {
     template<typename Callback>
     void periodic_timer::start(Callback &&callback, const std::chrono::milliseconds &period)
     {
-        if(m_is_active.exchange(true)) {
-            throw std::logic_error("periodic timer already started");
-        }
+        set_active_or_throw_if_already();
 
-        m_finish_event.clear();
         m_current_periods_count = 0;
         m_is_canceled = false;
         start_period<Callback>(std::move(callback), period);
@@ -87,18 +89,15 @@ namespace vsh::cl {
 
                 increment_periods_count();
                 if(ret == callback_ret::Abort || m_is_canceled || is_all_periods_completed()) {
-                    m_finish_event.set();
-                    m_is_active = false;
+                    set_inactive_and_notify();
                 } else {
                     start_period<Callback>(std::move(callback), period);
                 }
             } else if(ec == boost::asio::error::operation_aborted) {
-                m_finish_event.set();
-                m_is_active = false;
+                set_inactive_and_notify();
             } else {
                 //TODO log something unexpected
-                m_finish_event.set();
-                m_is_active = false;
+                set_inactive_and_notify();
             }
         });
     }

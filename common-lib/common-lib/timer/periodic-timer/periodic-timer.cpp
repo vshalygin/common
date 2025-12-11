@@ -17,18 +17,21 @@ namespace vsh::cl {
 
     void periodic_timer::cancel()
     {
+        std::unique_lock lock(m_is_active_mtx);
         if(!m_is_active) {
             return;
         }
 
-        m_is_canceled = true;
-        m_timer.cancel();
+        if(!m_is_canceled.exchange(true)) {
+            m_timer.cancel();
+        }
 
-        m_finish_event.wait();
+        m_is_deactivated_cv.wait(lock, [this]() { return m_is_active; });
     }
 
     bool periodic_timer::is_active() const
     {
+        std::lock_guard lock(m_is_active_mtx);
         return m_is_active;
     }
 
@@ -53,5 +56,24 @@ namespace vsh::cl {
     void periodic_timer::increment_periods_count()
     {
         ++m_current_periods_count;
+    }
+
+    void periodic_timer::set_active_or_throw_if_already()
+    {
+        std::lock_guard lock(m_is_active_mtx);
+        if(m_is_active) {
+            throw std::logic_error("periodic timer already started");
+        }
+        m_is_active = true;
+    }
+
+    void periodic_timer::set_inactive_and_notify()
+    {
+        {
+            std::lock_guard lock(m_is_active_mtx);
+            m_is_active = false;
+        }
+
+        m_is_deactivated_cv.notify_all();
     }
 }

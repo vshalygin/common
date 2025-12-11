@@ -1,6 +1,7 @@
 #include <common-lib/timer/periodic-timer/periodic-timer.h>
 #include <common-lib/thread-pool/thread-pool.h>
 #include <common-lib/syncronization/event/event.h>
+#include <common-lib/syncronization/latch/latch.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -171,4 +172,28 @@ TEST(PeriodicTimer, CancelsTimerInCallback)
     }
     ASSERT_EQ(counter, 1);
     ASSERT_FALSE(sut.is_active());
+}
+
+TEST(PeriodicTimer, AllowsToCancelInTwoThreadSimultaneously)
+{
+    thread_pool pool(4);
+    periodic_timer sut(pool.get_io_context());
+    event sync_event1;
+    event sync_event2;
+    latch sync_latch(2);
+    MockFunction<callack_ret()> callback;
+    EXPECT_CALL(callback, Call)
+        .Times(1)
+        .WillOnce([&]() { sync_event1.set();  sync_event2.wait(); return callack_ret::Continue; });
+
+    sut.start(callback.AsStdFunction(), std::chrono::milliseconds(1));
+    sync_event1.wait();
+
+    pool.post([&]() { sync_latch.count_down(); sut.cancel(); });
+    pool.post([&]() { sync_latch.count_down();  sut.cancel(); });
+    sync_latch.wait();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    sync_event2.set();
+
+    pool.stop();
 }
