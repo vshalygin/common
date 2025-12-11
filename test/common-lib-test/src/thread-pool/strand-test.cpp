@@ -70,3 +70,33 @@ TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
 
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
+
+TEST(Strand, AnswerTrueOnCheckExecutingInFunctorDestructor)
+{
+    class desctructor_checker
+    {
+    public:
+        desctructor_checker(event &sync_event, strand *strand)
+            : m_sync_event(sync_event)
+            , m_strand(strand)
+        {}
+
+        ~desctructor_checker()
+        {
+            EXPECT_TRUE(m_strand->is_in_executing_context());
+            m_sync_event.set();
+        }
+
+    private:
+        event &m_sync_event;
+        strand *m_strand;
+    };
+
+    event sync_event;
+    thread_pool pool(2);
+    auto sut = pool.create_strand();
+
+    sut->post([checker = std::make_shared<desctructor_checker>(sync_event, sut.get())]() {});
+
+    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+}
