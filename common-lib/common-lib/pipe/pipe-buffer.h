@@ -1,4 +1,6 @@
 #pragma once
+#include "pipe-result.h"
+
 #include "common-lib/utils/buffer/buffer.h"
 #include "common-lib/thread-pool/thread-pool.h"
 #include "common-lib/thread-pool/strand.h"
@@ -8,24 +10,6 @@
 #include <atomic>
 
 namespace vsh::cl {
-    enum class pipe_op_res
-    {
-        ok,
-        canceled,
-        inactive,
-        unknown_error
-    };
-
-    inline bool is_success(pipe_op_res res)
-    {
-        return res == pipe_op_res::ok;
-    }
-
-    inline bool is_fail(pipe_op_res res)
-    {
-        return !is_success(res);
-    }
-
     class pipe_buffer final
         : public std::enable_shared_from_this<pipe_buffer>
     {
@@ -33,8 +17,8 @@ namespace vsh::cl {
         {};
 
     public:
-        using read_callback_t = std::function<void(pipe_op_res, cl::buffer &&)>;
-        using write_callback_t = std::function<void(pipe_op_res)>;
+        using read_callback_t = std::function<void(pipe_result, cl::buffer &&)>;
+        using write_callback_t = std::function<void(pipe_result)>;
 
         static std::shared_ptr<pipe_buffer> create(std::shared_ptr<cl::thread_pool> thread_pool);
 
@@ -49,16 +33,15 @@ namespace vsh::cl {
         void write_async(cl::buffer &&buf, write_callback_t &&callback);
         void read_async(read_callback_t &&callback);
 
-        bool is_active() const;
-        void set_active();
-        void set_inactive();
+        bool is_enabled() const;
+        void enable();
+        void disable();
 
     private:
-        void post_read_from_queue_if_possible();
         void read_from_queue_if_possible();
 
     private:
-        std::atomic_bool m_is_active = false;
+        std::atomic_bool m_is_enabled = false;
 
         std::unique_ptr<cl::strand> m_strand;
 

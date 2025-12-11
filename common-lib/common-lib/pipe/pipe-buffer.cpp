@@ -18,7 +18,7 @@ namespace vsh::cl {
     pipe_buffer::~pipe_buffer()
     {
         try {
-            set_inactive();
+            disable();
         } catch (...) {
             //TODO safe log
         }
@@ -30,12 +30,12 @@ namespace vsh::cl {
                      buf = std::move(buf),
                      callback = std::move(callback)]() mutable {
 
-            auto res = pipe_op_res::unknown_error;
-            if(self->is_active()) {
+            auto res = pipe_result::unknown_error;
+            if(self->is_enabled()) {
                 self->m_message_queue.push(std::move(buf));
-                res = pipe_op_res::ok;
+                res = pipe_result::ok;
             } else {
-                res = pipe_op_res::inactive;
+                res = pipe_result::disabled;
             }
 
             if(callback) try {
@@ -45,7 +45,7 @@ namespace vsh::cl {
             }
 
             if(is_success(res)) {
-                self->post_read_from_queue_if_possible();
+                self->read_from_queue_if_possible();
             }
 
         };
@@ -60,48 +60,47 @@ namespace vsh::cl {
         }
 
         auto task = [self = shared_from_this(), callback = std::move(callback)]() {
-            if(self->m_read_callback) {
-                try {
-                    self->m_read_callback(pipe_op_res::canceled, {});
-                } catch(...) {
-                    //TODO log
-                }
-                self->m_read_callback = read_callback_t();
+            if(self->m_read_callback) try {
+                self->m_read_callback(pipe_result::canceled, {});
+            } catch(...) {
+                //TODO log
             }
+            self->m_read_callback = read_callback_t();
 
-            if(self->is_active()) {
+            if(self->is_enabled()) {
                 self->m_read_callback = std::move(callback);
                 self->read_from_queue_if_possible();
-            } else {
-                try {
-                    callback(pipe_op_res::inactive, {});
-                } catch(...) {
-                    //TODO log
-                }
+            } else try {
+                callback(pipe_result::disabled, {});
+            } catch(...) {
+                //TODO log
             }
         };
 
         m_strand->post(std::move(task));
     }
 
-    bool pipe_buffer::is_active() const
+    bool pipe_buffer::is_enabled() const
     {
-        return m_is_active.load();
+        return m_is_enabled.load();
     }
 
-    void pipe_buffer::set_active()
+    void pipe_buffer::enable()
     {
-        m_is_active.store(true);
+        m_is_enabled.store(true);
     }
 
-    void pipe_buffer::set_inactive()
+    void pipe_buffer::disable()
     {
-        m_is_active.store(false);
+        if(!m_is_enabled.exchange(false)) {
+            return;
+        }
+
         cl::event sync_event;
 
         auto task = [this, &sync_event]() {
             if(m_read_callback) try {
-                m_read_callback(pipe_op_res::canceled, {});
+                m_read_callback(pipe_result::canceled, {});
             } catch(...) {
                 //TODO log
             }
@@ -117,15 +116,6 @@ namespace vsh::cl {
         sync_event.wait();
     }
 
-    void pipe_buffer::post_read_from_queue_if_possible()
-    {
-        auto task = [self = shared_from_this()]() {
-            self->read_from_queue_if_possible();
-        };
-
-        m_strand->post(std::move(task));
-    }
-
     void pipe_buffer::read_from_queue_if_possible()
     {
         if(m_message_queue.empty() || !m_read_callback) {
@@ -139,7 +129,7 @@ namespace vsh::cl {
         m_message_queue.pop();
         
         try {
-            callback(pipe_op_res::ok, std::move(buffer));
+            callback(pipe_result::ok, std::move(buffer));
         } catch (...) {
             //TODO log
         }
