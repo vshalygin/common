@@ -12,7 +12,7 @@ namespace vsh::cl {
                              creator)
         : m_strand(thread_pool->create_strand())
     {
-        assert(thread_pool->get_num() > 1); //otherwise will be deadlock
+        assert(thread_pool->get_num() > 1 && "may be deadlock");
     }
 
     pipe_buffer::~pipe_buffer()
@@ -96,7 +96,7 @@ namespace vsh::cl {
             return;
         }
 
-        cl::event sync_event;
+        event sync_event;
 
         auto task = [this, &sync_event]() {
             if(m_read_callback) try {
@@ -111,9 +111,31 @@ namespace vsh::cl {
             sync_event.set();
         };
 
-        m_strand->post(std::move(task));
+        if(m_strand->is_in_executing_context()) {
+            task();
+        } else {
+            m_strand->post(std::move(task));
+        }
 
         sync_event.wait();
+    }
+
+    size_t pipe_buffer::get_message_queue_count() const
+    {
+        cl::event sync_event;
+        size_t ans = 0;
+        auto task = [&]() {
+            ans = m_message_queue.size();
+            sync_event.set();
+        };
+        if(m_strand->is_in_executing_context()) {
+            task();
+        } else {
+            m_strand->post(std::move(task));
+        }
+        sync_event.wait();
+
+        return ans;
     }
 
     void pipe_buffer::read_from_queue_if_possible()

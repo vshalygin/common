@@ -37,6 +37,8 @@ namespace vsh::cl {
         void enable();
         void disable();
 
+        size_t get_message_queue_count() const;
+
     private:
         void read_from_queue_if_possible();
 
