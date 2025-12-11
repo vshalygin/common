@@ -48,3 +48,25 @@ TEST(Strand, ExecuteTaskAfterDestruction)
 
     sync_event2.wait_for(std::chrono::seconds(10));
 }
+
+TEST(Strand, AnswerFalseOnCheckExecutingContextIfItIsNoIn)
+{
+    thread_pool pool(2);
+    auto sut = pool.create_strand();
+
+    ASSERT_FALSE(sut->is_in_executing_context());
+}
+
+TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
+{
+    event sync_event;
+    thread_pool pool(2);
+    auto sut = pool.create_strand();
+
+    sut->post([&]() {
+        ASSERT_TRUE(sut->is_in_executing_context());
+        sync_event.set();
+    });
+
+    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+}
