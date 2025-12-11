@@ -87,6 +87,12 @@
     <ClInclude Include="common-lib\pipe\pipe-buffer.h">
       <Filter>pipe</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\pipe\pipe-endpoint.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\pipe\pipe-result.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -117,6 +123,9 @@
       <Filter>timer\periodic-timer</Filter>
     </ClCompile>
     <ClCompile Include="common-lib\pipe\pipe-buffer.cpp">
+      <Filter>pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\pipe\pipe-endpoint.cpp">
       <Filter>pipe</Filter>
     </ClCompile>
   </ItemGroup>
