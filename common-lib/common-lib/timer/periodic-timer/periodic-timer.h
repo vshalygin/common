@@ -66,7 +66,7 @@ namespace vsh::cl {
         set_active_or_throw_if_already();
 
         m_current_periods_count = 0;
-        m_is_canceled = false;
+        m_is_canceled.store(false, std::memory_order_release);
         start_period<Callback>(std::move(callback), period);
     }
 
@@ -88,9 +88,13 @@ namespace vsh::cl {
                 }
 
                 increment_periods_count();
-                if(ret == callback_ret::Abort || m_is_canceled || is_all_periods_completed()) {
+                if(ret == callback_ret::Abort ||
+                   m_is_canceled.load(std::memory_order_acquire) ||
+                   is_all_periods_completed())
+                {
                     set_inactive_and_notify();
-                } else {
+                }
+                else {
                     start_period<Callback>(std::move(callback), period);
                 }
             } else if(ec == boost::asio::error::operation_aborted) {

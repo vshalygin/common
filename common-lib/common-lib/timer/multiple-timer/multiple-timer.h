@@ -61,8 +61,7 @@ namespace vsh::cl {
                 if(it != timers_map.end()) {
                     timer_struct = std::move(it->second);
                     timers_map.erase(it);
-                }
-                else {
+                } else {
                     //TODO log error
                 }
             }

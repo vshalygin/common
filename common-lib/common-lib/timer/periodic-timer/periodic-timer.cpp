@@ -22,11 +22,11 @@ namespace vsh::cl {
             return;
         }
 
-        if(!m_is_canceled.exchange(true)) {
+        if(!m_is_canceled.exchange(true, std::memory_order_acq_rel)) {
             m_timer.cancel();
         }
 
-        m_is_deactivated_cv.wait(lock, [this]() { return m_is_active; });
+        m_is_deactivated_cv.wait(lock, [this]() { return !m_is_active; });
     }
 
     bool periodic_timer::is_active() const
