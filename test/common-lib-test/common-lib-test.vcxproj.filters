@@ -40,6 +40,9 @@
     <ClCompile Include="src\pipe\pipe-buffer-test.cpp">
       <Filter>pipe</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\pipe-endpoint-test.cpp">
+      <Filter>pipe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
