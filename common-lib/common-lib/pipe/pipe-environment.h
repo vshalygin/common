@@ -29,6 +29,8 @@ namespace vsh::cl {
         pipe_endpoint_sp open_pipe_timed(const std::string &pipe_name,
                                          const std::chrono::milliseconds &timeout);
 
+        size_t get_existing_pipes_count() const;
+
     private:
         class pipe_info
         {
@@ -58,8 +60,8 @@ namespace vsh::cl {
 
         std::shared_ptr<thread_pool> m_thread_pool;
 
-        std::mutex m_mtx;
-        std::condition_variable m_cv;
+        mutable std::mutex m_named_pipes_mtx;
+        std::condition_variable m_named_pipes_cv;
         std::map<std::string, std::shared_ptr<pipe_info>> m_named_pipes_map;
     };
 }

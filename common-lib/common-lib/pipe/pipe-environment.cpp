@@ -65,7 +65,7 @@ namespace vsh::cl {
         auto info = std::make_shared<pipe_info>(m_thread_pool);
         auto destruction_callback = [self = weak_from_this(), pipe_name]() {
             if(auto s = self.lock()) {
-                std::lock_guard lock(s->m_mtx);
+                std::lock_guard lock(s->m_named_pipes_mtx);
                 s->m_named_pipes_map.erase(pipe_name);
             }
         };
@@ -74,13 +74,13 @@ namespace vsh::cl {
                                                                std::move(destruction_callback));
 
         {
-            std::lock_guard lock(m_mtx);
+            std::lock_guard lock(m_named_pipes_mtx);
             if(m_named_pipes_map.count(pipe_name)) {
                 throw std::runtime_error("pipe '" + pipe_name + "' already exists");
             }
             m_named_pipes_map.insert({ pipe_name, std::move(info) });
         }
-        m_cv.notify_one();
+        m_named_pipes_cv.notify_one();
 
         return server_endpoint;
     }
@@ -93,14 +93,15 @@ namespace vsh::cl {
     pipe_endpoint_sp pipe_environment::open_pipe_timed(const std::string &pipe_name,
                                                        const std::chrono::milliseconds &timeout)
     {
-        std::unique_lock lock(m_mtx);
-        const auto is_success = m_cv.wait_for(lock, timeout, [&]() {
-            auto it = m_named_pipes_map.find(pipe_name);
-            if(it == m_named_pipes_map.end()) {
-                return false;
-            }
-            return !it->second->is_client_endpoint_exists();
-        });
+        std::unique_lock lock(m_named_pipes_mtx);
+        const auto is_success = m_named_pipes_cv.wait_for(lock, timeout,
+            [&]() {
+                auto it = m_named_pipes_map.find(pipe_name);
+                if(it == m_named_pipes_map.end()) {
+                    return false;
+                }
+                return !it->second->is_client_endpoint_exists();
+            });
 
         if(!is_success) {
             throw std::runtime_error("pipe server is not available");
@@ -113,7 +114,7 @@ namespace vsh::cl {
                 info->disable_buffers();
             }
             if(auto s = self.lock()) {
-                s->m_cv.notify_one();
+                s->m_named_pipes_cv.notify_one();
             }
         };
         auto client_endpoint = std::make_shared<pipe_endpoint>(info->get_server_to_client_buffer(),
@@ -123,5 +124,11 @@ namespace vsh::cl {
         info->enable_buffers();
 
         return client_endpoint;
+    }
+
+    size_t pipe_environment::get_existing_pipes_count() const
+    {
+        std::lock_guard lock(m_named_pipes_mtx);
+        return m_named_pipes_map.size();
     }
 }

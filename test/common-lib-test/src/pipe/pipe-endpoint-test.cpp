@@ -38,7 +38,7 @@ protected:
     std::shared_ptr<thread_pool> m_thread_pool;
     std::shared_ptr<pipe_buffer> m_input_buffer;
     std::shared_ptr<pipe_buffer> m_output_buffer;
-    MockFunction<void()> m_destruction_callback;
+    NiceMock<MockFunction<void()>> m_destruction_callback;
 
     std::unique_ptr<pipe_endpoint> m_sut;
     
