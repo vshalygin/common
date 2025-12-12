@@ -6,7 +6,7 @@ namespace vsh::cl {
     class event final
     {
     public:
-        event();
+        explicit event(bool manual_reset = true);
         ~event();
 
         event(event &) = delete;
@@ -17,7 +17,7 @@ namespace vsh::cl {
 
         void set();
         bool is_set() const;
-        void clear();
+        void reset();
 
         void wait();
         bool wait_for(const std::chrono::microseconds &mcs);

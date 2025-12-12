@@ -6,7 +6,10 @@ namespace vsh::cl {
     class event::impl final
     {
     public:
-        impl() = default;
+        explicit impl(bool manual_reset)
+            : m_manual_reset(manual_reset)
+            , m_is_set(std::make_shared<bool>(false))
+        {}
 
         impl(impl &) = delete;
         impl &operator=(impl &) = delete;
@@ -15,7 +18,10 @@ namespace vsh::cl {
         {
             {
                 std::lock_guard guard(m_mtx);
-                m_is_set = true;
+                *m_is_set = true;
+                if(!m_manual_reset) {
+                    m_is_set = std::make_shared<bool>(false);
+                }
             }
 
             m_cv.notify_all();
@@ -24,36 +30,37 @@ namespace vsh::cl {
         bool is_set() const
         {
             std::lock_guard guard(m_mtx);
-            return m_is_set;
+            return *m_is_set;
         }
 
-        void clear()
+        void reset()
         {
             std::lock_guard guard(m_mtx);
-            m_is_set = false;
+            *m_is_set = false;
         }
 
         void wait()
         {
             std::unique_lock lock(m_mtx);
-            m_cv.wait(lock, [this]() { return m_is_set; });
+            m_cv.wait(lock, [is_set = m_is_set]() { return *is_set; });
         }
 
         bool wait_for(const std::chrono::microseconds &mcs)
         {
             std::unique_lock lock(m_mtx);
-            return m_cv.wait_for(lock, mcs, [this]() { return m_is_set; });
+            return m_cv.wait_for(lock, mcs, [is_set = m_is_set]() { return *is_set; });
         }
 
     private:
+        const bool m_manual_reset;
         mutable std::mutex m_mtx;
-        bool m_is_set = false;
+        std::shared_ptr<bool> m_is_set;
 
         std::condition_variable m_cv;
     };
 
-    event::event()
-        : m_impl(std::make_unique<impl>())
+    event::event(bool manual_reset)
+        : m_impl(std::make_unique<impl>(manual_reset))
     {}
 
     event::~event() = default;
@@ -71,9 +78,9 @@ namespace vsh::cl {
         return m_impl->is_set();
     }
 
-    void event::clear()
+    void event::reset()
     {
-        m_impl->clear();
+        m_impl->reset();
     }
 
     void event::wait()
