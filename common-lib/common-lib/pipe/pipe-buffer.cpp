@@ -82,17 +82,17 @@ namespace vsh::cl {
 
     bool pipe_buffer::is_enabled() const
     {
-        return m_is_enabled.load();
+        return m_is_enabled.load(std::memory_order_acquire);
     }
 
     void pipe_buffer::enable()
     {
-        m_is_enabled.store(true);
+        m_is_enabled.store(true, std::memory_order_release);
     }
 
     void pipe_buffer::disable()
     {
-        if(!m_is_enabled.exchange(false)) {
+        if(!m_is_enabled.exchange(false, std::memory_order_acq_rel)) {
             return;
         }
 
