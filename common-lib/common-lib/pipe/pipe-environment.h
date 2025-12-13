@@ -1,10 +1,10 @@
 #pragma once
 #include "pipe-endpoint.h"
 #include "common-lib/thread-pool/thread-pool.h"
+#include "common-lib/syncronization/guarded-value/guarded-value.h"
 
 #include <map>
 #include <string>
-#include <condition_variable>
 
 namespace vsh::cl {
     class pipe_environment final
@@ -26,8 +26,6 @@ namespace vsh::cl {
 
         pipe_endpoint_sp create_pipe(const std::string &pipe_name);
         pipe_endpoint_sp open_pipe(const std::string &pipe_name);
-        pipe_endpoint_sp open_pipe_timed(const std::string &pipe_name,
-                                         const std::chrono::milliseconds &timeout);
 
         size_t get_existing_pipes_count() const;
 
@@ -60,8 +58,6 @@ namespace vsh::cl {
 
         std::shared_ptr<thread_pool> m_thread_pool;
 
-        mutable std::mutex m_named_pipes_mtx;
-        std::condition_variable m_named_pipes_cv;
-        std::map<std::string, std::shared_ptr<pipe_info>> m_named_pipes_map;
+        cl::guarded_value<std::map<std::string, std::shared_ptr<pipe_info>>> m_named_pipes_map;
     };
 }
