@@ -6,7 +6,8 @@ namespace vsh::cl {
     class event final
     {
     public:
-        explicit event(bool manual_reset = true);
+        explicit event(bool manual_reset = true,
+                       bool initial_set = false);
         ~event();
 
         event(event &) = delete;

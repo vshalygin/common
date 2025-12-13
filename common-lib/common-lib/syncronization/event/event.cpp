@@ -7,8 +7,9 @@ namespace vsh::cl {
     class event::impl final
     {
     public:
-        explicit impl(bool manual_reset)
+        explicit impl(bool manual_reset, bool initial_set)
             : m_manual_reset(manual_reset)
+            , m_is_set(initial_set)
         {}
 
         impl(impl &) = delete;
@@ -69,8 +70,9 @@ namespace vsh::cl {
         std::condition_variable_any m_cv;
     };
 
-    event::event(bool manual_reset)
-        : m_impl(std::make_unique<impl>(manual_reset))
+    event::event(bool manual_reset,
+                 bool initial_set)
+        : m_impl(std::make_unique<impl>(manual_reset, initial_set))
     {}
 
     event::~event() = default;
