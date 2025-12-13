@@ -46,6 +46,9 @@
     <Filter Include="pipe">
       <UniqueIdentifier>{d1645267-c238-45ca-881a-dff32d44e512}</UniqueIdentifier>
     </Filter>
+    <Filter Include="syncronization\spinlock">
+      <UniqueIdentifier>{d1ee088e-f1e1-47e1-95ec-82c142c3111c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
@@ -96,6 +99,9 @@
     <ClInclude Include="common-lib\pipe\pipe-environment.h">
       <Filter>pipe</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\syncronization\spinlock\spinlock.h">
+      <Filter>syncronization\spinlock</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -133,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="common-lib\pipe\pipe-environment.cpp">
       <Filter>pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp">
+      <Filter>syncronization\spinlock</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

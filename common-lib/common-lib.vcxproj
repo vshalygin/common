@@ -20,6 +20,7 @@
     <ClInclude Include="common-lib\syncronization\event\event.h" />
     <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\syncronization\latch\latch.h" />
+    <ClInclude Include="common-lib\syncronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread-pool\strand.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h" />
@@ -34,6 +35,7 @@
     <ClCompile Include="common-lib\pipe\pipe-endpoint.cpp" />
     <ClCompile Include="common-lib\syncronization\event\event.cpp" />
     <ClCompile Include="common-lib\syncronization\latch\latch.cpp" />
+    <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp" />
     <ClCompile Include="common-lib\thread-pool\strand.cpp" />
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp" />
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp" />
