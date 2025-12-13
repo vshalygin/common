@@ -1,6 +1,7 @@
 #include "event.h"
+#include "common-lib/syncronization/spinlock/spinlock-guard.h"
 #include <condition_variable>
-#include <mutex>
+#include <atomic>
 
 namespace vsh::cl {
     class event::impl final
@@ -8,55 +9,64 @@ namespace vsh::cl {
     public:
         explicit impl(bool manual_reset)
             : m_manual_reset(manual_reset)
-            , m_is_set(std::make_shared<bool>(false))
         {}
 
         impl(impl &) = delete;
         impl &operator=(impl &) = delete;
 
-        void set()
+        void set() noexcept
         {
-            {
-                std::lock_guard guard(m_mtx);
-                *m_is_set = true;
-                if(!m_manual_reset) {
-                    m_is_set = std::make_shared<bool>(false);
-                }
+            spinlock_guard guard(m_spinlock);
+            m_is_set = true;
+
+            guard.unlock();
+            if(m_manual_reset) {
+                m_cv.notify_all();
+            } else {
+                m_cv.notify_one();
             }
-
-            m_cv.notify_all();
         }
 
-        bool is_set() const
+        bool is_set() const noexcept
         {
-            std::lock_guard guard(m_mtx);
-            return *m_is_set;
+            spinlock_guard guard(m_spinlock);
+            return m_is_set;
         }
 
-        void reset()
+        void reset() noexcept
         {
-            std::lock_guard guard(m_mtx);
-            *m_is_set = false;
+            spinlock_guard guard(m_spinlock);
+            m_is_set = false;
         }
 
         void wait()
         {
-            std::unique_lock lock(m_mtx);
-            m_cv.wait(lock, [is_set = m_is_set]() { return *is_set; });
+            spinlock_guard guard(m_spinlock);
+            m_cv.wait(guard, [this]() { return m_is_set; });
+
+            if(!m_manual_reset) {
+                m_is_set = false;
+            }
         }
 
         bool wait_for(const std::chrono::microseconds &mcs)
         {
-            std::unique_lock lock(m_mtx);
-            return m_cv.wait_for(lock, mcs, [is_set = m_is_set]() { return *is_set; });
+            spinlock_guard guard(m_spinlock);
+            const auto deadline = std::chrono::steady_clock::now() + mcs;
+            auto signaled = m_cv.wait_until(guard, deadline, [this]() { return m_is_set; });
+            if(signaled && !m_manual_reset) {
+                m_is_set = false;
+            }
+
+            return signaled;
         }
 
     private:
         const bool m_manual_reset;
-        mutable std::mutex m_mtx;
-        std::shared_ptr<bool> m_is_set;
+        bool m_is_set = false;
 
-        std::condition_variable m_cv;
+        mutable spinlock m_spinlock;
+        std::condition_variable_any m_cv;
     };
 
     event::event(bool manual_reset)
@@ -65,20 +75,20 @@ namespace vsh::cl {
 
     event::~event() = default;
 
-    event::event(event &&) = default;
-    event &event::operator=(event &&) = default;
+    event::event(event &&) noexcept = default;
+    event &event::operator=(event &&) noexcept = default;
 
-    void event::set()
+    void event::set() noexcept
     {
         m_impl->set();
     }
 
-    bool event::is_set() const
+    bool event::is_set() const noexcept
     {
         return m_impl->is_set();
     }
 
-    void event::reset()
+    void event::reset() noexcept
     {
         m_impl->reset();
     }

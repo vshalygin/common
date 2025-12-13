@@ -12,12 +12,12 @@ namespace vsh::cl {
         event(event &) = delete;
         event &operator=(event &) = delete;
 
-        event(event &&);
-        event &operator=(event &&);
+        event(event &&) noexcept;
+        event &operator=(event &&) noexcept;
 
-        void set();
-        bool is_set() const;
-        void reset();
+        void set() noexcept;
+        bool is_set() const noexcept;
+        void reset() noexcept;
 
         void wait();
         bool wait_for(const std::chrono::microseconds &mcs);
