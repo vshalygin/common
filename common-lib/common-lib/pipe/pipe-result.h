@@ -6,6 +6,7 @@ namespace vsh::cl {
         ok,
         canceled,
         disabled,
+        timeout,
         unknown_error
     };
 

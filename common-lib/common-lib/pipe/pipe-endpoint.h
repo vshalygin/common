@@ -10,11 +10,9 @@ namespace vsh::cl {
     public:
         using write_callback_t = pipe_buffer::write_callback_t;
         using read_callback_t = pipe_buffer::read_callback_t;
-        using destruction_callback_t = std::function<void()>;
 
         pipe_endpoint(std::shared_ptr<pipe_buffer> input_buffer,
-                      std::shared_ptr<pipe_buffer> output_buffer,
-                      destruction_callback_t &&destruction_callback);
+                      std::shared_ptr<pipe_buffer> output_buffer);
 
         pipe_endpoint(pipe_endpoint &) = delete;
         pipe_endpoint &operator=(pipe_endpoint &) = delete;
@@ -29,6 +27,5 @@ namespace vsh::cl {
     private:
         std::shared_ptr<pipe_buffer> m_input_buffer;
         std::shared_ptr<pipe_buffer> m_output_buffer;
-        destruction_callback_t m_destruction_callback;
     };
 }

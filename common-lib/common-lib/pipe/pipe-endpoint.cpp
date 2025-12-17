@@ -2,11 +2,9 @@
 
 namespace vsh::cl {
     pipe_endpoint::pipe_endpoint(std::shared_ptr<pipe_buffer> input_buffer,
-                                 std::shared_ptr<pipe_buffer> output_buffer,
-                                 destruction_callback_t &&destruction_callback)
+                                 std::shared_ptr<pipe_buffer> output_buffer)
         : m_input_buffer(std::move(input_buffer))
         , m_output_buffer(std::move(output_buffer))
-        , m_destruction_callback(std::move(destruction_callback))
     {
         assert(m_input_buffer);
         assert(m_output_buffer);
@@ -14,8 +12,9 @@ namespace vsh::cl {
 
     pipe_endpoint::~pipe_endpoint()
     {
-        if(m_destruction_callback) try {
-            m_destruction_callback();
+        try {
+            m_input_buffer->disable();
+            m_output_buffer->disable();
         } catch(...) {
             //TODO safe log
         }

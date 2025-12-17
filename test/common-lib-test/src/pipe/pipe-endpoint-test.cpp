@@ -30,15 +30,13 @@ protected:
         m_input_buffer = pipe_buffer::create(m_thread_pool);
         m_output_buffer = pipe_buffer::create(m_thread_pool);
         
-        m_sut = std::make_unique<pipe_endpoint>(m_input_buffer, m_output_buffer,
-                                                m_destruction_callback.AsStdFunction());
+        m_sut = std::make_unique<pipe_endpoint>(m_input_buffer, m_output_buffer);
     }
 
 protected:
     std::shared_ptr<thread_pool> m_thread_pool;
     std::shared_ptr<pipe_buffer> m_input_buffer;
     std::shared_ptr<pipe_buffer> m_output_buffer;
-    NiceMock<MockFunction<void()>> m_destruction_callback;
 
     std::unique_ptr<pipe_endpoint> m_sut;
     
@@ -68,23 +66,15 @@ TEST_F(BufferEndpoint, AnswersConnectedIfBothBuffersEnabled)
     ASSERT_TRUE(m_sut->is_connected());
 }
 
-TEST_F(BufferEndpoint, CallsDestructionCallbackOnDestruction)
+TEST_F(BufferEndpoint, DisablesBufferOnDestruction)
 {
-    EXPECT_CALL(m_destruction_callback, Call)
-        .Times(1);
+    m_input_buffer->enable();
+    m_output_buffer->enable();
 
     m_sut.reset();
-    Mock::VerifyAndClearExpectations(&m_destruction_callback);
-}
 
-TEST_F(BufferEndpoint, DoesNotCrashIfDestructionCallbackThrowsException)
-{
-    EXPECT_CALL(m_destruction_callback, Call)
-        .Times(1)
-        .WillOnce(Throw(std::exception()));
-
-    m_sut.reset();
-    Mock::VerifyAndClearExpectations(&m_destruction_callback);
+    ASSERT_FALSE(m_input_buffer->is_enabled());
+    ASSERT_FALSE(m_output_buffer->is_enabled());
 }
 
 TEST_F(BufferEndpoint, WritesMessageToOutputBuffer)
