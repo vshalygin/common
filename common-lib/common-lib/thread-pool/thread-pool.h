@@ -15,18 +15,18 @@ namespace vsh::cl {
         thread_pool &operator=(thread_pool &) = delete;
 
         template<typename Task>
-        void post(Task &&task) const
+        void post(Task &&task)
         {
-            boost::asio::post(std::forward<Task>(task));
+            boost::asio::post(m_io_context, std::forward<Task>(task));
         }
 
         void stop();
         bool is_stopped() const;
 
-        unsigned get_num() const;
+        unsigned get_num() const noexcept;
 
-        boost::asio::io_context &get_io_context();
-        const boost::asio::io_context &get_io_context() const;
+        boost::asio::io_context &get_io_context() noexcept;
+        const boost::asio::io_context &get_io_context() const noexcept;
 
         std::unique_ptr<strand> create_strand();
 

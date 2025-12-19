@@ -13,8 +13,8 @@ namespace vsh::cl {
         latch(latch &) = delete;
         latch &operator=(latch &) = delete;
 
-        latch(latch &&) = default;
-        latch &operator=(latch &&) = default;
+        latch(latch &&);
+        latch &operator=(latch &&);
 
         void count_down();
 

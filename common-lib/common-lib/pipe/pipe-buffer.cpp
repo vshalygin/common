@@ -153,7 +153,7 @@ namespace vsh::cl {
         try {
             callback(pipe_result::ok, std::move(buffer));
         } catch (...) {
-            //TODO log
+            //TODO safe log
         }
     }
 }

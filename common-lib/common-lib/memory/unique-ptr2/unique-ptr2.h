@@ -16,6 +16,8 @@ namespace vsh::cl {
     {
         static_assert(std::is_nothrow_copy_constructible_v<Allocator>,
                       "allocator is not noexcept copyable");
+        static_assert(std::is_nothrow_constructible_v<Allocator>,
+                      "allocator is not noexcept contructible");
 
         template<typename T, typename Allocator, typename...Args>
         friend unique_ptr2<T, Allocator> make_unique2(

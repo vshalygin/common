@@ -53,6 +53,9 @@ namespace vsh::cl {
 
     latch::~latch() = default;
 
+    latch::latch(latch &&) = default;
+    latch &latch::operator=(latch &&) = default;
+
     void latch::count_down()
     {
         m_impl->count_down();

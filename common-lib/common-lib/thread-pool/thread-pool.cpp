@@ -41,17 +41,17 @@ namespace vsh::cl {
         return m_io_context.stopped();
     }
 
-    unsigned thread_pool::get_num() const
+    unsigned thread_pool::get_num() const noexcept
     {
         return m_thread_num;
     }
 
-    boost::asio::io_context &thread_pool::get_io_context()
+    boost::asio::io_context &thread_pool::get_io_context() noexcept
     {
         return m_io_context;
     }
 
-    const boost::asio::io_context &thread_pool::get_io_context() const
+    const boost::asio::io_context &thread_pool::get_io_context() const noexcept
     {
         return m_io_context;
     }
@@ -60,5 +60,4 @@ namespace vsh::cl {
     {
         return std::make_unique<strand>(m_io_context);
     }
-
 }

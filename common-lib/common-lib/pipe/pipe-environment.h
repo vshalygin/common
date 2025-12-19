@@ -11,6 +11,7 @@ namespace vsh::cl {
         using pipe_callback_t = std::function<void(pipe_result, pipe_endpoint_sp)>;
 
         explicit pipe_environment(std::shared_ptr<thread_pool> thread_pool);
+        ~pipe_environment();
 
         pipe_environment(pipe_environment &) = delete;
         pipe_environment &operator=(pipe_environment &) = delete;

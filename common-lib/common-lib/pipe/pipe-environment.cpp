@@ -77,7 +77,7 @@ namespace vsh::cl {
                !complement_endpoints_info_it->second.empty())
             {
                 auto complement_endpoint_info =
-                    exptract_prepared_endpoint_info(complement_endpoints_info_it,
+                    extract_prepared_endpoint_info(complement_endpoints_info_it,
                                                     complement_map);
 
                 cancel_timer(complement_endpoint_info.timer_id);
@@ -94,10 +94,10 @@ namespace vsh::cl {
 
                 auto complement_callback = std::move(complement_endpoint_info.callback);
 
-                m_thread_pool->post(create_pipe_callback_post_task(std::move(target_endpoint),
-                                                                   std::move(target_callback)));
-                m_thread_pool->post(create_pipe_callback_post_task(std::move(complement_endpoint),
-                                                                   std::move(complement_callback)));
+                m_thread_pool->post(create_pipe_ok_callback_task(std::move(target_endpoint),
+                                                                 std::move(target_callback)));
+                m_thread_pool->post(create_pipe_ok_callback_task(std::move(complement_endpoint),
+                                                                 std::move(complement_callback)));
             } else {
                 prepared_endpoint_info prepared_info;
                 prepared_info.timer_id = start_timer(target_map,
@@ -111,8 +111,8 @@ namespace vsh::cl {
             }
         }
 
-        prepared_endpoint_info exptract_prepared_endpoint_info(prepared_info_map::iterator iter,
-                                                               prepared_info_map &map)
+        prepared_endpoint_info extract_prepared_endpoint_info(prepared_info_map::iterator iter,
+                                                              prepared_info_map &map)
         {
             auto complement_endpoint_info = std::move(iter->second.front());
             iter->second.pop_front();
@@ -124,8 +124,8 @@ namespace vsh::cl {
             return complement_endpoint_info;
         }
 
-        std::function<void()> create_pipe_callback_post_task(std::shared_ptr<pipe_endpoint> endpoint,
-                                                             pipe_callback_t &&pipe_callback)
+        std::function<void()> create_pipe_ok_callback_task(std::shared_ptr<pipe_endpoint> endpoint,
+                                                           pipe_callback_t &&pipe_callback)
         {
             return [endpoint = std::move(endpoint),
                     callback = std::move(pipe_callback)]() mutable {
@@ -217,6 +217,8 @@ namespace vsh::cl {
     pipe_environment::pipe_environment(std::shared_ptr<thread_pool> thread_pool)
         : m_impl(std::make_unique<impl>(std::move(thread_pool)))
     {}
+
+    pipe_environment::~pipe_environment() = default;
 
     pipe_environment::pipe_environment(pipe_environment &&) = default;
     pipe_environment &pipe_environment::operator=(pipe_environment &&) = default;
