@@ -27,7 +27,7 @@ TEST(GuardedValue, MayBeCreatedByMovingValue)
 {
     test_class obj(34);
 
-    guarded_value sut(std::move(obj));
+    guarded_value<test_class> sut(std::move(obj));
     auto [guard, val] = sut.get();
 
     ASSERT_EQ(val.number, 34);

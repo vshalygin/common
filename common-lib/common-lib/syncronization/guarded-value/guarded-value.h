@@ -7,10 +7,6 @@ namespace vsh::cl {
     class guarded_value final
     {
     public:
-        guarded_value(T &&value)
-            : m_value(std::move(value))
-        {}
-
         template<typename...Args>
         guarded_value(Args&&...args)
             : m_value(std::forward<Args>(args)...)
