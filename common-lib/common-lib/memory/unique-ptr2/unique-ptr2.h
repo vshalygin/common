@@ -14,42 +14,35 @@ namespace vsh::cl {
     template<typename T, typename Allocator>
     class unique_ptr2 final
     {
-        static_assert(std::is_nothrow_copy_constructible_v<Allocator>,
-                      "allocator is not noexcept copyable");
-        static_assert(std::is_nothrow_constructible_v<Allocator>,
-                      "allocator is not noexcept contructible");
+        static_assert(!std::is_void_v<T>, "unique_ptr2 cannot be used with void");
+
+        static_assert(std::is_nothrow_move_constructible_v<Allocator>,
+                      "allocator is not noexcept move constructible");
+        static_assert(std::is_nothrow_move_assignable_v<Allocator>,
+                      "allocator is not noexcept move assignable");
 
         template<typename T, typename Allocator, typename...Args>
         friend unique_ptr2<T, Allocator> make_unique2(
-            const Allocator &allocator, Args&&...args);
+            std::decay_t<Allocator> &&allocator, Args&&...args);
 
         template<typename T, typename Allocator>
         friend class unique_ptr2;
 
     public:
-        explicit unique_ptr2(const Allocator &alloc = Allocator()) noexcept
-            : m_ptr(nullptr)
-            , m_alloc(alloc)
+        explicit unique_ptr2(Allocator &&allocator = Allocator()) noexcept
+            : m_alloc_memory(nullptr)
+            , m_object(nullptr)
+            , m_allocator(allocator)
         {}
 
-        template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
+        template<typename Y, typename = std::enable_if_t<std::is_convertible_v<Y *, T *>>>
         unique_ptr2(unique_ptr2<Y, Allocator> &&other) noexcept
-            : m_ptr(other.m_ptr)
-            , m_alloc(other.m_alloc)
+            : m_alloc_memory(other.m_alloc_memory)
+            , m_object(other.m_object)
+            , m_allocator(std::move(other.m_allocator))
         {
-            if(!m_ptr) {
-                return;
-            }
-
-            Y *other_ptr = other.get();
-            std::ptrdiff_t additional_offset =
-                reinterpret_cast<std::byte *>(static_cast<T *>(other_ptr)) -
-                reinterpret_cast<std::byte *>(other_ptr);
-
-            std::ptrdiff_t &offset = *reinterpret_cast<std::ptrdiff_t *>(m_ptr);
-            offset += additional_offset;
-
-            other.m_ptr = nullptr;
+            other.m_alloc_memory = nullptr;
+            other.m_object = nullptr;
         }
 
         ~unique_ptr2()
@@ -61,53 +54,62 @@ namespace vsh::cl {
         unique_ptr2 &operator=(unique_ptr2 &) = delete;
 
         unique_ptr2(unique_ptr2 &&other) noexcept
-            : m_ptr(nullptr)
-            , m_alloc(other.m_alloc)
+            : m_alloc_memory(other.m_alloc_memory)
+            , m_object(other.m_object)
+            , m_allocator(std::move(other.m_allocator))
         {
-            static_assert(noexcept(std::swap(m_ptr, other.m_ptr)),
-                          "std::swap is not noexcept");
-
-            std::swap(m_ptr, other.m_ptr);
+            other.m_alloc_memory = nullptr;
+            other.m_object = nullptr;
         }
 
         unique_ptr2 &operator=(unique_ptr2 &&other) noexcept
         {
-            static_assert(noexcept(std::swap(m_ptr, other.m_ptr)),
-                          "std::swap is not noexcept");
+            if(this != &other) {
+                reset();
 
-            std::swap(m_ptr, other.m_ptr);
+                m_alloc_memory = other.m_alloc_memory;
+                m_object = other.m_object;
+                m_allocator = std::move(other.m_allocator);
+
+                other.m_alloc_memory = nullptr;
+                other.m_object = nullptr;
+            }
             return *this;
         }
 
-        template<typename Y, typename = std::enable_if_t<std::is_base_of_v<T, Y>>>
-        unique_ptr2 & operator=(unique_ptr2<Y, Allocator> &&other) noexcept
+        template<typename Y, typename = std::enable_if_t<std::is_convertible_v<Y *, T *>>>
+        unique_ptr2 &operator=(unique_ptr2<Y, Allocator> &&other) noexcept
         {
-            *this = unique_ptr2(std::move(other));
+            reset();
+
+            m_alloc_memory = other.m_alloc_memory;
+            m_object = other.m_object;
+            m_allocator = std::move(other.m_allocator);
+
+            other.m_alloc_memory = nullptr;
+            other.m_object = nullptr;
+
             return *this;
         }
 
         void reset() noexcept
         {
-            if(m_ptr) {
-                get()->~T();
-                m_alloc.deallocate(m_ptr);
-                m_ptr = nullptr;
+            if(m_alloc_memory) {
+                m_object->~T();
+                m_allocator.deallocate(m_alloc_memory);
+                m_alloc_memory = nullptr;
+                m_object = nullptr;
             }
         }
 
         T *get() noexcept
         {
-            return const_cast<T *>(static_cast<const unique_ptr2 &>(*this).get());
+            return m_object;
         }
 
         const T *get() const noexcept
         {
-            if(!m_ptr) {
-                return nullptr;
-            }
-
-            std::ptrdiff_t offset = *reinterpret_cast<const std::ptrdiff_t *>(m_ptr);
-            return reinterpret_cast<T *>(static_cast<std::byte *>(m_ptr) + offset);
+            return m_object;
         }
 
         T *operator->() noexcept
@@ -115,7 +117,7 @@ namespace vsh::cl {
             return get();
         }
 
-        const T *operator->() const
+        const T *operator->() const noexcept
         {
             return get();
         }
@@ -132,37 +134,32 @@ namespace vsh::cl {
 
         operator bool() const noexcept
         {
-            return get();
+            return get() != nullptr;
         }
 
     private:
-        void *m_ptr;
-        Allocator m_alloc;
+        void *m_alloc_memory;
+        T *m_object;
+
+        Allocator m_allocator;
     };
 
     template<typename T, typename Allocator, typename...Args>
-    unique_ptr2<T, Allocator> make_unique2(const Allocator &allocator,
+    unique_ptr2<T, Allocator> make_unique2(std::decay_t<Allocator> &&allocator,
                                            Args&&...args)
     {
-        struct unique_ptr_content
-        {
-            std::ptrdiff_t offset;
-            T object;
-        };
 
-        unique_ptr_content *ptr = allocator.allocate<unique_ptr_content>();
-        ptr->offset =
-            reinterpret_cast<std::byte *>(&ptr->object) - reinterpret_cast<std::byte *>(ptr);
-
+        T *ptr = allocator.allocate<T>();
         try {
-            new (&(ptr->object)) T(std::forward<Args>(args)...);
+            new (ptr) T(std::forward<Args>(args)...);
         } catch (...) {
             allocator.deallocate(static_cast<void *>(ptr));
             throw;
         }
 
-        unique_ptr2<T, Allocator> ans{ allocator };
-        ans.m_ptr = ptr;
+        unique_ptr2<T, Allocator> ans{ std::move(allocator) };
+        ans.m_alloc_memory = static_cast<void *>(ptr);
+        ans.m_object = ptr;
 
         return ans;
     }
