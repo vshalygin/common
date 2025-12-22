@@ -9,15 +9,15 @@ namespace vsh::cl {
         , m_executor_work_guard(boost::asio::make_work_guard(m_io_context))
     {
         while(thread_num--) {
-            thread_group_.create_thread([this]() {
-                                            while(!m_io_context.stopped()) {
-                                                try {
-                                                    m_io_context.run();
-                                                    break;
-                                                }catch(...) {
-                                                }
-                                            }
-                                        });
+            m_thread_group.create_thread([this]() {
+                                             while(!m_io_context.stopped()) {
+                                                 try {
+                                                     m_io_context.run();
+                                                     break;
+                                                 }catch(...) {
+                                                 }
+                                             }
+                                         });
         }
     }
 
@@ -33,7 +33,7 @@ namespace vsh::cl {
     {
         m_io_context.stop();
 
-        std::call_once(join_threads_flag_, [this]() { thread_group_.join_all(); });
+        std::call_once(m_join_threads_flag, [this]() { m_thread_group.join_all(); });
     }
 
     bool thread_pool::is_stopped() const

@@ -38,7 +38,7 @@ namespace vsh::cl {
         io_context m_io_context;
         executor_work_guard m_executor_work_guard;
 
-        std::once_flag join_threads_flag_;
-        boost::thread_group thread_group_;
+        std::once_flag m_join_threads_flag;
+        boost::thread_group m_thread_group;
     };
 }
