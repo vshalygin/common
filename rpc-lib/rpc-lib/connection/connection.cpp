@@ -7,7 +7,7 @@
 
 #include <unordered_map>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class connection::impl
         : public std::enable_shared_from_this<impl>
     {

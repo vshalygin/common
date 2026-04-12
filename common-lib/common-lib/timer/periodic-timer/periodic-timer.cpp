@@ -1,6 +1,6 @@
 #include "periodic-timer.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     periodic_timer::periodic_timer(boost::asio::io_context &io_context)
         : m_io_context(io_context)
         , m_timer(m_io_context.get_executor())

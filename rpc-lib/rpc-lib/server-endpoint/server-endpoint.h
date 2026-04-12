@@ -19,7 +19,7 @@
 #include <functional>
 #include <atomic>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class server_endpoint final
     {
         using connection_change_state_handler_t = std::function<void(uint64_t, connection_state)>;

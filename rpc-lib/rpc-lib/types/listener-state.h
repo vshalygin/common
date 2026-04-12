@@ -1,5 +1,5 @@
 #pragma once
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     enum class listener_state
     {
         running,

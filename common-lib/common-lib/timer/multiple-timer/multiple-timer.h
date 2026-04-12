@@ -5,7 +5,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <atomic>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class multiple_timer final
     {
     public:

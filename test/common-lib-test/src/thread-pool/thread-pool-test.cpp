@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 
-using namespace vsh::cl;
+using namespace vshalygin::cl;
 using namespace testing;
 
 TEST(ThreadPool, CreatesPoolWithSpecifiedNumberOfThreads)

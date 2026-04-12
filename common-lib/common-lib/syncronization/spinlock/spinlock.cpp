@@ -1,7 +1,7 @@
 #include "spinlock.h"
 #include <thread>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     void spinlock::lock() noexcept
     {
         while(m_flag.test_and_set(std::memory_order_acquire)) {

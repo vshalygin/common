@@ -3,7 +3,7 @@
 #include <memory>
 #include <functional>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class iservice
     {
     public:

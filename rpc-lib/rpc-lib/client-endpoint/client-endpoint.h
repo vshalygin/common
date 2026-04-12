@@ -13,7 +13,7 @@
 #include <functional>
 #include <memory>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class client_endpoint final
     {
         template<typename Response>

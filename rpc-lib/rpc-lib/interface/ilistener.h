@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class itransport;
 
     //TODO write requesties

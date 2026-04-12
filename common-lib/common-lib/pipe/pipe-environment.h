@@ -3,7 +3,7 @@
 #include "pipe-result.h"
 #include "common-lib/thread-pool/thread-pool.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class pipe_environment final
     {
     public:

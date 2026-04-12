@@ -2,7 +2,7 @@
 #include <cassert>
 #include <array>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     namespace {
         constexpr uint32_t s_max_transfer_message_size = 8 * 1024 * 1024; //1 MB
 

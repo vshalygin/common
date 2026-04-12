@@ -9,7 +9,7 @@
 #include <queue>
 #include <atomic>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class pipe_buffer final
         : public std::enable_shared_from_this<pipe_buffer>
     {

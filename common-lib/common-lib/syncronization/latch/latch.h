@@ -2,7 +2,7 @@
 #include <memory>
 #include <chrono>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class latch final
     {
     public:

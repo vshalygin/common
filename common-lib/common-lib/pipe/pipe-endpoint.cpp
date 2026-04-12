@@ -1,6 +1,6 @@
 #include "pipe-endpoint.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     pipe_endpoint::pipe_endpoint(std::shared_ptr<pipe_buffer> input_buffer,
                                  std::shared_ptr<pipe_buffer> output_buffer)
         : m_input_buffer(std::move(input_buffer))

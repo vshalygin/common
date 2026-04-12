@@ -1,6 +1,6 @@
 #include "multiple-timer.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     multiple_timer::multiple_timer(boost::asio::io_context &io_context)
         : m_io_context(io_context)
     {}

@@ -7,7 +7,7 @@
 
 #include <functional>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     template<typename Response>
     class request_callback final
         : public google::protobuf::RpcController

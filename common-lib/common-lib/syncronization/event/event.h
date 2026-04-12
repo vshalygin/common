@@ -2,7 +2,7 @@
 #include <chrono>
 #include <memory>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class event final
     {
     public:

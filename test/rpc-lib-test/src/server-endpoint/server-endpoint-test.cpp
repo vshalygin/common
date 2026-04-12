@@ -14,8 +14,8 @@
 #include <common-lib/thread-pool/thread-pool.h>
 #include <gtest/gtest.h>
 
-using namespace vsh::rpc;
-using namespace vsh::cl;
+using namespace vshalygin::rpc;
+using namespace vshalygin::cl;
 using namespace testing;
 using namespace google::protobuf::util;
 
@@ -272,7 +272,7 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
@@ -455,7 +455,7 @@ TEST_F(ServerEndpoint, MakeSyncRequestOnSpecifiedConnection)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
     EXPECT_CALL(*transport, set_start_callback)
@@ -494,7 +494,7 @@ TEST_F(ServerEndpoint, ThrowsExceptionIfMakeSyncRequestOnSpecifiedConnectionFail
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler1;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler1;
     auto transport1 = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback1;
     EXPECT_CALL(*transport1, set_start_callback)
@@ -538,7 +538,7 @@ TEST_F(ServerEndpoint, MakesSyncRequestToAllConnections)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
     EXPECT_CALL(*transport, set_start_callback)
@@ -619,7 +619,7 @@ TEST_F(ServerEndpoint, MakeAsyncRequestOnSpecifiedConnection)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
     EXPECT_CALL(*transport, set_start_callback)
@@ -666,7 +666,7 @@ TEST_F(ServerEndpoint, MakeUnsuccessfulAsyncRequestOnSpecifiedConnection)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler1;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler1;
     auto transport1 = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback1;
     EXPECT_CALL(*transport1, set_start_callback)
@@ -714,7 +714,7 @@ TEST_F(ServerEndpoint, MakesAsyncRequestToAllConnections)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vsh::cl::buffer &&)> recv_handler;
+    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
     EXPECT_CALL(*transport, set_start_callback)

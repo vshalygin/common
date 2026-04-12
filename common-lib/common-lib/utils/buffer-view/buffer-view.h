@@ -2,7 +2,7 @@
 #include "common-lib/utils/buffer/buffer.h"
 #include <iterator>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class buffer_view final
     {
     public:

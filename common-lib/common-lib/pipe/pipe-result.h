@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     enum class pipe_result
     {
         ok,

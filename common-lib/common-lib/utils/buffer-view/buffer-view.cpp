@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     buffer_view::iterator::iterator(std::byte *buffer) noexcept
         : m_buffer(buffer)
     {}

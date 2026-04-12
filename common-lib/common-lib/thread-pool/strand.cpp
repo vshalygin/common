@@ -1,6 +1,6 @@
 #include "strand.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     strand::strand(boost::asio::io_context &io_context)
         : m_strand(io_context.get_executor())
         , m_executing_thread_id(std::make_shared<thread_id_t>())

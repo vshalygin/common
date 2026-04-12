@@ -3,7 +3,7 @@
 #include "rpc-lib/transfer-message/transfer-message.h"
 #include "rpc-lib/connection/iconnection.h"
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     void channel::CallMethod(const MethodDescriptor *method,
                              RpcController *controller,
                              const Message *request,

@@ -2,7 +2,7 @@
 #include <mutex>
 #include <utility>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     template<typename T>
     class guarded_value final
     {

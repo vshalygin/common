@@ -13,8 +13,8 @@
 
 #include <list>
 
-using namespace vsh::cl;
-using namespace vsh::rpc;
+using namespace vshalygin::cl;
+using namespace vshalygin::rpc;
 using namespace testing;
 
 namespace {

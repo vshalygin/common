@@ -3,7 +3,7 @@
 #include <condition_variable>
 #include <atomic>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class event::impl final
     {
     public:

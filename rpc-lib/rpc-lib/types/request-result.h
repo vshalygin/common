@@ -2,7 +2,7 @@
 #include <string>
 #include <cassert>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     enum class request_result : unsigned char
     {
         ok = 0,

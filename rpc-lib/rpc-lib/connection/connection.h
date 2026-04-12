@@ -6,7 +6,7 @@
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
 #include <common-lib/thread-pool/thread-pool.h>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class connection final
         : public iconnection
     {

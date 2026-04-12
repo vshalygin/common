@@ -1,7 +1,7 @@
 #include "pipe-buffer.h"
 #include "common-lib/syncronization/event/event.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     std::shared_ptr<pipe_buffer> pipe_buffer::create(std::shared_ptr<cl::thread_pool> thread_pool)
     {
         return std::make_shared<pipe_buffer>(std::move(thread_pool),

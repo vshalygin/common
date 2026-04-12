@@ -4,7 +4,7 @@
 #include <utility>
 #include <type_traits>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     template<typename T, typename Allocator = default_allocator>
     class unique_ptr2;
 

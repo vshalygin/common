@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     enum class connection_state
     {
         connected,

@@ -1,7 +1,7 @@
 #pragma once
 #include "spinlock.h"
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class spinlock_guard final
     {
     public:

@@ -4,9 +4,9 @@
 #include <list>
 #include <string>
 
-using pipe_endpoint_sp = std::shared_ptr<vsh::cl::pipe_endpoint>;
+using pipe_endpoint_sp = std::shared_ptr<vshalygin::cl::pipe_endpoint>;
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     namespace {
         struct prepared_endpoint_info
         {

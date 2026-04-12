@@ -3,7 +3,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class latch::impl
     {
     public:

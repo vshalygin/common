@@ -3,7 +3,7 @@
 
 #include <boost/asio/post.hpp>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     thread_pool::thread_pool(unsigned thread_num)
         : m_thread_num(thread_num)
         , m_executor_work_guard(boost::asio::make_work_guard(m_io_context))

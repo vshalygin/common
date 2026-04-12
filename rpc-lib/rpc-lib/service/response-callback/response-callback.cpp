@@ -1,6 +1,6 @@
 #include "response-callback.h"
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     response_callback::response_callback(callback_t &&callback)
         : m_callback(std::move(callback))
     {

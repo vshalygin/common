@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace vsh::rpc;
+using namespace vshalygin::rpc;
 using namespace testing;
 
 TEST(RequestResult, TestIsSuccess)

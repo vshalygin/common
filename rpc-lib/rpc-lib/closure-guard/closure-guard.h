@@ -5,7 +5,7 @@
 
 #include <memory>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class closure_guard final
     {
         using Closure = google::protobuf::Closure;

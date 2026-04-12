@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-using namespace vsh::cl;
+using namespace vshalygin::cl;
 using namespace testing;
 
 class MultipleTimer

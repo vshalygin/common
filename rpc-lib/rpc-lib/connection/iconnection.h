@@ -5,12 +5,12 @@
 #include <functional>
 #include <chrono>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class multiple_timer;
     class thread_pool;
 }
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class itransport;
 
     class iconnection

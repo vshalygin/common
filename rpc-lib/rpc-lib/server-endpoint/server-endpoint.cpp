@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     server_endpoint::impl::impl(std::unique_ptr<ilistener> listener,
                                 std::shared_ptr<iservice> service,
                                 std::shared_ptr<cl::thread_pool> thread_pool,

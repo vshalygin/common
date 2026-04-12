@@ -1,6 +1,6 @@
 #include "client-endpoint.h"
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     client_endpoint::client_endpoint(std::shared_ptr<iservice> service,
                                      std::unique_ptr<ichannel> channel,
                                      std::shared_ptr<iconnection> connection,

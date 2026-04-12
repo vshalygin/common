@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdlib>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class default_allocator
     {
     public:

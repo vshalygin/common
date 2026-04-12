@@ -3,11 +3,11 @@
 #include <gmock/gmock.h>
 
 class channel_mock
-    : public vsh::rpc::ichannel
+    : public vshalygin::rpc::ichannel
 {
 public:
-    MOCK_METHOD(void, set_connection, (std::shared_ptr<vsh::rpc::iconnection> connection), (override));
-    MOCK_METHOD(std::shared_ptr<vsh::rpc::iconnection>, get_connection, (), (const, override));
+    MOCK_METHOD(void, set_connection, (std::shared_ptr<vshalygin::rpc::iconnection> connection), (override));
+    MOCK_METHOD(std::shared_ptr<vshalygin::rpc::iconnection>, get_connection, (), (const, override));
     MOCK_METHOD(void, drop_connection, (), (override));
 
     MOCK_METHOD(void,

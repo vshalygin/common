@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <atomic>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class strand final
     {
     public:

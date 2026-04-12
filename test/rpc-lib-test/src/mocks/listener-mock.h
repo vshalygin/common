@@ -3,7 +3,7 @@
 #include <gmock/gmock.h>
 
 class listener_mock
-    : public vsh::rpc::ilistener
+    : public vshalygin::rpc::ilistener
 {
 public:
     MOCK_METHOD(void, start, (), (override));

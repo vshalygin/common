@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class iconnection;
 
     template<typename Service>

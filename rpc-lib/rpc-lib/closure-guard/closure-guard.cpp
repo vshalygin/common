@@ -1,7 +1,7 @@
 #include "closure-guard.h"
 #include <utility>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     closure_guard::closure_guard() noexcept
         : closure_guard(nullptr)
     {}

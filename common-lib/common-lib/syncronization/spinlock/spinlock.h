@@ -1,7 +1,7 @@
 #pragma once
 #include <atomic>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class spinlock final
     {
     public:

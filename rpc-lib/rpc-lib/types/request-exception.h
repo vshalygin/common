@@ -2,7 +2,7 @@
 #include "request-result.h"
 #include <exception>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class request_exception
         : public std::exception
     {

@@ -9,7 +9,7 @@
 #include <atomic>
 #include <condition_variable>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class periodic_timer final
     {
     public:

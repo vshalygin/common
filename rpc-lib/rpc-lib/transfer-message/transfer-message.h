@@ -28,7 +28,7 @@
     res: 8 bytes message number + 1 byte response result code
 */
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     enum class transfer_msg_type : unsigned char
     {
         req = 0,

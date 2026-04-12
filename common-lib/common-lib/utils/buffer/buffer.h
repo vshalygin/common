@@ -2,7 +2,7 @@
 #include <memory>
 #include <iterator>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class buffer final
     {
     public:

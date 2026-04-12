@@ -4,7 +4,7 @@
 
 #include <memory>
 
-namespace vsh::cl {
+namespace vshalygin::cl {
     class pipe_endpoint final
     {
     public:

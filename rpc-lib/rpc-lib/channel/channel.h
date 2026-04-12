@@ -5,7 +5,7 @@
 #include <common-lib/utils/buffer/buffer.h>
 #include <atomic>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class channel final
         : public ichannel
     {

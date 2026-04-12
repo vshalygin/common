@@ -17,8 +17,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-using namespace vsh::rpc;
-using namespace vsh::cl;
+using namespace vshalygin::rpc;
+using namespace vshalygin::cl;
 using namespace google::protobuf::util;
 using namespace testing;
 

@@ -5,7 +5,7 @@
 
 #include <memory>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class iconnection;
 
     class ichannel

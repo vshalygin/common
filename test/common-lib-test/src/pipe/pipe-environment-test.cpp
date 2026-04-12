@@ -8,7 +8,7 @@
 //
 //#include <string>
 //
-//using namespace vsh::cl;
+//using namespace vshalygin::cl;
 //using namespace testing;
 //
 //namespace {

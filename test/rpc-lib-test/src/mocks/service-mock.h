@@ -3,13 +3,13 @@
 #include <gmock/gmock.h>
 
 class service_mock
-    : public vsh::rpc::iservice
+    : public vshalygin::rpc::iservice
 {
 public:
     MOCK_METHOD(void,
                 process_request,
-                (vsh::cl::buffer &&request_message,
-                 std::function<void(vsh::cl::buffer &&)> &&raw_response_callback),
+                (vshalygin::cl::buffer &&request_message,
+                 std::function<void(vshalygin::cl::buffer &&)> &&raw_response_callback),
                 (override));
 };
 

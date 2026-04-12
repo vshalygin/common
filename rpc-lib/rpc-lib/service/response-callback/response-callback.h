@@ -8,7 +8,7 @@
 #include <functional>
 #include <memory>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class response_callback final
         : public google::protobuf::RpcController
         , public google::protobuf::Closure

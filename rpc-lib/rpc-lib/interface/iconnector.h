@@ -2,7 +2,7 @@
 #include "itransport.h"
 #include <memory>
 
-namespace vsh::rpc {
+namespace vshalygin::rpc {
     class iconnector
     {
     public:
