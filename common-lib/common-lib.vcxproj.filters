@@ -43,9 +43,6 @@
     <Filter Include="timer\periodic-timer">
       <UniqueIdentifier>{7df212d7-73f5-4e34-a2d1-58800efa1e81}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pipe">
-      <UniqueIdentifier>{d1645267-c238-45ca-881a-dff32d44e512}</UniqueIdentifier>
-    </Filter>
     <Filter Include="syncronization\spinlock">
       <UniqueIdentifier>{d1ee088e-f1e1-47e1-95ec-82c142c3111c}</UniqueIdentifier>
     </Filter>
@@ -87,18 +84,6 @@
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h">
       <Filter>timer\periodic-timer</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-buffer.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-endpoint.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-result.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-environment.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\syncronization\spinlock\spinlock.h">
       <Filter>syncronization\spinlock</Filter>
     </ClInclude>
@@ -133,15 +118,6 @@
     </ClCompile>
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp">
       <Filter>timer\periodic-timer</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\pipe\pipe-buffer.cpp">
-      <Filter>pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\pipe\pipe-endpoint.cpp">
-      <Filter>pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\pipe\pipe-environment.cpp">
-      <Filter>pipe</Filter>
     </ClCompile>
     <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp">
       <Filter>syncronization\spinlock</Filter>

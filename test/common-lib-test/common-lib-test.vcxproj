@@ -12,9 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
-    <ClCompile Include="src\pipe\pipe-buffer-test.cpp" />
-    <ClCompile Include="src\pipe\pipe-endpoint-test.cpp" />
-    <ClCompile Include="src\pipe\pipe-environment-test.cpp" />
     <ClCompile Include="src\syncronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\thread-pool\strand-test.cpp" />
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp" />
