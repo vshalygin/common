@@ -203,22 +203,22 @@ namespace vsh::cl {
 
     buffer_view::reverse_iterator buffer_view::rbegin() noexcept
     {
-        return reverse_iterator(m_buffer + m_size);
+        return reverse_iterator(iterator(m_buffer + m_size));
     }
 
     buffer_view::reverse_iterator buffer_view::rend() noexcept
     {
-        return reverse_iterator(m_buffer);
+        return reverse_iterator(iterator(m_buffer));
     }
 
     buffer_view::const_reverse_iterator buffer_view::crbegin() const noexcept
     {
-        return const_reverse_iterator(m_buffer + m_size);
+        return const_reverse_iterator(const_iterator(m_buffer + m_size));
     }
 
     buffer_view::const_reverse_iterator buffer_view::crend() const noexcept
     {
-        return const_reverse_iterator(m_buffer);
+        return const_reverse_iterator(const_iterator(m_buffer));
     }
 
     buffer_view::iterator operator+(buffer_view::iterator::difference_type offset,

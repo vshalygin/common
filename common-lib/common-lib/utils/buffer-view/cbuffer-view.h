@@ -10,7 +10,7 @@ namespace vsh::cl {
         {
             friend cbuffer_view;
 
-            iterator(const std::byte *buffer) noexcept;
+            explicit iterator(const std::byte *buffer) noexcept;
 
         public:
             using difference_type = std::ptrdiff_t;
