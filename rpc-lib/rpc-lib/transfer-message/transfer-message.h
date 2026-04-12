@@ -21,7 +21,7 @@
     transfer_type::res - response sent from one process to an another as an answer to the request
 
     Structure of all types is the same header:
-    1 byte message type + 4 bytes size of serialize message
+    1 byte message type + 4 bytes size of serialized message
 
     Every type has its own trailer:
     req: 8 bytes message number + 4 bytes method idx

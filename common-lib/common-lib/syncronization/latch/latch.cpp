@@ -37,7 +37,8 @@ namespace vshalygin::cl {
         bool wait_for(const std::chrono::microseconds &microseconds)
         {
             std::unique_lock lock(m_mtx);
-            return m_cv.wait_for(lock, microseconds, [this]() { return m_counter == 0; });
+            const auto deadline = std::chrono::steady_clock::now() + microseconds;
+            return m_cv.wait_until(lock, deadline, [this]() { return m_counter == 0; });
         }
 
     private:
