@@ -136,7 +136,7 @@ namespace vshalygin::rpc {
         }
 
     private:
-        std::function<void()> create_send_error_handler(uint64_t msg_number)
+        auto create_send_error_handler(uint64_t msg_number)
         {
             return [self = weak_from_this(), msg_number]() {
                 if(auto s = self.lock()) {
@@ -379,7 +379,7 @@ namespace vshalygin::rpc {
 
     void connection::stop_transport()
     {
-        return m_impl->stop_transport();
+        m_impl->stop_transport();
     }
 
     size_t connection::get_active_requests_count() const
