@@ -13,6 +13,9 @@ namespace vshalygin::cl {
         strand(strand &) = delete;
         strand &operator=(strand &) = delete;
 
+        strand(strand &&) = default;
+        strand &operator=(strand &&) = default;
+
         template<typename Task>
         void post(Task &&task) const;
 

@@ -21,8 +21,8 @@ TEST(Strand, ExecuteTasksConsecutively)
 
     thread_pool pool(2);
     auto sut = pool.create_strand();
-    sut->post(mock1.AsStdFunction());
-    sut->post(mock2.AsStdFunction());
+    sut.post(mock1.AsStdFunction());
+    sut.post(mock2.AsStdFunction());
 
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
@@ -39,11 +39,12 @@ TEST(Strand, ExecuteTaskAfterDestruction)
         .Times(1)
         .WillOnce([&]() { sync_event2.set(); });
     thread_pool pool(2);
-    auto sut = pool.create_strand();
-    sut->post(mock1.AsStdFunction());
-    sut->post(mock2.AsStdFunction());
 
-    sut.reset();
+    {
+        auto sut = pool.create_strand();
+        sut.post(mock1.AsStdFunction());
+        sut.post(mock2.AsStdFunction());
+    }
     sync_event1.set();
 
     sync_event2.wait_for(std::chrono::seconds(10));
@@ -54,7 +55,7 @@ TEST(Strand, AnswerFalseOnCheckExecutingContextIfItIsNoIn)
     thread_pool pool(2);
     auto sut = pool.create_strand();
 
-    ASSERT_FALSE(sut->is_in_executing_context());
+    ASSERT_FALSE(sut.is_in_executing_context());
 }
 
 TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
@@ -63,8 +64,8 @@ TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
     thread_pool pool(2);
     auto sut = pool.create_strand();
 
-    sut->post([&]() {
-        ASSERT_TRUE(sut->is_in_executing_context());
+    sut.post([&]() {
+        ASSERT_TRUE(sut.is_in_executing_context());
         sync_event.set();
     });
 
@@ -96,7 +97,7 @@ TEST(Strand, AnswerTrueOnCheckExecutingInFunctorDestructor)
     thread_pool pool(2);
     auto sut = pool.create_strand();
 
-    sut->post([checker = std::make_shared<desctructor_checker>(sync_event, sut.get())]() {});
+    sut.post([checker = std::make_shared<desctructor_checker>(sync_event, &sut)]() {});
 
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }

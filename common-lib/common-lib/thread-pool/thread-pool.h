@@ -28,7 +28,7 @@ namespace vshalygin::cl {
         boost::asio::io_context &get_io_context() noexcept;
         const boost::asio::io_context &get_io_context() const noexcept;
 
-        std::unique_ptr<strand> create_strand();
+        strand create_strand();
 
     private:
         using io_context = boost::asio::io_context;

@@ -56,8 +56,8 @@ namespace vshalygin::cl {
         return m_io_context;
     }
 
-    std::unique_ptr<strand> thread_pool::create_strand()
+    strand thread_pool::create_strand()
     {
-        return std::make_unique<strand>(m_io_context);
+        return strand(m_io_context);
     }
 }
