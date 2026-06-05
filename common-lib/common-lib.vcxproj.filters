@@ -46,6 +46,9 @@
     <Filter Include="syncronization\spinlock">
       <UniqueIdentifier>{d1ee088e-f1e1-47e1-95ec-82c142c3111c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pipe\pipe-buffer">
+      <UniqueIdentifier>{dc5689a2-e35b-40be-b962-643fd5e81662}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
