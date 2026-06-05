@@ -7,8 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{50EC9BAA-3
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common-lib", "common-lib\common-lib.vcxproj", "{A73A4837-35C7-451C-B557-3E2F1F779622}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "example", "example", "{5F3C5D95-E2C7-4DDC-90F7-788AD27B1837}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rpc-lib", "rpc-lib\rpc-lib.vcxproj", "{A2383AD1-18D5-4CA6-838A-873D961D38B5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common-lib-test", "test\common-lib-test\common-lib-test.vcxproj", "{4BDBB3A5-4331-4161-A341-A5D1C5E24138}"
