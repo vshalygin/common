@@ -75,8 +75,5 @@
     <Filter Include="timer\periodic-timer">
       <UniqueIdentifier>{fdbc5790-7680-4e3c-a2aa-60d2564838d5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pipe">
-      <UniqueIdentifier>{0e303e76-d857-4048-9cd9-8b38fbee743b}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
 </Project>

@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h" />
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
+    <ClInclude Include="common-lib\pipe\pipe-buffer\pipe-buffer.h" />
+    <ClInclude Include="common-lib\pipe\pipe-env.h" />
+    <ClInclude Include="common-lib\pipe\pipe.h" />
     <ClInclude Include="common-lib\syncronization\event\event.h" />
     <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\syncronization\latch\latch.h" />
@@ -27,6 +30,9 @@
     <ClInclude Include="common-lib\utils\buffer\buffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="common-lib\pipe\pipe-buffer\pipe-buffer.cpp" />
+    <ClCompile Include="common-lib\pipe\pipe-env.cpp" />
+    <ClCompile Include="common-lib\pipe\pipe.cpp" />
     <ClCompile Include="common-lib\syncronization\event\event.cpp" />
     <ClCompile Include="common-lib\syncronization\latch\latch.cpp" />
     <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp" />

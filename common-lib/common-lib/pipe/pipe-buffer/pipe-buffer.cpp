@@ -13,63 +13,101 @@ namespace vshalygin::cl {
 
     pipe_buffer::~pipe_buffer()
     {
-        try {
-            std::promise<void> p;
-            auto f = p.get_future();
-
-            strand_.post([&] { p.set_value(); });
-
-            f.wait();
-        } catch (...) {
-            //TODO log
-        }
+        invalidate();
     }
 
-    void pipe_buffer::write_async(std::string &&data)
+    void pipe_buffer::write_async(std::string &&data, std::function<void(bool)> &&handler)
     {
-        auto task = [self = weak_from_this(), data = std::move(data)]() {
-            if(auto s = self.lock()) {
-                s->buffer_.push(std::move(data));
-                s->read_async();
-            }
-        };
-
-        strand_.post(std::move(task));
-    }
-
-    void pipe_buffer::start_reading_async(std::function<void(std::string &&)> &&handler)
-    {
-        assert(handler);
-        assert(!handler_); //sets one once by design
-
-        auto safe_handler = [handler = std::move(handler)](std::string &&str) {
+        auto safe_handler = [handler = std::move(handler)](bool res) {
             try {
-                handler(std::move(str));
+                handler(res);
             } catch (...) {
                 //TODO log
             }
         };
 
-        strand_.post([self = weak_from_this(), handler = std::move(safe_handler)]() {
+        auto task = [self = weak_from_this(),
+                     data = std::move(data),
+                     write_handler = std::move(safe_handler)]() mutable {
             if(auto s = self.lock()) {
-                s->handler_ = std::move(handler);
-                s->read_async();
-            }
-        });;
-    }
+                try {
+                    s->buffer_.push(std::move(data));
+                } catch (...) {
+                    write_handler(false);
+                    throw;
+                }
+                write_handler(true);
 
-    void pipe_buffer::read_async()
-    {
-        auto task = [self = weak_from_this()]() {
-            if(auto s = self.lock(); s && s->handler_) {
-                while(!s->buffer_.empty()) {
-                    auto msg = std::move(s->buffer_.front());
-                    s->buffer_.pop();
-                    s->handler_(std::move(msg));
+                if(!s->read_handlers_.empty()) {
+                    auto read_handler = std::move(s->read_handlers_.front());
+                    s->read_handlers_.pop();
+                    read_handler(true, std::move(data));
                 }
             }
         };
 
         strand_.post(std::move(task));
+    }
+
+    void pipe_buffer::read_async(std::function<void(bool, std::string &&)> &&handler)
+    {
+        assert(handler);
+
+        auto safe_handler = [handler = std::move(handler)](bool res, std::string &&str) {
+            try {
+                return handler(res, std::move(str));
+            } catch (...) {
+                //TODO log
+            }
+        };
+
+        strand_.post([self = weak_from_this(), handler = std::move(safe_handler)]() mutable {
+            if(auto s = self.lock()) {
+                if(!s->is_valid_) {
+                    handler(false, {});
+                    return;
+                }
+
+                if(!s->buffer_.empty()) {
+                    auto msg = std::move(s->buffer_.front());
+                    s->buffer_.pop();
+                    handler(true, std::move(msg));
+                } else {
+                    s->read_handlers_.push(std::move(handler));
+                }
+            }
+        });
+    }
+
+    void pipe_buffer::invalidate() noexcept
+    {
+        try {
+            std::packaged_task<void()> task([this]() {
+                is_valid_ = false;
+                while(!read_handlers_.empty()) {
+                    read_handlers_.front()(false, {});
+                    read_handlers_.pop();
+                }
+            });
+            auto f = task.get_future();
+
+            strand_.dispatch(std::move(task));
+
+            f.get();
+        } catch(...) {
+            //TODO log
+        }
+    }
+
+    bool pipe_buffer::is_valid() const
+    {
+        std::packaged_task<bool()> task([this]() {
+            return is_valid_;
+        });
+        auto f = task.get_future();
+
+        strand_.dispatch(std::move(task));
+
+        return f.get();
     }
 }

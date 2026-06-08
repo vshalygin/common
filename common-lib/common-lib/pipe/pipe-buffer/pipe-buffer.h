@@ -24,17 +24,18 @@ namespace vshalygin::cl {
 
         ~pipe_buffer();
 
-        void write_async(std::string &&data);
-        void start_reading_async(std::function<void(std::string &&)> &&handler);
+        void write_async(std::string &&data, std::function<void(bool)> &&handler);
+        void read_async(std::function<void(bool, std::string &&)> &&handler);
+
+        void invalidate() noexcept;
+        bool is_valid() const;
 
     private:
-        void read_async();
-
-    private:
+        bool is_valid_ = true;
         strand strand_;
-        std::queue<std::string> buffer_;
 
-        std::function<void(std::string &&)> handler_;
+        std::queue<std::string> buffer_;
+        std::queue<std::function<void(bool, std::string &&)>> read_handlers_;
     };
 
 }

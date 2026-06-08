@@ -26,10 +26,6 @@
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\common-lib\common-lib\pipe\pipe-env.h" />
-    <ClInclude Include="..\..\common-lib\common-lib\pipe\pipe.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
