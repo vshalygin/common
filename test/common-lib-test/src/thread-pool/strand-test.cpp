@@ -50,54 +50,47 @@ TEST(Strand, ExecuteTaskAfterDestruction)
     sync_event2.wait_for(std::chrono::seconds(10));
 }
 
-TEST(Strand, AnswerFalseOnCheckExecutingContextIfItIsNoIn)
-{
-    thread_pool pool(2);
-    auto sut = pool.create_strand();
 
-    ASSERT_FALSE(sut.is_in_executing_context());
-}
-
-TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
+TEST(Strand, DispatchesTaskByPostingInExecutionQueue)
 {
     event sync_event;
     thread_pool pool(2);
     auto sut = pool.create_strand();
+    InSequence s;
+    MockFunction<void()> mock1, mock2;
+    EXPECT_CALL(mock1, Call())
+        .Times(1);
+    EXPECT_CALL(mock2, Call())
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
 
-    sut.post([&]() {
-        ASSERT_TRUE(sut.is_in_executing_context());
-        sync_event.set();
-    });
-
+    sut.dispatch(mock1.AsStdFunction());
+    sut.dispatch(mock2.AsStdFunction());
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
-TEST(Strand, AnswerTrueOnCheckExecutingInFunctorDestructor)
+TEST(Strand, DispatchesTaskByExecutingInPlace)
 {
-    class desctructor_checker
-    {
-    public:
-        desctructor_checker(event &sync_event, strand *strand)
-            : m_sync_event(sync_event)
-            , m_strand(strand)
-        {}
-
-        ~desctructor_checker()
-        {
-            EXPECT_TRUE(m_strand->is_in_executing_context());
-            m_sync_event.set();
-        }
-
-    private:
-        event &m_sync_event;
-        strand *m_strand;
-    };
-
-    event sync_event;
+    event sync_event1, sync_event2;
     thread_pool pool(2);
     auto sut = pool.create_strand();
+    InSequence s;
+    MockFunction<void()> mock1, mock2, mock3;
+    EXPECT_CALL(mock1, Call())
+        .Times(1)
+        .WillOnce([&]() {
+            sut.dispatch(mock2.AsStdFunction());
+        });
+    EXPECT_CALL(mock2, Call())
+        .Times(1)
+        .WillOnce([&]() { sync_event2.set(); });
+    EXPECT_CALL(mock3, Call())
+        .Times(1)
+        .WillOnce([&]() { sync_event1.set(); });
 
-    sut.post([checker = std::make_shared<desctructor_checker>(sync_event, &sut)]() {});
+    sut.dispatch(mock1.AsStdFunction());
+    ASSERT_TRUE(sync_event2.wait_for(std::chrono::seconds(10)));
+    sut.dispatch(mock3.AsStdFunction());
 
-    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+    ASSERT_TRUE(sync_event1.wait_for(std::chrono::seconds(10)));
 }
