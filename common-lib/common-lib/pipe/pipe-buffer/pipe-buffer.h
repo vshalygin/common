@@ -9,15 +9,9 @@
 
 namespace vshalygin::cl {
     class pipe_buffer final
-        : public std::enable_shared_from_this<pipe_buffer>
     {
-        class creator
-        {};
-
     public:
-        static std::shared_ptr<pipe_buffer> create(std::shared_ptr<thread_pool> thread_pool);
-
-        pipe_buffer(std::shared_ptr<thread_pool> thread_pool, creator);
+        explicit pipe_buffer(std::shared_ptr<thread_pool> thread_pool);
 
         pipe_buffer(pipe_buffer &) = delete;
         pipe_buffer &operator=(pipe_buffer &) = delete;

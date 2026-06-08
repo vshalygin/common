@@ -2,12 +2,7 @@
 #include <future>
 
 namespace vshalygin::cl {
-    std::shared_ptr<pipe_buffer> pipe_buffer::create(std::shared_ptr<thread_pool> thread_pool)
-    {
-        return std::make_shared<pipe_buffer>(std::move(thread_pool), creator{});
-    }
-
-    pipe_buffer::pipe_buffer(std::shared_ptr<thread_pool> thread_pool, creator)
+    pipe_buffer::pipe_buffer(std::shared_ptr<thread_pool> thread_pool)
         : strand_(thread_pool->create_strand())
     {}
 
@@ -26,23 +21,21 @@ namespace vshalygin::cl {
             }
         };
 
-        auto task = [self = weak_from_this(),
+        auto task = [this,
                      data = std::move(data),
                      write_handler = std::move(safe_handler)]() mutable {
-            if(auto s = self.lock()) {
-                try {
-                    s->buffer_.push(std::move(data));
-                } catch (...) {
-                    write_handler(false);
-                    throw;
-                }
-                write_handler(true);
+            try {
+                buffer_.push(std::move(data));
+            } catch(...) {
+                write_handler(false);
+                throw;
+            }
+            write_handler(true);
 
-                if(!s->read_handlers_.empty()) {
-                    auto read_handler = std::move(s->read_handlers_.front());
-                    s->read_handlers_.pop();
-                    read_handler(true, std::move(data));
-                }
+            if(!read_handlers_.empty()) {
+                auto read_handler = std::move(read_handlers_.front());
+                read_handlers_.pop();
+                read_handler(true, std::move(data));
             }
         };
 
@@ -61,20 +54,18 @@ namespace vshalygin::cl {
             }
         };
 
-        strand_.post([self = weak_from_this(), handler = std::move(safe_handler)]() mutable {
-            if(auto s = self.lock()) {
-                if(!s->is_valid_) {
-                    handler(false, {});
-                    return;
-                }
+        strand_.post([this, handler = std::move(safe_handler)]() mutable {
+            if(!is_valid_) {
+                handler(false, {});
+                return;
+            }
 
-                if(!s->buffer_.empty()) {
-                    auto msg = std::move(s->buffer_.front());
-                    s->buffer_.pop();
-                    handler(true, std::move(msg));
-                } else {
-                    s->read_handlers_.push(std::move(handler));
-                }
+            if(!buffer_.empty()) {
+                auto msg = std::move(buffer_.front());
+                buffer_.pop();
+                handler(true, std::move(msg));
+            } else {
+                read_handlers_.push(std::move(handler));
             }
         });
     }

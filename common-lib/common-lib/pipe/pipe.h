@@ -9,8 +9,13 @@ namespace vshalygin::cl {
 
     struct pipe_buffers
     {
-        std::shared_ptr<pipe_buffer> client_to_server;
-        std::shared_ptr<pipe_buffer> server_to_client;
+        pipe_buffers(std::shared_ptr<thread_pool> thread_pool)
+            : client_to_server(thread_pool)
+            , server_to_client(std::move(thread_pool))
+        {}
+
+        pipe_buffer client_to_server;
+        pipe_buffer server_to_client;
     };
 
     class pipe final
