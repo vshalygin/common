@@ -15,7 +15,9 @@ namespace vshalygin::cl {
     {
         auto safe_handler = [handler = std::move(handler)](bool res) {
             try {
-                handler(res);
+                if(handler) {
+                    handler(res);
+                }
             } catch (...) {
                 //TODO log
             }
@@ -35,7 +37,8 @@ namespace vshalygin::cl {
             if(!read_handlers_.empty()) {
                 auto read_handler = std::move(read_handlers_.front());
                 read_handlers_.pop();
-                read_handler(true, std::move(data));
+                read_handler(true, std::move(buffer_.front()));
+                buffer_.pop();
             }
         };
 
@@ -44,13 +47,13 @@ namespace vshalygin::cl {
 
     void pipe_buffer::read_async(std::function<void(bool, std::string &&)> &&handler)
     {
-        assert(handler);
-
         auto safe_handler = [handler = std::move(handler)](bool res, std::string &&str) {
             try {
-                return handler(res, std::move(str));
+                if(handler) {
+                    handler(res, std::move(str));
+                }
             } catch (...) {
-                //TODO log
+                //TODO write in log
             }
         };
 
@@ -94,6 +97,30 @@ namespace vshalygin::cl {
     {
         std::packaged_task<bool()> task([this]() {
             return is_valid_;
+        });
+        auto f = task.get_future();
+
+        strand_.dispatch(std::move(task));
+
+        return f.get();
+    }
+
+    size_t pipe_buffer::get_pending_messages_count() const
+    {
+        std::packaged_task<bool()> task([this]() {
+            return buffer_.size();
+        });
+        auto f = task.get_future();
+
+        strand_.dispatch(std::move(task));
+
+        return f.get();
+    }
+
+    size_t pipe_buffer::get_pending_read_handlers_count() const
+    {
+        std::packaged_task<bool()> task([this]() {
+            return read_handlers_.size();
         });
         auto f = task.get_future();
 

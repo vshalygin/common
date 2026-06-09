@@ -24,6 +24,9 @@ namespace vshalygin::cl {
         void invalidate() noexcept;
         bool is_valid() const;
 
+        size_t get_pending_messages_count() const;
+        size_t get_pending_read_handlers_count() const;
+
     private:
         bool is_valid_ = true;
         strand strand_;
