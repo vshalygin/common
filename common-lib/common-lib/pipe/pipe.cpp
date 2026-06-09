@@ -47,8 +47,8 @@ namespace vshalygin::cl {
             return false;
         }
         auto &output_buff = is_server_ ?
-                           pipe_buffers_->server_to_client :
-                           pipe_buffers_->client_to_server;
+                            pipe_buffers_->server_to_client :
+                            pipe_buffers_->client_to_server;
         if(!output_buff.is_valid()) {
             return false;
         }

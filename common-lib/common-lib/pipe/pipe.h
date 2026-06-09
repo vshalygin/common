@@ -18,12 +18,12 @@ namespace vshalygin::cl {
         pipe_buffer server_to_client;
     };
 
-    class pipe final
+    class pipe
     {
         friend pipe_env;
 
+    protected:
         explicit pipe(bool is_server);
-
         void set_buffers(std::shared_ptr<pipe_buffers> pipe_buffers);
 
     public:
