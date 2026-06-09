@@ -34,6 +34,12 @@
     <Filter Include="server-endpoint">
       <UniqueIdentifier>{cdb19d86-cbcf-48f7-b5aa-3463fbd41bd2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="transport">
+      <UniqueIdentifier>{60e9c832-6753-4904-8f94-c78145362a72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="transport\in-process">
+      <UniqueIdentifier>{9c8f22f0-548a-4273-a25a-624020e87616}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -56,6 +62,15 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
       <Filter>server-endpoint</Filter>
+    </ClCompile>
+    <ClCompile Include="pipe-transport.cpp">
+      <Filter>transport\in-process</Filter>
+    </ClCompile>
+    <ClCompile Include="listener.cpp">
+      <Filter>transport\in-process</Filter>
+    </ClCompile>
+    <ClCompile Include="connector.cpp">
+      <Filter>transport\in-process</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -121,6 +136,15 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
+    </ClInclude>
+    <ClInclude Include="pipe-transport.h">
+      <Filter>transport\in-process</Filter>
+    </ClInclude>
+    <ClInclude Include="listener.h">
+      <Filter>transport\in-process</Filter>
+    </ClInclude>
+    <ClInclude Include="connector.h">
+      <Filter>transport\in-process</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

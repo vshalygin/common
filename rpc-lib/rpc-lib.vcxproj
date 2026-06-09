@@ -11,6 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="connector.cpp" />
+    <ClCompile Include="listener.cpp" />
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
     <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
@@ -18,8 +20,11 @@
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp" />
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
+    <ClCompile Include="pipe-transport.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="connector.h" />
+    <ClInclude Include="listener.h" />
     <ClInclude Include="rpc-lib\channel\channel.h" />
     <ClInclude Include="rpc-lib\channel\ichannel.h" />
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
@@ -41,6 +46,7 @@
     <ClInclude Include="rpc-lib\types\request-exception.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
+    <ClInclude Include="pipe-transport.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">

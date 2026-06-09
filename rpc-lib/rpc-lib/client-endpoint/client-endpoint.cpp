@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
             [service = std::move(service)](cl::buffer &&buffer,
                                            response_handler_t &&res_handler) {
                 service->process_request(std::move(buffer), std::move(res_handler));
-        });
+            });
     }
 
     void client_endpoint::connect()
