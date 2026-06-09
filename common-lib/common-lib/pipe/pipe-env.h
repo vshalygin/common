@@ -22,6 +22,11 @@ namespace vshalygin::cl {
         std::shared_ptr<pipe> create_pipe(const std::string &name);
         std::shared_ptr<pipe> open_pipe(const std::string &name);
 
+        size_t get_client_pipe_map_size() const;
+        size_t get_server_pipe_map_size() const;
+        size_t get_client_pipe_queue_size(const std::string &name) const;
+        size_t get_server_pipe_queue_size(const std::string &name) const;
+
     private:
         std::shared_ptr<pipe> create_new_pipe_end(const std::string &name,
                                                   bool is_server,
@@ -31,7 +36,7 @@ namespace vshalygin::cl {
     private:
         std::shared_ptr<thread_pool> thread_pool_;
 
-        std::mutex mtx_;
+        mutable std::mutex mtx_;
         pipe_map client_side_pipes_;
         pipe_map server_side_pipes_;
     };
