@@ -36,8 +36,10 @@ namespace vshalygin::cl {
 
         bool wait_connect_for(const std::chrono::microseconds &mcs) const;
 
-        bool write_async(std::string &&msg, std::function<void(bool)> &&handler);
-        bool read_async(std::function<void(bool, std::string &&)> &&handler);
+        bool write_async(buffer &&msg, std::function<void(bool)> &&handler);
+        bool read_async(std::function<void(bool, buffer &&)> &&handler);
+
+        void disconnect();
 
     private:
         mutable std::mutex mtx_;

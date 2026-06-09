@@ -8,6 +8,18 @@ using namespace vshalygin::cl;
 using namespace testing;
 
 namespace {
+    //TODO move to test lib
+    MATCHER_P2(BufferEq, expected, size, "Arrays are equal") {
+        for(size_t i = 0; i < size; ++i) {
+            if(arg[i] != expected[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+namespace {
     class test_pipe
         : public pipe
     {
@@ -125,6 +137,25 @@ TEST_F(Pipe, WaitsConnection)
     sut.set_buffers(buffers);
 }
 
+TEST_F(Pipe, InvalidateBuffersByDisconnection)
+{
+    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    test_pipe sut(true);
+    sut.set_buffers(buffers);
+
+    sut.disconnect();
+
+    EXPECT_FALSE(buffers->client_to_server.is_valid());
+    EXPECT_FALSE(buffers->server_to_client.is_valid());
+}
+
+TEST_F(Pipe, DoesNothingOnDisconnectIfNoBuufers)
+{
+    test_pipe sut(true);
+
+    sut.disconnect();
+}
+
 TEST_F(ServerPipe, WriteAsyncReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->write_async({}, {}));
@@ -140,15 +171,18 @@ TEST_F(ServerPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
 
 TEST_F(ServerPipe, WriteAsyncWritesMessageInOutputBuffer)
 {
+    buffer buf(2);
+    buf[0] = (std::byte)0x1;
+    buf[1] = (std::byte)0x2;
     MockFunction<void(bool)> write_mock;
-    MockFunction<void(bool, std::string &&)> read_mock;
+    MockFunction<void(bool, buffer &&)> read_mock;
     EXPECT_CALL(write_mock, Call(true))
         .Times(1);
-    EXPECT_CALL(read_mock, Call(true, std::string("some message")))
+    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
-    EXPECT_TRUE(sut_->write_async("some message", write_mock.AsStdFunction()));
+    EXPECT_TRUE(sut_->write_async(buf.copy(), write_mock.AsStdFunction()));
 
     EXPECT_TRUE(buffers_->server_to_client.get_pending_messages_count() == 1);
     buffers_->server_to_client.read_async(read_mock.AsStdFunction());
@@ -171,15 +205,18 @@ TEST_F(ServerPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
 
 TEST_F(ServerPipe, ReadAsyncReadsMessageFromInputBuffer)
 {
-    MockFunction<void(bool, std::string &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(true, std::string("some message")))
+    buffer buf(2);
+    buf[0] = (std::byte)0x1;
+    buf[1] = (std::byte)0x2;
+    MockFunction<void(bool, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
     EXPECT_TRUE(sut_->read_async(read_mock.AsStdFunction()));
 
     EXPECT_TRUE(buffers_->client_to_server.get_pending_read_handlers_count() == 1);
-    buffers_->client_to_server.write_async("some message", {});
+    buffers_->client_to_server.write_async(buf.copy(), {});
     sut_.reset();
     buffers_.reset();
 }
@@ -199,15 +236,18 @@ TEST_F(ClientPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
 
 TEST_F(ClientPipe, WriteAsyncWritesMessageInOutputBuffer)
 {
+    buffer buf(2);
+    buf[0] = (std::byte)0x1;
+    buf[1] = (std::byte)0x2;
     MockFunction<void(bool)> write_mock;
-    MockFunction<void(bool, std::string &&)> read_mock;
+    MockFunction<void(bool, buffer &&)> read_mock;
     EXPECT_CALL(write_mock, Call(true))
         .Times(1);
-    EXPECT_CALL(read_mock, Call(true, std::string("some message")))
+    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
-    EXPECT_TRUE(sut_->write_async("some message", write_mock.AsStdFunction()));
+    EXPECT_TRUE(sut_->write_async(buf.copy(), write_mock.AsStdFunction()));
 
     EXPECT_TRUE(buffers_->client_to_server.get_pending_messages_count() == 1);
     buffers_->client_to_server.read_async(read_mock.AsStdFunction());
@@ -230,15 +270,18 @@ TEST_F(ClientPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
 
 TEST_F(ClientPipe, ReadAsyncReadsMessageFromInputBuffer)
 {
-    MockFunction<void(bool, std::string &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(true, std::string("some message")))
+    buffer buf(2);
+    buf[0] = (std::byte)0x1;
+    buf[1] = (std::byte)0x2;
+    MockFunction<void(bool, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
     EXPECT_TRUE(sut_->read_async(read_mock.AsStdFunction()));
 
     EXPECT_TRUE(buffers_->server_to_client.get_pending_read_handlers_count() == 1);
-    buffers_->server_to_client.write_async("some message", {});
+    buffers_->server_to_client.write_async(buf.copy(), {});
     sut_.reset();
     buffers_.reset();
 }

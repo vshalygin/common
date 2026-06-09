@@ -11,7 +11,7 @@ namespace vshalygin::cl {
         invalidate();
     }
 
-    void pipe_buffer::write_async(std::string &&data, std::function<void(bool)> &&handler)
+    void pipe_buffer::write_async(buffer &&data, std::function<void(bool)> &&handler)
     {
         auto safe_handler = [handler = std::move(handler)](bool res) {
             try {
@@ -45,9 +45,9 @@ namespace vshalygin::cl {
         strand_.post(std::move(task));
     }
 
-    void pipe_buffer::read_async(std::function<void(bool, std::string &&)> &&handler)
+    void pipe_buffer::read_async(std::function<void(bool, buffer &&)> &&handler)
     {
-        auto safe_handler = [handler = std::move(handler)](bool res, std::string &&str) {
+        auto safe_handler = [handler = std::move(handler)](bool res, buffer &&str) {
             try {
                 if(handler) {
                     handler(res, std::move(str));

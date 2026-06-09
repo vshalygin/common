@@ -1,6 +1,7 @@
 #pragma once
 #include <common-lib/thread-pool/thread-pool.h>
 #include <common-lib/thread-pool/strand.h>
+#include <common-lib/utils/buffer/buffer.h>
 
 #include <memory>
 #include <queue>
@@ -18,8 +19,8 @@ namespace vshalygin::cl {
 
         ~pipe_buffer();
 
-        void write_async(std::string &&data, std::function<void(bool)> &&handler);
-        void read_async(std::function<void(bool, std::string &&)> &&handler);
+        void write_async(buffer &&data, std::function<void(bool)> &&handler);
+        void read_async(std::function<void(bool, buffer &&)> &&handler);
 
         void invalidate() noexcept;
         bool is_valid() const;
@@ -31,8 +32,8 @@ namespace vshalygin::cl {
         bool is_valid_ = true;
         strand strand_;
 
-        std::queue<std::string> buffer_;
-        std::queue<std::function<void(bool, std::string &&)>> read_handlers_;
+        std::queue<buffer> buffer_;
+        std::queue<std::function<void(bool, buffer &&)>> read_handlers_;
     };
 
 }

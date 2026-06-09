@@ -9,9 +9,11 @@ namespace vshalygin::cl {
 
     pipe::~pipe()
     {
-        if(pipe_buffers_) {
-            pipe_buffers_->client_to_server.invalidate();
-            pipe_buffers_->server_to_client.invalidate();
+        try {
+            disconnect();
+        } catch(...) {
+            //TODO log fatal
+            std::terminate();
         }
     }
 
@@ -40,7 +42,7 @@ namespace vshalygin::cl {
         return cv_.wait_until(lock, now + mcs, [this]()->bool { return pipe_buffers_ != nullptr; });
     }
 
-    bool pipe::write_async(std::string &&msg, std::function<void(bool)> &&handler)
+    bool pipe::write_async(buffer &&msg, std::function<void(bool)> &&handler)
     {
         std::lock_guard guard(mtx_);
         if(!pipe_buffers_) {
@@ -57,7 +59,7 @@ namespace vshalygin::cl {
         return true;
     }
 
-    bool pipe::read_async(std::function<void(bool, std::string &&)> &&handler)
+    bool pipe::read_async(std::function<void(bool, buffer &&)> &&handler)
     {
         std::lock_guard guard(mtx_);
         if(!pipe_buffers_) {
@@ -73,5 +75,14 @@ namespace vshalygin::cl {
 
         input_buff.read_async(std::move(handler));
         return true;
+    }
+
+    void pipe::disconnect()
+    {
+        std::lock_guard guard(mtx_);
+        if(pipe_buffers_) {
+            pipe_buffers_->client_to_server.invalidate();
+            pipe_buffers_->server_to_client.invalidate();
+        }
     }
 }
