@@ -37,8 +37,10 @@ namespace {
             ++m_recv_async_called;
         }
 
-        void start() override
+        void start(std::function<void()> &&start_handler, std::function<void()> &&stop_handler) override
         {
+            m_start_handler = std::move(start_handler);
+            m_stop_handler = std::move(stop_handler);
             was_started = true;
             m_stopped = false;
             if(m_start_handler) {
@@ -58,16 +60,6 @@ namespace {
         bool is_stopped() const override
         {
             return m_stopped;
-        }
-
-        void set_start_callback(std::function<void()> &&handler) override
-        {
-            m_start_handler = std::move(handler);
-        }
-
-        void set_stop_callback(std::function<void()> &&handler) override
-        {
-            m_stop_handler = std::move(handler);
         }
 
         void emit_disconnect_event()
@@ -589,23 +581,4 @@ TEST_F(Connection, DoesNothingOnDisconnectIfNoTransport)
     auto sut = create_sut_without_transport();
 
     ASSERT_NO_THROW(sut->stop_transport());
-}
-
-TEST_F(Connection, DoesNotCallStartCallbackIfItIsNotSet)
-{
-    NiceMock<MockFunction<void()>> callback;
-    EXPECT_CALL(callback, Call)
-        .Times(0);
-    m_transport_ptr->set_start_callback(callback.AsStdFunction());
-    auto sut = create_sut();
-}
-
-TEST_F(Connection, DoesNotCallStopCallbackIfItIsNotSet)
-{
-    NiceMock<MockFunction<void()>> callback;
-    EXPECT_CALL(callback, Call)
-        .Times(0);
-    m_transport_ptr->set_stop_callback(callback.AsStdFunction());
-    auto sut = create_sut();
-    sut->stop_transport();
 }

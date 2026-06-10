@@ -10,12 +10,9 @@ public:
                                    std::function<void()> &&error_handler), (const, override));
     MOCK_METHOD(void, recv_async, (std::function<void(vshalygin::cl::buffer &&)> &&handler), (const, override));
 
-    MOCK_METHOD(void, start, (), (override));
+    MOCK_METHOD(void, start, (std::function<void()> &&, std::function<void()> &&), (override));
     MOCK_METHOD(void, stop, (), (override));
     MOCK_METHOD(bool, is_stopped, (), (const, override));
-
-    MOCK_METHOD(void, set_start_callback, (std::function<void()> &&callback), (override));
-    MOCK_METHOD(void, set_stop_callback, (std::function<void()> &&callback), (override));
 };
 
 using transport_nice_mock = ::testing::NiceMock<transport_mock>;

@@ -67,24 +67,11 @@ TEST_F(ServerEndpoint, StartsTransportOnNewCollection)
 
     auto transport = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport, start)
-        .Times(1);
-
-    auto sut = create_sut();
-    new_connection_handler(std::move(transport));
-}
-
-TEST_F(ServerEndpoint, AnswersInactiveConnectionCountAsOneIfTranportDidNotConfirmActivationByCallback)
-{
-    std::function<void(std::unique_ptr<itransport>)> new_connection_handler;
-    EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
-        .WillOnce(SaveArg<0>(&new_connection_handler));
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
 
-    auto transport = std::make_unique<transport_nice_mock>();
     auto sut = create_sut();
     new_connection_handler(std::move(transport));
-
-    ASSERT_EQ(sut->get_inactive_connections_count(), 1);
 }
 
 TEST_F(ServerEndpoint, AnswersInactiveConnectionCountAsZeroIfTranportStartThrowsException)
@@ -113,14 +100,12 @@ TEST_F(ServerEndpoint, AnswersInactiveConnectionCountAsZeroIfTranportStartCallba
         .WillOnce(SaveArg<0>(&new_connection_handler));
 
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
 
     auto sut = create_sut();
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     ASSERT_EQ(sut->get_inactive_connections_count(), 0);
 }
@@ -128,21 +113,6 @@ TEST_F(ServerEndpoint, AnswersInactiveConnectionCountAsZeroIfTranportStartCallba
 TEST_F(ServerEndpoint, AnswersZeroChannelsIfNewConnectionHandlerWasNotCalled)
 {
     auto sut = create_sut();
-
-    ASSERT_EQ(sut->get_channels_count(), 0);
-}
-
-TEST_F(ServerEndpoint, AnswersZeroChannelsCountIfNewConnectionHandlerWasCalledButTransportStartHandlerWasNotCalled)
-{
-    std::function<void(std::unique_ptr<itransport>)> new_connection_handler;
-    EXPECT_CALL(*m_listener, set_connect_handler)
-        .Times(1)
-        .WillOnce(SaveArg<0>(&new_connection_handler));
-
-    auto transport = std::make_unique<transport_nice_mock>();
-
-    auto sut = create_sut();
-    new_connection_handler(std::move(transport));
 
     ASSERT_EQ(sut->get_channels_count(), 0);
 }
@@ -155,14 +125,12 @@ TEST_F(ServerEndpoint, AnswersOneChannelCountIfNewConnectionHandlerWasCalledAndT
         .WillOnce(SaveArg<0>(&new_connection_handler));
 
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
 
     auto sut = create_sut();
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     ASSERT_EQ(sut->get_channels_count(), 1);
 }
@@ -175,9 +143,9 @@ TEST_F(ServerEndpoint, CallsSetConnectionChangeHandler)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
     EXPECT_CALL(connection_change_state_handler, Call(_, connection_state::connected))
         .Times(1);
@@ -185,7 +153,6 @@ TEST_F(ServerEndpoint, CallsSetConnectionChangeHandler)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 }
 
 TEST_F(ServerEndpoint, CallsConnectionChangeHandlerSeveralTimesWithVariousIds)
@@ -197,18 +164,15 @@ TEST_F(ServerEndpoint, CallsConnectionChangeHandlerSeveralTimesWithVariousIds)
     auto transport1 = std::make_unique<transport_nice_mock>();
     auto transport2 = std::make_unique<transport_nice_mock>();
     auto transport3 = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback1;
-    std::function<void()> transport_started_callback2;
-    std::function<void()> transport_started_callback3;
-    EXPECT_CALL(*transport1, set_start_callback)
+    EXPECT_CALL(*transport1, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback1));
-    EXPECT_CALL(*transport2, set_start_callback)
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
+    EXPECT_CALL(*transport2, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback2));
-    EXPECT_CALL(*transport3, set_start_callback)
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
+    EXPECT_CALL(*transport3, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback3));
+        .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
     EXPECT_CALL(connection_change_state_handler, Call(0, _))
         .Times(1);
@@ -222,9 +186,6 @@ TEST_F(ServerEndpoint, CallsConnectionChangeHandlerSeveralTimesWithVariousIds)
     new_connection_handler(std::move(transport1));
     new_connection_handler(std::move(transport2));
     new_connection_handler(std::move(transport3));
-    transport_started_callback1();
-    transport_started_callback2();
-    transport_started_callback3();
 }
 
 TEST_F(ServerEndpoint, AnswersZeroChannelCountIfTransportWasStopped)
@@ -234,14 +195,20 @@ TEST_F(ServerEndpoint, AnswersZeroChannelCountIfTransportWasStopped)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     auto transport = std::make_unique<transport_nice_mock>();
+    auto transport_ptr = transport.get();
     std::function<void()> transport_started_callback;
     std::function<void()> transport_stop_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
-    EXPECT_CALL(*transport, set_stop_callback)
-        .Times(1)
-        .WillOnce(SaveArg<0>(&transport_stop_callback));
+        .WillOnce([&](auto &&start_callback, auto &&stop_callback) {
+                      start_callback();
+                      transport_started_callback = std::move(start_callback);
+                      transport_stop_callback = std::move(stop_callback);
+                  });
+    EXPECT_CALL(*transport, stop)
+        .Times(2)
+        .WillOnce([&]() { transport_stop_callback(); })
+        .WillRepeatedly(DoDefault());
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
     EXPECT_CALL(connection_change_state_handler, Call)
         .Times(2);
@@ -249,10 +216,9 @@ TEST_F(ServerEndpoint, AnswersZeroChannelCountIfTransportWasStopped)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
     ASSERT_EQ(sut->get_channels_count(), 1);
 
-    transport_stop_callback();
+    transport_ptr->stop();
     ASSERT_EQ(sut->get_channels_count(), 0);
 }
 
@@ -277,10 +243,9 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler));
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport, send_async)
         .Times(1)
         .WillOnce([&](auto &&buf, auto) {
@@ -290,7 +255,6 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
 
     auto sut = create_sut();
     new_connection_handler(std::move(transport));
-    transport_started_callback();
  
     recv_handler(req_buffer.copy());
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
@@ -349,16 +313,14 @@ TEST_F(ServerEndpoint, DropsConnectionWithId)
     auto transport1_ptr = transport1.get();
     auto transport2 = std::make_unique<transport_nice_mock>();
     auto transport2_ptr = transport2.get();
-    std::function<void()> transport_started_callback1;
-    std::function<void()> transport_started_callback2;
-    EXPECT_CALL(*transport1, set_start_callback)
+    EXPECT_CALL(*transport1, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback1));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport1, stop)
         .Times(1);
-    EXPECT_CALL(*transport2, set_start_callback)
+    EXPECT_CALL(*transport2, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback2));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport2, stop)
         .Times(0);
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
@@ -370,8 +332,6 @@ TEST_F(ServerEndpoint, DropsConnectionWithId)
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
     new_connection_handler(std::move(transport2));
-    transport_started_callback1();
-    transport_started_callback2();
 
     sut->drop_connection(0);
     Mock::VerifyAndClearExpectations(transport1_ptr);
@@ -388,16 +348,14 @@ TEST_F(ServerEndpoint, DropsAllConnections)
     auto transport1_ptr = transport1.get();
     auto transport2 = std::make_unique<transport_nice_mock>();
     auto transport2_ptr = transport2.get();
-    std::function<void()> transport_started_callback1;
-    std::function<void()> transport_started_callback2;
-    EXPECT_CALL(*transport1, set_start_callback)
+    EXPECT_CALL(*transport1, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback1));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport1, stop)
         .Times(1);
-    EXPECT_CALL(*transport2, set_start_callback)
+    EXPECT_CALL(*transport2, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback2));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport2, stop)
         .Times(1);
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
@@ -409,8 +367,6 @@ TEST_F(ServerEndpoint, DropsAllConnections)
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
     new_connection_handler(std::move(transport2));
-    transport_started_callback1();
-    transport_started_callback2();
 
     sut->drop_all_connections();
     Mock::VerifyAndClearExpectations(transport1_ptr);
@@ -424,10 +380,9 @@ TEST_F(ServerEndpoint, ThrowsExceptionOnAttemptToMakeRequestWithUnexistingId)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
     EXPECT_CALL(connection_change_state_handler, Call(_, connection_state::connected))
         .Times(1);
@@ -435,7 +390,6 @@ TEST_F(ServerEndpoint, ThrowsExceptionOnAttemptToMakeRequestWithUnexistingId)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     try {
         sut->make_request<proto::request_message, proto::response_message>(1000,
@@ -457,10 +411,9 @@ TEST_F(ServerEndpoint, MakeSyncRequestOnSpecifiedConnection)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler));
@@ -477,7 +430,6 @@ TEST_F(ServerEndpoint, MakeSyncRequestOnSpecifiedConnection)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     auto res = sut->make_request<proto::request_message, proto::response_message>
         (connection_id, m_req_message, m_create_stub, &proto::Service_Stub::Method2);
@@ -496,10 +448,9 @@ TEST_F(ServerEndpoint, ThrowsExceptionIfMakeSyncRequestOnSpecifiedConnectionFail
         .WillOnce(SaveArg<0>(&new_connection_handler));
     std::function<void(vshalygin::cl::buffer &&)> recv_handler1;
     auto transport1 = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback1;
-    EXPECT_CALL(*transport1, set_start_callback)
+    EXPECT_CALL(*transport1, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback1));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport1, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler1));
@@ -516,7 +467,6 @@ TEST_F(ServerEndpoint, ThrowsExceptionIfMakeSyncRequestOnSpecifiedConnectionFail
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
-    transport_started_callback1();
 
     try {
         sut->make_request<proto::request_message, proto::response_message>
@@ -540,10 +490,9 @@ TEST_F(ServerEndpoint, MakesSyncRequestToAllConnections)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler));
@@ -560,7 +509,6 @@ TEST_F(ServerEndpoint, MakesSyncRequestToAllConnections)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     auto res = sut->make_request_all<proto::request_message, proto::response_message>
         (m_req_message, m_create_stub, &proto::Service_Stub::Method2);
@@ -577,10 +525,9 @@ TEST_F(ServerEndpoint, ThrowsExceptionOnAttenptToMakeRequestAsyncWithUnexistingI
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
     EXPECT_CALL(connection_change_state_handler, Call(_, connection_state::connected))
         .Times(1);
@@ -588,7 +535,6 @@ TEST_F(ServerEndpoint, ThrowsExceptionOnAttenptToMakeRequestAsyncWithUnexistingI
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     try {
         sut->make_request_async<proto::request_message, proto::response_message>(1000,
@@ -622,9 +568,9 @@ TEST_F(ServerEndpoint, MakeAsyncRequestOnSpecifiedConnection)
     std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler));
@@ -641,7 +587,6 @@ TEST_F(ServerEndpoint, MakeAsyncRequestOnSpecifiedConnection)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     sut->make_request_async<proto::request_message, proto::response_message>
         (connection_id, m_req_message, m_create_stub, &proto::Service_Stub::Method2, request_callback);
@@ -668,10 +613,9 @@ TEST_F(ServerEndpoint, MakeUnsuccessfulAsyncRequestOnSpecifiedConnection)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     std::function<void(vshalygin::cl::buffer &&)> recv_handler1;
     auto transport1 = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback1;
-    EXPECT_CALL(*transport1, set_start_callback)
+    EXPECT_CALL(*transport1, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback1));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport1, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler1));
@@ -688,7 +632,6 @@ TEST_F(ServerEndpoint, MakeUnsuccessfulAsyncRequestOnSpecifiedConnection)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
-    transport_started_callback1();
 
     sut->make_request_async<proto::request_message, proto::response_message>
         (connection_id, m_req_message, m_create_stub, &proto::Service_Stub::Method2, request_callback);
@@ -716,10 +659,9 @@ TEST_F(ServerEndpoint, MakesAsyncRequestToAllConnections)
         .WillOnce(SaveArg<0>(&new_connection_handler));
     std::function<void(vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
-    std::function<void()> transport_started_callback;
-    EXPECT_CALL(*transport, set_start_callback)
+    EXPECT_CALL(*transport, start)
         .Times(1)
-        .WillOnce(SaveArg<0>(&transport_started_callback));
+        .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
         .WillOnce(SaveArg<0>(&recv_handler));
@@ -736,7 +678,6 @@ TEST_F(ServerEndpoint, MakesAsyncRequestToAllConnections)
     auto sut = create_sut();
     sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
-    transport_started_callback();
 
     auto num = sut->make_request_all_async<proto::request_message, proto::response_message>
         (m_req_message, m_create_stub, &proto::Service_Stub::Method2, request_callback);
