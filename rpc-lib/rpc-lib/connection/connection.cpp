@@ -4,6 +4,7 @@
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
+#include <common-lib/syncronization/event/event.h>
 
 #include <unordered_map>
 
@@ -63,16 +64,26 @@ namespace vshalygin::rpc {
         void set_and_start_transport(std::unique_ptr<itransport> transport)
         {
             assert(transport);
-            auto connect_handler = create_change_state_handler(connection_state::connected);
-            auto disconnect_handler = create_change_state_handler(connection_state::disconnected);
+            cl::event start_event;
+            auto connect_handler = [&]() {
+                call_change_state_handler(connection_state::connected);
+                start_event.set();
+            };
+            auto disconnect_handler = [self = weak_from_this()]() {
+                if(auto s = self.lock()) {
+                    s->cancel_active_requests();
+                    s->call_change_state_handler(connection_state::disconnected);
+                }
+            };
+
+            transport->start(std::move(connect_handler), std::move(disconnect_handler));
+            if(!start_event.wait_for(std::chrono::seconds(10))) {
+                throw std::runtime_error("failed to wait transport starting");
+            }
+            transport->recv_async(create_receive_handler());
 
             auto [guard, curr_transport] = m_transport.get();
             curr_transport = std::move(transport);
-            curr_transport->set_start_callback(std::move(connect_handler));
-            curr_transport->set_stop_callback(std::move(disconnect_handler));
-
-            curr_transport->start();
-            curr_transport->recv_async(create_receive_handler());
         }
 
         void request_async(cl::buffer &&message,
@@ -313,21 +324,11 @@ namespace vshalygin::rpc {
         void call_change_state_handler(connection_state new_state)
         {
             auto [guard, change_state_handler] = m_change_state_handler.get();
-            if(change_state_handler) {
+            if(change_state_handler) try {
                 change_state_handler(new_state);
+            } catch (...) {
+                //TODO log
             }
-        }
-
-        auto create_change_state_handler(connection_state new_state)
-        {
-            return [self = weak_from_this(), new_state]() {
-                if(auto s = self.lock()) {
-                    if(new_state == connection_state::disconnected) {
-                        s->cancel_active_requests();
-                    }
-                    s->call_change_state_handler(new_state);
-                }
-            };
         }
 
     private:
