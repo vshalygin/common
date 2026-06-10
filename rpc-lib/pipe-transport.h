@@ -18,20 +18,16 @@ namespace vshalygin::rpc {
                         std::function<void()> &&error_handler) const override;
         void recv_async(std::function<void(cl::buffer &&)> &&handler) const override;
 
-        void start() override;
+        void start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback) override;
         void stop() override;
         bool is_stopped() const override;
-
-        void set_start_callback(std::function<void()> &&callback) override;
-        void set_stop_callback(std::function<void()> &&callback) override;
 
     private:
         std::shared_ptr<cl::pipe> pipe_;
 
-        std::function<void()> start_callback_;
         std::function<void()> stop_callback_;
 
-        std::mutex start_mtx_;
+        std::mutex mtx_;
         bool is_started_ = false;
     };
 }

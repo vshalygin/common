@@ -11,8 +11,8 @@ namespace vshalygin::rpc {
                                     std::function<void()> &&error_handler) const
     {
         auto res = pipe_->write_async(std::move(message),
-                                     [eh = std::move(error_handler)](bool is_success) {
-                                         if(!is_success) {
+                                     [eh = std::move(error_handler)](cl::pipe_op_res res) {
+                                         if(res == cl::pipe_op_res::failed) {
                                              eh();
                                          }
                                      });
@@ -24,19 +24,19 @@ namespace vshalygin::rpc {
 
     void pipe_transport::recv_async(std::function<void(cl::buffer &&)> &&handler) const
     {
-        pipe_->read_async([handler = std::move(handler)](bool res, cl::buffer &&msg) {
-                              if(res) {
+        pipe_->read_async([handler = std::move(handler)](cl::pipe_op_res res, cl::buffer &&msg) {
+                              if(is_success(res)) {
                                   handler(std::move(msg));
                               }
                           });
     }
 
-    void pipe_transport::start()
+    void pipe_transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
     {
-        assert(start_callback_);
-        assert(stop_callback_);
-        
-        std::unique_lock lock(start_mtx_);
+        assert(start_callback);
+        assert(stop_callback);
+
+        std::lock_guard lock(mtx_);
         if(is_started_) {
             throw std::logic_error("pipe transport already started");
         }
@@ -46,36 +46,28 @@ namespace vshalygin::rpc {
             throw std::runtime_error("unable to wait pipe connection");
         }
 
+        stop_callback_ = std::move(stop_callback);
         is_started_ = true;
-        lock.unlock();
 
-        start_callback_();
+        start_callback();
     }
 
     void pipe_transport::stop()
     {
-        assert(stop_callback_);
-
-        pipe_->disconnect();
-        try {
-            stop_callback_();
-        } catch(...) {
-            //TODO log
+        std::lock_guard lock(mtx_);
+        if(is_started_) {
+            pipe_->disconnect();
+            is_started_ = false;
+            try {
+                stop_callback_();
+            } catch(...) {
+                //TODO log
+            }
         }
     }
 
     bool pipe_transport::is_stopped() const
     {
         return pipe_->is_connected();
-    }
-
-    void pipe_transport::set_start_callback(std::function<void()> &&callback)
-    {
-        start_callback_ = std::move(callback);
-    }
-
-    void pipe_transport::set_stop_callback(std::function<void()> &&callback)
-    {
-        stop_callback_ = std::move(callback);
     }
 }

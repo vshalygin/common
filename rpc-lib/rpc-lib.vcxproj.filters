@@ -66,10 +66,10 @@
     <ClCompile Include="pipe-transport.cpp">
       <Filter>transport\in-process</Filter>
     </ClCompile>
-    <ClCompile Include="listener.cpp">
+    <ClCompile Include="pipe-listener.cpp">
       <Filter>transport\in-process</Filter>
     </ClCompile>
-    <ClCompile Include="connector.cpp">
+    <ClCompile Include="pipe-connector.cpp">
       <Filter>transport\in-process</Filter>
     </ClCompile>
   </ItemGroup>
@@ -140,10 +140,10 @@
     <ClInclude Include="pipe-transport.h">
       <Filter>transport\in-process</Filter>
     </ClInclude>
-    <ClInclude Include="listener.h">
+    <ClInclude Include="pipe-listener.h">
       <Filter>transport\in-process</Filter>
     </ClInclude>
-    <ClInclude Include="connector.h">
+    <ClInclude Include="pipe-connector.h">
       <Filter>transport\in-process</Filter>
     </ClInclude>
   </ItemGroup>

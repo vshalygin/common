@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="connector.cpp" />
-    <ClCompile Include="listener.cpp" />
+    <ClCompile Include="pipe-connector.cpp" />
+    <ClCompile Include="pipe-listener.cpp" />
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
     <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
@@ -23,8 +23,8 @@
     <ClCompile Include="pipe-transport.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="connector.h" />
-    <ClInclude Include="listener.h" />
+    <ClInclude Include="pipe-connector.h" />
+    <ClInclude Include="pipe-listener.h" />
     <ClInclude Include="rpc-lib\channel\channel.h" />
     <ClInclude Include="rpc-lib\channel\ichannel.h" />
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
