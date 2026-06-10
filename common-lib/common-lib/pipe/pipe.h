@@ -35,6 +35,8 @@ namespace vshalygin::cl {
         [[nodiscard]] bool is_connected() const;
 
         bool wait_connect_for(const std::chrono::microseconds &mcs) const;
+        void wait_connect() const;
+        void stop_waiting_all() const;
 
         bool write_async(buffer &&msg, std::function<void(pipe_op_res)> &&handler);
         bool read_async(std::function<void(pipe_op_res, buffer &&)> &&handler);
@@ -44,6 +46,8 @@ namespace vshalygin::cl {
     private:
         mutable std::mutex mtx_;
         mutable std::condition_variable cv_;
+        mutable std::shared_ptr<bool> stop_waiting_flag_ = std::make_shared<bool>(false);
+
         std::shared_ptr<pipe_buffers> pipe_buffers_;
 
         const bool is_server_;

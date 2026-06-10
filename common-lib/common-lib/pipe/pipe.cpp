@@ -39,7 +39,31 @@ namespace vshalygin::cl {
     {
         auto now = std::chrono::steady_clock::now();
         std::unique_lock lock(mtx_);
-        return cv_.wait_until(lock, now + mcs, [this]()->bool { return pipe_buffers_ != nullptr; });
+        return cv_.wait_until(lock, now + mcs,
+                              [this, stop_waiting_flag = stop_waiting_flag_]() {
+                                  return *stop_waiting_flag || pipe_buffers_ != nullptr;
+                              });
+    }
+
+    void pipe::wait_connect() const
+    {
+        std::unique_lock lock(mtx_);
+        cv_.wait(lock,[this, stop_waiting_flag = stop_waiting_flag_]() {
+                          return *stop_waiting_flag || pipe_buffers_ != nullptr;
+                      });
+    }
+
+    void pipe::stop_waiting_all() const
+    {
+        auto new_stop_waiting_flag = std::make_shared<bool>(false);
+
+        {
+            std::lock_guard lock(mtx_);
+            *stop_waiting_flag_ = true;
+            stop_waiting_flag_ = std::move(new_stop_waiting_flag);
+        }
+
+        cv_.notify_all();
     }
 
     bool pipe::write_async(buffer &&msg, std::function<void(pipe_op_res)> &&handler)
