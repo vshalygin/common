@@ -42,7 +42,7 @@ namespace vshalygin::cl {
         return cv_.wait_until(lock, now + mcs, [this]()->bool { return pipe_buffers_ != nullptr; });
     }
 
-    bool pipe::write_async(buffer &&msg, std::function<void(bool)> &&handler)
+    bool pipe::write_async(buffer &&msg, std::function<void(pipe_op_res)> &&handler)
     {
         std::lock_guard guard(mtx_);
         if(!pipe_buffers_) {
@@ -59,7 +59,7 @@ namespace vshalygin::cl {
         return true;
     }
 
-    bool pipe::read_async(std::function<void(bool, buffer &&)> &&handler)
+    bool pipe::read_async(std::function<void(pipe_op_res, buffer &&)> &&handler)
     {
         std::lock_guard guard(mtx_);
         if(!pipe_buffers_) {

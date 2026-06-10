@@ -15,6 +15,7 @@
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
     <ClInclude Include="common-lib\pipe\pipe-buffer\pipe-buffer.h" />
     <ClInclude Include="common-lib\pipe\pipe-env.h" />
+    <ClInclude Include="common-lib\pipe\pipe-op-res.h" />
     <ClInclude Include="common-lib\pipe\pipe.h" />
     <ClInclude Include="common-lib\syncronization\event\event.h" />
     <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h" />

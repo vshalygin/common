@@ -45,10 +45,10 @@ TEST(PipeBuffer, AddMessageInBufferOnWriteOperationIfNoPendingReadHandlers)
     buf[1] = (std::byte)0x2;
 
     event sync_event;
-    MockFunction<void(bool)> mock1;
+    MockFunction<void(pipe_op_res)> mock1;
     EXPECT_CALL(mock1, Call)
         .Times(1)
-        .WillOnce([&](bool) { sync_event.set(); });
+        .WillOnce([&]() { sync_event.set(); });
     auto pool = std::make_shared<thread_pool>(2);
 
     pipe_buffer sut(pool);
@@ -64,8 +64,8 @@ TEST(PipeBuffer, CallWriteHandlerWithTrueParameterIfWritingSucceeded)
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
     event sync_event;
-    MockFunction<void(bool)> mock1;
-    EXPECT_CALL(mock1, Call(true))
+    MockFunction<void(pipe_op_res)> mock1;
+    EXPECT_CALL(mock1, Call(pipe_op_res::success))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
@@ -82,11 +82,11 @@ TEST(PipeBuffer, CallPendingReadHandlerAfterWrite)
     buf[1] = (std::byte)0x2;
     InSequence s;
     event sync_event;
-    MockFunction<void(bool)> write_mock;
-    MockFunction<void(bool, buffer &&)> read_mock;
+    MockFunction<void(pipe_op_res)> write_mock;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(write_mock, Call)
         .Times(1);
-    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
@@ -116,8 +116,8 @@ TEST(PipeBuffer, IfWriteHandlerThrowsItDoesNotInterruptCallingReadCallbacks)
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
-    MockFunction<void(bool)> write_mock;
-    MockFunction<void(bool, buffer &&)> read_mock;
+    MockFunction<void(pipe_op_res)> write_mock;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(write_mock, Call)
         .Times(1)
         .WillOnce(Throw(std::exception()));
@@ -133,8 +133,8 @@ TEST(PipeBuffer, IfWriteHandlerThrowsItDoesNotInterruptCallingReadCallbacks)
 
 TEST(PipeBuffer, CallsReadHandlerInstantlyIfInvalidated)
 {
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(false, _))
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::failed, _))
         .Times(1);
     auto pool = std::make_shared<thread_pool>(2);
     pipe_buffer sut(pool);
@@ -147,7 +147,7 @@ TEST(PipeBuffer, CallsReadHandlerInstantlyIfInvalidated)
 
 TEST(PipeBuffer, AddsPendingReadHandlerIfNoPendingMessages)
 {
-    MockFunction<void(bool, buffer &&)> read_mock;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(read_mock, Call)
         .Times(0);
     auto pool = std::make_shared<thread_pool>(2);
@@ -164,8 +164,8 @@ TEST(PipeBuffer, CallsReadHandlerInstantlyIfThereIsAPendingMessage)
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1);
     auto pool = std::make_shared<thread_pool>(2);
     pipe_buffer sut(pool);
@@ -189,8 +189,8 @@ TEST(PipeBuffer, AllowsEmptyReadHandler)
 
 TEST(PipeBuffer, InvalidateMethodsTriggersPendingReadCallbacks)
 {
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(false, _))
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::canceled, _))
         .Times(2);
     auto pool = std::make_shared<thread_pool>(2);
     pipe_buffer sut(pool);
@@ -204,8 +204,8 @@ TEST(PipeBuffer, InvalidateMethodsTriggersPendingReadCallbacks)
 
 TEST(PipeBuffer, DestructorTriggersPendingReadCallbacks)
 {
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(false, _))
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::canceled, _))
         .Times(2);
     auto pool = std::make_shared<thread_pool>(2);
     auto sut = std::make_unique<pipe_buffer>(pool);

@@ -1,4 +1,6 @@
 #pragma once
+#include "../pipe-op-res.h"
+
 #include <common-lib/thread-pool/thread-pool.h>
 #include <common-lib/thread-pool/strand.h>
 #include <common-lib/utils/buffer/buffer.h>
@@ -19,8 +21,8 @@ namespace vshalygin::cl {
 
         ~pipe_buffer();
 
-        void write_async(buffer &&data, std::function<void(bool)> &&handler);
-        void read_async(std::function<void(bool, buffer &&)> &&handler);
+        void write_async(buffer &&data, std::function<void(pipe_op_res)> &&handler);
+        void read_async(std::function<void(pipe_op_res, buffer &&)> &&handler);
 
         void invalidate() noexcept;
         bool is_valid() const;
@@ -33,7 +35,7 @@ namespace vshalygin::cl {
         strand strand_;
 
         std::queue<buffer> buffer_;
-        std::queue<std::function<void(bool, buffer &&)>> read_handlers_;
+        std::queue<std::function<void(pipe_op_res, buffer &&)>> read_handlers_;
     };
 
 }

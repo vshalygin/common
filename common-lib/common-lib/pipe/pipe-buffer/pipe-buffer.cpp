@@ -11,13 +11,11 @@ namespace vshalygin::cl {
         invalidate();
     }
 
-    void pipe_buffer::write_async(buffer &&data, std::function<void(bool)> &&handler)
+    void pipe_buffer::write_async(buffer &&data, std::function<void(pipe_op_res)> &&handler)
     {
-        auto safe_handler = [handler = std::move(handler)](bool res) {
-            try {
-                if(handler) {
-                    handler(res);
-                }
+        auto safe_handler = [handler = std::move(handler)](pipe_op_res res) {
+            if(handler) try {
+                handler(res);
             } catch (...) {
                 //TODO log
             }
@@ -29,15 +27,15 @@ namespace vshalygin::cl {
             try {
                 buffer_.push(std::move(data));
             } catch(...) {
-                write_handler(false);
+                write_handler(pipe_op_res::failed);
                 throw;
             }
-            write_handler(true);
+            write_handler(pipe_op_res::success);
 
             if(!read_handlers_.empty()) {
                 auto read_handler = std::move(read_handlers_.front());
                 read_handlers_.pop();
-                read_handler(true, std::move(buffer_.front()));
+                read_handler(pipe_op_res::success, std::move(buffer_.front()));
                 buffer_.pop();
             }
         };
@@ -45,13 +43,11 @@ namespace vshalygin::cl {
         strand_.post(std::move(task));
     }
 
-    void pipe_buffer::read_async(std::function<void(bool, buffer &&)> &&handler)
+    void pipe_buffer::read_async(std::function<void(pipe_op_res, buffer &&)> &&handler)
     {
-        auto safe_handler = [handler = std::move(handler)](bool res, buffer &&str) {
-            try {
-                if(handler) {
-                    handler(res, std::move(str));
-                }
+        auto safe_handler = [handler = std::move(handler)](pipe_op_res res, buffer &&str) {
+            if(handler) try {
+                handler(res, std::move(str));
             } catch (...) {
                 //TODO write in log
             }
@@ -59,16 +55,21 @@ namespace vshalygin::cl {
 
         strand_.post([this, handler = std::move(safe_handler)]() mutable {
             if(!is_valid_) {
-                handler(false, {});
+                handler(pipe_op_res::failed, {});
                 return;
             }
 
             if(!buffer_.empty()) {
                 auto msg = std::move(buffer_.front());
                 buffer_.pop();
-                handler(true, std::move(msg));
+                handler(pipe_op_res::success, std::move(msg));
             } else {
-                read_handlers_.push(std::move(handler));
+                try {
+                    read_handlers_.push(std::move(handler));
+                } catch(...) {
+                    handler(pipe_op_res::failed, {});
+                    throw;
+                }
             }
         });
     }
@@ -79,7 +80,7 @@ namespace vshalygin::cl {
             std::packaged_task<void()> task([this]() {
                 is_valid_ = false;
                 while(!read_handlers_.empty()) {
-                    read_handlers_.front()(false, {});
+                    read_handlers_.front()(pipe_op_res::canceled, {});
                     read_handlers_.pop();
                 }
             });

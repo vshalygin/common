@@ -36,8 +36,8 @@ namespace vshalygin::cl {
 
         bool wait_connect_for(const std::chrono::microseconds &mcs) const;
 
-        bool write_async(buffer &&msg, std::function<void(bool)> &&handler);
-        bool read_async(std::function<void(bool, buffer &&)> &&handler);
+        bool write_async(buffer &&msg, std::function<void(pipe_op_res)> &&handler);
+        bool read_async(std::function<void(pipe_op_res, buffer &&)> &&handler);
 
         void disconnect();
 

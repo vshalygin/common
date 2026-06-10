@@ -174,11 +174,11 @@ TEST_F(ServerPipe, WriteAsyncWritesMessageInOutputBuffer)
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
-    MockFunction<void(bool)> write_mock;
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(write_mock, Call(true))
+    MockFunction<void(pipe_op_res)> write_mock;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(write_mock, Call(pipe_op_res::success))
         .Times(1);
-    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
@@ -208,8 +208,8 @@ TEST_F(ServerPipe, ReadAsyncReadsMessageFromInputBuffer)
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
@@ -239,11 +239,11 @@ TEST_F(ClientPipe, WriteAsyncWritesMessageInOutputBuffer)
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
-    MockFunction<void(bool)> write_mock;
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(write_mock, Call(true))
+    MockFunction<void(pipe_op_res)> write_mock;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(write_mock, Call(pipe_op_res::success))
         .Times(1);
-    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
@@ -273,8 +273,8 @@ TEST_F(ClientPipe, ReadAsyncReadsMessageFromInputBuffer)
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
-    MockFunction<void(bool, buffer &&)> read_mock;
-    EXPECT_CALL(read_mock, Call(true, BufferEq(buf.data(), buf.size())))
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1);
 
     sut_->set_buffers(buffers_);
