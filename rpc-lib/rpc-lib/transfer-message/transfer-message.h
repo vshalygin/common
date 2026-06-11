@@ -13,15 +13,15 @@
 
 /*
     A transfer_msg is a single, logically complete message transmitted
-    between one process and another. The structure consists of three parts: a header,
+    between client and server. The structure consists of three parts: a header,
     a serialized message, and a trailer.
 
     Each transfer_msg has its own type:
-    transfer_type::req - request sent from one process to an another
-    transfer_type::res - response sent from one process to an another as an answer to the request
+    transfer_type::req - request sent from one endpoint to an another
+    transfer_type::res - response sent from one endpoint to an another as an answer to the request
 
     Structure of all types is the same header:
-    1 byte message type + 4 bytes size of serialized message
+    1 byte message type + 4 bytes serialized protobuf message size
 
     Every type has its own trailer:
     req: 8 bytes message number + 4 bytes method idx

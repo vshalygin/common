@@ -169,7 +169,7 @@ namespace vshalygin::rpc {
 
     bool is_transfer_msg_too_big(const google::protobuf::Message *proto_message)
     {
-        const auto serialized_message_size = static_cast<uint32_t>(proto_message->ByteSizeLong());
+        const auto serialized_message_size = proto_message->ByteSizeLong();
         return (serialized_message_size > s_max_transfer_message_size);
     }
 
@@ -234,9 +234,9 @@ namespace vshalygin::rpc {
                                        uint32_t method_idx,
                                        const google::protobuf::Message *message)
     {
-        uint32_t serialized_message_size = 0;
+        size_t serialized_message_size = 0;
         if(message) {
-            serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+            serialized_message_size = message->ByteSizeLong();
         }
 
         if(serialized_message_size > s_max_transfer_message_size) {
@@ -244,15 +244,15 @@ namespace vshalygin::rpc {
         }
 
         const uint32_t buf_size = s_header_bytes_count +
-                                  serialized_message_size +
+                                  static_cast<uint32_t>(serialized_message_size) +
                                   s_req_trailer_bytes_count;
 
         cl::buffer ans(buf_size);
         size_t curr_pos = 0;
 
         fill_message_type_byte(ans, curr_pos, transfer_msg_type::req);
-        fill_serialized_message_size_bytes(ans, curr_pos, serialized_message_size);
-        fill_serialized_message_bytes(ans, curr_pos, message, serialized_message_size);
+        fill_serialized_message_size_bytes(ans, curr_pos, static_cast<uint32_t>(serialized_message_size));
+        fill_serialized_message_bytes(ans, curr_pos, message, static_cast<uint32_t>(serialized_message_size));
         fill_message_number_bytes(ans, curr_pos, message_number);
         fill_method_idx_bytes(ans, curr_pos, method_idx);
 
@@ -264,9 +264,9 @@ namespace vshalygin::rpc {
                                        response_result rc,
                                        google::protobuf::Message *message)
     {
-        uint32_t serialized_message_size = 0;
+        size_t serialized_message_size = 0;
         if(message) {
-            serialized_message_size = static_cast<uint32_t>(message->ByteSizeLong());
+            serialized_message_size = message->ByteSizeLong();
         }
 
         if(serialized_message_size > s_max_transfer_message_size) {
@@ -274,15 +274,15 @@ namespace vshalygin::rpc {
         }
 
         const uint32_t buf_size = s_header_bytes_count +
-                                  serialized_message_size +
+                                  static_cast<uint32_t>(serialized_message_size) +
                                   s_res_trailer_bytes_count;
 
         cl::buffer ans(buf_size);
         size_t curr_pos = 0;
 
         fill_message_type_byte(ans, curr_pos, transfer_msg_type::res);
-        fill_serialized_message_size_bytes(ans, curr_pos, serialized_message_size);
-        fill_serialized_message_bytes(ans, curr_pos, message, serialized_message_size);
+        fill_serialized_message_size_bytes(ans, curr_pos, static_cast<uint32_t>(serialized_message_size));
+        fill_serialized_message_bytes(ans, curr_pos, message, static_cast<uint32_t>(serialized_message_size));
         fill_message_number_bytes(ans, curr_pos, message_number);
         fill_response_result_bytes(ans, curr_pos, rc);
 
