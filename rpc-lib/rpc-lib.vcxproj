@@ -11,8 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pipe-connector.cpp" />
-    <ClCompile Include="pipe-listener.cpp" />
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
     <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
@@ -20,7 +18,9 @@
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp" />
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
-    <ClCompile Include="pipe-transport.cpp" />
+    <ClCompile Include="rpc-lib\transport\in-process\pipe-connector.cpp" />
+    <ClCompile Include="rpc-lib\transport\in-process\pipe-listener.cpp" />
+    <ClCompile Include="rpc-lib\transport\in-process\pipe-transport.cpp" />
     <ClCompile Include="rpc-lib\transport\proto\pipe-auth.pb.cc">
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
@@ -29,8 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pipe-connector.h" />
-    <ClInclude Include="pipe-listener.h" />
     <ClInclude Include="rpc-lib\channel\channel.h" />
     <ClInclude Include="rpc-lib\channel\ichannel.h" />
     <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
@@ -46,6 +44,9 @@
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
     <ClInclude Include="rpc-lib\service\service.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
+    <ClInclude Include="rpc-lib\transport\in-process\pipe-connector.h" />
+    <ClInclude Include="rpc-lib\transport\in-process\pipe-listener.h" />
+    <ClInclude Include="rpc-lib\transport\in-process\pipe-transport.h" />
     <ClInclude Include="rpc-lib\transport\proto\pipe-auth.pb.h" />
     <ClInclude Include="rpc-lib\types\connection-state.h" />
     <ClInclude Include="rpc-lib\types\constants.h" />
@@ -53,7 +54,6 @@
     <ClInclude Include="rpc-lib\types\request-exception.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
-    <ClInclude Include="pipe-transport.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">

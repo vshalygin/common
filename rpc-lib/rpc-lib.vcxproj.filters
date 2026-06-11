@@ -66,17 +66,17 @@
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
       <Filter>server-endpoint</Filter>
     </ClCompile>
-    <ClCompile Include="pipe-transport.cpp">
-      <Filter>transport\in-process</Filter>
-    </ClCompile>
-    <ClCompile Include="pipe-listener.cpp">
-      <Filter>transport\in-process</Filter>
-    </ClCompile>
-    <ClCompile Include="pipe-connector.cpp">
-      <Filter>transport\in-process</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\transport\proto\pipe-auth.pb.cc">
       <Filter>transport\proto</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\transport\in-process\pipe-connector.cpp">
+      <Filter>transport\in-process</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\transport\in-process\pipe-listener.cpp">
+      <Filter>transport\in-process</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\transport\in-process\pipe-transport.cpp">
+      <Filter>transport\in-process</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -143,17 +143,17 @@
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
     </ClInclude>
-    <ClInclude Include="pipe-transport.h">
-      <Filter>transport\in-process</Filter>
-    </ClInclude>
-    <ClInclude Include="pipe-listener.h">
-      <Filter>transport\in-process</Filter>
-    </ClInclude>
-    <ClInclude Include="pipe-connector.h">
-      <Filter>transport\in-process</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\transport\proto\pipe-auth.pb.h">
       <Filter>transport\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\transport\in-process\pipe-connector.h">
+      <Filter>transport\in-process</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\transport\in-process\pipe-listener.h">
+      <Filter>transport\in-process</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\transport\in-process\pipe-transport.h">
+      <Filter>transport\in-process</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
