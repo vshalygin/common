@@ -116,14 +116,14 @@ protected:
     std::unique_ptr<iconnection> create_sut()
     {
         auto ans = std::make_unique<connection>(m_thread_pool);
-        ans->set_and_start_transport(std::move(m_transport));
+        ans->start_and_set_transport(std::move(m_transport));
         return ans;
     }
 
     std::unique_ptr<iconnection> create_sut(const std::chrono::milliseconds &timeout)
     {
         auto ans = std::make_unique<connection>(m_thread_pool, timeout);
-        ans->set_and_start_transport(std::move(m_transport));
+        ans->start_and_set_transport(std::move(m_transport));
         return ans;
     }
 
@@ -533,7 +533,7 @@ TEST_F(Connection, CallsTransportStartOnSettingTransport)
     auto sut = create_sut_without_transport();
     EXPECT_FALSE(transport_mock::was_started);
 
-    sut->set_and_start_transport(std::move(m_transport));
+    sut->start_and_set_transport(std::move(m_transport));
 
     EXPECT_TRUE(transport_mock::was_started);
 }
@@ -548,7 +548,7 @@ TEST_F(Connection, CallsTransportStartCallbackOnSettingTransport)
     auto sut = create_sut_without_transport();
     sut->set_change_state_handler(connect_handler.AsStdFunction());
 
-    sut->set_and_start_transport(std::move(m_transport));
+    sut->start_and_set_transport(std::move(m_transport));
 
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }

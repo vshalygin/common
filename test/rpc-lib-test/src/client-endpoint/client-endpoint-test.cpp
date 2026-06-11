@@ -114,7 +114,7 @@ TEST_F(ClientEndpoint, StartTransportAndSetsConnection)
     EXPECT_CALL(*m_connector, create_transport())
         .Times(1)
         .WillOnce(Return(ByMove(std::move(transport))));
-    EXPECT_CALL(*m_connection, set_and_start_transport)
+    EXPECT_CALL(*m_connection, start_and_set_transport)
         .Times(1)
         .WillOnce([&](auto &&transp) { EXPECT_EQ(transp.get(), transport_ptr);  });
     EXPECT_CALL(*m_channel, set_connection)

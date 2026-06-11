@@ -26,7 +26,7 @@ namespace vshalygin::rpc {
     void client_endpoint::connect()
     {
         auto transport = m_connector->create_transport();
-        m_connection->set_and_start_transport(std::move(transport));
+        m_connection->start_and_set_transport(std::move(transport));
         m_channel->set_connection(m_connection);
     }
 

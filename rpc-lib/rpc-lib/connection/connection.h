@@ -19,7 +19,7 @@ namespace vshalygin::rpc {
 
         ~connection();
 
-        void set_and_start_transport(std::unique_ptr<itransport> transport) override;
+        void start_and_set_transport(std::unique_ptr<itransport> transport) override;
 
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler) override;

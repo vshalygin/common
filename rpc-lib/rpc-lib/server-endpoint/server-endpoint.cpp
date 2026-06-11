@@ -105,7 +105,7 @@ namespace vshalygin::rpc {
         }
 
         try {
-            new_connection->set_and_start_transport(std::move(transport));
+            new_connection->start_and_set_transport(std::move(transport));
         } catch (...) {
             //TODO log
             auto [guard, inactive_map] = m_inactive_connection_map.get();

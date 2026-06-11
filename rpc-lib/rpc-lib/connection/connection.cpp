@@ -61,7 +61,7 @@ namespace vshalygin::rpc {
             }
         }
 
-        void set_and_start_transport(std::unique_ptr<itransport> transport)
+        void start_and_set_transport(std::unique_ptr<itransport> transport)
         {
             assert(transport);
             cl::event start_event;
@@ -351,9 +351,9 @@ namespace vshalygin::rpc {
 
     connection::~connection() = default;
 
-    void connection::set_and_start_transport(std::unique_ptr<itransport> transport)
+    void connection::start_and_set_transport(std::unique_ptr<itransport> transport)
     {
-        m_impl->set_and_start_transport(std::move(transport));
+        m_impl->start_and_set_transport(std::move(transport));
     }
 
     void connection::request_async(cl::buffer &&message,
