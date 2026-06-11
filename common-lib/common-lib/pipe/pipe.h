@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <chrono>
+#include <stdexcept>
+#include <optional>
 
 namespace vshalygin::cl {
     class pipe_env;
@@ -35,18 +37,20 @@ namespace vshalygin::cl {
         [[nodiscard]] bool is_connected() const;
 
         bool wait_connect_for(const std::chrono::microseconds &mcs) const;
-        void wait_connect() const;
-        void stop_waiting_all() const;
+        bool wait_connect() const;
 
         bool write_async(buffer &&msg, std::function<void(pipe_op_res)> &&handler);
         bool read_async(std::function<void(pipe_op_res, buffer &&)> &&handler);
 
-        void disconnect();
+        bool try_to_write_for(buffer &&msg, const std::chrono::microseconds &timeout);
+        std::optional<buffer> try_to_read_for(const std::chrono::microseconds &timeout);
+
+        void invalidate();
 
     private:
         mutable std::mutex mtx_;
         mutable std::condition_variable cv_;
-        mutable std::shared_ptr<bool> stop_waiting_flag_ = std::make_shared<bool>(false);
+        mutable bool stop_flag_ = false;
 
         std::shared_ptr<pipe_buffers> pipe_buffers_;
 

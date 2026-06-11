@@ -129,6 +129,43 @@ TEST_F(Pipe, WaitsConnection)
 
     thread_pool_->post([&]() {
         sync_event.set();
+        sut.wait_connect();
+    });
+    sync_event.wait();
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+    sut.set_buffers(buffers);
+}
+
+TEST_F(Pipe, CancelsWaiting)
+{
+    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    event sync_event1;
+    event sync_event2;
+    test_pipe sut(true);
+
+    thread_pool_->post([&]() {
+        sync_event1.set();
+        sut.wait_connect();
+        sync_event2.set();
+    });
+    sync_event1.wait();
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+    sut.invalidate();
+    sync_event2.wait();
+
+    ASSERT_FALSE(sut.is_connected());
+}
+
+TEST_F(Pipe, WaitsConnectionTimed)
+{
+    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    event sync_event;
+    test_pipe sut(true);
+
+    thread_pool_->post([&]() {
+        sync_event.set();
         ASSERT_TRUE(sut.wait_connect_for(std::chrono::seconds(10)));
     });
     sync_event.wait();
@@ -137,23 +174,44 @@ TEST_F(Pipe, WaitsConnection)
     sut.set_buffers(buffers);
 }
 
-TEST_F(Pipe, InvalidateBuffersByDisconnection)
+TEST_F(Pipe, CancelsTimedWaiting)
+{
+    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    event sync_event1;
+    event sync_event2;
+    test_pipe sut(true);
+
+    thread_pool_->post([&]() {
+        sync_event1.set();
+        ASSERT_TRUE(sut.wait_connect_for(std::chrono::seconds(10)));
+        sync_event2.set();
+    });
+    sync_event1.wait();
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+    sut.invalidate();
+    sync_event2.wait();
+
+    ASSERT_FALSE(sut.is_connected());
+}
+
+TEST_F(Pipe, InvalidateBuffers)
 {
     auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
     test_pipe sut(true);
     sut.set_buffers(buffers);
 
-    sut.disconnect();
+    sut.invalidate();
 
     EXPECT_FALSE(buffers->client_to_server.is_valid());
     EXPECT_FALSE(buffers->server_to_client.is_valid());
 }
 
-TEST_F(Pipe, DoesNothingOnDisconnectIfNoBuufers)
+TEST_F(Pipe, DoesNothingOnInvalidationIfNoBufers)
 {
     test_pipe sut(true);
 
-    sut.disconnect();
+    sut.invalidate();
 }
 
 TEST_F(ServerPipe, WriteAsyncReturnsFalseIfNoBuffers)
@@ -217,6 +275,67 @@ TEST_F(ServerPipe, ReadAsyncReadsMessageFromInputBuffer)
 
     EXPECT_TRUE(buffers_->client_to_server.get_pending_read_handlers_count() == 1);
     buffers_->client_to_server.write_async(buf.copy(), {});
+    sut_.reset();
+    buffers_.reset();
+}
+
+TEST_F(ServerPipe, TryToWriteForReturnsFalseIfNoBuffers)
+{
+    ASSERT_FALSE(sut_->try_to_write_for({}, std::chrono::seconds(10)));
+}
+
+TEST_F(ServerPipe, TryToWriteForReturnsFalseIfOutputBufferInvalid)
+{
+    buffers_->server_to_client.invalidate();
+    sut_->set_buffers(buffers_);
+
+    ASSERT_FALSE(sut_->try_to_write_for({}, std::chrono::seconds(10)));
+}
+
+TEST_F(ServerPipe, TryToWriteForWritesMessageInOutputBuffer)
+{
+    buffer buf(2);
+    buf[0] = (std::byte)0x1;
+    buf[1] = (std::byte)0x2;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
+        .Times(1);
+    sut_->set_buffers(buffers_);
+    
+    auto res = sut_->try_to_write_for(buf.copy(), std::chrono::seconds(10));
+
+    ASSERT_TRUE(res);
+    buffers_->server_to_client.read_async(read_mock.AsStdFunction());
+
+    sut_.reset();
+    buffers_.reset();
+}
+
+TEST_F(ServerPipe, TryToReadForReturnsFalseIfNoBuffers)
+{
+    ASSERT_FALSE(sut_->try_to_read_for({}));
+}
+
+TEST_F(ServerPipe, TryToReadForReturnsFalseIfInputBufferInvalid)
+{
+    buffers_->client_to_server.invalidate();
+    sut_->set_buffers(buffers_);
+
+    ASSERT_FALSE(sut_->try_to_read_for({}));
+}
+
+TEST_F(ServerPipe, TryToReadForReadsMessageFromInputBuffer)
+{
+    buffer buf(2);
+    buf[0] = (std::byte)0x1;
+    buf[1] = (std::byte)0x2;
+    MockFunction<void(pipe_op_res, buffer &&)> read_mock;
+    sut_->set_buffers(buffers_);
+    buffers_->client_to_server.write_async(buf.copy(), {});
+
+    auto res = sut_->try_to_read_for(std::chrono::seconds(10));
+    ASSERT_TRUE(res && *res == buf);
+
     sut_.reset();
     buffers_.reset();
 }

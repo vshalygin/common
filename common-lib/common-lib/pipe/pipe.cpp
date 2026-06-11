@@ -1,4 +1,6 @@
 #include "pipe.h"
+#include "common-lib/syncronization/event/event.h"
+
 #include <mutex>
 #include <condition_variable>
 
@@ -10,7 +12,7 @@ namespace vshalygin::cl {
     pipe::~pipe()
     {
         try {
-            disconnect();
+            invalidate();
         } catch(...) {
             //TODO log fatal
             std::terminate();
@@ -40,30 +42,19 @@ namespace vshalygin::cl {
         auto now = std::chrono::steady_clock::now();
         std::unique_lock lock(mtx_);
         return cv_.wait_until(lock, now + mcs,
-                              [this, stop_waiting_flag = stop_waiting_flag_]() {
-                                  return *stop_waiting_flag || pipe_buffers_ != nullptr;
+                              [this]() {
+                                  return stop_flag_ || pipe_buffers_ != nullptr;
                               });
     }
 
-    void pipe::wait_connect() const
+    bool pipe::wait_connect() const
     {
         std::unique_lock lock(mtx_);
-        cv_.wait(lock,[this, stop_waiting_flag = stop_waiting_flag_]() {
-                          return *stop_waiting_flag || pipe_buffers_ != nullptr;
+        cv_.wait(lock,[this]() {
+                          return stop_flag_ || pipe_buffers_ != nullptr;
                       });
-    }
 
-    void pipe::stop_waiting_all() const
-    {
-        auto new_stop_waiting_flag = std::make_shared<bool>(false);
-
-        {
-            std::lock_guard lock(mtx_);
-            *stop_waiting_flag_ = true;
-            stop_waiting_flag_ = std::move(new_stop_waiting_flag);
-        }
-
-        cv_.notify_all();
+        return !stop_flag_;
     }
 
     bool pipe::write_async(buffer &&msg, std::function<void(pipe_op_res)> &&handler)
@@ -101,9 +92,65 @@ namespace vshalygin::cl {
         return true;
     }
 
-    void pipe::disconnect()
+    bool pipe::try_to_write_for(buffer &&msg, const std::chrono::microseconds &timeout)
     {
-        std::lock_guard guard(mtx_);
+        struct data
+        {
+            event sync_event;
+            pipe_op_res res = pipe_op_res::failed;
+        };
+        auto d = std::make_shared<data>();
+        auto task = [d](pipe_op_res r) {
+            d->res = r;
+            d->sync_event.set();
+        };
+
+        if(!write_async(std::move(msg), std::move(task))) {
+            return false;
+        }
+
+        if(!d->sync_event.wait_for(timeout)) {
+            return false;
+        }
+
+        return is_success(d->res);
+    }
+
+    std::optional<buffer> pipe::try_to_read_for(const std::chrono::microseconds &timeout)
+    {
+        struct data
+        {
+            event sync_event;
+            pipe_op_res res = pipe_op_res::failed;
+            buffer buf;
+        };
+        auto d = std::make_shared<data>();
+        auto task = [d](pipe_op_res r, buffer &&b) {
+            d->res = r;
+            d->buf = std::move(b);
+            d->sync_event.set();
+        };
+
+        if(!read_async(std::move(task))) {
+            return std::nullopt;
+        }
+
+        if(!d->sync_event.wait_for(timeout)) {
+            return std::nullopt;
+        }
+
+        return is_success(d->res) ? std::optional<buffer>(std::move(d->buf)) : std::nullopt;
+    }
+
+    void pipe::invalidate()
+    {
+        std::unique_lock lock(mtx_);
+        stop_flag_ = true;
+
+        lock.unlock();
+        cv_.notify_all();
+        lock.lock();
+
         if(pipe_buffers_) {
             pipe_buffers_->client_to_server.invalidate();
             pipe_buffers_->server_to_client.invalidate();
