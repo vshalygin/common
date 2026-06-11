@@ -56,7 +56,7 @@ namespace vshalygin::rpc {
     {
         std::lock_guard lock(mtx_);
         if(is_started_) {
-            pipe_->disconnect();
+            pipe_->invalidate();
             is_started_ = false;
             try {
                 stop_callback_();

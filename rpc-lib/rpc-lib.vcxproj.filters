@@ -40,6 +40,9 @@
     <Filter Include="transport\in-process">
       <UniqueIdentifier>{9c8f22f0-548a-4273-a25a-624020e87616}</UniqueIdentifier>
     </Filter>
+    <Filter Include="transport\proto">
+      <UniqueIdentifier>{f1e65cb8-7454-4869-a7cc-e87e889ba14a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -71,6 +74,9 @@
     </ClCompile>
     <ClCompile Include="pipe-connector.cpp">
       <Filter>transport\in-process</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\transport\proto\pipe-auth.pb.cc">
+      <Filter>transport\proto</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,5 +152,13 @@
     <ClInclude Include="pipe-connector.h">
       <Filter>transport\in-process</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\transport\proto\pipe-auth.pb.h">
+      <Filter>transport\proto</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="rpc-lib\transport\proto\pipe-auth.proto">
+      <Filter>transport\proto</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

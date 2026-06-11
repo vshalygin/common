@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package vshalygin.rpc.proto;
+
+message pipe_auth_request {
+    string auth_data = 1;
+}
+
+message pipe_auth_response {
+    bool is_accepted = 1;
+    string pipe_name = 2;
+}
