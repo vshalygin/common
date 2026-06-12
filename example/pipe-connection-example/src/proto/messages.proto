@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package proto;
+
+message client_request {
+    string data = 1;
+}
+
+message client_response {
+    string data = 2;
+}
+
+message server_request {
+    string data = 3;
+}
+
+message server_response {
+    string data = 5;
+}

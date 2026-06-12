@@ -11,7 +11,7 @@ namespace vshalygin::rpc {
         : pipe_env_(std::move(pipe_env))
         , listener_pipe_name_(listener_pipe_name)
     {
-        assert(pipe_env);
+        assert(pipe_env_);
     }
 
     std::unique_ptr<itransport> pipe_connector::create_transport()

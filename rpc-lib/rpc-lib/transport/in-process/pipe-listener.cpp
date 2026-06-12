@@ -40,7 +40,7 @@ namespace vshalygin::rpc {
         assert(connect_handler_);
 
         std::lock_guard guard(mtx_);
-        if(listen_thread_.joinable() && !listen_thread_.get_stop_token().stop_requested()) {
+        if(is_running_) {
             throw std::runtime_error("pipe listener already started");
         }
         
