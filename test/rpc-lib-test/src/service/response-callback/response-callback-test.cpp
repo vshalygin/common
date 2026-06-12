@@ -89,3 +89,17 @@ TEST(ResponseCallback, AnswersFalseOnCheckIfNotFailed)
 
     ASSERT_FALSE(sut->Failed());
 }
+
+TEST(ResponseCallback, CallsCallbackWithUnknownErrorParameterIfDestroyedByException)
+{
+    try {
+        NiceMock<MockFunction<void(response_result)>> callback;
+        EXPECT_CALL(callback, Call(response_result::unknown_error))
+            .Times(1);
+
+        auto sut = response_callback::create_on_heap(callback.AsStdFunction());
+        closure_guard cg(sut);
+        throw std::runtime_error("");
+    } catch(...) {
+    }
+}

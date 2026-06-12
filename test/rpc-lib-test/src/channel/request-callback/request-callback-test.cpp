@@ -28,18 +28,13 @@ protected:
         m_callback_ptr = &m_callback;
 
         m_request_callback = request_callback<Response>::create_on_heap(m_callback.AsStdFunction());
-        m_guard = closure_guard(m_request_callback);
-    }
-
-    void TearDown() override
-    {
-        m_guard.reset();
+        m_guard = std::make_unique<closure_guard>(m_request_callback);
     }
 
 protected:
     NiceMock<MockFunction<void(request_result, std::unique_ptr<Response>)>> *m_callback_ptr;
 
-    closure_guard m_guard;
+    std::unique_ptr<closure_guard> m_guard;
     request_callback<Response> *m_request_callback;
 
 private:
@@ -93,4 +88,16 @@ TEST_F(RequestCallback, AnswersTrueIfCanceled)
 TEST_F(RequestCallback, AnswersFalseIfNotCanceled)
 {
     ASSERT_FALSE(m_request_callback->IsCanceled());
+}
+
+TEST_F(RequestCallback, CallsCallbackWithUnknownErrorParameterIfDestroyedByException)
+{
+    try {
+        EXPECT_CALL(*m_callback_ptr, Call(request_result::unknown_error, _))
+            .Times(1);
+
+        auto guard = std::move(m_guard);
+        throw std::runtime_error("");
+    } catch(...){
+    }
 }

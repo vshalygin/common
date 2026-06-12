@@ -39,7 +39,7 @@ TEST_F(ClosureGuard, DoesNothingIfClosureIsNullptr)
 
 TEST_F(ClosureGuard, CallsRunMethodOnResetOperation)
 {
-    auto sut = closure_guard(m_closure.get());
+    auto sut = std::make_unique<closure_guard>(m_closure.get());
     EXPECT_CALL(*m_closure, Run)
         .Times(1);
 
@@ -48,26 +48,6 @@ TEST_F(ClosureGuard, CallsRunMethodOnResetOperation)
     Mock::VerifyAndClearExpectations(m_closure.get());
 }
 
-TEST_F(ClosureGuard, CallsRunMethodOnResetOperationOnlyOnce)
-{
-    auto sut = closure_guard(m_closure.get());
-    EXPECT_CALL(*m_closure, Run)
-        .Times(1);
-
-    sut.reset();
-    sut.reset();
-    sut.reset();
-
-    Mock::VerifyAndClearExpectations(m_closure.get());
-}
-
-TEST_F(ClosureGuard, DoesNothingOnResetOperationAfterMoving)
-{
-    auto sut = closure_guard(m_closure.get());
-    closure_guard other(std::move(sut));
-
-    sut.reset();
-}
 
 TEST_F(ClosureGuard, CallsDoneIfMoveAssignedByEmtpyGuard)
 {
@@ -76,18 +56,6 @@ TEST_F(ClosureGuard, CallsDoneIfMoveAssignedByEmtpyGuard)
     EXPECT_CALL(*m_closure, Run)
         .Times(1);
     sut = closure_guard();
-
-    Mock::VerifyAndClearExpectations(m_closure.get());
-}
-
-TEST_F(ClosureGuard, CallsDoneIfResetCalledOnMoveAssignedObject)
-{
-    auto guard = closure_guard(m_closure.get());
-    auto sut = std::move(guard);
-
-    EXPECT_CALL(*m_closure, Run)
-        .Times(1);
-    sut.reset();
 
     Mock::VerifyAndClearExpectations(m_closure.get());
 }

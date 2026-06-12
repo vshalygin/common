@@ -36,5 +36,7 @@ namespace vshalygin::rpc {
     private:
         response_result m_response_result = response_result::ok;
         callback_t m_callback;
+
+        const int m_uncaught_exceptions;
     };
 }

@@ -19,6 +19,7 @@ namespace vshalygin::rpc {
         request_callback(Callback &&callback)
             : m_response(std::make_unique<Response>())
             , m_callback(std::forward<Callback>(callback))
+            , m_uncaught_exceptions(std::uncaught_exceptions())
         {
             assert(m_response);
             assert(m_callback);
@@ -42,6 +43,9 @@ namespace vshalygin::rpc {
         void Run() override
         {
             try {
+                if(std::uncaught_exceptions() > m_uncaught_exceptions) {
+                    m_request_result = request_result::unknown_error;
+                }
                 m_callback(m_request_result, std::move(m_response));
             } catch(...) {
                 //TODO safe log
@@ -91,5 +95,7 @@ namespace vshalygin::rpc {
 
         std::unique_ptr<Response> m_response;
         callback_t m_callback;
+
+        const int m_uncaught_exceptions;
     };
 }

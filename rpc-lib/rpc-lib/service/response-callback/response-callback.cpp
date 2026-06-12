@@ -3,6 +3,7 @@
 namespace vshalygin::rpc {
     response_callback::response_callback(callback_t &&callback)
         : m_callback(std::move(callback))
+        , m_uncaught_exceptions(std::uncaught_exceptions())
     {
         assert(m_callback);
     }
@@ -15,6 +16,9 @@ namespace vshalygin::rpc {
     void response_callback::Run()
     {
         try {
+            if(std::uncaught_exceptions() > m_uncaught_exceptions) {
+                m_response_result = response_result::unknown_error;
+            }
             m_callback(m_response_result);
         } catch(...) {
             //TODO safe log
