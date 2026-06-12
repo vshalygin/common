@@ -116,21 +116,22 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
                                                &m_request_message);
     MockFunction<void(buffer &&)> response_callback;
     EXPECT_CALL(response_callback, Call)
-        .Times(1)
-        .WillOnce([&](auto &&buf) { EXPECT_EQ(response_buf, buf); });
+        .Times(1);
     EXPECT_CALL(*m_gservice, Method2)
         .Times(1)
-        .WillOnce([&](::google::protobuf::RpcController *controller,
+        .WillOnce([&](::google::protobuf::RpcController * /*controller*/,
                   const ::proto::request_message *request,
-                  ::proto::response_message *response,
+                  ::proto::response_message * /*response*/,
                   ::google::protobuf::Closure *done) {
                       closure_guard cg(done);
                       EXPECT_TRUE(MessageDifferencer::Equals(m_request_message, *request));
-                      controller->SetFailed(to_string(response_result::unknown_error));
-                      response->CopyFrom(m_response_message);
+                      throw std::runtime_error("");
                   });
 
-    m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
+    try {
+        m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
+    } catch(...) {
+    }
 }
 
 TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNotSet)

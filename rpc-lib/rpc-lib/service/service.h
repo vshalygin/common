@@ -69,7 +69,7 @@ namespace vshalygin::rpc {
             auto response_callback = response_callback::create_on_heap(std::move(callback));
 
             m_gservice->CallMethod(m_gservice->descriptor()->method(method_idx),
-                                   response_callback,
+                                   nullptr,
                                    req.get(),
                                    res.get(),
                                    response_callback);

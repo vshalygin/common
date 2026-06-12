@@ -232,3 +232,14 @@ TEST_F(ClientEndpoint, MakeFailRequestAsync)
     
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
+
+TEST_F(ClientEndpoint, RequestHandlerCatchesException)
+{
+    EXPECT_CALL(*m_service, process_request)
+        .Times(1)
+        .WillOnce(Throw(std::exception()));
+
+    auto sut = create_sut(); sut;
+
+    ASSERT_NO_THROW(m_request_handler({}, {}));
+}
