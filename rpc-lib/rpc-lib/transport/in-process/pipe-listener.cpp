@@ -23,7 +23,7 @@ namespace vshalygin::rpc {
 
         bool check_auth(const proto::pipe_auth_request & /*data*/)
         {
-            return true; //well, allow anything
+            return true; //well, allow anyone
         }
     }
 

@@ -3,6 +3,8 @@
 #include <memory>
 
 namespace vshalygin::rpc {
+    //create_transport должен бросать исключение, если не удалось создать транспрот
+
     class iconnector
     {
     public:

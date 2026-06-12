@@ -4,7 +4,7 @@ namespace vshalygin::rpc {
     pipe_transport::pipe_transport(std::shared_ptr<cl::pipe> pipe)
         : pipe_(std::move(pipe))
     {
-        assert(pipe_);
+        assert(pipe_ && pipe_->is_connected());
     }
 
     void pipe_transport::send_async(cl::buffer &&message,
