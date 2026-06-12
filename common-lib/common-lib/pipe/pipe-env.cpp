@@ -12,7 +12,7 @@ namespace vshalygin::cl {
 
     std::shared_ptr<pipe> pipe_env::open_pipe(const std::string &name)
     {
-        return create_new_pipe_end(name, true, client_side_pipes_, server_side_pipes_);
+        return create_new_pipe_end(name, false, client_side_pipes_, server_side_pipes_);
     }
 
     std::shared_ptr<pipe> pipe_env::create_new_pipe_end(const std::string &name,
