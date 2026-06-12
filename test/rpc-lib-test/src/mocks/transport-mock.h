@@ -12,7 +12,7 @@ public:
 
     MOCK_METHOD(void, start, (std::function<void()> &&, std::function<void()> &&), (override));
     MOCK_METHOD(void, stop, (), (override));
-    MOCK_METHOD(bool, is_stopped, (), (const, override));
+    MOCK_METHOD(bool, is_running, (), (const, override));
 };
 
 using transport_nice_mock = ::testing::NiceMock<transport_mock>;

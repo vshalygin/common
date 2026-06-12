@@ -37,8 +37,8 @@ namespace vshalygin::rpc {
         assert(stop_callback);
 
         std::lock_guard lock(mtx_);
-        if(is_started_) {
-            throw std::logic_error("pipe transport already started");
+        if(state_ != state::init) {
+            throw std::logic_error("pipe transport was started");
         }
 
         auto res = pipe_->wait_connect_for(std::chrono::seconds(10));
@@ -47,7 +47,7 @@ namespace vshalygin::rpc {
         }
 
         stop_callback_ = std::move(stop_callback);
-        is_started_ = true;
+        state_ = state::started;
 
         start_callback();
     }
@@ -55,9 +55,9 @@ namespace vshalygin::rpc {
     void pipe_transport::stop()
     {
         std::lock_guard lock(mtx_);
-        if(is_started_) {
+        if(state_ == state::started) {
             pipe_->invalidate();
-            is_started_ = false;
+            state_ = state::stopped;
             try {
                 stop_callback_();
             } catch(...) {
@@ -66,8 +66,9 @@ namespace vshalygin::rpc {
         }
     }
 
-    bool pipe_transport::is_stopped() const
+    bool pipe_transport::is_running() const
     {
-        return pipe_->is_connected();
+        std::lock_guard lock(mtx_);
+        return state_ == state::started;
     }
 }

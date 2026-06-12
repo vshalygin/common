@@ -124,7 +124,7 @@ namespace vshalygin::rpc {
         bool is_active() const
         {
             auto [guard, transport] = m_transport.get();
-            return transport && !transport->is_stopped();
+            return transport && transport->is_running();
         }
 
         void stop_transport()

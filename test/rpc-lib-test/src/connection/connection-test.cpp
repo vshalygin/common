@@ -57,9 +57,9 @@ namespace {
             }
         }
 
-        bool is_stopped() const override
+        bool is_running() const override
         {
-            return m_stopped;
+            return !m_stopped;
         }
 
         void emit_disconnect_event()
@@ -468,14 +468,14 @@ TEST_F(Connection, SetsDisconnectHandler)
 
 TEST_F(Connection, CheckIfConnected)
 {
-    EXPECT_TRUE(m_transport_ptr->is_stopped());
+    EXPECT_FALSE(m_transport_ptr->is_running());
     auto sut = create_sut();
-    EXPECT_FALSE(m_transport_ptr->is_stopped());
+    EXPECT_TRUE(m_transport_ptr->is_running());
 
     sut->stop_transport();
 
     ASSERT_FALSE(sut->is_active());
-    ASSERT_TRUE(m_transport_ptr->is_stopped());
+    ASSERT_FALSE(m_transport_ptr->is_running());
 }
 
 TEST_F(Connection, CallsTransportStopBeforeDestruction)
