@@ -22,6 +22,7 @@ namespace vshalygin::rpc {
         closure_guard(closure_guard &&) noexcept;
         closure_guard &operator=(closure_guard &&) noexcept;
 
+    private:
         void reset() noexcept;
 
     private:

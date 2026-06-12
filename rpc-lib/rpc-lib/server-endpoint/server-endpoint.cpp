@@ -93,11 +93,8 @@ namespace vshalygin::rpc {
         const auto id = m_next_connection_id.fetch_add(1);
         auto new_connection = std::make_shared<connection>(m_thread_pool);
 
-        auto change_state_handler = create_connection_change_state_handler(self, id);
-        auto request_handler = create_request_handler();
-
-        new_connection->set_change_state_handler(std::move(change_state_handler));
-        new_connection->set_request_handler(std::move(request_handler));
+        new_connection->set_change_state_handler(create_connection_change_state_handler(self, id));
+        new_connection->set_request_handler(create_request_handler());
 
         {
             auto [guard, inactive_map] = m_inactive_connection_map.get();

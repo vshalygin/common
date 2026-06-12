@@ -32,12 +32,17 @@ namespace vshalygin::rpc {
         template<typename Response>
         using response_results_t = std::vector<std::pair<request_result, std::unique_ptr<Response>>>;
 
+        server_endpoint() = default;
+
         server_endpoint(std::unique_ptr<ilistener> listener,
                         std::shared_ptr<iservice> service,
                         std::shared_ptr<cl::thread_pool> thread_pool);
 
         server_endpoint(server_endpoint &) = delete;
         server_endpoint &operator=(server_endpoint &) = delete;
+
+        server_endpoint(server_endpoint &&) = default;
+        server_endpoint &operator=(server_endpoint &&) = default;
 
         void start_listen();
         bool is_listening() const;
