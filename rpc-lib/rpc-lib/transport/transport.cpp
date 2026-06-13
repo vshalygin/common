@@ -10,7 +10,7 @@ namespace vshalygin::rpc {
     }
 
     void transport::send_async(cl::buffer &&message,
-                                    std::function<void()> &&error_handler) const
+                                    std::function<void()> &&error_handler)
     {
         auto res = pipe_->write_async(std::move(message),
                                      [eh = std::move(error_handler)](pipe_op_res res) {
@@ -24,13 +24,19 @@ namespace vshalygin::rpc {
         }
     }
 
-    void transport::recv_async(std::function<void(cl::buffer &&)> &&handler) const
+    void transport::recv_async(std::function<void(cl::buffer &&)> &&handler)
     {
-        pipe_->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
-                              if(is_success(res)) {
-                                  handler(std::move(msg));
-                              }
-                          });
+        auto r = pipe_->read_async([handler = std::move(handler), this](pipe_op_res res, cl::buffer &&msg) {
+                                       if(is_success(res)) {
+                                           handler(std::move(msg));
+                                       } else {
+                                           stop();
+                                       }
+                                   });
+
+        if(!r) {
+            stop();
+        }
     }
 
     void transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
@@ -51,8 +57,10 @@ namespace vshalygin::rpc {
         stop_callback_ = std::move(stop_callback);
         state_ = state::started;
 
-        if(start_callback) {
+        if(start_callback) try {
             start_callback();
+        } catch (...) {
+            //TODO log
         }
     }
 

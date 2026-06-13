@@ -7,8 +7,8 @@ class transport_mock
 {
 public:
     MOCK_METHOD(void, send_async, (vshalygin::cl::buffer &&message,
-                                   std::function<void()> &&error_handler), (const, override));
-    MOCK_METHOD(void, recv_async, (std::function<void(vshalygin::cl::buffer &&)> &&handler), (const, override));
+                                   std::function<void()> &&error_handler), (override));
+    MOCK_METHOD(void, recv_async, (std::function<void(vshalygin::cl::buffer &&)> &&handler), (override));
 
     MOCK_METHOD(void, start, (std::function<void()> &&, std::function<void()> &&), (override));
     MOCK_METHOD(void, stop, (), (override));

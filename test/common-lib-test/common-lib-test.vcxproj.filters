@@ -37,15 +37,6 @@
     <ClCompile Include="src\thread-pool\strand-test.cpp">
       <Filter>thread-pool</Filter>
     </ClCompile>
-    <ClCompile Include="src\pipe\pipe-buffer\pipe-buffer-test.cpp">
-      <Filter>pipe\pipe-buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="src\pipe\pipe-test.cpp">
-      <Filter>pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\pipe\pipe-env-test.cpp">
-      <Filter>pipe</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -83,12 +74,6 @@
     </Filter>
     <Filter Include="timer\periodic-timer">
       <UniqueIdentifier>{fdbc5790-7680-4e3c-a2aa-60d2564838d5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pipe">
-      <UniqueIdentifier>{14d0779b-0645-4227-af38-096e50d403fc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pipe\pipe-buffer">
-      <UniqueIdentifier>{d4f01734-5d21-4c8d-8dae-13f5f666022b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

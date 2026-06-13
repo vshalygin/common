@@ -29,9 +29,9 @@ namespace {
         }
 
         MOCK_METHOD(void, send_async, (buffer &&message,
-                                       std::function<void()> &&error_handler), (const, override));
+                                       std::function<void()> &&error_handler), (override));
 
-        void recv_async(std::function<void(buffer &&)> &&handler) const override
+        void recv_async(std::function<void(buffer &&)> &&handler) override
         {
             m_recv_handler = std::move(handler);
             ++m_recv_async_called;
