@@ -1,5 +1,5 @@
 #pragma once
-#include "rpc-lib/interface/ilistener.h"
+#include "ilistener.h"
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <thread>
 
@@ -7,15 +7,15 @@ namespace vshalygin::rpc {
     class ipipe_env;
     class ipipe;
 
-    class pipe_listener
+    class listener
         : public ilistener
     {
     public:
-        explicit pipe_listener(std::shared_ptr<ipipe_env> pipe_env,
-                               const std::string &listener_pipe_name);
+        explicit listener(std::shared_ptr<ipipe_env> pipe_env,
+                          const std::string &listener_pipe_name);
 
-        pipe_listener(pipe_listener &) = delete;
-        pipe_listener &operator=(pipe_listener &) = delete;
+        listener(listener &) = delete;
+        listener &operator=(listener &) = delete;
 
         void start() override;
         void stop() override;

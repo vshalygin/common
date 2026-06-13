@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/interface/ilistener.h>
+#include <rpc-lib/listener/ilistener.h>
 #include <gmock/gmock.h>
 
 class listener_mock

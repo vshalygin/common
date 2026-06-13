@@ -1,10 +1,10 @@
-#include "pipe-listener.h"
-#include "pipe-transport.h"
+#include "listener.h"
 
 #pragma warning(push, 0)
 #include "rpc-lib/transport/proto/pipe-auth.pb.h"
 #pragma warning(pop)
 
+#include <rpc-lib/transport/transport.h>
 #include <rpc-lib/pipe/ipipe.h>
 #include <rpc-lib/pipe/ipipe-env.h>
 #include <common-lib/utils/buffer/buffer.h>
@@ -27,15 +27,15 @@ namespace vshalygin::rpc {
         }
     }
 
-    pipe_listener::pipe_listener(std::shared_ptr<ipipe_env> pipe_env,
-                                 const std::string &listener_pipe_name)
+    listener::listener(std::shared_ptr<ipipe_env> pipe_env,
+                       const std::string &listener_pipe_name)
         : pipe_env_(std::move(pipe_env))
         , listener_pipe_name_(listener_pipe_name)
     {
         assert(pipe_env_);
     }
 
-    void pipe_listener::start()
+    void listener::start()
     {
         assert(connect_handler_);
 
@@ -61,7 +61,7 @@ namespace vshalygin::rpc {
         }
     }
 
-    void pipe_listener::stop()
+    void listener::stop()
     {
         std::lock_guard guard(mtx_);
         if(is_running_) {
@@ -80,26 +80,26 @@ namespace vshalygin::rpc {
         }
     }
 
-    bool pipe_listener::is_stopped() const
+    bool listener::is_stopped() const
     {
         std::lock_guard guard(mtx_);
         return !is_running_;
     }
 
-    void pipe_listener::set_change_state_handler(change_state_handler_t &&handler)
+    void listener::set_change_state_handler(change_state_handler_t &&handler)
     {
         auto [guard, state_change_handler] = state_change_handler_.get();
         state_change_handler = std::move(handler);
     }
 
-    void pipe_listener::set_connect_handler(connect_handler_t &&handler)
+    void listener::set_connect_handler(connect_handler_t &&handler)
     {
         assert(!connect_handler_);
 
         connect_handler_ = std::move(handler);
     }
 
-    void pipe_listener::create_new_connection()
+    void listener::create_new_connection()
     {
         std::unique_lock guard(mtx_);
         if(!is_running_) {
@@ -147,7 +147,7 @@ namespace vshalygin::rpc {
                 return;
             }
 
-            connect_handler_(std::make_unique<pipe_transport>(std::move(pipe)));
+            connect_handler_(std::make_unique<transport>(std::move(pipe)));
         }
     }
 }

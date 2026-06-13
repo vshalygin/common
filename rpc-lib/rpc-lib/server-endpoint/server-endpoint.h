@@ -1,5 +1,5 @@
 #pragma once
-#include "rpc-lib/interface/ilistener.h"
+#include "rpc-lib/listener/ilistener.h"
 #include "rpc-lib/connection/iconnection.h"
 #include "rpc-lib/service/iservice.h"
 #include "rpc-lib/channel/ichannel.h"

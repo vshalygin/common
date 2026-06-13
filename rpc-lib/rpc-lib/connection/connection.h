@@ -1,6 +1,6 @@
 #pragma once
 #include "iconnection.h"
-#include "rpc-lib/interface/itransport.h"
+#include "rpc-lib/transport/itransport.h"
 #include "rpc-lib/types/constants.h"
 
 #include <common-lib/timer/multiple-timer/multiple-timer.h>

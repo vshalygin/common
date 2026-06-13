@@ -1,5 +1,5 @@
-#include "pipe-connector.h"
-#include "pipe-transport.h"
+#include "connector.h"
+#include "rpc-lib/transport/transport.h"
 #include "rpc-lib/pipe/ipipe-env.h"
 #include "rpc-lib/pipe/ipipe.h"
 
@@ -8,15 +8,15 @@
 #pragma warning(pop)
 
 namespace vshalygin::rpc {
-    pipe_connector::pipe_connector(std::shared_ptr<ipipe_env> pipe_env,
-                                   const std::string &listener_pipe_name)
+    connector::connector(std::shared_ptr<ipipe_env> pipe_env,
+                         const std::string &listener_pipe_name)
         : pipe_env_(std::move(pipe_env))
         , listener_pipe_name_(listener_pipe_name)
     {
         assert(pipe_env_);
     }
 
-    std::unique_ptr<itransport> pipe_connector::create_transport()
+    std::unique_ptr<itransport> connector::create_transport()
     {
         auto listener_pipe = pipe_env_->open_pipe(listener_pipe_name_);
         if(!listener_pipe->wait_connect_for(std::chrono::seconds(10))) {
@@ -50,6 +50,6 @@ namespace vshalygin::rpc {
             throw std::runtime_error("failed to wait worker pipe connection");
         }
 
-        return std::make_unique<pipe_transport>(std::move(pipe));
+        return std::make_unique<transport>(std::move(pipe));
     }
 }

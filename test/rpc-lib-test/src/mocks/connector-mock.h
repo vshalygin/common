@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/interface/iconnector.h>
+#include <rpc-lib/connector/iconnector.h>
 #include <gmock/gmock.h>
 
 class connector_mock

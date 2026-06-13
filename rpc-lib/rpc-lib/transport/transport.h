@@ -1,18 +1,18 @@
 #pragma once
-#include "rpc-lib/interface/itransport.h"
+#include "itransport.h"
 #include <mutex>
 
 namespace vshalygin::rpc {
     class ipipe;
 
-    class pipe_transport
+    class transport
         : public itransport
     {
     public:
-        explicit pipe_transport(std::shared_ptr<ipipe> pipe);
+        explicit transport(std::shared_ptr<ipipe> pipe);
 
-        pipe_transport(pipe_transport &) = delete;
-        pipe_transport &operator=(pipe_transport &) = delete;
+        transport(transport &) = delete;
+        transport &operator=(transport &) = delete;
 
         void send_async(cl::buffer &&message,
                         std::function<void()> &&error_handler) const override;

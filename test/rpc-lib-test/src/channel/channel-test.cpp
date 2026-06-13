@@ -1,6 +1,6 @@
 #include <rpc-lib/channel/channel.h>
 #include <rpc-lib/transfer-message/transfer-message.h>
-#include <rpc-lib/interface/itransport.h>
+#include <rpc-lib/transport/itransport.h>
 
 #include "mocks/closure-mock.h"
 #include "mocks/connection-mock.h"

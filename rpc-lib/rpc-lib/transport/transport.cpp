@@ -1,15 +1,15 @@
-#include "pipe-transport.h"
+#include "transport.h"
 #include "rpc-lib/pipe/ipipe.h"
 #include <cassert>
 
 namespace vshalygin::rpc {
-    pipe_transport::pipe_transport(std::shared_ptr<ipipe> pipe)
+    transport::transport(std::shared_ptr<ipipe> pipe)
         : pipe_(std::move(pipe))
     {
         assert(pipe_ && pipe_->is_connected());
     }
 
-    void pipe_transport::send_async(cl::buffer &&message,
+    void transport::send_async(cl::buffer &&message,
                                     std::function<void()> &&error_handler) const
     {
         auto res = pipe_->write_async(std::move(message),
@@ -24,7 +24,7 @@ namespace vshalygin::rpc {
         }
     }
 
-    void pipe_transport::recv_async(std::function<void(cl::buffer &&)> &&handler) const
+    void transport::recv_async(std::function<void(cl::buffer &&)> &&handler) const
     {
         pipe_->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
                               if(is_success(res)) {
@@ -33,7 +33,7 @@ namespace vshalygin::rpc {
                           });
     }
 
-    void pipe_transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
+    void transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
     {
         assert(start_callback);
         assert(stop_callback);
@@ -51,10 +51,12 @@ namespace vshalygin::rpc {
         stop_callback_ = std::move(stop_callback);
         state_ = state::started;
 
-        start_callback();
+        if(start_callback) {
+            start_callback();
+        }
     }
 
-    void pipe_transport::stop()
+    void transport::stop()
     {
         std::lock_guard lock(mtx_);
         if(state_ == state::started) {
@@ -68,7 +70,7 @@ namespace vshalygin::rpc {
         }
     }
 
-    bool pipe_transport::is_running() const
+    bool transport::is_running() const
     {
         std::lock_guard lock(mtx_);
         return state_ == state::started;

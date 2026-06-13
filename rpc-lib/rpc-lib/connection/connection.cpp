@@ -1,6 +1,7 @@
 #include "connection.h"
 #include "rpc-lib/transfer-message/transfer-message.h"
 #include "rpc-lib/types/constants.h"
+#include "rpc-lib/transport/itransport.h"
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <common-lib/timer/multiple-timer/multiple-timer.h>

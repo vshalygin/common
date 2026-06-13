@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/interface/itransport.h>
+#include <rpc-lib/transport/itransport.h>
 #include <gmock/gmock.h>
 
 class transport_mock

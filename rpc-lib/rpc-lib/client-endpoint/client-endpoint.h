@@ -2,7 +2,7 @@
 #include "rpc-lib/channel/ichannel.h"
 #include "rpc-lib/connection/iconnection.h"
 #include "rpc-lib/service/iservice.h"
-#include "rpc-lib/interface/iconnector.h"
+#include "rpc-lib/connector/iconnector.h"
 #include "rpc-lib/channel/request-callback/request-callback.h"
 #include "rpc-lib/types/constants.h"
 #include "rpc-lib/types/request-exception.h"

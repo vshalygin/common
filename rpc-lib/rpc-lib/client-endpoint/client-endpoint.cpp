@@ -1,4 +1,5 @@
 #include "client-endpoint.h"
+#include "rpc-lib/transport/itransport.h"
 
 namespace vshalygin::rpc {
     client_endpoint::client_endpoint(std::shared_ptr<iservice> service,

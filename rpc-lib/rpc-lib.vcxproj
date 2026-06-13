@@ -15,21 +15,15 @@
     <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
+    <ClCompile Include="rpc-lib\connector\connector.cpp" />
+    <ClCompile Include="rpc-lib\listener\listener.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe.cpp" />
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp" />
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
-    <ClCompile Include="rpc-lib\transport\in-process\pipe-connector.cpp" />
-    <ClCompile Include="rpc-lib\transport\in-process\pipe-listener.cpp" />
-    <ClCompile Include="rpc-lib\transport\in-process\pipe-transport.cpp" />
-    <ClCompile Include="rpc-lib\transport\proto\pipe-auth.pb.cc">
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
+    <ClCompile Include="rpc-lib\transport\transport.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\channel\channel.h" />
@@ -39,9 +33,10 @@
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
-    <ClInclude Include="rpc-lib\interface\iconnector.h" />
-    <ClInclude Include="rpc-lib\interface\ilistener.h" />
-    <ClInclude Include="rpc-lib\interface\itransport.h" />
+    <ClInclude Include="rpc-lib\connector\connector.h" />
+    <ClInclude Include="rpc-lib\connector\iconnector.h" />
+    <ClInclude Include="rpc-lib\listener\ilistener.h" />
+    <ClInclude Include="rpc-lib\listener\listener.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe.h" />
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h" />
@@ -53,10 +48,8 @@
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
     <ClInclude Include="rpc-lib\service\service.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
-    <ClInclude Include="rpc-lib\transport\in-process\pipe-connector.h" />
-    <ClInclude Include="rpc-lib\transport\in-process\pipe-listener.h" />
-    <ClInclude Include="rpc-lib\transport\in-process\pipe-transport.h" />
-    <ClInclude Include="rpc-lib\transport\proto\pipe-auth.pb.h" />
+    <ClInclude Include="rpc-lib\transport\itransport.h" />
+    <ClInclude Include="rpc-lib\transport\transport.h" />
     <ClInclude Include="rpc-lib\types\connection-state.h" />
     <ClInclude Include="rpc-lib\types\constants.h" />
     <ClInclude Include="rpc-lib\types\listener-state.h" />
@@ -68,15 +61,6 @@
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="rpc-lib\transport\proto\pipe-auth.proto">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename).pb.cc;%(RootDir)%(Directory)%(Filename).pb.h</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename).pb.cc;%(RootDir)%(Directory)%(Filename).pb.h</Outputs>
-    </CustomBuild>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
