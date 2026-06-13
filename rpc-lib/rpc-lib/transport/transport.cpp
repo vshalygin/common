@@ -11,11 +11,16 @@ namespace vshalygin::rpc {
 
     transport::~transport()
     {
-        stop();
+        try {
+            stop();
+        } catch (...) {
+            //TODO log
+            std::terminate();
+        }
     }
 
     void transport::send_async(cl::buffer &&message,
-                                    std::function<void()> &&error_handler)
+                               std::function<void()> &&error_handler)
     {
         auto res = pipe_->write_async(std::move(message),
                                      [eh = std::move(error_handler)](pipe_op_res res) {
@@ -29,13 +34,13 @@ namespace vshalygin::rpc {
         }
     }
 
-    void transport::recv_async(std::function<void(cl::buffer &&)> &&handler)
+    void transport::recv_async(std::function<void(bool, cl::buffer &&)> &&handler)
     {
-        auto r = pipe_->read_async([handler = std::move(handler), this](pipe_op_res res, cl::buffer &&msg) {
+        auto r = pipe_->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
                                        if(is_success(res)) {
-                                           handler(std::move(msg));
+                                           handler(true, std::move(msg));
                                        } else {
-                                           stop();
+                                           handler(false, {});
                                        }
                                    });
 

@@ -59,6 +59,7 @@ namespace vshalygin::rpc {
                 cancel_active_requests();
             } catch (...) {
                 //TODO safe log
+                std::terminate();
             }
         }
 
@@ -168,9 +169,9 @@ namespace vshalygin::rpc {
 
         auto create_receive_handler()
         {
-            return [self = weak_from_this()](cl::buffer &&message) {
+            return [self = weak_from_this()](bool is_success, cl::buffer &&message) {
                 if(auto s = self.lock()) {
-                    s->dispatch_receive_event(std::move(message));
+                    if(is_success) s->dispatch_receive_event(std::move(message));
                     s->receive_async();
                 }
             };

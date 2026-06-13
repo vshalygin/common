@@ -238,7 +238,7 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport, recv_async)
         .Times(AtLeast(1))
@@ -256,7 +256,7 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
     auto sut = create_sut();
     new_connection_handler(std::move(transport));
  
-    recv_handler(req_buffer.copy());
+    recv_handler(true, req_buffer.copy());
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
@@ -409,7 +409,7 @@ TEST_F(ServerEndpoint, MakeSyncRequestOnSpecifiedConnection)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport, start)
         .Times(1)
@@ -421,7 +421,7 @@ TEST_F(ServerEndpoint, MakeSyncRequestOnSpecifiedConnection)
         .Times(1)
         .WillOnce([&](auto &&buf, auto &&) {
                       EXPECT_EQ(buf, req_buffer);
-                      recv_handler(res_buffer.copy());
+                      recv_handler(true, res_buffer.copy());
                   });
 
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
@@ -446,7 +446,7 @@ TEST_F(ServerEndpoint, ThrowsExceptionIfMakeSyncRequestOnSpecifiedConnectionFail
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler1;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler1;
     auto transport1 = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport1, start)
         .Times(1)
@@ -458,7 +458,7 @@ TEST_F(ServerEndpoint, ThrowsExceptionIfMakeSyncRequestOnSpecifiedConnectionFail
         .Times(1)
         .WillOnce([&](auto &&buf, auto &&) {
                       EXPECT_EQ(buf, req_buffer);
-                      recv_handler1(res_buffer.copy());
+                      recv_handler1(true, res_buffer.copy());
                   });
 
     NiceMock<MockFunction<void(uint64_t, connection_state)>> connection_change_state_handler;
@@ -488,7 +488,7 @@ TEST_F(ServerEndpoint, MakesSyncRequestToAllConnections)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport, start)
         .Times(1)
@@ -499,9 +499,9 @@ TEST_F(ServerEndpoint, MakesSyncRequestToAllConnections)
     EXPECT_CALL(*transport, send_async)
         .Times(1)
         .WillOnce([&](auto &&buf, auto &&) {
-        EXPECT_EQ(buf, req_buffer);
-        recv_handler(res_buffer.copy());
-    });
+                      EXPECT_EQ(buf, req_buffer);
+                      recv_handler(true, res_buffer.copy());
+                  });
 
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
     EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
@@ -565,7 +565,7 @@ TEST_F(ServerEndpoint, MakeAsyncRequestOnSpecifiedConnection)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     std::function<void()> transport_started_callback;
     EXPECT_CALL(*transport, start)
@@ -578,7 +578,7 @@ TEST_F(ServerEndpoint, MakeAsyncRequestOnSpecifiedConnection)
         .Times(1)
         .WillOnce([&](auto &&buf, auto &&) {
                       EXPECT_EQ(buf, req_buffer);
-                      recv_handler(res_buffer.copy());
+                      recv_handler(true, res_buffer.copy());
                   });
 
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
@@ -611,7 +611,7 @@ TEST_F(ServerEndpoint, MakeUnsuccessfulAsyncRequestOnSpecifiedConnection)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler1;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler1;
     auto transport1 = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport1, start)
         .Times(1)
@@ -623,7 +623,7 @@ TEST_F(ServerEndpoint, MakeUnsuccessfulAsyncRequestOnSpecifiedConnection)
         .Times(1)
         .WillOnce([&](auto &&buf, auto &&) {
                       EXPECT_EQ(buf, req_buffer);
-                      recv_handler1(res_buffer.copy());
+                      recv_handler1(true, res_buffer.copy());
                   });
 
     NiceMock<MockFunction<void(uint64_t, connection_state)>> connection_change_state_handler;
@@ -657,7 +657,7 @@ TEST_F(ServerEndpoint, MakesAsyncRequestToAllConnections)
     EXPECT_CALL(*m_listener, set_connect_handler)
         .Times(1)
         .WillOnce(SaveArg<0>(&new_connection_handler));
-    std::function<void(vshalygin::cl::buffer &&)> recv_handler;
+    std::function<void(bool, vshalygin::cl::buffer &&)> recv_handler;
     auto transport = std::make_unique<transport_nice_mock>();
     EXPECT_CALL(*transport, start)
         .Times(1)
@@ -669,7 +669,7 @@ TEST_F(ServerEndpoint, MakesAsyncRequestToAllConnections)
         .Times(1)
         .WillOnce([&](auto &&buf, auto &&) {
         EXPECT_EQ(buf, req_buffer);
-        recv_handler(res_buffer.copy());
+        recv_handler(true, res_buffer.copy());
     });
 
     MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;

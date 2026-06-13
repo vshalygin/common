@@ -31,7 +31,7 @@ namespace {
         MOCK_METHOD(void, send_async, (buffer &&message,
                                        std::function<void()> &&error_handler), (override));
 
-        void recv_async(std::function<void(buffer &&)> &&handler) override
+        void recv_async(std::function<void(bool, buffer &&)> &&handler) override
         {
             m_recv_handler = std::move(handler);
             ++m_recv_async_called;
@@ -71,7 +71,13 @@ namespace {
         void emit_recv_event(buffer &&message)
         {
             ASSERT_TRUE(m_recv_handler) << "recv_async was never called";
-            m_recv_handler(std::move(message));
+            m_recv_handler(true, std::move(message));
+        }
+
+        void emit_error_recv_event(buffer &&message)
+        {
+            ASSERT_TRUE(m_recv_handler) << "recv_async was never called";
+            m_recv_handler(false, std::move(message));
         }
 
         int get_recv_async_called() const
@@ -83,7 +89,7 @@ namespace {
         inline static bool was_started = false;
 
     private:
-        mutable std::function<void(buffer &&)> m_recv_handler;
+        mutable std::function<void(bool, buffer &&)> m_recv_handler;
         std::function<void()> m_start_handler;
         std::function<void()> m_stop_handler;
         mutable int m_recv_async_called = 0;
@@ -413,6 +419,32 @@ TEST_F(Connection, MakesRecvAsyncAfterRecvAsyncCallbackCalled)
 
     m_transport_ptr->emit_recv_event(std::move(transfer_res_message));
     ASSERT_EQ(m_transport_ptr->get_recv_async_called(), 2);
+}
+
+TEST_F(Connection, DoesNotCallSendAsyncHandlerIfRecvAsyncErrorHappened)
+{
+    MockFunction<void(request_result, vshalygin::cl::buffer &&)> req_callback;
+    EXPECT_CALL(req_callback, Call)
+        .Times(0);
+
+    const auto num = 34;
+    auto transfer_req_message = create_transfer_msg_req(num, 7, &m_request_message);
+    auto transfer_res_message = create_transfer_msg_res(
+        num, response_result::unknown_error, &m_response_message);
+    auto sut = create_sut();
+    sut->request_async(std::move(transfer_req_message), req_callback.AsStdFunction());
+
+    m_transport_ptr->emit_error_recv_event(std::move(transfer_res_message));
+
+    ASSERT_EQ(m_transport_ptr->get_recv_async_called(), 2);
+    Mock::VerifyAndClearExpectations(&req_callback);
+
+    event sync_event;
+    EXPECT_CALL(req_callback, Call(request_result::canceled, _))
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+    sut.reset();
+    sync_event.wait();
 }
 
 TEST_F(Connection, DoesNothingOnRequestIfRequestHandlerIsNotSet)

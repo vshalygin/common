@@ -8,7 +8,8 @@
 #include <functional>
 
 namespace vshalygin::rpc {
-    //TODO invalidate должна завершать все pending operations
+    //TODO invalidate должна завершать все pending operations, также все чтения и записи долны завершаться
+    //немедленно
 
     class ipipe
     {

@@ -14,9 +14,11 @@ namespace vshalygin::rpc {
         transport(transport &) = delete;
         transport &operator=(transport &) = delete;
 
+        ~transport() override;
+
         void send_async(cl::buffer &&message,
                         std::function<void()> &&error_handler) override;
-        void recv_async(std::function<void(cl::buffer &&)> &&handler) override;
+        void recv_async(std::function<void(bool, cl::buffer &&)> &&handler) override;
 
         void start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback) override;
         void stop() override;
