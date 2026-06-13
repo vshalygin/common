@@ -1,15 +1,17 @@
-#include <common-lib/pipe/pipe-env.h>
+#include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
+#include <rpc-lib/pipe/ipipe.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+using namespace vshalygin::rpc;
 using namespace vshalygin::cl;
 using namespace testing;
 
-TEST(PipeEnv, CreatesNewPipeUnconnectedIfNoCounterpart)
+TEST(MemPipeEnv, CreatesNewPipeUnconnectedIfNoCounterpart)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_env sut(pool);
+    mem_pipe_env sut(pool);
 
     auto pipe = sut.create_pipe("name");
 
@@ -18,10 +20,10 @@ TEST(PipeEnv, CreatesNewPipeUnconnectedIfNoCounterpart)
     ASSERT_TRUE(sut.get_server_pipe_queue_size("name") == 1);
 }
 
-TEST(PipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
+TEST(MemPipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_env sut(pool);
+    mem_pipe_env sut(pool);
 
     auto pipe = sut.open_pipe("name");
 
@@ -30,10 +32,10 @@ TEST(PipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
     ASSERT_TRUE(sut.get_client_pipe_queue_size("name") == 1);
 }
 
-TEST(PipeEnv, CreateNewPipeConnectedIfCounterpartExists)
+TEST(MemPipeEnv, CreateNewPipeConnectedIfCounterpartExists)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_env sut(pool);
+    mem_pipe_env sut(pool);
     auto client_pipe = sut.open_pipe("name");
 
     auto server_pipe = sut.create_pipe("name");
@@ -46,10 +48,10 @@ TEST(PipeEnv, CreateNewPipeConnectedIfCounterpartExists)
     EXPECT_TRUE(sut.get_server_pipe_queue_size("name") == 0);
 }
 
-TEST(PipeEnv, OpenNewPipeConnectedIfCounterpartExists)
+TEST(MemPipeEnv, OpenNewPipeConnectedIfCounterpartExists)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_env sut(pool);
+    mem_pipe_env sut(pool);
     auto client_pipe = sut.open_pipe("name");
 
     auto server_pipe = sut.create_pipe("name");
@@ -62,10 +64,10 @@ TEST(PipeEnv, OpenNewPipeConnectedIfCounterpartExists)
     EXPECT_TRUE(sut.get_server_pipe_queue_size("name") == 0);
 }
 
-TEST(PipeEnv, CreatedAndOpenedPipesAreConnected)
+TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_env sut(pool);
+    mem_pipe_env sut(pool);
     auto client_pipe = sut.open_pipe("name");
     auto server_pipe = sut.create_pipe("name");
     buffer client_msg(1); client_msg[0] = (std::byte)0x1;
@@ -80,10 +82,10 @@ TEST(PipeEnv, CreatedAndOpenedPipesAreConnected)
     ASSERT_TRUE(r2 && *r2 == client_msg);
 }
 
-TEST(PipeEnv, CreateSeparatePipesIfTheirNamesDiffer)
+TEST(MemPipeEnv, CreateSeparatePipesIfTheirNamesDiffer)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_env sut(pool);
+    mem_pipe_env sut(pool);
     auto client_pipe = sut.open_pipe("name1");
 
     auto server_pipe = sut.create_pipe("name2");

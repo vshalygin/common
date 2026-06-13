@@ -15,6 +15,9 @@
     <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp" />
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp" />
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe.cpp" />
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp" />
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp" />
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp" />
@@ -39,6 +42,12 @@
     <ClInclude Include="rpc-lib\interface\iconnector.h" />
     <ClInclude Include="rpc-lib\interface\ilistener.h" />
     <ClInclude Include="rpc-lib\interface\itransport.h" />
+    <ClInclude Include="rpc-lib\pipe\ipipe-env.h" />
+    <ClInclude Include="rpc-lib\pipe\ipipe.h" />
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h" />
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h" />
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe.h" />
+    <ClInclude Include="rpc-lib\pipe\pipe-op-res.h" />
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h" />
     <ClInclude Include="rpc-lib\service\iservice.h" />
     <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />

@@ -1,12 +1,14 @@
 #include "pipe-connector.h"
 #include "pipe-transport.h"
+#include "rpc-lib/pipe/ipipe-env.h"
+#include "rpc-lib/pipe/ipipe.h"
 
 #pragma warning(push, 0)
 #include "rpc-lib/transport/proto/pipe-auth.pb.h"
 #pragma warning(pop)
 
 namespace vshalygin::rpc {
-    pipe_connector::pipe_connector(std::shared_ptr<cl::pipe_env> pipe_env,
+    pipe_connector::pipe_connector(std::shared_ptr<ipipe_env> pipe_env,
                                    const std::string &listener_pipe_name)
         : pipe_env_(std::move(pipe_env))
         , listener_pipe_name_(listener_pipe_name)

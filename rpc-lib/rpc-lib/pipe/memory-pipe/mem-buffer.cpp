@@ -1,17 +1,17 @@
-#include "pipe-buffer.h"
+#include "mem-buffer.h"
 #include <future>
 
-namespace vshalygin::cl {
-    pipe_buffer::pipe_buffer(std::shared_ptr<thread_pool> thread_pool)
+namespace vshalygin::rpc {
+    mem_buffer::mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool)
         : strand_(thread_pool->create_strand())
     {}
 
-    pipe_buffer::~pipe_buffer()
+    mem_buffer::~mem_buffer()
     {
         invalidate();
     }
 
-    void pipe_buffer::write_async(buffer &&data, std::function<void(pipe_op_res)> &&handler)
+    void mem_buffer::write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&handler)
     {
         auto safe_handler = [handler = std::move(handler)](pipe_op_res res) {
             if(handler) try {
@@ -43,9 +43,9 @@ namespace vshalygin::cl {
         strand_.post(std::move(task));
     }
 
-    void pipe_buffer::read_async(std::function<void(pipe_op_res, buffer &&)> &&handler)
+    void mem_buffer::read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&handler)
     {
-        auto safe_handler = [handler = std::move(handler)](pipe_op_res res, buffer &&str) {
+        auto safe_handler = [handler = std::move(handler)](pipe_op_res res, cl::buffer &&str) {
             if(handler) try {
                 handler(res, std::move(str));
             } catch (...) {
@@ -74,7 +74,7 @@ namespace vshalygin::cl {
         });
     }
 
-    void pipe_buffer::invalidate() noexcept
+    void mem_buffer::invalidate() noexcept
     {
         try {
             std::packaged_task<void()> task([this]() {
@@ -94,7 +94,7 @@ namespace vshalygin::cl {
         }
     }
 
-    bool pipe_buffer::is_valid() const
+    bool mem_buffer::is_valid() const
     {
         std::packaged_task<bool()> task([this]() {
             return is_valid_;
@@ -106,7 +106,7 @@ namespace vshalygin::cl {
         return f.get();
     }
 
-    size_t pipe_buffer::get_pending_messages_count() const
+    size_t mem_buffer::get_pending_messages_count() const
     {
         std::packaged_task<bool()> task([this]() {
             return buffer_.size();
@@ -118,7 +118,7 @@ namespace vshalygin::cl {
         return f.get();
     }
 
-    size_t pipe_buffer::get_pending_read_handlers_count() const
+    size_t mem_buffer::get_pending_read_handlers_count() const
     {
         std::packaged_task<bool()> task([this]() {
             return read_handlers_.size();

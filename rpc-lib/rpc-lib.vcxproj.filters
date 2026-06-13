@@ -43,6 +43,12 @@
     <Filter Include="transport\proto">
       <UniqueIdentifier>{f1e65cb8-7454-4869-a7cc-e87e889ba14a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pipe">
+      <UniqueIdentifier>{c74cb791-5359-4823-bcf9-e50a27bb48fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe\memory-pipe">
+      <UniqueIdentifier>{666aea95-4aa6-4921-8fea-0086194a619e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -78,6 +84,15 @@
     <ClCompile Include="rpc-lib\transport\in-process\pipe-transport.cpp">
       <Filter>transport\in-process</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
@@ -94,9 +109,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\connection\connection.h">
       <Filter>connection</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\channel\ichannel.h">
-      <Filter>channel</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\channel\channel.h">
       <Filter>channel</Filter>
@@ -154,6 +166,27 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\transport\in-process\pipe-transport.h">
       <Filter>transport\in-process</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\channel\ichannel.h">
+      <Filter>channel</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe.h">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\pipe-op-res.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\ipipe.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\ipipe-env.h">
+      <Filter>pipe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

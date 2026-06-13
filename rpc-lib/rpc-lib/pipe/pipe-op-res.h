@@ -1,5 +1,5 @@
 #pragma once
-namespace vshalygin::cl {
+namespace vshalygin::rpc {
     enum class pipe_op_res
     {
         success,

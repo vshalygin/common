@@ -3,17 +3,15 @@
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <thread>
 
-namespace vshalygin::cl {
-    class pipe_env;
-    class pipe;
-}
-
 namespace vshalygin::rpc {
+    class ipipe_env;
+    class ipipe;
+
     class pipe_listener
         : public ilistener
     {
     public:
-        explicit pipe_listener(std::shared_ptr<cl::pipe_env> pipe_env,
+        explicit pipe_listener(std::shared_ptr<ipipe_env> pipe_env,
                                const std::string &listener_pipe_name);
 
         pipe_listener(pipe_listener &) = delete;
@@ -30,8 +28,8 @@ namespace vshalygin::rpc {
         void create_new_connection();
 
     private:
-        std::shared_ptr<cl::pipe_env> pipe_env_;
-        std::shared_ptr<cl::pipe> current_listener_pipe_;
+        std::shared_ptr<ipipe_env> pipe_env_;
+        std::shared_ptr<ipipe> current_listener_pipe_;
         bool is_running_ = false;
 
         const std::string listener_pipe_name_;

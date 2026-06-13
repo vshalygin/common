@@ -1,7 +1,9 @@
 #include "pipe-transport.h"
+#include "rpc-lib/pipe/ipipe.h"
+#include <cassert>
 
 namespace vshalygin::rpc {
-    pipe_transport::pipe_transport(std::shared_ptr<cl::pipe> pipe)
+    pipe_transport::pipe_transport(std::shared_ptr<ipipe> pipe)
         : pipe_(std::move(pipe))
     {
         assert(pipe_ && pipe_->is_connected());
@@ -11,8 +13,8 @@ namespace vshalygin::rpc {
                                     std::function<void()> &&error_handler) const
     {
         auto res = pipe_->write_async(std::move(message),
-                                     [eh = std::move(error_handler)](cl::pipe_op_res res) {
-                                         if(res == cl::pipe_op_res::failed) {
+                                     [eh = std::move(error_handler)](pipe_op_res res) {
+                                         if(res == pipe_op_res::failed) {
                                              eh();
                                          }
                                      });
@@ -24,7 +26,7 @@ namespace vshalygin::rpc {
 
     void pipe_transport::recv_async(std::function<void(cl::buffer &&)> &&handler) const
     {
-        pipe_->read_async([handler = std::move(handler)](cl::pipe_op_res res, cl::buffer &&msg) {
+        pipe_->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
                               if(is_success(res)) {
                                   handler(std::move(msg));
                               }

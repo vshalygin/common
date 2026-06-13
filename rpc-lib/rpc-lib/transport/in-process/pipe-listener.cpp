@@ -5,8 +5,8 @@
 #include "rpc-lib/transport/proto/pipe-auth.pb.h"
 #pragma warning(pop)
 
-#include <common-lib/pipe/pipe.h>
-#include <common-lib/pipe/pipe-env.h>
+#include <rpc-lib/pipe/ipipe.h>
+#include <rpc-lib/pipe/ipipe-env.h>
 #include <common-lib/utils/buffer/buffer.h>
 
 #include <cassert>
@@ -27,7 +27,7 @@ namespace vshalygin::rpc {
         }
     }
 
-    pipe_listener::pipe_listener(std::shared_ptr<cl::pipe_env> pipe_env,
+    pipe_listener::pipe_listener(std::shared_ptr<ipipe_env> pipe_env,
                                  const std::string &listener_pipe_name)
         : pipe_env_(std::move(pipe_env))
         , listener_pipe_name_(listener_pipe_name)

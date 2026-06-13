@@ -1,9 +1,10 @@
-#include <common-lib/pipe/pipe.h>
+#include <rpc-lib/pipe/memory-pipe/mem-pipe.h>
 #include <common-lib/syncronization/event/event.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+using namespace vshalygin::rpc;
 using namespace vshalygin::cl;
 using namespace testing;
 
@@ -21,18 +22,18 @@ namespace {
 
 namespace {
     class test_pipe
-        : public pipe
+        : public mem_pipe
     {
     public:
         explicit test_pipe(bool is_server)
-            : pipe(is_server)
+            : mem_pipe(is_server)
         {}
 
-        using pipe::set_buffers;
+        using mem_pipe::set_buffers;
     };
 }
 
-class Pipe
+class MemPipe
     : public Test
 {
 protected:
@@ -44,54 +45,54 @@ protected:
     std::shared_ptr<thread_pool> thread_pool_;
 };
 
-class ServerPipe
-    : public Pipe
+class ServerMemPipe
+    : public MemPipe
 {
 protected:
     void SetUp() override
     {
-        Pipe::SetUp();
+        MemPipe::SetUp();
         sut_ = std::make_unique<test_pipe>(true);
-        buffers_ = std::make_shared<pipe_buffers>(thread_pool_);
+        buffers_ = std::make_shared<mem_buffers>(thread_pool_);
     }
 
     std::unique_ptr<test_pipe> sut_;
-    std::shared_ptr<pipe_buffers> buffers_;
+    std::shared_ptr<mem_buffers> buffers_;
 };
 
-class ClientPipe
-    : public Pipe
+class ClientMemPipe
+    : public MemPipe
 {
 protected:
     void SetUp() override
     {
-        Pipe::SetUp();
+        MemPipe::SetUp();
         sut_ = std::make_unique<test_pipe>(false);
-        buffers_ = std::make_shared<pipe_buffers>(thread_pool_);
+        buffers_ = std::make_shared<mem_buffers>(thread_pool_);
     }
 
     std::unique_ptr<test_pipe> sut_;
-    std::shared_ptr<pipe_buffers> buffers_;
+    std::shared_ptr<mem_buffers> buffers_;
 };
 
-TEST_F(Pipe, IsNotConnectedByDefault)
+TEST_F(MemPipe, IsNotConnectedByDefault)
 {
     test_pipe sut(true);
 
     ASSERT_FALSE(sut.is_connected());
 }
 
-TEST_F(Pipe, IsConnectedAfterAddingBuffers)
+TEST_F(MemPipe, IsConnectedAfterAddingBuffers)
 {
     test_pipe sut(true);
-    sut.set_buffers(std::make_shared<pipe_buffers>(thread_pool_));
+    sut.set_buffers(std::make_shared<mem_buffers>(thread_pool_));
 
     ASSERT_TRUE(sut.is_connected());
 }
 
-TEST_F(Pipe, IsNotConnectedAfterBufferInvalidated)
+TEST_F(MemPipe, IsNotConnectedAfterBufferInvalidated)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
     test_pipe sut(true);
     sut.set_buffers(buffers);
 
@@ -101,9 +102,9 @@ TEST_F(Pipe, IsNotConnectedAfterBufferInvalidated)
     ASSERT_FALSE(sut.is_connected());
 }
 
-TEST_F(Pipe, InvalidatesHoldingBuffersBeforeDestruction)
+TEST_F(MemPipe, InvalidatesHoldingBuffersBeforeDestruction)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
 
     {
         test_pipe sut(true);
@@ -114,16 +115,16 @@ TEST_F(Pipe, InvalidatesHoldingBuffersBeforeDestruction)
     ASSERT_FALSE(buffers->server_to_client.is_valid());
 }
 
-TEST_F(Pipe, ReturnsFalseIfNoConnectionAfterWaiting)
+TEST_F(MemPipe, ReturnsFalseIfNoConnectionAfterWaiting)
 {
     test_pipe sut(true);
 
     ASSERT_FALSE(sut.wait_connect_for(std::chrono::microseconds(1)));
 }
 
-TEST_F(Pipe, WaitsConnection)
+TEST_F(MemPipe, WaitsConnection)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
     event sync_event;
     test_pipe sut(true);
 
@@ -137,9 +138,9 @@ TEST_F(Pipe, WaitsConnection)
     sut.set_buffers(buffers);
 }
 
-TEST_F(Pipe, CancelsWaiting)
+TEST_F(MemPipe, CancelsWaiting)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
     event sync_event1;
     event sync_event2;
     test_pipe sut(true);
@@ -158,9 +159,9 @@ TEST_F(Pipe, CancelsWaiting)
     ASSERT_FALSE(sut.is_connected());
 }
 
-TEST_F(Pipe, WaitsConnectionTimed)
+TEST_F(MemPipe, WaitsConnectionTimed)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
     event sync_event;
     test_pipe sut(true);
 
@@ -174,9 +175,9 @@ TEST_F(Pipe, WaitsConnectionTimed)
     sut.set_buffers(buffers);
 }
 
-TEST_F(Pipe, CancelsTimedWaiting)
+TEST_F(MemPipe, CancelsTimedWaiting)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
     event sync_event1;
     event sync_event2;
     test_pipe sut(true);
@@ -195,9 +196,9 @@ TEST_F(Pipe, CancelsTimedWaiting)
     ASSERT_FALSE(sut.is_connected());
 }
 
-TEST_F(Pipe, InvalidateBuffers)
+TEST_F(MemPipe, InvalidateBuffers)
 {
-    auto buffers = std::make_shared<pipe_buffers>(thread_pool_);
+    auto buffers = std::make_shared<mem_buffers>(thread_pool_);
     test_pipe sut(true);
     sut.set_buffers(buffers);
 
@@ -207,19 +208,19 @@ TEST_F(Pipe, InvalidateBuffers)
     EXPECT_FALSE(buffers->server_to_client.is_valid());
 }
 
-TEST_F(Pipe, DoesNothingOnInvalidationIfNoBufers)
+TEST_F(MemPipe, DoesNothingOnInvalidationIfNoBufers)
 {
     test_pipe sut(true);
 
     sut.invalidate();
 }
 
-TEST_F(ServerPipe, WriteAsyncReturnsFalseIfNoBuffers)
+TEST_F(ServerMemPipe, WriteAsyncReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->write_async({}, {}));
 }
 
-TEST_F(ServerPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
+TEST_F(ServerMemPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
 {
     buffers_->server_to_client.invalidate();
     sut_->set_buffers(buffers_);
@@ -227,7 +228,7 @@ TEST_F(ServerPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
     ASSERT_FALSE(sut_->write_async({}, {}));
 }
 
-TEST_F(ServerPipe, WriteAsyncWritesMessageInOutputBuffer)
+TEST_F(ServerMemPipe, WriteAsyncWritesMessageInOutputBuffer)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -248,12 +249,12 @@ TEST_F(ServerPipe, WriteAsyncWritesMessageInOutputBuffer)
     buffers_.reset();
 }
 
-TEST_F(ServerPipe, ReadAsyncReturnsFalseIfNoBuffers)
+TEST_F(ServerMemPipe, ReadAsyncReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->read_async({}));
 }
 
-TEST_F(ServerPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
+TEST_F(ServerMemPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
 {
     buffers_->client_to_server.invalidate();
     sut_->set_buffers(buffers_);
@@ -261,7 +262,7 @@ TEST_F(ServerPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
     ASSERT_FALSE(sut_->read_async({}));
 }
 
-TEST_F(ServerPipe, ReadAsyncReadsMessageFromInputBuffer)
+TEST_F(ServerMemPipe, ReadAsyncReadsMessageFromInputBuffer)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -279,12 +280,12 @@ TEST_F(ServerPipe, ReadAsyncReadsMessageFromInputBuffer)
     buffers_.reset();
 }
 
-TEST_F(ServerPipe, TryToWriteForReturnsFalseIfNoBuffers)
+TEST_F(ServerMemPipe, TryToWriteForReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->try_to_write_for({}, std::chrono::seconds(10)));
 }
 
-TEST_F(ServerPipe, TryToWriteForReturnsFalseIfOutputBufferInvalid)
+TEST_F(ServerMemPipe, TryToWriteForReturnsFalseIfOutputBufferInvalid)
 {
     buffers_->server_to_client.invalidate();
     sut_->set_buffers(buffers_);
@@ -292,7 +293,7 @@ TEST_F(ServerPipe, TryToWriteForReturnsFalseIfOutputBufferInvalid)
     ASSERT_FALSE(sut_->try_to_write_for({}, std::chrono::seconds(10)));
 }
 
-TEST_F(ServerPipe, TryToWriteForWritesMessageInOutputBuffer)
+TEST_F(ServerMemPipe, TryToWriteForWritesMessageInOutputBuffer)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -311,12 +312,12 @@ TEST_F(ServerPipe, TryToWriteForWritesMessageInOutputBuffer)
     buffers_.reset();
 }
 
-TEST_F(ServerPipe, TryToReadForReturnsFalseIfNoBuffers)
+TEST_F(ServerMemPipe, TryToReadForReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->try_to_read_for({}));
 }
 
-TEST_F(ServerPipe, TryToReadForReturnsFalseIfInputBufferInvalid)
+TEST_F(ServerMemPipe, TryToReadForReturnsFalseIfInputBufferInvalid)
 {
     buffers_->client_to_server.invalidate();
     sut_->set_buffers(buffers_);
@@ -324,7 +325,7 @@ TEST_F(ServerPipe, TryToReadForReturnsFalseIfInputBufferInvalid)
     ASSERT_FALSE(sut_->try_to_read_for({}));
 }
 
-TEST_F(ServerPipe, TryToReadForReadsMessageFromInputBuffer)
+TEST_F(ServerMemPipe, TryToReadForReadsMessageFromInputBuffer)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -340,12 +341,12 @@ TEST_F(ServerPipe, TryToReadForReadsMessageFromInputBuffer)
     buffers_.reset();
 }
 
-TEST_F(ClientPipe, WriteAsyncReturnsFalseIfNoBuffers)
+TEST_F(ClientMemPipe, WriteAsyncReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->write_async({}, {}));
 }
 
-TEST_F(ClientPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
+TEST_F(ClientMemPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
 {
     buffers_->client_to_server.invalidate();
     sut_->set_buffers(buffers_);
@@ -353,7 +354,7 @@ TEST_F(ClientPipe, WriteAsyncReturnsFalseIfOutputBufferInvalid)
     ASSERT_FALSE(sut_->write_async({}, {}));
 }
 
-TEST_F(ClientPipe, WriteAsyncWritesMessageInOutputBuffer)
+TEST_F(ClientMemPipe, WriteAsyncWritesMessageInOutputBuffer)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -374,12 +375,12 @@ TEST_F(ClientPipe, WriteAsyncWritesMessageInOutputBuffer)
     buffers_.reset();
 }
 
-TEST_F(ClientPipe, ReadAsyncReturnsFalseIfNoBuffers)
+TEST_F(ClientMemPipe, ReadAsyncReturnsFalseIfNoBuffers)
 {
     ASSERT_FALSE(sut_->read_async({}));
 }
 
-TEST_F(ClientPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
+TEST_F(ClientMemPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
 {
     buffers_->server_to_client.invalidate();
     sut_->set_buffers(buffers_);
@@ -387,7 +388,7 @@ TEST_F(ClientPipe, ReadAsyncReturnsFalseIfInputBufferInvalid)
     ASSERT_FALSE(sut_->read_async({}));
 }
 
-TEST_F(ClientPipe, ReadAsyncReadsMessageFromInputBuffer)
+TEST_F(ClientMemPipe, ReadAsyncReadsMessageFromInputBuffer)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;

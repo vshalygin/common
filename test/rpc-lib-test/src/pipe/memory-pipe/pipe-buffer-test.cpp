@@ -1,9 +1,10 @@
-#include <common-lib/pipe/pipe-buffer/pipe-buffer.h>
+#include <rpc-lib/pipe/memory-pipe/mem-buffer.h>
 #include <common-lib/syncronization/event/event.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+using namespace vshalygin::rpc;
 using namespace vshalygin::cl;
 using namespace testing;
 
@@ -19,26 +20,26 @@ namespace {
     }
 }
 
-TEST(PipeBuffer, IsValidAfterCreation)
+TEST(MemBuffer, IsValidAfterCreation)
 {
     auto pool = std::make_shared<thread_pool>(2);
 
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
 
     ASSERT_TRUE(sut.is_valid());
 }
 
-TEST(PipeBuffer, IsNotValidAfterInvalidation)
+TEST(MemBuffer, IsNotValidAfterInvalidation)
 {
     auto pool = std::make_shared<thread_pool>(2);
 
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
     sut.invalidate();
 
     ASSERT_FALSE(sut.is_valid());
 }
 
-TEST(PipeBuffer, AddMessageInBufferOnWriteOperationIfNoPendingReadHandlers)
+TEST(MemBuffer, AddMessageInBufferOnWriteOperationIfNoPendingReadHandlers)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -51,14 +52,14 @@ TEST(PipeBuffer, AddMessageInBufferOnWriteOperationIfNoPendingReadHandlers)
         .WillOnce([&]() { sync_event.set(); });
     auto pool = std::make_shared<thread_pool>(2);
 
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
     sut.write_async(buf.copy(), mock1.AsStdFunction());
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 
     ASSERT_EQ(sut.get_pending_messages_count(), 1);
 }
 
-TEST(PipeBuffer, CallWriteHandlerWithTrueParameterIfWritingSucceeded)
+TEST(MemBuffer, CallWriteHandlerWithTrueParameterIfWritingSucceeded)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -70,12 +71,12 @@ TEST(PipeBuffer, CallWriteHandlerWithTrueParameterIfWritingSucceeded)
         .WillOnce([&]() { sync_event.set(); });
 
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
     sut.write_async(buf.copy(), mock1.AsStdFunction());
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
-TEST(PipeBuffer, CallPendingReadHandlerAfterWrite)
+TEST(MemBuffer, CallPendingReadHandlerAfterWrite)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -91,7 +92,7 @@ TEST(PipeBuffer, CallPendingReadHandlerAfterWrite)
         .WillOnce([&]() { sync_event.set(); });
 
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
     sut.read_async(read_mock.AsStdFunction());
     sut.write_async(buf.copy(), write_mock.AsStdFunction());
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
@@ -100,18 +101,18 @@ TEST(PipeBuffer, CallPendingReadHandlerAfterWrite)
     EXPECT_EQ(sut.get_pending_messages_count(), 0);
 }
 
-TEST(PipeBuffer, DoesNotCallWriteFunctorIfIsIsNotPresented)
+TEST(MemBuffer, DoesNotCallWriteFunctorIfIsIsNotPresented)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
     buf[1] = (std::byte)0x2;
     auto pool = std::make_shared<thread_pool>(2);
-    auto sut = std::make_unique<pipe_buffer>(pool);
+    auto sut = std::make_unique<mem_buffer>(pool);
     sut->write_async(buf.copy(), {});
     sut.reset();
 }
 
-TEST(PipeBuffer, IfWriteHandlerThrowsItDoesNotInterruptCallingReadCallbacks)
+TEST(MemBuffer, IfWriteHandlerThrowsItDoesNotInterruptCallingReadCallbacks)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -125,19 +126,19 @@ TEST(PipeBuffer, IfWriteHandlerThrowsItDoesNotInterruptCallingReadCallbacks)
         .Times(1);
 
     auto pool = std::make_shared<thread_pool>(2);
-    auto sut = std::make_unique<pipe_buffer>(pool);
+    auto sut = std::make_unique<mem_buffer>(pool);
     sut->read_async(read_mock.AsStdFunction());
     sut->write_async(buf.copy(), write_mock.AsStdFunction());
     sut.reset();
 }
 
-TEST(PipeBuffer, CallsReadHandlerInstantlyIfInvalidated)
+TEST(MemBuffer, CallsReadHandlerInstantlyIfInvalidated)
 {
     MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(read_mock, Call(pipe_op_res::failed, _))
         .Times(1);
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
 
     sut.invalidate();
     sut.read_async(read_mock.AsStdFunction());
@@ -145,13 +146,13 @@ TEST(PipeBuffer, CallsReadHandlerInstantlyIfInvalidated)
     ASSERT_EQ(sut.get_pending_read_handlers_count(), 0);
 }
 
-TEST(PipeBuffer, AddsPendingReadHandlerIfNoPendingMessages)
+TEST(MemBuffer, AddsPendingReadHandlerIfNoPendingMessages)
 {
     MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(read_mock, Call)
         .Times(0);
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
 
     sut.read_async(read_mock.AsStdFunction());
 
@@ -159,7 +160,7 @@ TEST(PipeBuffer, AddsPendingReadHandlerIfNoPendingMessages)
     Mock::VerifyAndClearExpectations(&read_mock);
 }
 
-TEST(PipeBuffer, CallsReadHandlerInstantlyIfThereIsAPendingMessage)
+TEST(MemBuffer, CallsReadHandlerInstantlyIfThereIsAPendingMessage)
 {
     buffer buf(2);
     buf[0] = (std::byte)0x1;
@@ -168,7 +169,7 @@ TEST(PipeBuffer, CallsReadHandlerInstantlyIfThereIsAPendingMessage)
     EXPECT_CALL(read_mock, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
         .Times(1);
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
 
     sut.write_async(buf.copy(), {});
     sut.read_async(read_mock.AsStdFunction());
@@ -178,22 +179,22 @@ TEST(PipeBuffer, CallsReadHandlerInstantlyIfThereIsAPendingMessage)
     Mock::VerifyAndClearExpectations(&read_mock);
 }
 
-TEST(PipeBuffer, AllowsEmptyReadHandler)
+TEST(MemBuffer, AllowsEmptyReadHandler)
 {
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
 
     sut.invalidate();
     sut.read_async({});
 }
 
-TEST(PipeBuffer, InvalidateMethodsTriggersPendingReadCallbacks)
+TEST(MemBuffer, InvalidateMethodsTriggersPendingReadCallbacks)
 {
     MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(read_mock, Call(pipe_op_res::canceled, _))
         .Times(2);
     auto pool = std::make_shared<thread_pool>(2);
-    pipe_buffer sut(pool);
+    mem_buffer sut(pool);
     sut.read_async(read_mock.AsStdFunction());
     sut.read_async(read_mock.AsStdFunction());
 
@@ -202,13 +203,13 @@ TEST(PipeBuffer, InvalidateMethodsTriggersPendingReadCallbacks)
     ASSERT_EQ(sut.get_pending_read_handlers_count(), 0);
 }
 
-TEST(PipeBuffer, DestructorTriggersPendingReadCallbacks)
+TEST(MemBuffer, DestructorTriggersPendingReadCallbacks)
 {
     MockFunction<void(pipe_op_res, buffer &&)> read_mock;
     EXPECT_CALL(read_mock, Call(pipe_op_res::canceled, _))
         .Times(2);
     auto pool = std::make_shared<thread_pool>(2);
-    auto sut = std::make_unique<pipe_buffer>(pool);
+    auto sut = std::make_unique<mem_buffer>(pool);
     sut->read_async(read_mock.AsStdFunction());
     sut->read_async(read_mock.AsStdFunction());
 

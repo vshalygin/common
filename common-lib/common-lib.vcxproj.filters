@@ -46,12 +46,6 @@
     <Filter Include="syncronization\spinlock">
       <UniqueIdentifier>{d1ee088e-f1e1-47e1-95ec-82c142c3111c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pipe">
-      <UniqueIdentifier>{f8760b9b-9124-4590-a88b-392d72e16a9d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pipe\pipe-buffer">
-      <UniqueIdentifier>{dc5689a2-e35b-40be-b962-643fd5e81662}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
@@ -96,18 +90,6 @@
     <ClInclude Include="common-lib\syncronization\spinlock\spinlock-guard.h">
       <Filter>syncronization\spinlock</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-env.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-buffer\pipe-buffer.h">
-      <Filter>pipe\pipe-buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\pipe\pipe-op-res.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
@@ -139,15 +121,6 @@
     </ClCompile>
     <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp">
       <Filter>syncronization\spinlock</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\pipe\pipe-env.cpp">
-      <Filter>pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\pipe\pipe.cpp">
-      <Filter>pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\pipe\pipe-buffer\pipe-buffer.cpp">
-      <Filter>pipe\pipe-buffer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

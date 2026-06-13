@@ -1,15 +1,15 @@
 #pragma once
 #include "rpc-lib/interface/itransport.h"
-#include "common-lib/pipe/pipe.h"
-
 #include <mutex>
 
 namespace vshalygin::rpc {
+    class ipipe;
+
     class pipe_transport
         : public itransport
     {
     public:
-        explicit pipe_transport(std::shared_ptr<cl::pipe> pipe);
+        explicit pipe_transport(std::shared_ptr<ipipe> pipe);
 
         pipe_transport(pipe_transport &) = delete;
         pipe_transport &operator=(pipe_transport &) = delete;
@@ -23,7 +23,7 @@ namespace vshalygin::rpc {
         bool is_running() const override;
 
     private:
-        std::shared_ptr<cl::pipe> pipe_;
+        std::shared_ptr<ipipe> pipe_;
 
         std::function<void()> stop_callback_;
 

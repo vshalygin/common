@@ -46,6 +46,18 @@
     <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp">
       <Filter>server-endpoint</Filter>
     </ClCompile>
+    <ClCompile Include="src\transport\in-process\pipe-transport-test.cpp">
+      <Filter>transport\in-process</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipe\memory-pipe\pipe-buffer-test.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipe\memory-pipe\pipe-env-test.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pipe\memory-pipe\pipe-test.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -86,6 +98,18 @@
     </Filter>
     <Filter Include="server-endpoint">
       <UniqueIdentifier>{04329da9-a1ec-4d97-9f37-e8b4e98ddc4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="transport">
+      <UniqueIdentifier>{cbf0eaba-361b-41de-a0c8-98f5a90b27d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="transport\in-process">
+      <UniqueIdentifier>{3eebb4d3-3938-48f2-aa93-5cf4676ddd22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe">
+      <UniqueIdentifier>{c58f8263-f3e1-46d3-b25a-cd0071f51e8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe\memory-pipe">
+      <UniqueIdentifier>{2f646b38-8694-4fdd-ba50-bdd70dcee8bf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
