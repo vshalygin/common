@@ -111,37 +111,41 @@ namespace vshalygin::rpc {
             return;
         }
 
-        auto con_msg = pipe->try_to_read_for(std::chrono::seconds(10));
-        if(!con_msg) {
-            return;
-        }
-        proto::auth_request req;
-        if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
-            return;
-        }
+        try {
+            auto con_msg = pipe->try_to_read_for(std::chrono::seconds(10));
+            if(!con_msg) {
+                throw std::runtime_error("failed to read auth request");;
+            }
+            proto::auth_request req;
+            if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
+                throw std::runtime_error("failed to parse auth request");
+            }
 
-        proto::auth_response res;
-        if(authenticator_->check_request(req)) {
-            res.set_is_accepted(true);
-            res.set_pipe_data(make_unique_pipe_name());
-        } else {
-            res.set_is_accepted(false);
-        }
+            proto::auth_response res;
+            if(authenticator_->check_request(req)) {
+                res.set_is_accepted(true);
+                res.set_pipe_data(make_unique_pipe_name());
+            } else {
+                res.set_is_accepted(false);
+            }
 
+            cl::buffer buf(res.ByteSizeLong());
+            if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {
+                throw std::runtime_error("failed to serialize auth response");
+            }
 
-        cl::buffer buf(res.ByteSizeLong());
-        if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {
-            return;
-        }
+            if(!pipe->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
+                throw std::runtime_error("failed to write auth response");
+            }
 
-        if(!pipe->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
-            return;
-        }
-        
-        if(res.is_accepted()) {
-            connect_handler_(std::make_unique<transport>(std::move(pipe)));
-        } else {
-            pipe->invalidate(); //TODO what if invalidation before reading?
+            if(res.is_accepted()) {
+                connect_handler_(std::make_unique<transport>(std::move(pipe)));
+            } else {
+                pipe->invalidate();
+            }
+        } catch (...) {
+            pipe->invalidate();
+            throw;
         }
     }
 }
