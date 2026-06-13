@@ -13,11 +13,10 @@ TEST(MemPipeEnv, CreatesNewPipeUnconnectedIfNoCounterpart)
     auto pool = std::make_shared<thread_pool>(2);
     mem_pipe_env sut(pool);
 
-    auto pipe = sut.create_pipe("name");
+    auto pipe = sut.create_pipe();
 
     ASSERT_FALSE(pipe->is_connected());
-    ASSERT_TRUE(sut.get_server_pipe_map_size() == 1);
-    ASSERT_TRUE(sut.get_server_pipe_queue_size("name") == 1);
+    ASSERT_TRUE(sut.get_server_pipe_queue_size() == 1);
 }
 
 TEST(MemPipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
@@ -25,51 +24,46 @@ TEST(MemPipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
     auto pool = std::make_shared<thread_pool>(2);
     mem_pipe_env sut(pool);
 
-    auto pipe = sut.open_pipe("name");
+    auto pipe = sut.open_pipe();
 
     ASSERT_FALSE(pipe->is_connected());
-    ASSERT_TRUE(sut.get_client_pipe_map_size() == 1);
-    ASSERT_TRUE(sut.get_client_pipe_queue_size("name") == 1);
+    ASSERT_TRUE(sut.get_client_pipe_queue_size() == 1);
 }
 
 TEST(MemPipeEnv, CreateNewPipeConnectedIfCounterpartExists)
 {
     auto pool = std::make_shared<thread_pool>(2);
     mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe("name");
+    auto client_pipe = sut.open_pipe();
 
-    auto server_pipe = sut.create_pipe("name");
+    auto server_pipe = sut.create_pipe();
 
     EXPECT_TRUE(client_pipe->is_connected());
     EXPECT_TRUE(server_pipe->is_connected());
-    EXPECT_TRUE(sut.get_client_pipe_map_size() == 0);
-    EXPECT_TRUE(sut.get_client_pipe_queue_size("name") == 0);
-    EXPECT_TRUE(sut.get_server_pipe_map_size() == 0);
-    EXPECT_TRUE(sut.get_server_pipe_queue_size("name") == 0);
+    EXPECT_TRUE(sut.get_client_pipe_queue_size() == 0);
+    EXPECT_TRUE(sut.get_server_pipe_queue_size() == 0);
 }
 
 TEST(MemPipeEnv, OpenNewPipeConnectedIfCounterpartExists)
 {
     auto pool = std::make_shared<thread_pool>(2);
     mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe("name");
+    auto client_pipe = sut.open_pipe();
 
-    auto server_pipe = sut.create_pipe("name");
+    auto server_pipe = sut.create_pipe();
 
     EXPECT_TRUE(client_pipe->is_connected());
     EXPECT_TRUE(server_pipe->is_connected());
-    EXPECT_TRUE(sut.get_client_pipe_map_size() == 0);
-    EXPECT_TRUE(sut.get_client_pipe_queue_size("name") == 0);
-    EXPECT_TRUE(sut.get_server_pipe_map_size() == 0);
-    EXPECT_TRUE(sut.get_server_pipe_queue_size("name") == 0);
+    EXPECT_TRUE(sut.get_client_pipe_queue_size() == 0);
+    EXPECT_TRUE(sut.get_server_pipe_queue_size() == 0);
 }
 
 TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
 {
     auto pool = std::make_shared<thread_pool>(2);
     mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe("name");
-    auto server_pipe = sut.create_pipe("name");
+    auto client_pipe = sut.open_pipe();
+    auto server_pipe = sut.create_pipe();
     buffer client_msg(1); client_msg[0] = (std::byte)0x1;
     buffer server_msg(1); server_msg[0] = (std::byte)0x2;
 
@@ -82,18 +76,16 @@ TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
     ASSERT_TRUE(r2 && *r2 == client_msg);
 }
 
-TEST(MemPipeEnv, CreateSeparatePipesIfTheirNamesDiffer)
+TEST(MemPipeEnv, DoNotConnectNewPipeToCounterpartIfItIsNotExistingAnymore)
 {
     auto pool = std::make_shared<thread_pool>(2);
     mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe("name1");
+    auto client_pipe = sut.open_pipe();
+    client_pipe.reset();
 
-    auto server_pipe = sut.create_pipe("name2");
+    auto server_pipe = sut.create_pipe();
 
-    EXPECT_FALSE(client_pipe->is_connected());
     EXPECT_FALSE(server_pipe->is_connected());
-    EXPECT_TRUE(sut.get_client_pipe_map_size() == 1);
-    EXPECT_TRUE(sut.get_client_pipe_queue_size("name1") == 1);
-    EXPECT_TRUE(sut.get_server_pipe_map_size() == 1);
-    EXPECT_TRUE(sut.get_server_pipe_queue_size("name2") == 1);
+    EXPECT_TRUE(sut.get_client_pipe_queue_size() == 0);
+    EXPECT_TRUE(sut.get_server_pipe_queue_size() == 1);
 }

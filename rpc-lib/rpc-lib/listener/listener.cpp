@@ -1,10 +1,11 @@
 #include "listener.h"
 
 #pragma warning(push, 0)
-#include "rpc-lib/transport/proto/pipe-auth.pb.h"
+#include "rpc-lib/authenticator/proto/auth.pb.h"
 #pragma warning(pop)
 
 #include <rpc-lib/transport/transport.h>
+#include "rpc-lib/authenticator/iauthenticator.h"
 #include <rpc-lib/pipe/ipipe.h>
 #include <rpc-lib/pipe/ipipe-env.h>
 #include <common-lib/utils/buffer/buffer.h>
@@ -20,19 +21,15 @@ namespace vshalygin::rpc {
             static std::atomic_uint64_t counter = 0;
             return std::to_string(counter++);
         }
-
-        bool check_auth(const proto::pipe_auth_request & /*data*/)
-        {
-            return true; //well, allow anyone
-        }
     }
 
     listener::listener(std::shared_ptr<ipipe_env> pipe_env,
-                       const std::string &listener_pipe_name)
+                       std::shared_ptr<iauthenticator> authenticator)
         : pipe_env_(std::move(pipe_env))
-        , listener_pipe_name_(listener_pipe_name)
+        , authenticator_(std::move(authenticator))
     {
         assert(pipe_env_);
+        assert(authenticator_);
     }
 
     void listener::start()
@@ -66,9 +63,9 @@ namespace vshalygin::rpc {
         std::lock_guard guard(mtx_);
         if(is_running_) {
             listen_thread_.request_stop();
-            if(current_listener_pipe_) {
-                current_listener_pipe_->invalidate();
-                current_listener_pipe_.reset();
+            if(current_pipe_) {
+                current_pipe_->invalidate();
+                current_pipe_.reset();
             }
             listen_thread_.join();
             is_running_ = false;
@@ -105,28 +102,28 @@ namespace vshalygin::rpc {
         if(!is_running_) {
             return;
         }
-        auto listener_pipe = pipe_env_->create_pipe(listener_pipe_name_);
+        auto pipe = pipe_env_->create_pipe();
 
-        current_listener_pipe_ = listener_pipe;
+        current_pipe_ = pipe;
         guard.unlock();
 
-        if(!listener_pipe->wait_connect()) {
+        if(!pipe->wait_connect()) {
             return;
         }
 
-        auto con_msg = listener_pipe->try_to_read_for(std::chrono::seconds(10));
+        auto con_msg = pipe->try_to_read_for(std::chrono::seconds(10));
         if(!con_msg) {
             return;
         }
-        proto::pipe_auth_request req;
+        proto::auth_request req;
         if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
             return;
         }
 
-        proto::pipe_auth_response res;
-        if(check_auth(req)) {
+        proto::auth_response res;
+        if(authenticator_->check_request(req)) {
             res.set_is_accepted(true);
-            res.set_pipe_name(make_unique_pipe_name());
+            res.set_pipe_data(make_unique_pipe_name());
         } else {
             res.set_is_accepted(false);
         }
@@ -137,17 +134,14 @@ namespace vshalygin::rpc {
             return;
         }
 
-        if(!listener_pipe->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
+        if(!pipe->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
             return;
         }
         
         if(res.is_accepted()) {
-            auto pipe = pipe_env_->create_pipe(res.pipe_name());
-            if(!pipe->wait_connect_for(std::chrono::seconds(10))) {
-                return;
-            }
-
             connect_handler_(std::make_unique<transport>(std::move(pipe)));
+        } else {
+            pipe->invalidate(); //TODO what if invalidation before reading?
         }
     }
 }

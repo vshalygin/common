@@ -5,13 +5,14 @@
 namespace vshalygin::rpc {
     class ipipe_env;
     class itransport;
+    class iauthenticator;
 
     class connector
         : public iconnector
     {
     public:
         explicit connector(std::shared_ptr<ipipe_env> pipe_env,
-                           const std::string &listener_pipe_name);
+                           std::shared_ptr<iauthenticator> authenticator);
 
         connector(connector &) = delete;
         connector &operator=(connector &) = delete;
@@ -20,6 +21,6 @@ namespace vshalygin::rpc {
 
     private:
         std::shared_ptr<ipipe_env> pipe_env_;
-        const std::string listener_pipe_name_;
+        std::shared_ptr<iauthenticator> authenticator_;
     };
 }

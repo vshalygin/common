@@ -6,13 +6,14 @@
 namespace vshalygin::rpc {
     class ipipe_env;
     class ipipe;
+    class iauthenticator;
 
     class listener
         : public ilistener
     {
     public:
         explicit listener(std::shared_ptr<ipipe_env> pipe_env,
-                          const std::string &listener_pipe_name);
+                          std::shared_ptr<iauthenticator> authenticator);
 
         listener(listener &) = delete;
         listener &operator=(listener &) = delete;
@@ -29,10 +30,9 @@ namespace vshalygin::rpc {
 
     private:
         std::shared_ptr<ipipe_env> pipe_env_;
-        std::shared_ptr<ipipe> current_listener_pipe_;
+        std::shared_ptr<iauthenticator> authenticator_;
+        std::shared_ptr<ipipe> current_pipe_;
         bool is_running_ = false;
-
-        const std::string listener_pipe_name_;
 
         connect_handler_t connect_handler_;
 

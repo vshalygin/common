@@ -46,6 +46,15 @@
     <Filter Include="connector">
       <UniqueIdentifier>{78079948-6449-41d7-a27a-3269a5ea53f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="authenticator">
+      <UniqueIdentifier>{cd6ba141-8f45-4d0c-a986-f971892cf8ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="authenticator\simple-authenticator">
+      <UniqueIdentifier>{27c54d39-cc06-46d8-94e0-935103b104c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="authenticator\proto">
+      <UniqueIdentifier>{600ba9e1-dc40-446c-bc33-ff441ae6e4cf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
@@ -86,6 +95,12 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\listener\listener.cpp">
       <Filter>listener</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp">
+      <Filter>authenticator\simple-authenticator</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\authenticator\proto\auth.pb.cc">
+      <Filter>authenticator\proto</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -179,5 +194,19 @@
     <ClInclude Include="rpc-lib\listener\listener.h">
       <Filter>listener</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\authenticator\iauthenticator.h">
+      <Filter>authenticator</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.h">
+      <Filter>authenticator\simple-authenticator</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\authenticator\proto\auth.pb.h">
+      <Filter>authenticator\proto</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="rpc-lib\authenticator\proto\auth.proto">
+      <Filter>authenticator\proto</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
