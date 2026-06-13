@@ -9,6 +9,11 @@ namespace vshalygin::rpc {
         assert(pipe_ && pipe_->is_connected());
     }
 
+    transport::~transport()
+    {
+        stop();
+    }
+
     void transport::send_async(cl::buffer &&message,
                                     std::function<void()> &&error_handler)
     {

@@ -170,12 +170,10 @@ namespace vshalygin::rpc {
                                                                      connection_state state)
     {
         auto [guard, handler] = m_connection_change_state_handler.get();
-        if(handler) {
-            try {
-                handler(connection_id, state);
-            } catch(...) {
-                //TODO log
-            }
+        if(handler)  try {
+            handler(connection_id, state);
+        } catch(...) {
+            //TODO log
         }
     }
 
