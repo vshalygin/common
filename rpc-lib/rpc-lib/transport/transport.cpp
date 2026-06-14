@@ -4,9 +4,9 @@
 
 namespace vshalygin::rpc {
     transport::transport(std::shared_ptr<ipipe> pipe)
-        : pipe_(std::move(pipe))
+        : m_pipe(std::move(pipe))
     {
-        assert(pipe_ && pipe_->is_connected());
+        assert(m_pipe && m_pipe->is_connected());
     }
 
     transport::~transport()
@@ -22,12 +22,12 @@ namespace vshalygin::rpc {
     void transport::send_async(cl::buffer &&message,
                                std::function<void()> &&error_handler)
     {
-        auto res = pipe_->write_async(std::move(message),
-                                     [eh = std::move(error_handler)](pipe_op_res res) {
-                                         if(res == pipe_op_res::failed) {
-                                             eh();
-                                         }
-                                     });
+        auto res = m_pipe->write_async(std::move(message),
+                                       [eh = std::move(error_handler)](pipe_op_res res) {
+                                           if(res == pipe_op_res::failed) {
+                                               eh();
+                                           }
+                                       });
 
         if(!res) {
             throw std::runtime_error("write_async failed");
@@ -36,13 +36,13 @@ namespace vshalygin::rpc {
 
     void transport::recv_async(std::function<void(bool, cl::buffer &&)> &&handler)
     {
-        auto r = pipe_->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
-                                       if(is_success(res)) {
-                                           handler(true, std::move(msg));
-                                       } else {
-                                           handler(false, {});
-                                       }
-                                   });
+        auto r = m_pipe->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
+                                        if(is_success(res)) {
+                                            handler(true, std::move(msg));
+                                        } else {
+                                            handler(false, {});
+                                        }
+                                    });
 
         if(!r) {
             stop();
@@ -51,21 +51,18 @@ namespace vshalygin::rpc {
 
     void transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
     {
-        assert(start_callback);
-        assert(stop_callback);
-
-        std::lock_guard lock(mtx_);
-        if(state_ != state::init) {
+        std::lock_guard lock(m_mtx);
+        if(m_state != state::init) {
             throw std::logic_error("pipe transport was started");
         }
 
-        auto res = pipe_->wait_connect_for(std::chrono::seconds(10));
+        auto res = m_pipe->wait_connect_for(std::chrono::seconds(10));
         if(!res) {
             throw std::runtime_error("unable to wait pipe connection");
         }
 
-        stop_callback_ = std::move(stop_callback);
-        state_ = state::started;
+        m_stop_callback = std::move(stop_callback);
+        m_state = state::started;
 
         if(start_callback) try {
             start_callback();
@@ -76,12 +73,12 @@ namespace vshalygin::rpc {
 
     void transport::stop()
     {
-        std::lock_guard lock(mtx_);
-        if(state_ == state::started) {
-            pipe_->invalidate();
-            state_ = state::stopped;
-            try {
-                stop_callback_();
+        std::lock_guard lock(m_mtx);
+        if(m_state == state::started) {
+            m_pipe->invalidate();
+            m_state = state::stopped;
+            if(m_stop_callback) try {
+                m_stop_callback();
             } catch(...) {
                 //TODO log
             }
@@ -90,7 +87,7 @@ namespace vshalygin::rpc {
 
     bool transport::is_running() const
     {
-        std::lock_guard lock(mtx_);
-        return state_ == state::started;
+        std::lock_guard lock(m_mtx);
+        return m_state == state::started;
     }
 }

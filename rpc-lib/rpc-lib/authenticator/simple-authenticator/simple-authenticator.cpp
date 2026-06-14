@@ -5,7 +5,7 @@ namespace vshalygin::rpc {
     proto::auth_request simple_authenticator::create_request() const
     {
         proto::auth_request req;
-        req.set_auth_data("trust me");
+        req.set_auth_data("");
         return req;
     }
 

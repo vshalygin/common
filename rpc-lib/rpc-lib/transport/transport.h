@@ -25,17 +25,17 @@ namespace vshalygin::rpc {
         bool is_running() const override;
 
     private:
-        std::shared_ptr<ipipe> pipe_;
+        std::shared_ptr<ipipe> m_pipe;
 
-        std::function<void()> stop_callback_;
+        std::function<void()> m_stop_callback;
 
-        mutable std::mutex mtx_;
+        mutable std::mutex m_mtx;
 
         enum class state
         {
             init,
             started,
             stopped
-        } state_ = state::init;
+        } m_state = state::init;
     };
 }
