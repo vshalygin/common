@@ -8,5 +8,4 @@ message auth_request {
 
 message auth_response {
     bool is_accepted = 1;
-    string pipe_data = 2;
 }

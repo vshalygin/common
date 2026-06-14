@@ -132,6 +132,7 @@
     <ClCompile Include="src\client-endpoint\client-endpoint-test.cpp" />
     <ClCompile Include="src\closure-guard\closure-guard-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
+    <ClCompile Include="src\connector\connector-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\pipe-buffer-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\pipe-env-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\pipe-test.cpp" />
@@ -157,11 +158,14 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\mocks\authenticator-mock.h" />
     <ClInclude Include="src\mocks\channel-mock.h" />
     <ClInclude Include="src\mocks\closure-mock.h" />
     <ClInclude Include="src\mocks\connection-mock.h" />
     <ClInclude Include="src\mocks\connector-mock.h" />
     <ClInclude Include="src\mocks\listener-mock.h" />
+    <ClInclude Include="src\mocks\pipe-env-mock.h" />
+    <ClInclude Include="src\mocks\pipe-mock.h" />
     <ClInclude Include="src\mocks\rpc-controller-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />
     <ClInclude Include="src\mocks\transport-mock.h" />

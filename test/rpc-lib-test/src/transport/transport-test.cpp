@@ -1,5 +1,6 @@
 #include <rpc-lib/transport/transport.h>
 #include <rpc-lib/pipe/ipipe.h>
+#include "mocks/pipe-mock.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -19,26 +20,6 @@ namespace {
         }
         return true;
     }
-
-    class pipe_mock
-        : public ipipe
-    {
-    public:
-        MOCK_METHOD(bool, is_connected, (), (const, override));
-
-        MOCK_METHOD(bool, wait_connect_for, (const std::chrono::microseconds &), (const, override));
-        MOCK_METHOD(bool, wait_connect, (), (const, override));
-
-        MOCK_METHOD(bool, write_async, (buffer &&, std::function<void(pipe_op_res)> &&), (override));
-        MOCK_METHOD(bool, read_async, (std::function<void(pipe_op_res, buffer &&)> &&), (override));
-
-        MOCK_METHOD(bool, try_to_write_for, (buffer &&msg, const std::chrono::microseconds &), (override));
-        MOCK_METHOD(std::optional<buffer>, try_to_read_for, (const std::chrono::microseconds &), (override));
-
-        MOCK_METHOD(void, invalidate, (), (override));
-    };
-
-    using pipe_nice_mock = NiceMock<pipe_mock>;
 }
 
 class Transport

@@ -15,14 +15,6 @@
 #include <string>
 
 namespace vshalygin::rpc {
-    namespace {
-        std::string make_unique_pipe_name()
-        {
-            static std::atomic_uint64_t counter = 0;
-            return std::to_string(counter++);
-        }
-    }
-
     listener::listener(std::shared_ptr<ipipe_env> pipe_env,
                        std::shared_ptr<iauthenticator> authenticator)
         : pipe_env_(std::move(pipe_env))
@@ -30,6 +22,16 @@ namespace vshalygin::rpc {
     {
         assert(pipe_env_);
         assert(authenticator_);
+    }
+
+    listener::~listener()
+    {
+        try {
+            stop();
+        } catch(...) {
+            //TODO log
+            std::terminate();
+        }
     }
 
     void listener::start()
@@ -122,12 +124,7 @@ namespace vshalygin::rpc {
             }
 
             proto::auth_response res;
-            if(authenticator_->check_request(req)) {
-                res.set_is_accepted(true);
-                res.set_pipe_data(make_unique_pipe_name());
-            } else {
-                res.set_is_accepted(false);
-            }
+            res.set_is_accepted(authenticator_->check_request(req));
 
             cl::buffer buf(res.ByteSizeLong());
             if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {

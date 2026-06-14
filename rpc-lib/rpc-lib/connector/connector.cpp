@@ -11,21 +11,21 @@
 namespace vshalygin::rpc {
     connector::connector(std::shared_ptr<ipipe_env> pipe_env,
                          std::shared_ptr<iauthenticator> authenticator)
-        : pipe_env_(std::move(pipe_env))
-        , authenticator_(std::move(authenticator))
+        : m_pipe_env(std::move(pipe_env))
+        , m_authenticator(std::move(authenticator))
     {
-        assert(pipe_env_);
-        assert(authenticator_);
+        assert(m_pipe_env);
+        assert(m_authenticator);
     }
 
     std::unique_ptr<itransport> connector::create_transport()
     {
-        auto pipe = pipe_env_->open_pipe();
+        auto pipe = m_pipe_env->open_pipe();
         if(!pipe->wait_connect_for(std::chrono::seconds(10))) {
             throw std::runtime_error("failed to wait pipe connection");
         }
 
-        proto::auth_request req = authenticator_->create_request();
+        proto::auth_request req = m_authenticator->create_request();
         cl::buffer buff(req.ByteSizeLong());
         req.SerializeToArray(buff.data(), static_cast<int>(buff.size()));
         if(!pipe->try_to_write_for(std::move(buff), std::chrono::seconds(10))) {

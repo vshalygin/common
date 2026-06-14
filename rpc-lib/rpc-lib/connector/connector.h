@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
         std::unique_ptr<itransport> create_transport() override;
 
     private:
-        std::shared_ptr<ipipe_env> pipe_env_;
-        std::shared_ptr<iauthenticator> authenticator_;
+        std::shared_ptr<ipipe_env> m_pipe_env;
+        std::shared_ptr<iauthenticator> m_authenticator;
     };
 }

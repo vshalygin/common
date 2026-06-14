@@ -18,6 +18,8 @@ namespace vshalygin::rpc {
         listener(listener &) = delete;
         listener &operator=(listener &) = delete;
 
+        ~listener();
+
         void start() override;
         void stop() override;
         bool is_stopped() const override;

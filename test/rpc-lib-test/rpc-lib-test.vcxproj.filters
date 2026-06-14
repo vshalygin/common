@@ -58,6 +58,9 @@
     <ClCompile Include="src\transport\transport-test.cpp">
       <Filter>transport</Filter>
     </ClCompile>
+    <ClCompile Include="src\connector\connector-test.cpp">
+      <Filter>connector</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -108,6 +111,9 @@
     <Filter Include="pipe\memory-pipe">
       <UniqueIdentifier>{2f646b38-8694-4fdd-ba50-bdd70dcee8bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="connector">
+      <UniqueIdentifier>{b46cf90f-fa2f-4b0e-9cc9-21005b6fa557}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\proto\test-messages.proto">
@@ -140,6 +146,15 @@
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\listener-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\pipe-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\pipe-env-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\authenticator-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
   </ItemGroup>
