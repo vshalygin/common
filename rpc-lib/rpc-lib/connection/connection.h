@@ -33,8 +33,8 @@ namespace vshalygin::rpc {
         bool is_active() const override;
         void stop_transport() override;
 
-        size_t get_active_requests_count() const override;
-        size_t get_active_timers_count() const override;
+        size_t get_active_requests_count() const;
+        size_t get_active_timers_count() const;
 
     private:
         class impl;

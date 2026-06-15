@@ -122,7 +122,7 @@ protected:
         m_thread_pool->stop();
     }
 
-    std::unique_ptr<iconnection> create_sut()
+    std::unique_ptr<connection> create_sut()
     {
         auto ans = std::make_unique<connection>(m_thread_pool,
                                                 m_service,
@@ -131,7 +131,7 @@ protected:
         return ans;
     }
 
-    std::unique_ptr<iconnection> create_sut(const std::chrono::milliseconds &timeout)
+    std::unique_ptr<connection> create_sut(const std::chrono::milliseconds &timeout)
     {
         auto ans = std::make_unique<connection>(m_thread_pool,
                                                 m_service,
@@ -141,7 +141,7 @@ protected:
         return ans;
     }
 
-    std::unique_ptr<iconnection> create_sut_without_transport()
+    std::unique_ptr<connection> create_sut_without_transport()
     {
         auto ans = std::make_unique<connection>(m_thread_pool,
                                                 m_service,

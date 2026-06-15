@@ -27,8 +27,5 @@ namespace vshalygin::rpc {
 
         virtual bool is_active() const = 0;
         virtual void stop_transport() = 0;
-
-        virtual size_t get_active_requests_count() const = 0;
-        virtual size_t get_active_timers_count() const = 0;
     };
 }
