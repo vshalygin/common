@@ -17,6 +17,8 @@
 namespace vshalygin::rpc {
     class client_endpoint final
     {
+        using connection_state_change_handler_t = std::function<void(connection_state)>;
+
         template<typename Response>
         using request_callback_t = std::function<void(request_result, std::unique_ptr<Response>)>;
 
@@ -33,7 +35,8 @@ namespace vshalygin::rpc {
         client_endpoint(std::shared_ptr<iservice> service,
                         std::unique_ptr<ichannel> channel,
                         std::unique_ptr<iconnector> connector,
-                        std::shared_ptr<cl::thread_pool> thread_pool);
+                        std::shared_ptr<cl::thread_pool> thread_pool,
+                        connection_state_change_handler_t &&handler);
 
         client_endpoint(client_endpoint &) = delete;
         client_endpoint &operator=(client_endpoint &) = delete;
@@ -44,8 +47,6 @@ namespace vshalygin::rpc {
         void connect();
         void disconnect();
         bool is_connected() const;
-
-        void set_connection_change_state_handler(std::function<void(connection_state)> &&handler);
 
         template<typename Request, typename Response>
         std::unique_ptr<Response> make_request(const Request &req, auto &service_stub, auto method)

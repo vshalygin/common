@@ -17,6 +17,7 @@ namespace vshalygin::rpc {
 
         explicit connection(std::shared_ptr<cl::thread_pool> thread_pool,
                             std::shared_ptr<iservice> service,
+                            change_state_handler_t &&change_state_handler,
                             const std::chrono::microseconds &timeout = RequestTimeout);
 
         connection(connection &) = delete;
@@ -29,7 +30,6 @@ namespace vshalygin::rpc {
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler) override;
 
-        void set_change_state_handler(std::function<void(connection_state)> &&handler) override;
         bool is_active() const override;
         void stop_transport() override;
 

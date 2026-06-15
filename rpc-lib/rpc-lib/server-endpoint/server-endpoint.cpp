@@ -8,10 +8,12 @@ namespace vshalygin::rpc {
     server_endpoint::impl::impl(std::unique_ptr<ilistener> listener,
                                 std::shared_ptr<iservice> service,
                                 std::shared_ptr<cl::thread_pool> thread_pool,
+                                connection_change_state_handler_t &&connection_change_state_handler,
                                 creator)
         : m_listener(std::move(listener))
         , m_service(std::move(service))
         , m_thread_pool(std::move(thread_pool))
+        , m_connection_change_state_handler(std::move(connection_change_state_handler))
     {
         assert(m_listener);
         assert(m_service);
@@ -31,13 +33,6 @@ namespace vshalygin::rpc {
     void server_endpoint::impl::stop_listen()
     {
         return m_listener->stop();
-    }
-
-    void server_endpoint::impl::set_connection_change_state_handler
-        (connection_change_state_handler_t &&handler)
-    {
-        auto [guard, connection_change_state_handler] = m_connection_change_state_handler.get();
-        connection_change_state_handler = std::move(handler);
     }
 
     void server_endpoint::impl::set_listener_change_state_handler
@@ -91,9 +86,9 @@ namespace vshalygin::rpc {
                                                       std::weak_ptr<impl> self)
     {
         const auto id = m_next_connection_id.fetch_add(1);
-        auto new_connection = std::make_shared<connection>(m_thread_pool, m_service);
-
-        new_connection->set_change_state_handler(create_connection_change_state_handler(self, id));
+        auto new_connection = std::make_shared<connection>(m_thread_pool,
+                                                           m_service,
+                                                           create_connection_change_state_handler(self, id));
 
         {
             auto [guard, inactive_map] = m_inactive_connection_map.get();
@@ -160,9 +155,8 @@ namespace vshalygin::rpc {
     void server_endpoint::impl::call_connection_state_change_handler(uint64_t connection_id,
                                                                      connection_state state)
     {
-        auto [guard, handler] = m_connection_change_state_handler.get();
-        if(handler)  try {
-            handler(connection_id, state);
+        if(m_connection_change_state_handler) try {
+            m_connection_change_state_handler(connection_id, state);
         } catch(...) {
             //TODO log
         }
@@ -170,8 +164,12 @@ namespace vshalygin::rpc {
 
     server_endpoint::server_endpoint(std::unique_ptr<ilistener> listener,
                                      std::shared_ptr<iservice> service,
-                                     std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_impl(impl::create(std::move(listener), std::move(service), std::move(thread_pool)))
+                                     std::shared_ptr<cl::thread_pool> thread_pool,
+                                     connection_change_state_handler_t &&connection_change_state_handler)
+        : m_impl(impl::create(std::move(listener),
+                              std::move(service),
+                              std::move(thread_pool),
+                              std::move(connection_change_state_handler)))
     {
         m_impl->set_new_connection_handler();
     }
@@ -189,12 +187,6 @@ namespace vshalygin::rpc {
     void server_endpoint::stop_listen()
     {
         m_impl->stop_listen();
-    }
-
-    void server_endpoint::set_connection_change_state_handler
-        (connection_change_state_handler_t &&handler)
-    {
-        m_impl->set_connection_change_state_handler(std::move(handler));
     }
 
     void server_endpoint::set_listener_change_state_handler

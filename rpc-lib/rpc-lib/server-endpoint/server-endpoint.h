@@ -36,7 +36,8 @@ namespace vshalygin::rpc {
 
         server_endpoint(std::unique_ptr<ilistener> listener,
                         std::shared_ptr<iservice> service,
-                        std::shared_ptr<cl::thread_pool> thread_pool);
+                        std::shared_ptr<cl::thread_pool> thread_pool,
+                        connection_change_state_handler_t &&connection_change_state_handler);
 
         server_endpoint(server_endpoint &) = delete;
         server_endpoint &operator=(server_endpoint &) = delete;
@@ -48,7 +49,6 @@ namespace vshalygin::rpc {
         bool is_listening() const;
         void stop_listen();
 
-        void set_connection_change_state_handler(connection_change_state_handler_t &&handler);
         void set_listener_change_state_handler(listener_change_state_handler_t &&handler);
 
         void drop_connection(uint64_t id);
@@ -107,17 +107,20 @@ namespace vshalygin::rpc {
     public:
         inline static std::shared_ptr<impl> create(std::unique_ptr<ilistener> listener,
                                                    std::shared_ptr<iservice> service,
-                                                   std::shared_ptr<cl::thread_pool> thread_pool)
+                                                   std::shared_ptr<cl::thread_pool> thread_pool,
+                                                   connection_change_state_handler_t &&connection_change_state_handler)
         {
             return std::make_shared<impl>(std::move(listener),
                                           std::move(service),
                                           std::move(thread_pool),
+                                          std::move(connection_change_state_handler),
                                           creator());
         }
 
         impl(std::unique_ptr<ilistener> listener,
              std::shared_ptr<iservice> service,
              std::shared_ptr<cl::thread_pool> thread_pool,
+             connection_change_state_handler_t &&connection_change_state_handler,
              creator);
 
         impl(impl &) = delete;
@@ -127,7 +130,6 @@ namespace vshalygin::rpc {
         bool is_listening() const;
         void stop_listen();
 
-        void set_connection_change_state_handler(connection_change_state_handler_t &&handler);
         void set_listener_change_state_handler(listener_change_state_handler_t &&handler);
 
         void drop_connection(uint64_t id);
@@ -302,7 +304,7 @@ namespace vshalygin::rpc {
         cl::guarded_value<channel_map_t> m_channel_map;
         cl::guarded_value<connection_map_t> m_inactive_connection_map;
 
-        cl::guarded_value<connection_change_state_handler_t> m_connection_change_state_handler;
+        connection_change_state_handler_t m_connection_change_state_handler;
     };
 
     template<typename Request, typename Response>

@@ -79,12 +79,18 @@ protected:
                            });
     }
 
+    void TearDown() override
+    {
+        m_thread_pool->stop();
+    }
+
     std::unique_ptr<client_endpoint> create_sut()
     {
         return std::make_unique<client_endpoint>(m_service,
                                                  std::move(m_channel),
                                                  std::move(m_connector),
-                                                 m_thread_pool);
+                                                 m_thread_pool,
+                                                 m_connection_state_change_handler.AsStdFunction());
     }
 
     void emit_recv_event(bool res, buffer buff)
@@ -114,6 +120,8 @@ protected:
 
     std::function<void(bool, vshalygin::cl::buffer &&)> m_recv_handler;
     std::function<void()> m_stop_transport_handler;
+
+    MockFunction<void(connection_state)> m_connection_state_change_handler;
 };
 
 TEST_F(ClientEndpoint, SetsRequestHandlerOnConstruction)
@@ -171,17 +179,14 @@ TEST_F(ClientEndpoint, ChecksConnection)
 
 TEST_F(ClientEndpoint, SetsConnectionChangeStateHandler)
 {
-    MockFunction<void(connection_state)> handler;
-
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(handler.AsStdFunction());
 
-    EXPECT_CALL(handler, Call(connection_state::connected))
+    EXPECT_CALL(m_connection_state_change_handler, Call(connection_state::connected))
         .Times(1);
     sut->connect();
-    Mock::VerifyAndClearExpectations(&handler);
+    Mock::VerifyAndClearExpectations(&m_connection_state_change_handler);
 
-    EXPECT_CALL(handler, Call(connection_state::disconnected))
+    EXPECT_CALL(m_connection_state_change_handler, Call(connection_state::disconnected))
         .Times(1);
     sut->disconnect();
 }

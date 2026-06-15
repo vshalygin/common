@@ -37,10 +37,15 @@ protected:
 
     std::unique_ptr<server_endpoint> create_sut()
     {
-        return std::make_unique<server_endpoint>(std::move(m_listener), m_service, m_thread_pool);
+        return std::make_unique<server_endpoint>(std::move(m_listener),
+                                                 m_service,
+                                                 m_thread_pool,
+                                                 m_connection_change_state_handler.AsStdFunction());
     }
 
 protected:
+    MockFunction<void(uint64_t, connection_state)> m_connection_change_state_handler;
+
     proto::request_message m_req_message;
     proto::response_message m_res_message;
     std::shared_ptr<thread_pool> m_thread_pool;
@@ -146,12 +151,11 @@ TEST_F(ServerEndpoint, CallsSetConnectionChangeHandler)
     EXPECT_CALL(*transport, start)
         .Times(1)
         .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(_, connection_state::connected))
+
+    EXPECT_CALL(m_connection_change_state_handler, Call(_, connection_state::connected))
         .Times(1);
 
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 }
 
@@ -173,16 +177,14 @@ TEST_F(ServerEndpoint, CallsConnectionChangeHandlerSeveralTimesWithVariousIds)
     EXPECT_CALL(*transport3, start)
         .Times(1)
         .WillOnce([](auto &&start_callback, auto &&) { start_callback(); });
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(0, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(0, _))
         .Times(1);
-    EXPECT_CALL(connection_change_state_handler, Call(1, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(1, _))
         .Times(1);
-    EXPECT_CALL(connection_change_state_handler, Call(2, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(2, _))
         .Times(1);
 
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
     new_connection_handler(std::move(transport2));
     new_connection_handler(std::move(transport3));
@@ -209,12 +211,10 @@ TEST_F(ServerEndpoint, AnswersZeroChannelCountIfTransportWasStopped)
         .Times(2)
         .WillOnce([&]() { transport_stop_callback(); })
         .WillRepeatedly(DoDefault());
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call)
+    EXPECT_CALL(m_connection_change_state_handler, Call)
         .Times(2);
 
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
     ASSERT_EQ(sut->get_channels_count(), 1);
 
@@ -323,13 +323,11 @@ TEST_F(ServerEndpoint, DropsConnectionWithId)
         .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport2, stop)
         .Times(0);
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(0, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(0, _))
         .Times(1);
-    EXPECT_CALL(connection_change_state_handler, Call(1, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(1, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
     new_connection_handler(std::move(transport2));
 
@@ -358,13 +356,11 @@ TEST_F(ServerEndpoint, DropsAllConnections)
         .WillOnce([](auto &&start_callback, auto) { start_callback(); });
     EXPECT_CALL(*transport2, stop)
         .Times(1);
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(0, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(0, _))
         .Times(1);
-    EXPECT_CALL(connection_change_state_handler, Call(1, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(1, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
     new_connection_handler(std::move(transport2));
 
@@ -383,12 +379,10 @@ TEST_F(ServerEndpoint, ThrowsExceptionOnAttemptToMakeRequestWithUnexistingId)
     EXPECT_CALL(*transport, start)
         .Times(1)
         .WillOnce([](auto &&start_callback, auto) { start_callback(); });
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(_, connection_state::connected))
+    EXPECT_CALL(m_connection_change_state_handler, Call(_, connection_state::connected))
         .Times(1);
 
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 
     try {
@@ -424,11 +418,9 @@ TEST_F(ServerEndpoint, MakeSyncRequestOnSpecifiedConnection)
                       recv_handler(true, res_buffer.copy());
                   });
 
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(connection_id, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 
     auto res = sut->make_request<proto::request_message, proto::response_message>
@@ -461,11 +453,9 @@ TEST_F(ServerEndpoint, ThrowsExceptionIfMakeSyncRequestOnSpecifiedConnectionFail
                       recv_handler1(true, res_buffer.copy());
                   });
 
-    NiceMock<MockFunction<void(uint64_t, connection_state)>> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(connection_id, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
 
     try {
@@ -503,11 +493,9 @@ TEST_F(ServerEndpoint, MakesSyncRequestToAllConnections)
                       recv_handler(true, res_buffer.copy());
                   });
 
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(connection_id, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 
     auto res = sut->make_request_all<proto::request_message, proto::response_message>
@@ -528,12 +516,10 @@ TEST_F(ServerEndpoint, ThrowsExceptionOnAttenptToMakeRequestAsyncWithUnexistingI
     EXPECT_CALL(*transport, start)
         .Times(1)
         .WillOnce([](auto &&start_callback, auto) { start_callback(); });
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(_, connection_state::connected))
+    EXPECT_CALL(m_connection_change_state_handler, Call(_, connection_state::connected))
         .Times(1);
 
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 
     try {
@@ -581,11 +567,9 @@ TEST_F(ServerEndpoint, MakeAsyncRequestOnSpecifiedConnection)
                       recv_handler(true, res_buffer.copy());
                   });
 
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(connection_id, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 
     sut->make_request_async<proto::request_message, proto::response_message>
@@ -626,11 +610,9 @@ TEST_F(ServerEndpoint, MakeUnsuccessfulAsyncRequestOnSpecifiedConnection)
                       recv_handler1(true, res_buffer.copy());
                   });
 
-    NiceMock<MockFunction<void(uint64_t, connection_state)>> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(connection_id, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport1));
 
     sut->make_request_async<proto::request_message, proto::response_message>
@@ -672,11 +654,9 @@ TEST_F(ServerEndpoint, MakesAsyncRequestToAllConnections)
         recv_handler(true, res_buffer.copy());
     });
 
-    MockFunction<void(uint64_t, connection_state)> connection_change_state_handler;
-    EXPECT_CALL(connection_change_state_handler, Call(connection_id, _))
+    EXPECT_CALL(m_connection_change_state_handler, Call(connection_id, _))
         .Times(1);
     auto sut = create_sut();
-    sut->set_connection_change_state_handler(connection_change_state_handler.AsStdFunction());
     new_connection_handler(std::move(transport));
 
     auto num = sut->make_request_all_async<proto::request_message, proto::response_message>

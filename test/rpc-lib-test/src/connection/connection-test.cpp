@@ -124,21 +124,28 @@ protected:
 
     std::unique_ptr<iconnection> create_sut()
     {
-        auto ans = std::make_unique<connection>(m_thread_pool, m_service);
+        auto ans = std::make_unique<connection>(m_thread_pool,
+                                                m_service,
+                                                m_change_state_handler.AsStdFunction());
         ans->start_and_set_transport(std::move(m_transport));
         return ans;
     }
 
     std::unique_ptr<iconnection> create_sut(const std::chrono::milliseconds &timeout)
     {
-        auto ans = std::make_unique<connection>(m_thread_pool, m_service, timeout);
+        auto ans = std::make_unique<connection>(m_thread_pool,
+                                                m_service,
+                                                m_change_state_handler.AsStdFunction(),
+                                                timeout);
         ans->start_and_set_transport(std::move(m_transport));
         return ans;
     }
 
     std::unique_ptr<iconnection> create_sut_without_transport()
     {
-        auto ans = std::make_unique<connection>(m_thread_pool, m_service);
+        auto ans = std::make_unique<connection>(m_thread_pool,
+                                                m_service,
+                                                m_change_state_handler.AsStdFunction());
         return ans;
     }
 
@@ -152,6 +159,8 @@ protected:
     proto::some_message m_response_message;
 
     std::unique_ptr<transport_nice_mock> m_transport;
+
+    NiceMock<MockFunction<void(connection_state)>> m_change_state_handler;
 };
 
 TEST_F(Connection, LaunchesTimerOnRequestAsyncOperation)
@@ -491,14 +500,13 @@ TEST_F(Connection, SendsAnswerOnRequest)
 TEST_F(Connection, SetsDisconnectHandler)
 {
     event sync_event;
-    MockFunction<void(connection_state)> disconnect_handler;
-    EXPECT_CALL(disconnect_handler, Call(connection_state::disconnected))
+    EXPECT_CALL(m_change_state_handler, Call(connection_state::connected))
+        .Times(1);
+    EXPECT_CALL(m_change_state_handler, Call(connection_state::disconnected))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
     auto sut = create_sut();
-    sut->set_change_state_handler(disconnect_handler.AsStdFunction());
-
     m_transport_ptr->emit_disconnect_event();
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
@@ -578,12 +586,10 @@ TEST_F(Connection, CallsTransportStartOnSettingTransport)
 TEST_F(Connection, CallsTransportStartCallbackOnSettingTransport)
 {
     event sync_event;
-    MockFunction<void(connection_state)> connect_handler;
-    EXPECT_CALL(connect_handler, Call(connection_state::connected))
+    EXPECT_CALL(m_change_state_handler, Call(connection_state::connected))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
     auto sut = create_sut_without_transport();
-    sut->set_change_state_handler(connect_handler.AsStdFunction());
 
     sut->start_and_set_transport(std::move(m_transport));
 

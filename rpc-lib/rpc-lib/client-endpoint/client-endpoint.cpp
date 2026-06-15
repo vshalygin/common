@@ -6,7 +6,8 @@ namespace vshalygin::rpc {
     client_endpoint::client_endpoint(std::shared_ptr<iservice> service,
                                      std::unique_ptr<ichannel> channel,
                                      std::unique_ptr<iconnector> connector,
-                                     std::shared_ptr<cl::thread_pool> thread_pool)
+                                     std::shared_ptr<cl::thread_pool> thread_pool,
+                                     connection_state_change_handler_t &&state_change_handler)
         : m_channel(std::move(channel))
         , m_connector(std::move(connector))
     {
@@ -16,7 +17,9 @@ namespace vshalygin::rpc {
         assert(m_connector);
         assert(thread_pool);
 
-        m_connection = std::make_unique<connection>(thread_pool, std::move(service));
+        m_connection = std::make_unique<connection>(thread_pool,
+                                                    std::move(service),
+                                                    std::move(state_change_handler));
     }
 
     void client_endpoint::connect()
@@ -34,11 +37,5 @@ namespace vshalygin::rpc {
     bool client_endpoint::is_connected() const
     {
         return m_connection->is_active();
-    }
-
-    void client_endpoint::set_connection_change_state_handler
-        (std::function<void(connection_state)> &&handler)
-    {
-        m_connection->set_change_state_handler(std::move(handler));
     }
 }
