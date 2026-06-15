@@ -51,18 +51,20 @@ namespace vshalygin::rpc {
 
     void transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
     {
-        std::lock_guard lock(m_mtx);
-        if(m_state != state::init) {
-            throw std::logic_error("pipe transport was started");
-        }
+        {
+            std::lock_guard lock(m_mtx);
+            if(m_state != state::init) {
+                throw std::logic_error("pipe transport was started");
+            }
 
-        auto res = m_pipe->wait_connect_for(std::chrono::seconds(10));
-        if(!res) {
-            throw std::runtime_error("unable to wait pipe connection");
-        }
+            auto res = m_pipe->wait_connect_for(std::chrono::seconds(10));
+            if(!res) {
+                throw std::runtime_error("unable to wait pipe connection");
+            }
 
-        m_stop_callback = std::move(stop_callback);
-        m_state = state::started;
+            m_stop_callback = std::move(stop_callback);
+            m_state = state::started;
+        }
 
         if(start_callback) try {
             start_callback();
@@ -73,12 +75,15 @@ namespace vshalygin::rpc {
 
     void transport::stop()
     {
-        std::lock_guard lock(m_mtx);
+        std::unique_lock lock(m_mtx);
         if(m_state == state::started) {
             m_pipe->invalidate();
             m_state = state::stopped;
-            if(m_stop_callback) try {
-                m_stop_callback();
+            auto stop_callback = std::move(m_stop_callback);
+            lock.unlock();
+
+            if(stop_callback) try {
+                stop_callback();
             } catch(...) {
                 //TODO log
             }
