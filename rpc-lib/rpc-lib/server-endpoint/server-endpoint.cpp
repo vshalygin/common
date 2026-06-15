@@ -162,18 +162,6 @@ namespace vshalygin::rpc {
         }
     }
 
-    server_endpoint::server_endpoint(std::unique_ptr<ilistener> listener,
-                                     std::shared_ptr<iservice> service,
-                                     std::shared_ptr<cl::thread_pool> thread_pool,
-                                     connection_change_state_handler_t &&connection_change_state_handler)
-        : m_impl(impl::create(std::move(listener),
-                              std::move(service),
-                              std::move(thread_pool),
-                              std::move(connection_change_state_handler)))
-    {
-        m_impl->set_new_connection_handler();
-    }
-
     void server_endpoint::start_listen()
     {
         m_impl->start_listen();

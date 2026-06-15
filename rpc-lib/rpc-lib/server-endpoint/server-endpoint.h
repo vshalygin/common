@@ -1,8 +1,8 @@
 #pragma once
 #include "rpc-lib/listener/ilistener.h"
 #include "rpc-lib/connection/iconnection.h"
-#include "rpc-lib/service/iservice.h"
 #include "rpc-lib/channel/ichannel.h"
+#include "rpc-lib/service/service.h"
 #include "rpc-lib/types/connection-state.h"
 #include "rpc-lib/types/request-exception.h"
 #include "rpc-lib/types/constants.h"
@@ -34,8 +34,9 @@ namespace vshalygin::rpc {
 
         server_endpoint() = default;
 
+        template<typename GService>
         server_endpoint(std::unique_ptr<ilistener> listener,
-                        std::shared_ptr<iservice> service,
+                        std::unique_ptr<GService> gservice,
                         std::shared_ptr<cl::thread_pool> thread_pool,
                         connection_change_state_handler_t &&connection_change_state_handler);
 
@@ -306,6 +307,19 @@ namespace vshalygin::rpc {
 
         connection_change_state_handler_t m_connection_change_state_handler;
     };
+
+    template<typename GService>
+    server_endpoint::server_endpoint(std::unique_ptr<ilistener> listener,
+                                     std::unique_ptr<GService> gservice,
+                                     std::shared_ptr<cl::thread_pool> thread_pool,
+                                     connection_change_state_handler_t &&connection_change_state_handler)
+        : m_impl(impl::create(std::move(listener),
+                              std::make_shared<service<GService>>(std::move(gservice)),
+                              std::move(thread_pool),
+                              std::move(connection_change_state_handler)))
+    {
+        m_impl->set_new_connection_handler();
+    }
 
     template<typename Request, typename Response>
     std::unique_ptr<Response> server_endpoint::make_request(uint64_t connection_id,

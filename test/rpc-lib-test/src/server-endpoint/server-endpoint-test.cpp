@@ -1,5 +1,6 @@
 #include <rpc-lib/server-endpoint/server-endpoint.h>
 #include <rpc-lib/transfer-message/transfer-message.h>
+#include <rpc-lib/closure-guard/closure-guard.h>
 #include <common-lib/syncronization/event/event.h>
 
 #include "mocks/service-mock.h"
@@ -19,6 +20,34 @@ using namespace vshalygin::cl;
 using namespace testing;
 using namespace google::protobuf::util;
 
+namespace {
+    class TestService
+        : public proto::Service
+    {
+    public:
+        void Method(::google::protobuf::RpcController *,
+                    const ::proto::request_message *,
+                    ::proto::response_message *response,
+                    ::google::protobuf::Closure *done) override
+        {
+            closure_guard guard(done);
+
+            response->Clear();
+            response->set_data2(34);
+        }
+
+        void Method2(::google::protobuf::RpcController *,
+                     const ::proto::request_message *,
+                     ::proto::response_message *response,
+                     ::google::protobuf::Closure *done) override
+        {
+            closure_guard guard(done);
+
+            response->set_data2(36);
+        }
+    };
+}
+
 class ServerEndpoint
     : public Test
 {
@@ -27,7 +56,6 @@ protected:
     {
         m_thread_pool = std::make_shared<thread_pool>(1);
         m_listener = std::make_unique<listener_nice_mock>();
-        m_service = std::make_shared<service_nice_mock>();
 
         m_req_message.set_data(34);
         m_res_message.set_data(45);
@@ -38,7 +66,7 @@ protected:
     std::unique_ptr<server_endpoint> create_sut()
     {
         return std::make_unique<server_endpoint>(std::move(m_listener),
-                                                 m_service,
+                                                 std::make_unique<TestService>(),
                                                  m_thread_pool,
                                                  m_connection_change_state_handler.AsStdFunction());
     }
@@ -50,7 +78,6 @@ protected:
     proto::response_message m_res_message;
     std::shared_ptr<thread_pool> m_thread_pool;
     std::unique_ptr<listener_nice_mock> m_listener;
-    std::shared_ptr<service_nice_mock> m_service;
 
     std::function<proto::Service_Stub(google::protobuf::RpcChannel *ch)> m_create_stub;
 };
@@ -224,15 +251,12 @@ TEST_F(ServerEndpoint, AnswersZeroChannelCountIfTransportWasStopped)
 
 TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
 {
+    m_res_message.Clear();
+    m_res_message.set_data2(34);
+
     event sync_event;
     buffer req_buffer = create_transfer_msg_req(3, 0, &m_req_message);
     buffer res_buffer = create_transfer_msg_res(3, response_result::ok, &m_res_message);
-    EXPECT_CALL(*m_service, process_request)
-        .Times(1)
-        .WillOnce([&](auto &&buf, auto &&callback) {
-                      EXPECT_EQ(req_buffer, buf);
-                      callback(res_buffer.copy());
-                  });
 
     std::function<void(std::unique_ptr<itransport>)> new_connection_handler;
     EXPECT_CALL(*m_listener, set_connect_handler)
@@ -257,7 +281,7 @@ TEST_F(ServerEndpoint, ProcessesRequestsFromClients)
     new_connection_handler(std::move(transport));
  
     recv_handler(true, req_buffer.copy());
-    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+    sync_event.wait();
 }
 
 TEST_F(ServerEndpoint, StartsListening)
