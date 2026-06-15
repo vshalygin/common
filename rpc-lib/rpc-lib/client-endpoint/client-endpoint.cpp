@@ -1,30 +1,22 @@
 #include "client-endpoint.h"
 #include "rpc-lib/transport/itransport.h"
+#include "rpc-lib/connection/connection.h"
 
 namespace vshalygin::rpc {
     client_endpoint::client_endpoint(std::shared_ptr<iservice> service,
                                      std::unique_ptr<ichannel> channel,
-                                     std::shared_ptr<iconnection> connection,
-                                     std::unique_ptr<iconnector> connector)
+                                     std::unique_ptr<iconnector> connector,
+                                     std::shared_ptr<cl::thread_pool> thread_pool)
         : m_channel(std::move(channel))
-        , m_connection(std::move(connection))
         , m_connector(std::move(connector))
     {
-        using response_handler_t = iconnection::response_handler_t;
+        using response_handler_t = connection::response_handler_t;
 
         assert(m_channel);
-        assert(m_connection);
         assert(m_connector);
+        assert(thread_pool);
 
-        m_connection->set_request_handler(
-            [service = std::move(service)](cl::buffer &&buffer,
-                                           response_handler_t &&res_handler) {
-                if(service) try {
-                    service->process_request(std::move(buffer), std::move(res_handler));
-                } catch (...) {
-                    //TODO log
-                }
-            });
+        m_connection = std::make_unique<connection>(thread_pool, std::move(service));
     }
 
     void client_endpoint::connect()

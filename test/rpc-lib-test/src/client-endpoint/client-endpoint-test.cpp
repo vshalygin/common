@@ -4,10 +4,10 @@
 #include <rpc-lib/types/request-exception.h>
 
 #include "mocks/channel-mock.h"
-#include "mocks/connection-mock.h"
 #include "mocks/connector-mock.h"
 #include "mocks/service-mock.h"
 #include "mocks/transport-mock.h"
+#include "mocks/connection-mock.h"
 
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"
@@ -28,10 +28,29 @@ class ClientEndpoint
 protected:
     void SetUp() override
     {
+        m_transport = std::make_unique<transport_nice_mock>();
+        m_transport_ptr = m_transport.get();
+        ON_CALL(*m_transport, recv_async)
+            .WillByDefault(SaveArg<0>(&m_recv_handler));
+        ON_CALL(*m_transport, start)
+            .WillByDefault([this](auto &&start_handler, auto &&stop_handler) {
+                               m_stop_transport_handler = std::move(stop_handler);
+                               start_handler();
+                           });
+        ON_CALL(*m_transport, stop)
+            .WillByDefault([this]() {
+                               ASSERT_TRUE(m_stop_transport_handler);
+                               m_stop_transport_handler();
+                           });
+
+        m_thread_pool = std::make_shared<thread_pool>(1);
+
         m_service = std::make_shared<service_nice_mock>();
         m_channel = std::make_unique<channel_nice_mock>();
-        m_connection = std::make_unique<connection_nice_mock>();
         m_connector = std::make_unique<connector_nice_mock>();
+        ON_CALL(*m_connector, create_transport)
+            .WillByDefault([this]() { return std::move(m_transport); });
+
 
         m_request_message.set_data(34);
         m_response_message.set_data(45);
@@ -42,10 +61,6 @@ protected:
             .WillByDefault([&](auto &&buf, auto &&res_handler) {
                                EXPECT_EQ(buf, m_raw_request_message);
                                res_handler(m_raw_response_message.copy());
-                           });
-        ON_CALL(*m_connection, set_request_handler)
-            .WillByDefault([&](auto &&handler) {
-                               m_request_handler = std::move(handler);
                            });
         ON_CALL(*m_channel, CallMethod)
             .WillByDefault([&](const google::protobuf::MethodDescriptor *method,
@@ -68,16 +83,21 @@ protected:
     {
         return std::make_unique<client_endpoint>(m_service,
                                                  std::move(m_channel),
-                                                 m_connection,
-                                                 std::move(m_connector));
+                                                 std::move(m_connector),
+                                                 m_thread_pool);
+    }
+
+    void emit_recv_event(bool res, buffer buff)
+    {
+        m_recv_handler(res, std::move(buff));
     }
 
 protected:
+    std::shared_ptr<thread_pool> m_thread_pool;
+
     const int m_stub_method = 1;
     const decltype(&proto::Service_Stub::Method2) m_stub_method_ptr = &proto::Service_Stub::Method2;
     response_result m_response_result = response_result::ok;
-
-    std::function<void(buffer &&, std::function<void(buffer &&)> &&)> m_request_handler;
 
     proto::request_message m_request_message;
     proto::response_message m_response_message;
@@ -87,39 +107,38 @@ protected:
 
     std::shared_ptr<service_nice_mock> m_service;
     std::unique_ptr<channel_nice_mock> m_channel;
-    std::shared_ptr<connection_nice_mock> m_connection;
     std::unique_ptr<connector_nice_mock> m_connector;
+
+    std::unique_ptr<transport_nice_mock> m_transport;
+    transport_nice_mock *m_transport_ptr;
+
+    std::function<void(bool, vshalygin::cl::buffer &&)> m_recv_handler;
+    std::function<void()> m_stop_transport_handler;
 };
 
-TEST_F(ClientEndpoint, SetsRequestHandlerAfterConstruction)
+TEST_F(ClientEndpoint, SetsRequestHandlerOnConstruction)
 {
-    MockFunction<void(buffer &&)> response_handler;
-    EXPECT_CALL(response_handler, Call)
-        .Times(1);
+    event sync_event;
     EXPECT_CALL(*m_service, process_request)
-        .Times(1);
-    EXPECT_CALL(*m_connection, set_request_handler)
         .Times(1)
-        .WillOnce([&](auto &&handler) {
-                      handler(m_raw_request_message.copy(), response_handler.AsStdFunction());
-                  });
+        .WillOnce([&]() { sync_event.set(); });
 
     auto sut = create_sut();
+    sut->connect();
+
+    m_raw_request_message = create_transfer_msg_req(34, 1, &m_request_message);
+    emit_recv_event(true, m_raw_request_message.copy());
+    sync_event.wait();
 }
 
 TEST_F(ClientEndpoint, StartTransportAndSetsConnection)
 {
-    auto transport = std::make_unique<transport_mock>();
-    auto transport_ptr = transport.get();
-    EXPECT_CALL(*m_connector, create_transport())
-        .Times(1)
-        .WillOnce(Return(ByMove(std::move(transport))));
-    EXPECT_CALL(*m_connection, start_and_set_transport)
-        .Times(1)
-        .WillOnce([&](auto &&transp) { EXPECT_EQ(transp.get(), transport_ptr);  });
+    EXPECT_CALL(*m_connector, create_transport)
+        .Times(1);
     EXPECT_CALL(*m_channel, set_connection)
-        .Times(1)
-        .WillOnce([&](auto &&conn) { EXPECT_EQ(m_connection.get(), conn.get());  });
+        .Times(1);
+    EXPECT_CALL(*m_transport_ptr, start)
+        .Times(1);
 
     auto sut = create_sut();
     sut->connect();
@@ -127,20 +146,24 @@ TEST_F(ClientEndpoint, StartTransportAndSetsConnection)
 
 TEST_F(ClientEndpoint, DisconnectsConnection)
 {
-    EXPECT_CALL(*m_connection, stop_transport)
+    EXPECT_CALL(*m_transport_ptr, stop)
         .Times(1);
 
     auto sut = create_sut();
+    sut->connect();
     sut->disconnect();
+
+    Mock::VerifyAndClearExpectations(m_transport_ptr);
 }
 
 TEST_F(ClientEndpoint, ChecksConnection)
 {
-    EXPECT_CALL(*m_connection, is_active)
+    EXPECT_CALL(*m_transport_ptr, is_running)
         .Times(1)
         .WillOnce(Return(true));
 
     auto sut = create_sut();
+    sut->connect();
     const auto ans = sut->is_connected();
 
     ASSERT_TRUE(ans);
@@ -149,14 +172,18 @@ TEST_F(ClientEndpoint, ChecksConnection)
 TEST_F(ClientEndpoint, SetsConnectionChangeStateHandler)
 {
     MockFunction<void(connection_state)> handler;
-    EXPECT_CALL(handler, Call(connection_state::disconnected))
-        .Times(1);
-    EXPECT_CALL(*m_connection, set_change_state_handler)
-        .Times(1)
-        .WillOnce([](auto &&h) { h(connection_state::disconnected); });
 
     auto sut = create_sut();
     sut->set_connection_change_state_handler(handler.AsStdFunction());
+
+    EXPECT_CALL(handler, Call(connection_state::connected))
+        .Times(1);
+    sut->connect();
+    Mock::VerifyAndClearExpectations(&handler);
+
+    EXPECT_CALL(handler, Call(connection_state::disconnected))
+        .Times(1);
+    sut->disconnect();
 }
 
 TEST_F(ClientEndpoint, MakeSuccessRequest)
@@ -231,15 +258,4 @@ TEST_F(ClientEndpoint, MakeFailRequestAsync)
         (m_request_message, stub, m_stub_method_ptr, std::move(callback));
     
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
-}
-
-TEST_F(ClientEndpoint, RequestHandlerCatchesException)
-{
-    EXPECT_CALL(*m_service, process_request)
-        .Times(1)
-        .WillOnce(Throw(std::exception()));
-
-    auto sut = create_sut(); sut;
-
-    ASSERT_NO_THROW(m_request_handler({}, {}));
 }

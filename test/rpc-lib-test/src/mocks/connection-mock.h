@@ -12,9 +12,6 @@ public:
                 (vshalygin::cl::buffer &&, std::function<void(vshalygin::rpc::request_result, vshalygin::cl::buffer &&)> &&),
                 (override));
 
-    MOCK_METHOD(void, set_request_handler,
-                (std::function<void(vshalygin::cl::buffer &&, response_handler_t &&)> &&handler), (override));
-
     MOCK_METHOD(void,
                 set_change_state_handler,
                 (std::function<void(vshalygin::rpc::connection_state)> &&),

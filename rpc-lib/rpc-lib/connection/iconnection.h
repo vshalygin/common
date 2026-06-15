@@ -23,10 +23,6 @@ namespace vshalygin::rpc {
         virtual void request_async(cl::buffer &&message,
                                    std::function<void(request_result, cl::buffer &&)> &&handler) = 0;
 
-        using response_handler_t = std::function<void(cl::buffer &&)>;
-        virtual void set_request_handler
-            (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler) = 0;
-
         virtual void set_change_state_handler(std::function<void(connection_state)> &&handler) = 0;
 
         virtual bool is_active() const = 0;
@@ -35,6 +31,4 @@ namespace vshalygin::rpc {
         virtual size_t get_active_requests_count() const = 0;
         virtual size_t get_active_timers_count() const = 0;
     };
-
-    std::unique_ptr<iconnection> create_connection(std::shared_ptr<cl::thread_pool> thread_pool);
 }

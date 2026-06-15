@@ -1,6 +1,7 @@
 #pragma once
 #include "iconnection.h"
 #include "rpc-lib/transport/itransport.h"
+#include "rpc-lib/service/iservice.h"
 #include "rpc-lib/types/constants.h"
 
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
@@ -11,7 +12,11 @@ namespace vshalygin::rpc {
         : public iconnection
     {
     public:
+        using response_handler_t = std::function<void(cl::buffer &&)>;
+        using request_handler_t = std::function<void(cl::buffer &&, response_handler_t &&)>;
+
         explicit connection(std::shared_ptr<cl::thread_pool> thread_pool,
+                            std::shared_ptr<iservice> service,
                             const std::chrono::microseconds &timeout = RequestTimeout);
 
         connection(connection &) = delete;
@@ -23,9 +28,6 @@ namespace vshalygin::rpc {
 
         void request_async(cl::buffer &&message,
                            std::function<void(request_result, cl::buffer &&)> &&handler) override;
-
-        void set_request_handler
-            (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler) override;
 
         void set_change_state_handler(std::function<void(connection_state)> &&handler) override;
         bool is_active() const override;

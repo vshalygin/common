@@ -1,6 +1,8 @@
 #include <rpc-lib/connection/connection.h>
 #include <rpc-lib/transfer-message/transfer-message.h>
 
+#include "mocks/service-mock.h"
+
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"
 #pragma warning(pop)
@@ -105,6 +107,7 @@ class Connection
 protected:
     void SetUp() override
     {
+        m_service = std::make_shared<service_nice_mock>();
         m_thread_pool = std::make_shared<thread_pool>(2);
         m_transport = std::make_unique<transport_nice_mock>();
 
@@ -121,25 +124,27 @@ protected:
 
     std::unique_ptr<iconnection> create_sut()
     {
-        auto ans = std::make_unique<connection>(m_thread_pool);
+        auto ans = std::make_unique<connection>(m_thread_pool, m_service);
         ans->start_and_set_transport(std::move(m_transport));
         return ans;
     }
 
     std::unique_ptr<iconnection> create_sut(const std::chrono::milliseconds &timeout)
     {
-        auto ans = std::make_unique<connection>(m_thread_pool, timeout);
+        auto ans = std::make_unique<connection>(m_thread_pool, m_service, timeout);
         ans->start_and_set_transport(std::move(m_transport));
         return ans;
     }
 
     std::unique_ptr<iconnection> create_sut_without_transport()
     {
-        auto ans = std::make_unique<connection>(m_thread_pool);
+        auto ans = std::make_unique<connection>(m_thread_pool, m_service);
         return ans;
     }
 
 protected:
+    std::shared_ptr<service_nice_mock> m_service;
+
     std::shared_ptr<thread_pool> m_thread_pool;
     transport_nice_mock *m_transport_ptr;
 
@@ -462,13 +467,6 @@ TEST_F(Connection, SendsAnswerOnRequest)
     auto transfer_req_message = create_transfer_msg_req(num, 7, &m_request_message);
     auto transfer_res_message = create_transfer_msg_res(
         num, response_result::unknown_error, &m_response_message);
-    MockFunction<void(buffer &&, std::function<void(buffer &&)> &&)> request_handler;
-    EXPECT_CALL(request_handler, Call)
-        .Times(1)
-        .WillOnce([&](buffer &&buf, auto &&response_handler) {
-                      EXPECT_EQ(buf, transfer_req_message);
-                      response_handler(transfer_res_message.copy());
-                  });
     EXPECT_CALL(*m_transport_ptr, send_async)
         .Times(1)
         .WillOnce([&](buffer &&buf, auto &&error_handler) {
@@ -476,11 +474,18 @@ TEST_F(Connection, SendsAnswerOnRequest)
                       EXPECT_FALSE(error_handler);
                       sync_event.set();
                   });
+    EXPECT_CALL(*m_service, process_request)
+        .Times(1)
+        .WillOnce([&](buffer &&request_message,
+                      std::function<void(buffer &&)> &&raw_response_callback) {
+                      ASSERT_TRUE(transfer_req_message == request_message);
+                      raw_response_callback(transfer_res_message.copy());
+                  });
+
     auto sut = create_sut();
-    sut->set_request_handler(request_handler.AsStdFunction());
 
     m_transport_ptr->emit_recv_event(transfer_req_message.copy());
-    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+    sync_event.wait();
 }
 
 TEST_F(Connection, SetsDisconnectHandler)
@@ -597,7 +602,7 @@ TEST_F(Connection, CallsRequestHandlerWithSendErrorCodeIfNoTransport)
     auto sut = create_sut_without_transport();
 
     sut->request_async(std::move(req_message), request_callback.AsStdFunction());
-    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+    sync_event.wait();
     EXPECT_EQ(sut->get_active_requests_count(), 0);
 }
 

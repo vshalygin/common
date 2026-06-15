@@ -284,9 +284,6 @@ namespace vshalygin::rpc {
         std::function<void(connection_state)>
             create_connection_change_state_handler(std::weak_ptr<impl> self, uint64_t connection_id) const;
 
-        std::function<void(cl::buffer &&, iconnection::response_handler_t &&)>
-            create_request_handler() const;
-
         std::shared_ptr<ichannel> find_channel_or_throw(uint64_t connection_id) const;
         std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>> get_all_channels_with_id() const;
 

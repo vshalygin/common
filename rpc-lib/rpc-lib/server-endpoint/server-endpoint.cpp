@@ -91,10 +91,9 @@ namespace vshalygin::rpc {
                                                       std::weak_ptr<impl> self)
     {
         const auto id = m_next_connection_id.fetch_add(1);
-        auto new_connection = std::make_shared<connection>(m_thread_pool);
+        auto new_connection = std::make_shared<connection>(m_thread_pool, m_service);
 
         new_connection->set_change_state_handler(create_connection_change_state_handler(self, id));
-        new_connection->set_request_handler(create_request_handler());
 
         {
             auto [guard, inactive_map] = m_inactive_connection_map.get();
@@ -132,14 +131,6 @@ namespace vshalygin::rpc {
                 }
                 s->call_connection_state_change_handler(connection_id, state);
             }
-        };
-    }
-
-    std::function<void(cl::buffer &&, iconnection::response_handler_t &&)> 
-        server_endpoint::impl::create_request_handler() const
-    {
-        return [service = m_service](cl::buffer &&buff, iconnection::response_handler_t &&res_handler) {
-            service->process_request(std::move(buff), std::move(res_handler));
         };
     }
 

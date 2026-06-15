@@ -1,14 +1,15 @@
 #pragma once
 #include "rpc-lib/channel/ichannel.h"
-#include "rpc-lib/connection/iconnection.h"
 #include "rpc-lib/service/iservice.h"
 #include "rpc-lib/connector/iconnector.h"
 #include "rpc-lib/channel/request-callback/request-callback.h"
 #include "rpc-lib/types/constants.h"
 #include "rpc-lib/types/request-exception.h"
+#include "rpc-lib/types/connection-state.h"
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <common-lib/syncronization/event/event.h>
+#include <common-lib/thread-pool/thread-pool.h>
 
 #include <functional>
 #include <memory>
@@ -31,8 +32,8 @@ namespace vshalygin::rpc {
 
         client_endpoint(std::shared_ptr<iservice> service,
                         std::unique_ptr<ichannel> channel,
-                        std::shared_ptr<iconnection> connection,
-                        std::unique_ptr<iconnector> connector);
+                        std::unique_ptr<iconnector> connector,
+                        std::shared_ptr<cl::thread_pool> thread_pool);
 
         client_endpoint(client_endpoint &) = delete;
         client_endpoint &operator=(client_endpoint &) = delete;

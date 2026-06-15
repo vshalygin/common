@@ -34,20 +34,30 @@ namespace vshalygin::rpc {
 
     public:
         static std::shared_ptr<impl> create(std::shared_ptr<cl::thread_pool> thread_pool,
+                                            std::shared_ptr<iservice> service,
                                             const std::chrono::microseconds &timeout)
         {
             return std::make_shared<impl>(std::move(thread_pool),
+                                          std::move(service),
                                           timeout,
                                           creator());
         }
 
         impl(std::shared_ptr<cl::thread_pool> thread_pool,
+             std::shared_ptr<iservice> service,
              const std::chrono::microseconds &timeout,
              creator)
             : m_timeout(timeout)
             , m_thread_pool(std::move(thread_pool))
             , m_multiple_timer(std::make_unique<cl::multiple_timer>(m_thread_pool->get_io_context()))
-        {}
+        {
+            m_request_handler = [service = std::move(service)](cl::buffer &&buff,
+                                                               response_handler_t &&res_handler) {
+                if(service) {
+                    service->process_request(std::move(buff), std::move(res_handler));
+                }
+            };
+        }
 
         impl(impl &) = delete;
         impl &operator=(impl &) = delete;
@@ -108,13 +118,6 @@ namespace vshalygin::rpc {
                 remove_request_handler_from_map(msg_number);
                 throw;
             }
-        }
-
-        void set_request_handler
-            (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler)
-        {
-            auto [guard, request_handler] = m_request_handler.get();
-            request_handler = std::move(handler);
         }
 
         void set_change_state_handler(std::function<void(connection_state)> &&handler)
@@ -235,25 +238,20 @@ namespace vshalygin::rpc {
         void handle_request(cl::buffer &&message)
         {
             auto response_handler = [self = weak_from_this()](cl::buffer &&res_msg) {
-                if(auto s = self.lock()) {
-                    try {
-                        auto [guard, transport] = s->m_transport.get();
-                        assert(transport);
-                        transport->send_async(std::move(res_msg), {});
-                    } catch(...) {
-                        //TODO safe log
-                    }
+                if(auto s = self.lock()) try {
+                    auto [guard, transport] = s->m_transport.get();
+                    assert(transport);
+                    transport->send_async(std::move(res_msg), {});
+                } catch(...) {
+                    //TODO safe log
                 }
             };
             auto task = [self = weak_from_this(), message = std::move(message),
                          response_handler = std::move(response_handler)]() mutable {
-                if(auto s = self.lock()) {
-                    auto [guard, request_handler] = s->m_request_handler.get();
-                    if(request_handler) try {
-                        request_handler(std::move(message), std::move(response_handler));
-                    } catch (...) {
-                        //TODO safe log
-                    }
+                if(auto s = self.lock()) try {
+                    s->m_request_handler(std::move(message), std::move(response_handler));
+                } catch (...) {
+                    //TODO safe log
                 }
             };
 
@@ -336,19 +334,19 @@ namespace vshalygin::rpc {
     private:
         const std::chrono::microseconds m_timeout;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
+        request_handler_t m_request_handler;
         cl::guarded_value<std::unique_ptr<itransport>> m_transport;
         std::unique_ptr<cl::multiple_timer> m_multiple_timer;
 
-        using request_handler_t = std::function<void(cl::buffer &&, response_handler_t &&)>;
-        cl::guarded_value<request_handler_t> m_request_handler;
 
         cl::guarded_value<request_map> m_request_map;
         cl::guarded_value<std::function<void(connection_state)>> m_change_state_handler;
     };
 
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
+                           std::shared_ptr<iservice> service,
                            const std::chrono::microseconds &timeout)
-        : m_impl(impl::create(std::move(thread_pool), timeout))
+        : m_impl(impl::create(std::move(thread_pool), std::move(service), timeout))
     {}
 
     connection::~connection() = default;
@@ -362,12 +360,6 @@ namespace vshalygin::rpc {
                                    std::function<void(request_result, cl::buffer &&)> &&handler)
     {
         m_impl->request_async(std::move(message), std::move(handler));
-    }
-
-    void connection::set_request_handler
-        (std::function<void(cl::buffer &&, response_handler_t &&)> &&handler)
-    {
-        m_impl->set_request_handler(std::move(handler));
     }
 
     void connection::set_change_state_handler(std::function<void(connection_state)> &&handler)
@@ -393,10 +385,5 @@ namespace vshalygin::rpc {
     size_t connection::get_active_timers_count() const
     {
         return m_impl->get_active_timers_count();
-    }
-
-    std::unique_ptr<iconnection> create_connection(std::shared_ptr<cl::thread_pool> thread_pool)
-    {
-        return std::make_unique<connection>(std::move(thread_pool));
     }
 }
