@@ -49,14 +49,18 @@ namespace vshalygin::rpc {
         template<typename Request, typename Response>
         std::unique_ptr<Response> make_request(const Request &req, auto &service_stub, auto method)
         {
-            auto result_data = std::make_shared<req_result_data<Response>>();
-            auto sync_event = std::make_shared<cl::event>();
+            struct sync_req_data
+            {
+                req_result_data<Response> data;
+                cl::event sync_event;
+            };
+            auto sync_data = std::make_shared<sync_req_data>();
 
-            auto req_callback = [result_data, sync_event]
+            auto req_callback = [sync_data]
                                 (request_result rc, std::unique_ptr<Response> response) {
-                result_data->req_result = rc;
-                result_data->response = std::move(response);
-                sync_event->set();
+                sync_data->data.req_result = rc;
+                sync_data->data.response = std::move(response);
+                sync_data->sync_event.set();
             };
 
             auto callback = request_callback<Response>::create_on_heap(std::move(req_callback));
@@ -66,16 +70,16 @@ namespace vshalygin::rpc {
                                    callback->get_response_ptr(),
                                    callback);
 
-            if(!sync_event->wait_for(RequestTimeout * 2)) {
+            if(!sync_data->sync_event.wait_for(RequestTimeout * 2)) {
                 throw request_exception(request_result::unknown_error,
                                         "waiting request callback failed");
             }
 
-            if(is_fail(result_data->req_result)) {
-                throw request_exception(result_data->req_result, "request failed");
+            if(is_fail(sync_data->data.req_result)) {
+                throw request_exception(sync_data->data.req_result, "request failed");
             }
 
-            return std::move(result_data->response);
+            return std::move(sync_data->data.response);
         }
 
         template<typename Request, typename Response>
