@@ -19,39 +19,24 @@ namespace vshalygin::cl {
         template<typename Task>
         void post(Task &&task) const;
 
-        bool is_in_executing_context() const;
+        template<typename Task>
+        void dispatch(Task &&task) const;
 
-    private:
-        using thread_id_t = std::atomic<std::thread::id>;
-
-        class thread_id_guard
-        {
-        public:
-            explicit thread_id_guard(std::shared_ptr<thread_id_t> thread_id);
-            ~thread_id_guard();
-
-            thread_id_guard(thread_id_guard &) = delete;
-            thread_id_guard &operator=(thread_id_guard &) = delete;
-
-        private:
-            std::shared_ptr<thread_id_t> m_thread_id;
-        };
+        bool is_running_in_this_thread() const;
 
     private:
         boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
-        std::shared_ptr<thread_id_t> m_executing_thread_id;
     };
 
     template<typename Task>
     void strand::post(Task &&task) const
     {
-        auto decorated_task = [task = std::make_unique<std::decay_t<Task>>(std::forward<Task>(task)),
-                               executing_thread_id = m_executing_thread_id]() mutable {
-            thread_id_guard guard(executing_thread_id);
-            (*task)();
-            task.reset();
-        };
+        boost::asio::post(m_strand, std::forward<Task>(task));
+    }
 
-        boost::asio::post(m_strand, std::move(decorated_task));
+    template<typename Task>
+    void strand::dispatch(Task &&task) const
+    {
+        boost::asio::dispatch(m_strand, std::forward<Task>(task));
     }
 }
