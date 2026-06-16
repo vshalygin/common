@@ -26,14 +26,19 @@ namespace vshalygin::cl {
         try {
             stop();
         } catch(...) {
+            //TODO log fatal
+            std::terminate();
         }
     }
 
     void thread_pool::stop()
     {
-        m_io_context.stop();
+        //allow pending tasks to execute, than stop io_context
+        m_executor_work_guard.reset();
 
         std::call_once(m_join_threads_flag, [this]() { m_thread_group.join_all(); });
+
+        m_io_context.stop();
     }
 
     bool thread_pool::is_stopped() const
