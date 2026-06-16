@@ -69,7 +69,6 @@ namespace vshalygin::rpc {
                 current_pipe_->invalidate();
                 current_pipe_.reset();
             }
-            listen_thread_.join();
             is_running_ = false;
 
             auto [g, state_change_handler] = state_change_handler_.get();
