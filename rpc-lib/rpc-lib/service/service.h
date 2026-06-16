@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
         using MessageFactory = google::protobuf::MessageFactory;
 
     public:
-        explicit service(std::unique_ptr<Service> gservice)
+        explicit service(std::shared_ptr<Service> gservice)
             : m_gservice(std::move(gservice))
         {}
 
@@ -103,6 +103,6 @@ namespace vshalygin::rpc {
         }
 
     private:
-        std::unique_ptr<Service> m_gservice;
+        std::shared_ptr<Service> m_gservice;
     };
 }

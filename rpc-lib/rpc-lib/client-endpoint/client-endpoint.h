@@ -30,8 +30,6 @@ namespace vshalygin::rpc {
         };
 
     public:
-        client_endpoint() = default;
-
         client_endpoint(std::shared_ptr<iservice> service,
                         std::unique_ptr<ichannel> channel,
                         std::unique_ptr<iconnector> connector,
@@ -40,9 +38,6 @@ namespace vshalygin::rpc {
 
         client_endpoint(client_endpoint &) = delete;
         client_endpoint &operator=(client_endpoint &) = delete;
-
-        client_endpoint(client_endpoint &&) = default;
-        client_endpoint &operator=(client_endpoint &&) = default;
 
         void connect();
         void disconnect();
