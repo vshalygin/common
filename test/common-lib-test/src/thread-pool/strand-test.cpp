@@ -55,7 +55,7 @@ TEST(Strand, AnswerFalseOnCheckExecutingContextIfItIsNoIn)
     thread_pool pool(2);
     auto sut = pool.create_strand();
 
-    ASSERT_FALSE(sut.is_in_executing_context());
+    ASSERT_FALSE(sut.is_running_in_this_thread());
 }
 
 TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
@@ -65,7 +65,7 @@ TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
     auto sut = pool.create_strand();
 
     sut.post([&]() {
-        ASSERT_TRUE(sut.is_in_executing_context());
+        ASSERT_TRUE(sut.is_running_in_this_thread());
         sync_event.set();
     });
 
@@ -84,7 +84,7 @@ TEST(Strand, AnswerTrueOnCheckExecutingInFunctorDestructor)
 
         ~desctructor_checker()
         {
-            EXPECT_TRUE(m_strand->is_in_executing_context());
+            EXPECT_TRUE(m_strand->is_running_in_this_thread());
             m_sync_event.set();
         }
 
@@ -100,4 +100,45 @@ TEST(Strand, AnswerTrueOnCheckExecutingInFunctorDestructor)
     sut.post([checker = std::make_shared<desctructor_checker>(sync_event, &sut)]() {});
 
     ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+}
+
+TEST(Strand, DispatchesTaskByPostingInExecutionQueue)
+{
+    event sync_event;
+    thread_pool pool(2);
+    auto sut = pool.create_strand();
+    InSequence s;
+    MockFunction<void()> mock1, mock2;
+    EXPECT_CALL(mock1, Call())
+        .Times(1);
+    EXPECT_CALL(mock2, Call())
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+    sut.dispatch(mock1.AsStdFunction());
+    sut.dispatch(mock2.AsStdFunction());
+    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
+}
+
+TEST(Strand, DispatchesTaskByExecutingInPlace)
+{
+    event sync_event1, sync_event2;
+    thread_pool pool(2);
+    auto sut = pool.create_strand();
+    InSequence s;
+    MockFunction<void()> mock1, mock2, mock3;
+    EXPECT_CALL(mock1, Call())
+         .Times(1)
+         .WillOnce([&]() {
+        sut.dispatch(mock2.AsStdFunction());
+        });
+    EXPECT_CALL(mock2, Call())
+         .Times(1)
+         .WillOnce([&]() { sync_event2.set(); });
+    EXPECT_CALL(mock3, Call())
+         .Times(1)
+         .WillOnce([&]() { sync_event1.set(); });
+    sut.dispatch(mock1.AsStdFunction());
+    ASSERT_TRUE(sync_event2.wait_for(std::chrono::seconds(10)));
+    sut.dispatch(mock3.AsStdFunction());
+    ASSERT_TRUE(sync_event1.wait_for(std::chrono::seconds(10)));
 }

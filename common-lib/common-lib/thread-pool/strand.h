@@ -22,7 +22,7 @@ namespace vshalygin::cl {
         template<typename Task>
         void dispatch(Task &&task) const;
 
-        bool is_running_in_this_thread() const;
+        bool is_running_in_this_thread() const noexcept;
 
     private:
         boost::asio::strand<boost::asio::io_context::executor_type> m_strand;

@@ -5,7 +5,7 @@ namespace vshalygin::cl {
         : m_strand(io_context.get_executor())
     {}
 
-    bool strand::is_running_in_this_thread() const
+    bool strand::is_running_in_this_thread() const noexcept
     {
         return m_strand.running_in_this_thread();
     }
