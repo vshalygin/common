@@ -144,16 +144,16 @@ namespace vshalygin::rpc {
 
     void mem_pipe::invalidate()
     {
-        std::unique_lock lock(mtx_);
-        stop_flag_ = true;
+        {
+            std::lock_guard lock(mtx_);
+            stop_flag_ = true;
 
-        lock.unlock();
-        cv_.notify_all();
-        lock.lock();
-
-        if(mem_buffers_) {
-            mem_buffers_->client_to_server.invalidate();
-            mem_buffers_->server_to_client.invalidate();
+            if(mem_buffers_) {
+                mem_buffers_->client_to_server.invalidate();
+                mem_buffers_->server_to_client.invalidate();
+            }
         }
+
+        cv_.notify_all();
     }
 }

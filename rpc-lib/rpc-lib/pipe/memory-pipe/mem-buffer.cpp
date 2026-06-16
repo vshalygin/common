@@ -78,10 +78,12 @@ namespace vshalygin::rpc {
     {
         try {
             std::packaged_task<void()> task([this]() {
-                is_valid_ = false;
-                while(!read_handlers_.empty()) {
-                    read_handlers_.front()(pipe_op_res::canceled, {});
-                    read_handlers_.pop();
+                if(is_valid_) {
+                    is_valid_ = false;
+                    while(!read_handlers_.empty()) {
+                        read_handlers_.front()(pipe_op_res::canceled, {});
+                        read_handlers_.pop();
+                    }
                 }
             });
             auto f = task.get_future();
