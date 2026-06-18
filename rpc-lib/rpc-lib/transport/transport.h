@@ -1,34 +1,44 @@
 #pragma once
-#include "itransport.h"
+#include <rpc-lib/pipe/pipe-op-res.h>
+#include <common-lib/utils/buffer/buffer.h>
+
+#include <functional>
 #include <atomic>
 
-namespace vshalygin::rpc {
-    class ipipe;
+namespace vshalygin::cl {
+    class thread_pool;
+}
 
-    class transport
-        : public itransport
+namespace vshalygin::rpc {
+    class ipipe_endpoint;
+
+    class transport final
     {
     public:
-        explicit transport(std::shared_ptr<ipipe> pipe,
+        explicit transport(std::shared_ptr<cl::thread_pool> thread_pool,
+                           std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::function<void()> &&stop_callback);
 
-        transport(transport &) = delete;
-        transport &operator=(transport &) = delete;
+        transport(const transport &) = delete;
+        transport &operator=(const transport &) = delete;
+        transport(transport &&) = default;
+        transport &operator=(transport &&) = default;
 
-        ~transport() override;
+        ~transport();
 
-        void send_async(cl::buffer &&message,
-                        std::function<void()> &&error_handler) override;
-        void recv_async(std::function<void(bool, cl::buffer &&)> &&handler) override;
+        using send_callback_t = std::function<void(pipe_op_res)>;
+        using recv_callback_t = std::function<void(pipe_op_res, cl::buffer &&)>;
 
-        void stop() override;
-        bool is_running() const override;
+        void send_async(cl::buffer &&message, send_callback_t &&callback);
+        void recv_async(recv_callback_t &&callback);
+
+        void stop();
+        bool is_running() const;
 
     private:
-        std::shared_ptr<ipipe> m_pipe;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        std::shared_ptr<ipipe_endpoint> m_pipe_endpoint;
 
-        std::function<void()> m_stop_callback;
-
-        std::atomic_bool m_is_stopped = false;
+        std::atomic_bool m_stopped_requested = false;
     };
 }

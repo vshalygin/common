@@ -1,71 +1,51 @@
 #include "transport.h"
-#include "rpc-lib/pipe/ipipe.h"
+#include "rpc-lib/pipe/ipipe-endpoint.h"
+#include "common-lib/thread-pool/thread-pool.h"
 #include <cassert>
 
 namespace vshalygin::rpc {
-    transport::transport(std::shared_ptr<ipipe> pipe,
+    transport::transport(std::shared_ptr<cl::thread_pool> thread_pool,
+                         std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                          std::function<void()> &&stop_callback)
-        : m_pipe(std::move(pipe))
-        , m_stop_callback(std::move(stop_callback))
+        : m_thread_pool(std::move(thread_pool))
+        , m_pipe_endpoint(std::move(pipe_endpoint))
     {
-        assert(m_pipe && m_pipe->is_connected());
+        assert(m_thread_pool);
+        assert(m_pipe_endpoint && m_pipe_endpoint->is_connected());
+
+        pipe_endpoint->subscribe_to_disconnect(std::move(stop_callback));
     }
 
     transport::~transport()
     {
-        try {
-            stop();
-        } catch (...) {
-            //TODO log
-            std::terminate();
-        }
+        stop();
     }
 
     void transport::send_async(cl::buffer &&message,
-                               std::function<void()> &&error_handler)
+                               send_callback_t &&callback)
     {
-        auto res = m_pipe->write_async(std::move(message),
-                                       [eh = std::move(error_handler)](pipe_op_res res) {
-                                           if(res == pipe_op_res::failed) {
-                                               eh();
-                                           }
-                                       });
+        assert(callback);
 
-        if(!res) {
-            throw std::runtime_error("write_async failed");
-        }
+        m_pipe_endpoint->write_async(std::move(message),
+                                     std::move(callback));
     }
 
-    void transport::recv_async(std::function<void(bool, cl::buffer &&)> &&handler)
+    void transport::recv_async(recv_callback_t &&callback)
     {
-        auto r = m_pipe->read_async([handler = std::move(handler)](pipe_op_res res, cl::buffer &&msg) {
-                                        if(is_success(res)) {
-                                            handler(true, std::move(msg));
-                                        } else {
-                                            handler(false, {});
-                                        }
-                                    });
+        assert(callback);
 
-        if(!r) {
-            stop();
-        }
+        m_pipe_endpoint->read_async(std::move(callback));
     }
 
     void transport::stop()
     {
-        if(!m_is_stopped.exchange(true, std::memory_order_acq_rel)) {
-            m_pipe->invalidate();
-
-            if(m_stop_callback) try {
-                m_stop_callback();
-            } catch(...) {
-                //TODO log
-            }
+        if(!m_stopped_requested.exchange(true, std::memory_order_acq_rel)) {
+            m_pipe_endpoint->invalidate();
         }
     }
 
     bool transport::is_running() const
     {
-        return m_pipe->is_connected();
+        return m_pipe_endpoint->is_connected();
     }
 }
