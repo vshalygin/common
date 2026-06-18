@@ -11,26 +11,25 @@ namespace vshalygin::rpc {
         invalidate();
     }
 
-    void mem_buffer::write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&handler)
+    void mem_buffer::write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&callback)
     {
-        auto safe_handler = [handler = std::move(handler)](pipe_op_res res) {
-            if(handler) try {
-                handler(res);
-            } catch (...) {
-                //TODO log
-            }
-        };
+        assert(callback);
 
         auto task = [this,
                      data = std::move(data),
-                     write_handler = std::move(safe_handler)]() mutable {
+                     callback = std::move(callback)]() mutable {
+            if(!is_valid_) {
+                callback(pipe_op_res::failed);
+                return;
+            }
+
             try {
                 buffer_.push(std::move(data));
             } catch(...) {
-                write_handler(pipe_op_res::failed);
+                callback(pipe_op_res::failed);
                 throw;
             }
-            write_handler(pipe_op_res::success);
+            callback(pipe_op_res::success);
 
             if(!read_handlers_.empty()) {
                 auto read_handler = std::move(read_handlers_.front());
@@ -43,31 +42,25 @@ namespace vshalygin::rpc {
         strand_.post(std::move(task));
     }
 
-    void mem_buffer::read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&handler)
+    void mem_buffer::read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&callback)
     {
-        auto safe_handler = [handler = std::move(handler)](pipe_op_res res, cl::buffer &&str) {
-            if(handler) try {
-                handler(res, std::move(str));
-            } catch (...) {
-                //TODO write in log
-            }
-        };
+        assert(callback);
 
-        strand_.post([this, handler = std::move(safe_handler)]() mutable {
+        strand_.post([this, callback = std::move(callback)]() mutable {
             if(!is_valid_) {
-                handler(pipe_op_res::failed, {});
+                callback(pipe_op_res::failed, {});
                 return;
             }
 
             if(!buffer_.empty()) {
                 auto msg = std::move(buffer_.front());
                 buffer_.pop();
-                handler(pipe_op_res::success, std::move(msg));
+                callback(pipe_op_res::success, std::move(msg));
             } else {
                 try {
-                    read_handlers_.push(std::move(handler));
+                    read_handlers_.push(std::move(callback));
                 } catch(...) {
-                    handler(pipe_op_res::failed, {});
+                    callback(pipe_op_res::failed, {});
                     throw;
                 }
             }
@@ -80,6 +73,7 @@ namespace vshalygin::rpc {
             std::packaged_task<void()> task([this]() {
                 if(is_valid_) {
                     is_valid_ = false;
+                    buffer_ = {};
                     while(!read_handlers_.empty()) {
                         read_handlers_.front()(pipe_op_res::canceled, {});
                         read_handlers_.pop();

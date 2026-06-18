@@ -21,8 +21,8 @@ namespace vshalygin::rpc {
 
         ~mem_buffer();
 
-        void write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&handler);
-        void read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&handler);
+        void write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&callback);
+        void read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&callback);
 
         void invalidate() noexcept;
         bool is_valid() const;

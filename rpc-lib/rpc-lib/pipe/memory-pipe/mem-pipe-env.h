@@ -31,10 +31,10 @@ namespace vshalygin::rpc {
                                                    queue_t &corresponding_queue);
 
     private:
-        std::shared_ptr<cl::thread_pool> thread_pool_;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
 
-        mutable std::mutex mtx_;
-        queue_t client_side_pipes_;
-        queue_t server_side_pipes_;
+        mutable std::mutex m_mtx;
+        queue_t m_client_side_pipes;
+        queue_t m_server_side_pipes;
     };
 }
