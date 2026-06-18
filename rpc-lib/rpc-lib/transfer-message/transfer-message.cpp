@@ -173,7 +173,7 @@ namespace vshalygin::rpc {
         return (serialized_message_size > s_max_transfer_message_size);
     }
 
-    transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message)
+    transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message) noexcept
     {
         assert(message.data());
         assert(message.size() > 0);

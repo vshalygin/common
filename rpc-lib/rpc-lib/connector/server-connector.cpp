@@ -19,7 +19,7 @@ namespace vshalygin::rpc {
         , m_pipe_env(std::move(pipe_env))
     {}
 
-    std::unique_ptr<itransport>
+    std::unique_ptr<transport>
         server_connector::create_transport(std::function<void()> &&stop_callback) const
     {
         std::unique_lock guard(m_mtx);

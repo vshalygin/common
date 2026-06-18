@@ -36,7 +36,7 @@ namespace vshalygin::rpc {
         if(connection) {
             connection->request_async(std::move(req_transfer_message), std::move(handler));
         } else {
-            throw std::runtime_error("connection is not set");
+            throw std::runtime_error("no connection");
         }
     }
 

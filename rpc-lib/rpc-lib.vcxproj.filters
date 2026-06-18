@@ -60,9 +60,6 @@
     <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
       <Filter>transfer-message</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\connection\connection.cpp">
-      <Filter>connection</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\channel\channel.cpp">
       <Filter>channel</Filter>
     </ClCompile>
@@ -78,7 +75,7 @@
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
       <Filter>server-endpoint</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe.cpp">
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp">
@@ -105,6 +102,12 @@
     <ClCompile Include="rpc-lib\connector\server-connector.cpp">
       <Filter>connector</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\connection\connection.cpp">
+      <Filter>connection</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffers.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
@@ -118,9 +121,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\types\response-result.h">
       <Filter>types</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connection\connection.h">
-      <Filter>connection</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\channel\channel.h">
       <Filter>channel</Filter>
@@ -161,7 +161,7 @@
     <ClInclude Include="rpc-lib\channel\ichannel.h">
       <Filter>channel</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe.h">
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.h">
       <Filter>pipe\memory-pipe</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h">
@@ -173,14 +173,11 @@
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h">
       <Filter>pipe</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\ipipe.h">
+    <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h">
       <Filter>pipe</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\ipipe-env.h">
       <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\transport\itransport.h">
-      <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\transport\transport.h">
       <Filter>transport</Filter>
@@ -214,6 +211,12 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\connector\server-connector.h">
       <Filter>connector</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\connection\connection.h">
+      <Filter>connection</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffers.h">
+      <Filter>pipe\memory-pipe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

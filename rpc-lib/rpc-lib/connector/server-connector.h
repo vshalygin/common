@@ -17,7 +17,7 @@ namespace vshalygin::rpc {
         server_connector(server_connector &) = delete;
         server_connector &operator=(server_connector &) = delete;
 
-        std::unique_ptr<itransport>
+        std::unique_ptr<transport>
             create_transport(std::function<void()> &&stop_callback) const override;
 
         void interrupt() override;
