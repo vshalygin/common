@@ -37,8 +37,6 @@ namespace vshalygin::rpc {
                                 std::function<void()> &&error_handler) = 0;
         virtual void recv_async(std::function<void(bool, cl::buffer &&)> &&handler) = 0;
 
-        virtual void start(std::function<void()> &&start_callback,
-                           std::function<void()> &&stop_callback) = 0;
         virtual void stop() = 0;
         virtual bool is_running() const = 0;
     };

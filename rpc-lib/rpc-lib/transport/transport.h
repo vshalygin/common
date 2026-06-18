@@ -1,6 +1,6 @@
 #pragma once
 #include "itransport.h"
-#include <mutex>
+#include <atomic>
 
 namespace vshalygin::rpc {
     class ipipe;
@@ -9,7 +9,8 @@ namespace vshalygin::rpc {
         : public itransport
     {
     public:
-        explicit transport(std::shared_ptr<ipipe> pipe);
+        explicit transport(std::shared_ptr<ipipe> pipe,
+                           std::function<void()> &&stop_callback);
 
         transport(transport &) = delete;
         transport &operator=(transport &) = delete;
@@ -20,7 +21,6 @@ namespace vshalygin::rpc {
                         std::function<void()> &&error_handler) override;
         void recv_async(std::function<void(bool, cl::buffer &&)> &&handler) override;
 
-        void start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback) override;
         void stop() override;
         bool is_running() const override;
 
@@ -29,13 +29,6 @@ namespace vshalygin::rpc {
 
         std::function<void()> m_stop_callback;
 
-        mutable std::mutex m_mtx;
-
-        enum class state
-        {
-            init,
-            started,
-            stopped
-        } m_state = state::init;
+        std::atomic_bool m_is_stopped = false;
     };
 }

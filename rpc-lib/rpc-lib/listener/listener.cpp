@@ -1,28 +1,21 @@
 #include "listener.h"
-
-#pragma warning(push, 0)
-#include "rpc-lib/authenticator/proto/auth.pb.h"
-#pragma warning(pop)
-
-#include <rpc-lib/transport/transport.h>
-#include "rpc-lib/authenticator/iauthenticator.h"
-#include <rpc-lib/pipe/ipipe.h>
-#include <rpc-lib/pipe/ipipe-env.h>
-#include <common-lib/utils/buffer/buffer.h>
+#include "rpc-lib/connection/connection.h"
+#include "rpc-lib/types/interrupt-exception.h"
+#include "rpc-lib/channel/channel.h"
 
 #include <cassert>
-#include <atomic>
-#include <string>
 
 namespace vshalygin::rpc {
-    listener::listener(std::shared_ptr<ipipe_env> pipe_env,
-                       std::shared_ptr<iauthenticator> authenticator)
-        : pipe_env_(std::move(pipe_env))
-        , authenticator_(std::move(authenticator))
-    {
-        assert(pipe_env_);
-        assert(authenticator_);
-    }
+    listener::listener(std::shared_ptr<iconnector> connector,
+                       std::shared_ptr<iservice> service,
+                       std::shared_ptr<cl::thread_pool> thread_pool,
+                       connection_change_handler_t &&handler)
+        : m_connector(std::move(connector))
+        , m_service(std::move(service))
+        , m_thread_pool(std::move(thread_pool))
+        , m_connection_change_handler(std::make_shared<connection_change_handler_t>(std::move(handler)))
+        , m_channel_map(std::make_shared<guarded_channel_map_t>())
+    {}
 
     listener::~listener()
     {
@@ -36,25 +29,25 @@ namespace vshalygin::rpc {
 
     void listener::start()
     {
-        assert(connect_handler_);
-
-        std::lock_guard guard(mtx_);
-        if(is_running_) {
-            throw std::runtime_error("pipe listener already started");
+        std::lock_guard guard(m_mtx);
+        if(m_is_running) {
+            return;
         }
         
-        listen_thread_ = std::jthread([this](std::stop_token st) {
+        m_listen_thread = std::jthread([this](std::stop_token st) {
             while(!st.stop_requested()) {
                 try {
-                    create_new_connection();
+                    create_new_active_connection();
+                } catch(const interrupt_exception &) {
+                    //normal situation
                 } catch(...) {
                     //TODO log
                 }
             }
         });
 
-        is_running_ = true;
-        auto [g, state_change_handler] = state_change_handler_.get();
+        m_is_running = true;
+        auto [g, state_change_handler] = m_state_change_handler.get();
         if(state_change_handler) {
             state_change_handler(listener_state::started);
         }
@@ -62,16 +55,17 @@ namespace vshalygin::rpc {
 
     void listener::stop()
     {
-        std::lock_guard guard(mtx_);
-        if(is_running_) {
-            listen_thread_.request_stop();
-            if(current_pipe_) {
-                current_pipe_->invalidate();
-                current_pipe_.reset();
+        std::lock_guard guard(m_mtx);
+        if(m_is_running) {
+            m_listen_thread.request_stop();
+            if(m_current_connection) {
+                m_current_connection->deactivate();
+                m_current_connection.reset();
             }
-            is_running_ = false;
+            m_is_running = false;
 
-            auto [g, state_change_handler] = state_change_handler_.get();
+            //TODO освободить мьютекс?
+            auto [g, state_change_handler] = m_state_change_handler.get();
             if(state_change_handler) {
                 state_change_handler(listener_state::stopped);
             }
@@ -80,68 +74,118 @@ namespace vshalygin::rpc {
 
     bool listener::is_stopped() const
     {
-        std::lock_guard guard(mtx_);
-        return !is_running_;
+        std::lock_guard guard(m_mtx);
+        return !m_is_running;
     }
 
     void listener::set_change_state_handler(change_state_handler_t &&handler)
     {
-        auto [guard, state_change_handler] = state_change_handler_.get();
+        auto [guard, state_change_handler] = m_state_change_handler.get();
         state_change_handler = std::move(handler);
     }
 
-    void listener::set_connect_handler(connect_handler_t &&handler)
+    std::shared_ptr<ichannel> listener::get_channel(uint64_t id) const
     {
-        assert(!connect_handler_);
-
-        connect_handler_ = std::move(handler);
+        auto [guard, map] = m_channel_map->get();
+        auto &el = map.at(id);
+        if(!el.first) {
+            throw std::runtime_error("connection is not activated");
+        }
+        return el.second;
     }
 
-    void listener::create_new_connection()
+    listener::channels listener::get_all_channels() const
     {
-        std::unique_lock guard(mtx_);
-        if(!is_running_) {
+        channels ans;
+        auto [guard, map] = m_channel_map->get();
+        ans.reserve(map.size());
+        for(auto el : map) {
+            bool is_activated = el.second.first;
+            if(is_activated) {
+                ans.push_back({ el.first, el.second.second });
+            }
+        }
+        return ans;
+    }
+
+    void listener::drop_connection(uint64_t id)
+    {
+        auto [guard, map] = m_channel_map->get();
+        auto it = map.find(id);
+        if(it != map.end()) {
+            bool is_activated = it->second.first;
+            if(is_activated) {
+                auto &channel = it->second.second;
+                channel->get_connection()->deactivate(); //TODO Действительно нужен метод get_connection()
+                channel->drop_connection();
+            }
+        }
+    }
+    void listener::drop_all_connections()
+    {
+        auto [guard, map] = m_channel_map->get();
+        for(auto &el : map) {
+            bool is_activated = el.second.first;
+            if(is_activated) {
+                auto &channel = el.second.second;
+                channel->get_connection()->deactivate();
+                channel->drop_connection();
+            }
+        }
+    }
+
+    void listener::create_new_active_connection()
+    {
+        std::unique_lock guard(m_mtx);
+        if(!m_is_running) {
             return;
         }
-        auto pipe = pipe_env_->create_pipe();
 
-        current_pipe_ = pipe;
+        auto id = m_next_connection_id++;
+        auto handler =
+        [handler = m_connection_change_handler, map = m_channel_map, id] (connection_state state) mutable {
+            if(state == connection_state::connected) {
+                auto [guard, m] = map->get();
+                assert(m.count(id));
+                m[id].first = true;
+            } else if(state == connection_state::disconnected) {
+                auto [guard, m] = map->get();
+                assert(m.count(id));
+                m.erase(id);
+            }
+
+            (*handler)(id, state);
+        };
+
+        m_current_connection = std::make_shared<connection>(m_connector,
+                                                            m_thread_pool,
+                                                            m_service,
+                                                            std::move(handler));
+
         guard.unlock();
-
-        if(!pipe->wait_connect()) {
-            return;
-        }
-
+        //TODO ужасно выглядит
         try {
-            auto con_msg = pipe->try_to_read_for(std::chrono::seconds(10));
-            if(!con_msg) {
-                throw std::runtime_error("failed to read auth request");;
-            }
-            proto::auth_request req;
-            if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
-                throw std::runtime_error("failed to parse auth request");
+            {
+                auto [g, m] = m_channel_map->get();
+                auto channel0 = std::make_shared<channel>(); //TODO сделать прототип?
+                channel0->set_connection(m_current_connection);
+                m.insert({ id, { false, channel0 } });
             }
 
-            proto::auth_response res;
-            res.set_is_accepted(authenticator_->check_request(req));
+            m_current_connection->activate();
 
-            cl::buffer buf(res.ByteSizeLong());
-            if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {
-                throw std::runtime_error("failed to serialize auth response");
+        } catch(...) {
+            {
+                auto [g, m] = m_channel_map->get();
+                m.erase(id);
             }
 
-            if(!pipe->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
-                throw std::runtime_error("failed to write auth response");
-            }
-
-            if(res.is_accepted()) {
-                connect_handler_(std::make_unique<transport>(std::move(pipe)));
-            } else {
-                pipe->invalidate();
-            }
-        } catch (...) {
-            pipe->invalidate();
+            guard.lock();
+            m_current_connection.reset();
             throw;
         }
+
+        guard.lock();
+        m_current_connection.reset();
     }
 }

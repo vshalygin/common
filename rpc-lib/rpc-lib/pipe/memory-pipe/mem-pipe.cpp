@@ -6,7 +6,7 @@
 
 namespace vshalygin::rpc {
     mem_pipe::mem_pipe(bool is_server)
-        : is_server_(is_server)
+        : m_is_server(is_server)
     {}
 
     mem_pipe::~mem_pipe()
@@ -22,50 +22,53 @@ namespace vshalygin::rpc {
     void mem_pipe::set_buffers(std::shared_ptr<mem_buffers> mem_buffers)
     {
         {
-            std::lock_guard guard(mtx_);
-            mem_buffers_ = std::move(mem_buffers);
+            std::lock_guard guard(m_mtx);
+            m_mem_buffers = std::move(mem_buffers);
         }
 
-        cv_.notify_all();
+        m_cv.notify_all();
     }
 
     bool mem_pipe::is_connected() const
     {
-        std::lock_guard guard(mtx_);
-        return mem_buffers_ &&
-               mem_buffers_->client_to_server.is_valid() &&
-               mem_buffers_->server_to_client.is_valid();
+        std::lock_guard guard(m_mtx);
+        return m_mem_buffers &&
+               m_mem_buffers->client_to_server.is_valid() &&
+               m_mem_buffers->server_to_client.is_valid();
     }
 
-    bool mem_pipe::wait_connect_for(const std::chrono::microseconds &mcs) const
+    pipe_wait_res mem_pipe::wait_connect_for(const std::chrono::microseconds &mcs) const
     {
         auto now = std::chrono::steady_clock::now();
-        std::unique_lock lock(mtx_);
-        return cv_.wait_until(lock, now + mcs,
-                              [this]() {
-                                  return stop_flag_ || mem_buffers_ != nullptr;
-                              });
+        std::unique_lock lock(m_mtx);
+        auto r = m_cv.wait_until(lock, now + mcs,
+                                [this]() {
+                                    return m_is_invalidated || m_mem_buffers != nullptr;
+                                });
+
+        return r ? (m_is_invalidated ? pipe_wait_res::invalidated : pipe_wait_res::connected)
+                 : pipe_wait_res::timeout;
     }
 
-    bool mem_pipe::wait_connect() const
+    pipe_wait_res mem_pipe::wait_connect() const
     {
-        std::unique_lock lock(mtx_);
-        cv_.wait(lock,[this]() {
-                          return stop_flag_ || mem_buffers_ != nullptr;
-                      });
+        std::unique_lock lock(m_mtx);
+        m_cv.wait(lock,[this]() {
+                           return m_is_invalidated || m_mem_buffers != nullptr;
+                       });
 
-        return !stop_flag_;
+        return m_is_invalidated ? pipe_wait_res::invalidated : pipe_wait_res::connected;
     }
 
     bool mem_pipe::write_async(cl::buffer &&msg, std::function<void(pipe_op_res)> &&handler)
     {
-        std::lock_guard guard(mtx_);
-        if(!mem_buffers_) {
+        std::lock_guard guard(m_mtx);
+        if(!m_mem_buffers) {
             return false;
         }
-        auto &output_buff = is_server_ ?
-                            mem_buffers_->server_to_client :
-                            mem_buffers_->client_to_server;
+        auto &output_buff = m_is_server ?
+                            m_mem_buffers->server_to_client :
+                            m_mem_buffers->client_to_server;
         if(!output_buff.is_valid()) {
             return false;
         }
@@ -76,13 +79,13 @@ namespace vshalygin::rpc {
 
     bool mem_pipe::read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&handler)
     {
-        std::lock_guard guard(mtx_);
-        if(!mem_buffers_) {
+        std::lock_guard guard(m_mtx);
+        if(!m_mem_buffers) {
             return false;
         }
-        auto &input_buff = is_server_ ?
-                           mem_buffers_->client_to_server :
-                           mem_buffers_->server_to_client;
+        auto &input_buff = m_is_server ?
+                           m_mem_buffers->client_to_server :
+                           m_mem_buffers->server_to_client;
 
         if(!input_buff.is_valid()) {
             return false;
@@ -145,15 +148,15 @@ namespace vshalygin::rpc {
     void mem_pipe::invalidate()
     {
         {
-            std::lock_guard lock(mtx_);
-            stop_flag_ = true;
+            std::lock_guard lock(m_mtx);
+            m_is_invalidated = true;
 
-            if(mem_buffers_) {
-                mem_buffers_->client_to_server.invalidate();
-                mem_buffers_->server_to_client.invalidate();
+            if(m_mem_buffers) {
+                m_mem_buffers->client_to_server.invalidate();
+                m_mem_buffers->server_to_client.invalidate();
             }
         }
 
-        cv_.notify_all();
+        m_cv.notify_all();
     }
 }

@@ -37,8 +37,8 @@ namespace vshalygin::rpc {
 
         [[nodiscard]] bool is_connected() const override;
 
-        bool wait_connect_for(const std::chrono::microseconds &mcs) const override;
-        bool wait_connect() const override;
+        pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const override;
+        pipe_wait_res wait_connect() const override;
 
         bool write_async(cl::buffer &&msg, std::function<void(pipe_op_res)> &&handler) override;
         bool read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&handler) override;
@@ -49,12 +49,13 @@ namespace vshalygin::rpc {
         void invalidate() override;
 
     private:
-        mutable std::mutex mtx_;
-        mutable std::condition_variable cv_;
-        mutable bool stop_flag_ = false;
+        mutable std::mutex m_mtx;
+        mutable std::condition_variable m_cv;
 
-        std::shared_ptr<mem_buffers> mem_buffers_;
+        mutable bool m_is_invalidated = false;
 
-        const bool is_server_;
+        std::shared_ptr<mem_buffers> m_mem_buffers;
+
+        const bool m_is_server;
     };
 }

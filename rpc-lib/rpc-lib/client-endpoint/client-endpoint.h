@@ -94,8 +94,10 @@ namespace vshalygin::rpc {
         }
 
     private:
+        std::shared_ptr<iservice> m_service;
         std::unique_ptr<ichannel> m_channel;
-        std::shared_ptr<iconnection> m_connection;
-        std::unique_ptr<iconnector> m_connector;
+        std::shared_ptr<iconnector> m_connector;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        connection_state_change_handler_t m_connection_change_handler; //TODO сделать shared_ptr
     };
 }

@@ -3,8 +3,10 @@
 #include <cassert>
 
 namespace vshalygin::rpc {
-    transport::transport(std::shared_ptr<ipipe> pipe)
+    transport::transport(std::shared_ptr<ipipe> pipe,
+                         std::function<void()> &&stop_callback)
         : m_pipe(std::move(pipe))
+        , m_stop_callback(std::move(stop_callback))
     {
         assert(m_pipe && m_pipe->is_connected());
     }
@@ -49,41 +51,13 @@ namespace vshalygin::rpc {
         }
     }
 
-    void transport::start(std::function<void()> &&start_callback, std::function<void()> &&stop_callback)
-    {
-        {
-            std::lock_guard lock(m_mtx);
-            if(m_state != state::init) {
-                throw std::logic_error("pipe transport was started");
-            }
-
-            auto res = m_pipe->wait_connect_for(std::chrono::seconds(10));
-            if(!res) {
-                throw std::runtime_error("unable to wait pipe connection");
-            }
-
-            m_stop_callback = std::move(stop_callback);
-            m_state = state::started;
-        }
-
-        if(start_callback) try {
-            start_callback();
-        } catch (...) {
-            //TODO log
-        }
-    }
-
     void transport::stop()
     {
-        std::unique_lock lock(m_mtx);
-        if(m_state == state::started) {
+        if(!m_is_stopped.exchange(true, std::memory_order_acq_rel)) {
             m_pipe->invalidate();
-            m_state = state::stopped;
-            auto stop_callback = std::move(m_stop_callback);
-            lock.unlock();
 
-            if(stop_callback) try {
-                stop_callback();
+            if(m_stop_callback) try {
+                m_stop_callback();
             } catch(...) {
                 //TODO log
             }
@@ -92,7 +66,6 @@ namespace vshalygin::rpc {
 
     bool transport::is_running() const
     {
-        std::lock_guard lock(m_mtx);
-        return m_state == state::started;
+        return m_pipe->is_connected();
     }
 }

@@ -20,12 +20,12 @@ namespace vshalygin::rpc {
 
         virtual ~iconnection() = default;
 
-        virtual void start_and_set_transport(std::unique_ptr<itransport> transport) = 0;
+        virtual void activate() = 0;
+        virtual void deactivate() = 0;
 
         virtual void request_async(cl::buffer &&message,
                                    std::function<void(request_result, cl::buffer &&)> &&handler) = 0;
 
         virtual bool is_active() const = 0;
-        virtual void stop_transport() = 0;
     };
 }

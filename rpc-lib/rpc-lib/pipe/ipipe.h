@@ -1,5 +1,6 @@
 #pragma once
 #include "pipe-op-res.h"
+#include "pipe-wait-res.h"
 
 #include <common-lib/utils/buffer/buffer.h>
 
@@ -10,6 +11,7 @@
 namespace vshalygin::rpc {
     //TODO invalidate должна завершать все pending operations, также все чтения и записи долны завершаться
     //немедленно
+    // is_connected и invalidate должны быть синхронизированны
 
     class ipipe
     {
@@ -18,8 +20,8 @@ namespace vshalygin::rpc {
 
         [[nodiscard]] virtual bool is_connected() const = 0;
 
-        virtual bool wait_connect_for(const std::chrono::microseconds &mcs) const = 0;
-        virtual bool wait_connect() const = 0;
+        virtual pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const = 0;
+        virtual pipe_wait_res wait_connect() const = 0;
 
         virtual bool write_async(cl::buffer &&msg, std::function<void(pipe_op_res)> &&handler) = 0;
         virtual bool read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&handler) = 0;

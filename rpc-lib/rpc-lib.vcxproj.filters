@@ -43,9 +43,6 @@
     <Filter Include="listener">
       <UniqueIdentifier>{e73dba34-7353-4ad2-8c2a-25e63910f6be}</UniqueIdentifier>
     </Filter>
-    <Filter Include="connector">
-      <UniqueIdentifier>{78079948-6449-41d7-a27a-3269a5ea53f7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="authenticator">
       <UniqueIdentifier>{cd6ba141-8f45-4d0c-a986-f971892cf8ae}</UniqueIdentifier>
     </Filter>
@@ -54,6 +51,9 @@
     </Filter>
     <Filter Include="authenticator\proto">
       <UniqueIdentifier>{600ba9e1-dc40-446c-bc33-ff441ae6e4cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="connector">
+      <UniqueIdentifier>{fc0d5010-e5a3-4a20-9f0c-42650444de6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -90,9 +90,6 @@
     <ClCompile Include="rpc-lib\transport\transport.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\connector\connector.cpp">
-      <Filter>connector</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\listener\listener.cpp">
       <Filter>listener</Filter>
     </ClCompile>
@@ -101,6 +98,12 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\authenticator\proto\auth.pb.cc">
       <Filter>authenticator\proto</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\connector\client-connector.cpp">
+      <Filter>connector</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\connector\server-connector.cpp">
+      <Filter>connector</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -182,12 +185,6 @@
     <ClInclude Include="rpc-lib\transport\transport.h">
       <Filter>transport</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\connector\connector.h">
-      <Filter>connector</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connector\iconnector.h">
-      <Filter>connector</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\listener\ilistener.h">
       <Filter>listener</Filter>
     </ClInclude>
@@ -202,6 +199,21 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\authenticator\proto\auth.pb.h">
       <Filter>authenticator\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\types\interrupt-exception.h">
+      <Filter>types</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\connector\client-connector.h">
+      <Filter>connector</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\connector\iconnector.h">
+      <Filter>connector</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\connector\server-connector.h">
+      <Filter>connector</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

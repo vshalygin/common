@@ -2,10 +2,10 @@
 #include "rpc-lib/transfer-message/transfer-message.h"
 #include "rpc-lib/types/constants.h"
 #include "rpc-lib/transport/itransport.h"
+#include "rpc-lib/connector/iconnector.h"
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
-#include <common-lib/syncronization/event/event.h>
 
 #include <unordered_map>
 
@@ -13,9 +13,6 @@ namespace vshalygin::rpc {
     class connection::impl
         : public std::enable_shared_from_this<impl>
     {
-        class creator
-        {};
-
         using request_callback_t = std::function<void(request_result, cl::buffer &&)>;
 
         struct request_data
@@ -33,24 +30,13 @@ namespace vshalygin::rpc {
         using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
 
     public:
-        static std::shared_ptr<impl> create(std::shared_ptr<cl::thread_pool> thread_pool,
-                                            std::shared_ptr<iservice> service,
-                                            change_state_handler_t &&change_state_handler,
-                                            const std::chrono::microseconds &timeout)
-        {
-            return std::make_shared<impl>(std::move(thread_pool),
-                                          std::move(service),
-                                          std::move(change_state_handler),
-                                          timeout,
-                                          creator());
-        }
-
-        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(std::shared_ptr<iconnector> connector,
+             std::shared_ptr<cl::thread_pool> thread_pool,
              std::shared_ptr<iservice> service,
              change_state_handler_t &&change_state_handler,
-             const std::chrono::microseconds &timeout,
-             creator)
-            : m_timeout(timeout)
+             const std::chrono::microseconds &timeout)
+            : m_connector(std::move(connector))
+            , m_timeout(timeout)
             , m_thread_pool(std::move(thread_pool))
             , m_change_state_handler(std::move(change_state_handler))
             , m_multiple_timer(std::make_unique<cl::multiple_timer>(m_thread_pool->get_io_context()))
@@ -69,7 +55,7 @@ namespace vshalygin::rpc {
         ~impl()
         {
             try {
-                stop_transport();
+                deactivate();
                 cancel_active_requests();
             } catch (...) {
                 //TODO safe log
@@ -77,29 +63,36 @@ namespace vshalygin::rpc {
             }
         }
 
-        void start_and_set_transport(std::unique_ptr<itransport> transport)
+        void activate()
         {
-            assert(transport);
-            cl::event start_event;
-            auto connect_handler = [&]() {
-                call_change_state_handler(connection_state::connected);
-                start_event.set();
-            };
-            auto disconnect_handler = [self = weak_from_this()]() {
+            //TODO проверить, была ли уже активирована
+            auto stop_callback = [self = weak_from_this()]() {
                 if(auto s = self.lock()) {
                     s->cancel_active_requests();
                     s->call_change_state_handler(connection_state::disconnected);
                 }
             };
 
-            transport->start(std::move(connect_handler), std::move(disconnect_handler));
-            if(!start_event.wait_for(std::chrono::seconds(10))) {
-                throw std::runtime_error("failed to wait transport starting");
+            {
+                //TODO ужасная конструкция
+                auto t = m_connector->create_transport(std::move(stop_callback));
+                auto [guard, transport] = m_transport.get();
+                transport = std::move(t);
             }
-            transport->recv_async(create_receive_handler());
+            //TODO connection_state::disconnected может вызваться
+            // перед connection_state::connected
+            call_change_state_handler(connection_state::connected); //TODO делаем синхронно?
+        }
 
-            auto [guard, curr_transport] = m_transport.get();
-            curr_transport = std::move(transport);
+        void deactivate()
+        {
+            m_connector->interrupt();
+
+            auto [guard, transport] = m_transport.get();
+            if(transport) {
+                transport->stop();
+                transport.reset();
+            }
         }
 
         void request_async(cl::buffer &&message,
@@ -128,14 +121,6 @@ namespace vshalygin::rpc {
         {
             auto [guard, transport] = m_transport.get();
             return transport && transport->is_running();
-        }
-
-        void stop_transport()
-        {
-            auto [guard, transport] = m_transport.get();
-            if(transport) {
-                transport->stop();
-            }
         }
 
         size_t get_active_requests_count() const
@@ -329,6 +314,8 @@ namespace vshalygin::rpc {
         }
 
     private:
+        std::shared_ptr<iconnector> m_connector;
+
         const std::chrono::microseconds m_timeout;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::function<void(connection_state)> m_change_state_handler;
@@ -340,21 +327,28 @@ namespace vshalygin::rpc {
         cl::guarded_value<request_map> m_request_map;
     };
 
-    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
+    connection::connection(std::shared_ptr<iconnector> connector,
+                           std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<iservice> service,
                            change_state_handler_t &&change_state_handler,
                            const std::chrono::microseconds &timeout)
-        : m_impl(impl::create(std::move(thread_pool),
-                              std::move(service),
-                              std::move(change_state_handler),
-                              timeout))
+        : m_impl(std::make_shared<impl>(std::move(connector),
+                                        std::move(thread_pool),
+                                        std::move(service),
+                                        std::move(change_state_handler),
+                                        timeout))
     {}
 
     connection::~connection() = default;
 
-    void connection::start_and_set_transport(std::unique_ptr<itransport> transport)
+    void connection::activate()
     {
-        m_impl->start_and_set_transport(std::move(transport));
+        m_impl->activate();
+    }
+
+    void connection::deactivate()
+    {
+        m_impl->deactivate();
     }
 
     void connection::request_async(cl::buffer &&message,
@@ -366,11 +360,6 @@ namespace vshalygin::rpc {
     bool connection::is_active() const
     {
         return m_impl->is_active();
-    }
-
-    void connection::stop_transport()
-    {
-        m_impl->stop_transport();
     }
 
     size_t connection::get_active_requests_count() const

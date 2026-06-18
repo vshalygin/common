@@ -4,7 +4,8 @@
 #include <memory>
 
 namespace vshalygin::rpc {
-    class itransport;
+    class iconnection;
+    class ichannel;
 
     //TODO write requesties
     //1) connect_handler может и не быть, нужно это учитывать
@@ -16,7 +17,6 @@ namespace vshalygin::rpc {
     class ilistener
     {
     public:
-        using connect_handler_t = std::function<void(std::unique_ptr<itransport>)>;
         using change_state_handler_t = std::function<void(listener_state)>;
 
         virtual ~ilistener() = default;
@@ -24,8 +24,15 @@ namespace vshalygin::rpc {
         virtual void start() = 0;
         virtual void stop() = 0;
         virtual bool is_stopped() const = 0;
-        virtual void set_connect_handler(connect_handler_t &&handler) = 0;
+
+        virtual std::shared_ptr<ichannel> get_channel(uint64_t id) const = 0;
+
+        using channels = std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>>;
+        virtual channels get_all_channels() const = 0;
 
         virtual void set_change_state_handler(change_state_handler_t &&handler) = 0;
+
+        virtual void drop_connection(uint64_t id);
+        virtual void drop_all_connections();
     };
 }
