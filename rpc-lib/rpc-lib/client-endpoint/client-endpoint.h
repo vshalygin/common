@@ -13,11 +13,12 @@
 
 #include <functional>
 #include <memory>
+#include <chrono>
 
 namespace vshalygin::rpc {
     class client_endpoint final
     {
-        using connection_state_change_handler_t = std::function<void(connection_state)>;
+        using state_change_callback_t = std::function<void(connection_state)>;
 
         template<typename Response>
         using request_callback_t = std::function<void(request_result, std::unique_ptr<Response>)>;
@@ -34,7 +35,8 @@ namespace vshalygin::rpc {
                         std::unique_ptr<ichannel> channel,
                         std::unique_ptr<iconnector> connector,
                         std::shared_ptr<cl::thread_pool> thread_pool,
-                        connection_state_change_handler_t &&handler);
+                        state_change_callback_t &&handler,
+                        const std::chrono::milliseconds &request_timeout);
 
         client_endpoint(client_endpoint &) = delete;
         client_endpoint &operator=(client_endpoint &) = delete;
@@ -44,60 +46,74 @@ namespace vshalygin::rpc {
         bool is_connected() const;
 
         template<typename Request, typename Response>
-        std::unique_ptr<Response> make_request(const Request &req, auto &service_stub, auto method)
-        {
-            struct sync_req_data
-            {
-                req_result_data<Response> data;
-                cl::event sync_event;
-            };
-            auto sync_data = std::make_shared<sync_req_data>();
-
-            auto req_callback = [sync_data]
-                                (request_result rc, std::unique_ptr<Response> response) {
-                sync_data->data.req_result = rc;
-                sync_data->data.response = std::move(response);
-                sync_data->sync_event.set();
-            };
-
-            auto callback = request_callback<Response>::create_on_heap(std::move(req_callback));
-
-            (service_stub.*method)(callback,
-                                   &req,
-                                   callback->get_response_ptr(),
-                                   callback);
-
-            if(!sync_data->sync_event.wait_for(RequestTimeout * 2)) {
-                throw request_exception(request_result::unknown_error,
-                                        "waiting request callback failed");
-            }
-
-            if(is_fail(sync_data->data.req_result)) {
-                throw request_exception(sync_data->data.req_result, "request failed");
-            }
-
-            return std::move(sync_data->data.response);
-        }
+        std::unique_ptr<Response> make_request(const Request &req,
+                                               auto &service_stub,
+                                               auto method);
 
         template<typename Request, typename Response>
         void make_request_async(const Request &req,
                                 auto &service_stub,
                                 auto method,
-                                request_callback_t<Response> &&req_callback)
-        {
-            auto callback = request_callback<Response>::create_on_heap(std::move(req_callback));
-
-            (service_stub.*method)(callback,
-                                   &req,
-                                   callback->get_response_ptr(),
-                                   callback);
-        }
+                                request_callback_t<Response> &&req_callback);
 
     private:
         std::shared_ptr<iservice> m_service;
         std::unique_ptr<ichannel> m_channel;
         std::shared_ptr<iconnector> m_connector;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
-        connection_state_change_handler_t m_connection_change_handler; //TODO сделать shared_ptr
+        std::shared_ptr<state_change_callback_t> m_change_callback;
+        const std::chrono::milliseconds m_request_timeout;
     };
+
+    template<typename Request, typename Response>
+    std::unique_ptr<Response> client_endpoint::make_request(const Request &req,
+                                                            auto &service_stub,
+                                                            auto method)
+    {
+        struct sync_req_data
+        {
+            req_result_data<Response> data;
+            cl::event sync_event;
+        };
+        auto sync_data = std::make_shared<sync_req_data>();
+
+        auto req_callback =
+            [sync_data] (request_result rc, std::unique_ptr<Response> response) {
+                sync_data->data.req_result = rc;
+                sync_data->data.response = std::move(response);
+                sync_data->sync_event.set();
+            };
+
+        auto callback = request_callback<Response>::create_on_heap(std::move(req_callback));
+
+        (service_stub.*method)(callback,
+                               &req,
+                               callback->get_response_ptr(),
+                               callback);
+
+        if(!sync_data->sync_event.wait_for(RequestTimeout * 2)) {
+            throw request_exception(request_result::unknown_error,
+                                    "waiting request callback failed");
+        }
+
+        if(is_fail(sync_data->data.req_result)) {
+            throw request_exception(sync_data->data.req_result, "request failed");
+        }
+
+        return std::move(sync_data->data.response);
+    }
+
+    template<typename Request, typename Response>
+    void client_endpoint::make_request_async(const Request &req,
+                                             auto &service_stub,
+                                             auto method,
+                                             request_callback_t<Response> &&req_callback)
+    {
+        auto callback = request_callback<Response>::create_on_heap(std::move(req_callback));
+
+        (service_stub.*method)(callback,
+                               &req,
+                               callback->get_response_ptr(),
+                               callback);
+    }
 }

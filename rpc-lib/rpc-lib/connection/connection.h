@@ -29,16 +29,16 @@ namespace vshalygin::rpc {
         using change_state_callback_t = std::function<void(connection_state)>;
 
         static std::shared_ptr<iconnection> create(std::shared_ptr<cl::thread_pool> thread_pool,
-                                                   change_state_callback_t &&on_change_state,
+                                                   std::shared_ptr<change_state_callback_t> on_change_state,
                                                    std::shared_ptr<iconnector> connector,
                                                    std::shared_ptr<iservice> service,
-                                                   const std::chrono::microseconds &req_timeout);
+                                                   const std::chrono::milliseconds &req_timeout);
 
         connection(std::shared_ptr<cl::thread_pool> thread_pool,
-                   change_state_callback_t &&on_change_state,
+                   std::shared_ptr<change_state_callback_t> on_change_state,
                    std::shared_ptr<iconnector> connector,
                    std::shared_ptr<iservice> service,
-                   const std::chrono::microseconds &req_timeout,
+                   const std::chrono::milliseconds &req_timeout,
                    creator);
 
         connection(const connection &) = delete;
@@ -69,7 +69,7 @@ namespace vshalygin::rpc {
     private:
         std::mutex m_activation_mtx;
 
-        const std::chrono::microseconds m_req_timeout;
+        const std::chrono::milliseconds m_req_timeout;
 
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<change_state_callback_t> m_on_change_state;

@@ -29,10 +29,10 @@ namespace vshalygin::rpc {
     };
 
     std::shared_ptr<iconnection> connection::create(std::shared_ptr<cl::thread_pool> thread_pool,
-                                                    change_state_callback_t &&on_change_state,
+                                                    std::shared_ptr<change_state_callback_t> on_change_state,
                                                     std::shared_ptr<iconnector> connector,
                                                     std::shared_ptr<iservice> service,
-                                                    const std::chrono::microseconds &req_timeout)
+                                                    const std::chrono::milliseconds &req_timeout)
     {
         return std::make_shared<connection>(std::move(thread_pool),
                                              std::move(on_change_state),
@@ -43,14 +43,14 @@ namespace vshalygin::rpc {
     };
 
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
-                           change_state_callback_t &&on_change_state,
+                           std::shared_ptr<change_state_callback_t> on_change_state,
                            std::shared_ptr<iconnector> connector,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::microseconds &req_timeout,
+                           const std::chrono::milliseconds &req_timeout,
                            creator)
         : m_req_timeout(req_timeout)
         , m_thread_pool(std::move(thread_pool))
-        , m_on_change_state(std::make_shared<change_state_callback_t>(std::move(on_change_state)))
+        , m_on_change_state(std::move(on_change_state))
         , m_connector(std::move(connector))
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
@@ -125,9 +125,11 @@ namespace vshalygin::rpc {
         } else {
             m_thread_pool->post([cb = std::move(req_callback),
                                  msg_number,
-                                 s = shared_from_this()]()
+                                 self = weak_from_this()]()
             {
-                s->complete_request(msg_number, request_result::send_error, {});
+                if(auto s = self.lock()) {
+                    s->complete_request(msg_number, request_result::send_error, {});
+                }
             });
         }
     }
@@ -136,10 +138,10 @@ namespace vshalygin::rpc {
     {
         auto [guard, transport] = m_transport.get();
         assert(transport);
-        transport->recv_async([s = shared_from_this()](pipe_op_res r, cl::buffer &&message) {
+        transport->recv_async([this](pipe_op_res r, cl::buffer &&message) {
             if(is_success(r)) {
-                s->dispatch_receive_event(std::move(message));
-                s->do_receive_async();
+                dispatch_receive_event(std::move(message));
+                do_receive_async();
             }
         });
     }
