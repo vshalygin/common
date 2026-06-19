@@ -19,7 +19,6 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp" />
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
-    <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
     <ClCompile Include="rpc-lib\connector\client-connector.cpp" />

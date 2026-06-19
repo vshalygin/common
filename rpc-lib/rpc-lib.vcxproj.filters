@@ -69,9 +69,6 @@
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp">
       <Filter>service\response-callback</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\client-endpoint\client-endpoint.cpp">
-      <Filter>client-endpoint</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
       <Filter>server-endpoint</Filter>
     </ClCompile>
