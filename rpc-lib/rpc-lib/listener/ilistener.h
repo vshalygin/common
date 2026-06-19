@@ -17,8 +17,6 @@ namespace vshalygin::rpc {
     class ilistener
     {
     public:
-        using change_state_handler_t = std::function<void(listener_state)>;
-
         virtual ~ilistener() = default;
 
         virtual void start() = 0;
@@ -29,8 +27,6 @@ namespace vshalygin::rpc {
 
         using channels = std::vector<std::pair<uint64_t, std::shared_ptr<ichannel>>>;
         virtual channels get_all_channels() const = 0;
-
-        virtual void set_change_state_handler(change_state_handler_t &&handler) = 0;
 
         virtual void drop_connection(uint64_t id);
         virtual void drop_all_connections();

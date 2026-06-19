@@ -3,11 +3,13 @@
 #include <rpc-lib/types/connection-state.h>
 
 #include <common-lib/thread-pool/thread-pool.h>
+#include <common-lib/thread-pool/strand.h>
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
 
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <chrono>
 
 namespace vshalygin::rpc {
     class iconnector;
@@ -17,13 +19,16 @@ namespace vshalygin::rpc {
     class listener
         : public ilistener
     {
-        using connection_change_handler_t = std::function<void(uint64_t, connection_state)>;
+        using connection_change_callback_t = std::function<void(uint64_t, connection_state)>;
+        using change_state_callback_t = std::function<void(listener_state)>;
 
     public:
         explicit listener(std::shared_ptr<iconnector> connector,
                           std::shared_ptr<iservice> service,
                           std::shared_ptr<cl::thread_pool> thread_pool,
-                          connection_change_handler_t &&handler);
+                          connection_change_callback_t &&connect_change_callback,
+                          change_state_callback_t &&state_change_callback,
+                          const std::chrono::milliseconds &request_timeout);
 
         listener(listener &) = delete;
         listener &operator=(listener &) = delete;
@@ -33,8 +38,6 @@ namespace vshalygin::rpc {
         void start() override;
         void stop() override;
         bool is_stopped() const override;
-
-        void set_change_state_handler(change_state_handler_t &&handler) override;
 
         std::shared_ptr<ichannel> get_channel(uint64_t id) const override;
         channels get_all_channels() const override;
@@ -46,6 +49,8 @@ namespace vshalygin::rpc {
         void create_new_active_connection();
 
     private:
+        const std::chrono::milliseconds m_request_timeout;
+
         std::shared_ptr<iconnection> m_current_connection;
 
         uint64_t m_next_connection_id = 0;
@@ -53,9 +58,10 @@ namespace vshalygin::rpc {
         std::shared_ptr<iconnector> m_connector;
         std::shared_ptr<iservice> m_service;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
-        std::shared_ptr<connection_change_handler_t> m_connection_change_handler;
+        cl::strand m_on_connection_change_strand;
+        std::shared_ptr<connection_change_callback_t> m_on_connection_change;
 
-        cl::guarded_value<change_state_handler_t> m_state_change_handler;
+        std::shared_ptr<change_state_callback_t> m_on_state_change;
 
         using guarded_channel_map_t =
             cl::guarded_value<std::unordered_map<uint64_t, std::pair<bool, std::shared_ptr<ichannel>>>>;

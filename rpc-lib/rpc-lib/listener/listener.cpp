@@ -6,25 +6,40 @@
 #include <cassert>
 
 namespace vshalygin::rpc {
+    namespace {
+        using connection_change_callback_t = std::function<void(uint64_t, connection_state)>;
+        using change_state_callback_t = std::function<void(listener_state)>;
+
+        auto create_on_connection_change(auto &&callback)
+        {
+            return std::make_shared<connection_change_callback_t>(std::move(callback));
+        }
+
+        auto create_on_state_change(auto &&callback)
+        {
+            return std::make_shared<change_state_callback_t>(std::move(callback));
+        }
+    }
+
     listener::listener(std::shared_ptr<iconnector> connector,
                        std::shared_ptr<iservice> service,
                        std::shared_ptr<cl::thread_pool> thread_pool,
-                       connection_change_handler_t &&handler)
-        : m_connector(std::move(connector))
+                       connection_change_callback_t &&on_conn_change_callback,
+                       change_state_callback_t &&on_state_change,
+                       const std::chrono::milliseconds &request_timeout)
+        : m_request_timeout(request_timeout)
+        , m_connector(std::move(connector))
         , m_service(std::move(service))
         , m_thread_pool(std::move(thread_pool))
-        , m_connection_change_handler(std::make_shared<connection_change_handler_t>(std::move(handler)))
+        , m_on_connection_change_strand(m_thread_pool->create_strand())
+        , m_on_connection_change(create_on_connection_change(std::move(on_conn_change_callback)))
+        , m_on_state_change(create_on_state_change(std::move(on_state_change)))
         , m_channel_map(std::make_shared<guarded_channel_map_t>())
     {}
 
     listener::~listener()
     {
-        try {
-            stop();
-        } catch(...) {
-            //TODO log
-            std::terminate();
-        }
+        stop();
     }
 
     void listener::start()
@@ -47,10 +62,9 @@ namespace vshalygin::rpc {
         });
 
         m_is_running = true;
-        auto [g, state_change_handler] = m_state_change_handler.get();
-        if(state_change_handler) {
-            state_change_handler(listener_state::started);
-        }
+        m_on_connection_change_strand.post([callback = m_on_state_change]() {
+            (*callback)(listener_state::started);
+        });
     }
 
     void listener::stop()
@@ -64,11 +78,9 @@ namespace vshalygin::rpc {
             }
             m_is_running = false;
 
-            //TODO освободить мьютекс?
-            auto [g, state_change_handler] = m_state_change_handler.get();
-            if(state_change_handler) {
-                state_change_handler(listener_state::stopped);
-            }
+            m_on_connection_change_strand.post([callback = m_on_state_change]() {
+                (*callback)(listener_state::stopped);
+            });
         }
     }
 
@@ -76,12 +88,6 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         return !m_is_running;
-    }
-
-    void listener::set_change_state_handler(change_state_handler_t &&handler)
-    {
-        auto [guard, state_change_handler] = m_state_change_handler.get();
-        state_change_handler = std::move(handler);
     }
 
     std::shared_ptr<ichannel> listener::get_channel(uint64_t id) const
@@ -142,8 +148,8 @@ namespace vshalygin::rpc {
         }
 
         auto id = m_next_connection_id++;
-        auto handler =
-        [handler = m_connection_change_handler, map = m_channel_map, id] (connection_state state) mutable {
+        auto callback =
+        [cb = m_on_connection_change, map = m_channel_map, id] (connection_state state) mutable {
             if(state == connection_state::connected) {
                 auto [guard, m] = map->get();
                 assert(m.count(id));
@@ -154,26 +160,27 @@ namespace vshalygin::rpc {
                 m.erase(id);
             }
 
-            (*handler)(id, state);
+            (*cb)(id, state);
         };
-
-        m_current_connection = std::make_shared<connection>(m_connector,
-                                                            m_thread_pool,
-                                                            m_service,
-                                                            std::move(handler));
+        auto con_change_state_cb =
+            std::make_shared<connection::change_state_callback_t>(std::move(callback));
+        m_current_connection = connection::create(m_thread_pool,
+                                                  std::move(con_change_state_cb),
+                                                  m_connector,
+                                                  m_service,
+                                                  m_request_timeout);
 
         guard.unlock();
-        //TODO ужасно выглядит
+
+        {
+            auto [g, m] = m_channel_map->get();
+            auto channel0 = std::make_shared<channel>();
+            channel0->set_connection(m_current_connection);
+            m.insert({ id, { false, channel0 } });
+        }
+
         try {
-            {
-                auto [g, m] = m_channel_map->get();
-                auto channel0 = std::make_shared<channel>(); //TODO сделать прототип?
-                channel0->set_connection(m_current_connection);
-                m.insert({ id, { false, channel0 } });
-            }
-
             m_current_connection->activate();
-
         } catch(...) {
             {
                 auto [g, m] = m_channel_map->get();
