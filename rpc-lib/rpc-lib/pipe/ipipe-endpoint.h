@@ -15,6 +15,7 @@ namespace vshalygin::rpc {
     // при уничтожении вызываем все pending callbacks
     // pipe connection may disrupt spanteneously
     // subscribe to disconnect -> вызываем сразу асинхронно, если disconnect
+    // set_disconnect_callback вызывается только один раз
 
     class ipipe_endpoint
     {
@@ -25,7 +26,7 @@ namespace vshalygin::rpc {
         virtual ~ipipe_endpoint() = default;
 
         virtual bool is_connected() const = 0;
-        virtual void subscribe_to_disconnect(std::function<void()> &&callback) = 0;
+        virtual void set_disconnect_callback(std::function<void()> &&callback) = 0;
 
         virtual pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const = 0;
         virtual pipe_wait_res wait_connect() const = 0;

@@ -52,7 +52,7 @@
     <ClCompile Include="src\pipe\memory-pipe\pipe-env-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
-    <ClCompile Include="src\pipe\memory-pipe\pipe-test.cpp">
+    <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
     <ClCompile Include="src\transport\transport-test.cpp">

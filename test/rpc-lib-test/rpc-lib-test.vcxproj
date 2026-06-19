@@ -138,7 +138,7 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\pipe-env-test.cpp" />
-    <ClCompile Include="src\pipe\memory-pipe\pipe-test.cpp" />
+    <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>

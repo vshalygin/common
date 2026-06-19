@@ -43,7 +43,7 @@ namespace vshalygin::rpc {
         return m_mem_buffers && m_mem_buffers->is_valid();
     }
 
-    void mem_pipe_endpoint::subscribe_to_disconnect(std::function<void()> &&callback)
+    void mem_pipe_endpoint::set_disconnect_callback(std::function<void()> &&callback)
     {
         std::lock_guard guard(m_mtx);
         assert(!m_on_disconnect);
@@ -158,10 +158,17 @@ namespace vshalygin::rpc {
     {
         {
             std::lock_guard lock(m_mtx);
+            if(m_is_invalidated) {
+                return;
+            }
+
             m_is_invalidated = true;
 
             if(m_mem_buffers) {
                 m_mem_buffers->invalidate();
+            } else if(m_on_disconnect) {
+                m_thread_pool->post(std::move(m_on_disconnect));
+                m_on_disconnect = {};
             }
         }
 

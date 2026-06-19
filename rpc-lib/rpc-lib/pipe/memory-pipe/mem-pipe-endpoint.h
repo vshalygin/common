@@ -27,7 +27,7 @@ namespace vshalygin::rpc {
         ~mem_pipe_endpoint() override;
 
         bool is_connected() const override;
-        void subscribe_to_disconnect(std::function<void()> &&callback) override;
+        void set_disconnect_callback(std::function<void()> &&callback) override;
 
         pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const override;
         pipe_wait_res wait_connect() const override;

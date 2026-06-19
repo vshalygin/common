@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
         return !is_success(r);
     }
 
-    std::string to_string(pipe_wait_res r)
+    inline std::string to_string(pipe_wait_res r)
     {
         switch(r) {
             case pipe_wait_res::connected:
