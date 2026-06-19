@@ -13,7 +13,7 @@ namespace vshalygin::rpc {
         assert(m_thread_pool);
         assert(m_pipe_endpoint && m_pipe_endpoint->is_connected());
 
-        pipe_endpoint->subscribe_to_disconnect(std::move(stop_callback));
+        m_pipe_endpoint->subscribe_to_disconnect(std::move(stop_callback));
     }
 
     transport::~transport()

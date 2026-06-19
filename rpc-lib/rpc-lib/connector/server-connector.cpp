@@ -1,6 +1,6 @@
 #include "server-connector.h"
 #include "rpc-lib/transport/transport.h"
-#include "rpc-lib/pipe/ipipe.h"
+#include "rpc-lib/pipe/ipipe-endpoint.h"
 #include "rpc-lib/pipe/ipipe-env.h"
 #include "rpc-lib/authenticator/iauthenticator.h"
 #include "rpc-lib/types/interrupt-exception.h"
@@ -13,9 +13,11 @@
 #include <stdexcept>
 
 namespace vshalygin::rpc {
-    server_connector::server_connector(std::shared_ptr<iauthenticator> authenticator,
+    server_connector::server_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+                                       std::shared_ptr<iauthenticator> authenticator,
                                        std::shared_ptr<ipipe_env> pipe_env)
-        : m_authenticator(std::move(authenticator))
+        : m_thread_pool(std::move(thread_pool))
+        , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
     {}
 
@@ -23,12 +25,12 @@ namespace vshalygin::rpc {
         server_connector::create_transport(std::function<void()> &&stop_callback) const
     {
         std::unique_lock guard(m_mtx);
-        assert(!m_curr_pipe);
+        assert(!m_curr_pipe_endpoint);
 
         try {
-            m_curr_pipe = m_pipe_env->create_pipe();
+            m_curr_pipe_endpoint = m_pipe_env->create_pipe();
             guard.unlock();
-            auto wait_res = m_curr_pipe->wait_connect_for(std::chrono::seconds(10));
+            auto wait_res = m_curr_pipe_endpoint->wait_connect_for(std::chrono::seconds(10));
             guard.lock();
 
             if(is_fail(wait_res)) {
@@ -39,7 +41,7 @@ namespace vshalygin::rpc {
                 }
             }
 
-            auto con_msg = m_curr_pipe->try_to_read_for(std::chrono::seconds(10));
+            auto con_msg = m_curr_pipe_endpoint->try_to_read_for(std::chrono::seconds(10));
             if(!con_msg) {
                 throw std::runtime_error("failed to read handshake request");;
             }
@@ -60,15 +62,17 @@ namespace vshalygin::rpc {
                 throw std::runtime_error("failed to serialize handshake response");
             }
 
-            if(!m_curr_pipe->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
+            if(!m_curr_pipe_endpoint->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
                 throw std::runtime_error("failed to write handshake response");
             }
 
-            auto pipe = std::move(m_curr_pipe);
-            m_curr_pipe.reset();
-            return std::make_unique<transport>(std::move(pipe), std::move(stop_callback));
+            auto pipe = std::move(m_curr_pipe_endpoint);
+            m_curr_pipe_endpoint.reset();
+            return std::make_unique<transport>(m_thread_pool,
+                                               std::move(pipe),
+                                               std::move(stop_callback));
         } catch(...) {
-            m_curr_pipe.reset();
+            m_curr_pipe_endpoint.reset();
             throw;
         }
     }
@@ -76,8 +80,8 @@ namespace vshalygin::rpc {
     void server_connector::interrupt()
     {
         std::lock_guard guard(m_mtx);
-        if(m_curr_pipe) {
-            m_curr_pipe->invalidate();
+        if(m_curr_pipe_endpoint) {
+            m_curr_pipe_endpoint->invalidate();
         }
     }
 }

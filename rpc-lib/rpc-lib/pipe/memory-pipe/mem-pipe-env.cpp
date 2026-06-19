@@ -1,24 +1,24 @@
 #include "mem-pipe-env.h"
-#include "mem-pipe.h"
+#include "mem-pipe-enpoint.h"
 
 namespace vshalygin::rpc {
     mem_pipe_env::mem_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool)
         : m_thread_pool(std::move(thread_pool))
     {}
 
-    std::shared_ptr<ipipe> mem_pipe_env::create_pipe()
+    std::shared_ptr<ipipe_endpoint> mem_pipe_env::create_pipe()
     {
         return create_new_pipe_end(true, m_server_side_pipes, m_client_side_pipes);
     }
 
-    std::shared_ptr<ipipe> mem_pipe_env::open_pipe()
+    std::shared_ptr<ipipe_endpoint> mem_pipe_env::open_pipe()
     {
         return create_new_pipe_end(false, m_client_side_pipes, m_server_side_pipes);
     }
 
-    std::shared_ptr<ipipe> mem_pipe_env::create_new_pipe_end(bool is_server,
-                                                             queue_t &own_queue,
-                                                             queue_t &corresponding_queue)
+    std::shared_ptr<ipipe_endpoint> mem_pipe_env::create_new_pipe_end(bool is_server,
+                                                                      queue_t &own_queue,
+                                                                      queue_t &corresponding_queue)
     {
         std::shared_ptr<mem_pipe> ans(new mem_pipe(is_server, m_thread_pool));
         std::shared_ptr<mem_pipe> corresponding_pipe;

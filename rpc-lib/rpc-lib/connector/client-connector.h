@@ -2,16 +2,21 @@
 #include "iconnector.h"
 #include <mutex>
 
+namespace vshalygin::cl {
+    class thread_pool;
+}
+
 namespace vshalygin::rpc {
     class iauthenticator;
     class ipipe_env;
-    class ipipe;
+    class ipipe_endpoint;
 
     class client_connector
         : public iconnector
     {
     public:
-        explicit client_connector(std::shared_ptr<iauthenticator> authenticator,
+        explicit client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+                                  std::shared_ptr<iauthenticator> authenticator,
                                   std::shared_ptr<ipipe_env> pipe_env);
 
         client_connector(client_connector &) = delete;
@@ -23,10 +28,11 @@ namespace vshalygin::rpc {
         void interrupt() override;
 
     private:
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<iauthenticator> m_authenticator;
         std::shared_ptr<ipipe_env> m_pipe_env;
 
         mutable std::mutex m_mtx;
-        mutable std::shared_ptr<ipipe> m_curr_pipe;
+        mutable std::shared_ptr<ipipe_endpoint> m_curr_pipe_endpoint;
     };
 }

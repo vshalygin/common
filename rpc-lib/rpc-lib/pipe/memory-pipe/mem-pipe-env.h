@@ -19,16 +19,16 @@ namespace vshalygin::rpc {
         mem_pipe_env(mem_pipe_env &) = delete;
         mem_pipe_env &operator=(mem_pipe_env &) = delete;
 
-        std::shared_ptr<ipipe> create_pipe() override;
-        std::shared_ptr<ipipe> open_pipe() override;
+        std::shared_ptr<ipipe_endpoint> create_pipe() override;
+        std::shared_ptr<ipipe_endpoint> open_pipe() override;
 
         size_t get_client_pipe_queue_size() const;
         size_t get_server_pipe_queue_size() const;
 
     private:
-        std::shared_ptr<ipipe> create_new_pipe_end(bool is_server,
-                                                   queue_t &own_queue,
-                                                   queue_t &corresponding_queue);
+        std::shared_ptr<ipipe_endpoint> create_new_pipe_end(bool is_server,
+                                                            queue_t &own_queue,
+                                                            queue_t &corresponding_queue);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
