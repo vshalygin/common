@@ -6,12 +6,12 @@
 #include <mutex>
 
 namespace vshalygin::rpc {
-    class mem_pipe;
+    class mem_pipe_endpoint;
 
     class mem_pipe_env final
         : public ipipe_env
     {
-        using queue_t = std::queue<std::weak_ptr<mem_pipe>>;
+        using queue_t = std::queue<std::weak_ptr<mem_pipe_endpoint>>;
 
     public:
         explicit mem_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool);
@@ -34,7 +34,7 @@ namespace vshalygin::rpc {
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         mutable std::mutex m_mtx;
-        queue_t m_client_side_pipes;
-        queue_t m_server_side_pipes;
+        queue_t m_client_side_pipe_endpoints;
+        queue_t m_server_side_pipe_endpoints;
     };
 }

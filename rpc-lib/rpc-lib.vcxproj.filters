@@ -69,9 +69,6 @@
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp">
       <Filter>service\response-callback</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\server-endpoint\server-endpoint.cpp">
-      <Filter>server-endpoint</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
@@ -146,12 +143,6 @@
     <ClInclude Include="rpc-lib\types\request-exception.h">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\types\constants.h">
-      <Filter>types</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\types\listener-state.h">
-      <Filter>types</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
     </ClInclude>
@@ -178,9 +169,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\transport\transport.h">
       <Filter>transport</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\listener\ilistener.h">
-      <Filter>listener</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\listener\listener.h">
       <Filter>listener</Filter>

@@ -8,16 +8,10 @@
 namespace vshalygin::rpc {
     namespace {
         using connection_change_callback_t = std::function<void(uint64_t, connection_state)>;
-        using change_state_callback_t = std::function<void(listener_state)>;
 
         auto create_on_connection_change(auto &&callback)
         {
             return std::make_shared<connection_change_callback_t>(std::move(callback));
-        }
-
-        auto create_on_state_change(auto &&callback)
-        {
-            return std::make_shared<change_state_callback_t>(std::move(callback));
         }
     }
 
@@ -25,15 +19,12 @@ namespace vshalygin::rpc {
                        std::shared_ptr<iservice> service,
                        std::shared_ptr<cl::thread_pool> thread_pool,
                        connection_change_callback_t &&on_conn_change_callback,
-                       change_state_callback_t &&on_state_change,
                        const std::chrono::milliseconds &request_timeout)
         : m_request_timeout(request_timeout)
         , m_connector(std::move(connector))
         , m_service(std::move(service))
         , m_thread_pool(std::move(thread_pool))
-        , m_on_connection_change_strand(m_thread_pool->create_strand())
         , m_on_connection_change(create_on_connection_change(std::move(on_conn_change_callback)))
-        , m_on_state_change(create_on_state_change(std::move(on_state_change)))
         , m_channel_map(std::make_shared<guarded_channel_map_t>())
     {}
 
@@ -62,9 +53,6 @@ namespace vshalygin::rpc {
         });
 
         m_is_running = true;
-        m_on_connection_change_strand.post([callback = m_on_state_change]() {
-            (*callback)(listener_state::started);
-        });
     }
 
     void listener::stop()
@@ -77,10 +65,6 @@ namespace vshalygin::rpc {
                 m_current_connection.reset();
             }
             m_is_running = false;
-
-            m_on_connection_change_strand.post([callback = m_on_state_change]() {
-                (*callback)(listener_state::stopped);
-            });
         }
     }
 
@@ -170,8 +154,6 @@ namespace vshalygin::rpc {
                                                   m_service,
                                                   m_request_timeout);
 
-        guard.unlock();
-
         {
             auto [g, m] = m_channel_map->get();
             auto channel0 = std::make_shared<channel>();
@@ -179,8 +161,11 @@ namespace vshalygin::rpc {
             m.insert({ id, { false, channel0 } });
         }
 
+        guard.unlock();
         try {
             m_current_connection->activate();
+            guard.lock();
+            m_current_connection.reset();
         } catch(...) {
             {
                 auto [g, m] = m_channel_map->get();
@@ -191,8 +176,5 @@ namespace vshalygin::rpc {
             m_current_connection.reset();
             throw;
         }
-
-        guard.lock();
-        m_current_connection.reset();
     }
 }

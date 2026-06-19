@@ -1,5 +1,6 @@
 #include "mem-pipe-env.h"
-#include "mem-pipe-enpoint.h"
+#include "mem-pipe-endpoint.h"
+#include "mem-buffers.h"
 
 namespace vshalygin::rpc {
     mem_pipe_env::mem_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool)
@@ -8,20 +9,25 @@ namespace vshalygin::rpc {
 
     std::shared_ptr<ipipe_endpoint> mem_pipe_env::create_pipe()
     {
-        return create_new_pipe_end(true, m_server_side_pipes, m_client_side_pipes);
+        return create_new_pipe_end(true,
+                                   m_server_side_pipe_endpoints,
+                                   m_client_side_pipe_endpoints);
     }
 
     std::shared_ptr<ipipe_endpoint> mem_pipe_env::open_pipe()
     {
-        return create_new_pipe_end(false, m_client_side_pipes, m_server_side_pipes);
+        return create_new_pipe_end(false,
+                                   m_client_side_pipe_endpoints,
+                                   m_server_side_pipe_endpoints);
     }
 
-    std::shared_ptr<ipipe_endpoint> mem_pipe_env::create_new_pipe_end(bool is_server,
-                                                                      queue_t &own_queue,
-                                                                      queue_t &corresponding_queue)
+    std::shared_ptr<ipipe_endpoint> mem_pipe_env::create_new_pipe_end
+                                                            (bool is_server,
+                                                             queue_t &own_queue,
+                                                             queue_t &corresponding_queue)
     {
-        std::shared_ptr<mem_pipe> ans(new mem_pipe(is_server, m_thread_pool));
-        std::shared_ptr<mem_pipe> corresponding_pipe;
+        std::shared_ptr<mem_pipe_endpoint> ans(new mem_pipe_endpoint(is_server, m_thread_pool));
+        std::shared_ptr<mem_pipe_endpoint> corresponding_pipe;
 
         std::lock_guard guard(m_mtx);
         while(!corresponding_queue.empty() && !corresponding_pipe) {
@@ -43,12 +49,12 @@ namespace vshalygin::rpc {
     size_t mem_pipe_env::get_client_pipe_queue_size() const
     {
         std::lock_guard guard(m_mtx);
-        return m_client_side_pipes.size();
+        return m_client_side_pipe_endpoints.size();
     }
 
     size_t mem_pipe_env::get_server_pipe_queue_size() const
     {
         std::lock_guard guard(m_mtx);
-        return m_server_side_pipes.size();
+        return m_server_side_pipe_endpoints.size();
     }
 }

@@ -34,7 +34,7 @@ namespace vshalygin::rpc {
         mem_buffer m_client_to_server;
         mem_buffer m_server_to_client;
 
-        std::mutex m_mtx;
+        mutable std::mutex m_mtx;
         bool m_invalidated = false;
         std::vector<std::function<void()>> m_on_invalidate;
     };
