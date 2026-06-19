@@ -67,27 +67,23 @@ namespace vshalygin::rpc {
         });
     }
 
-    void mem_buffer::invalidate() noexcept
+    void mem_buffer::invalidate()
     {
-        try {
-            std::packaged_task<void()> task([this]() {
-                if(is_valid_) {
-                    is_valid_ = false;
-                    buffer_ = {};
-                    while(!read_handlers_.empty()) {
-                        read_handlers_.front()(pipe_op_res::canceled, {});
-                        read_handlers_.pop();
-                    }
+        std::packaged_task<void()> task([this]() {
+            if(is_valid_) {
+                is_valid_ = false;
+                buffer_ = {};
+                while(!read_handlers_.empty()) {
+                    read_handlers_.front()(pipe_op_res::canceled, {});
+                    read_handlers_.pop();
                 }
-            });
-            auto f = task.get_future();
+            }
+        });
+        auto f = task.get_future();
 
-            strand_.dispatch(std::move(task));
+        strand_.dispatch(std::move(task));
 
-            f.get();
-        } catch(...) {
-            //TODO log
-        }
+        f.get();
     }
 
     bool mem_buffer::is_valid() const

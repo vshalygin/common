@@ -46,7 +46,7 @@
     <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp">
       <Filter>server-endpoint</Filter>
     </ClCompile>
-    <ClCompile Include="src\pipe\memory-pipe\pipe-buffer-test.cpp">
+    <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
     <ClCompile Include="src\pipe\memory-pipe\pipe-env-test.cpp">

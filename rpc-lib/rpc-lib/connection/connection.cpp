@@ -240,7 +240,6 @@ namespace vshalygin::rpc {
                 m_multiple_timer.cancel(req_data->timer_id);
             }
         } catch(...) {
-            //TODO safe log
         }
     }
 }

@@ -24,7 +24,7 @@ namespace vshalygin::rpc {
         void write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&callback);
         void read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&callback);
 
-        void invalidate() noexcept;
+        void invalidate();
         bool is_valid() const;
 
         size_t get_pending_messages_count() const;
