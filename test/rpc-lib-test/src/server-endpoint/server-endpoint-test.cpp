@@ -2,7 +2,6 @@
 #include <rpc-lib/client-endpoint/client-endpoint.h>
 #include <rpc-lib/channel/channel.h>
 #include <rpc-lib/connection/connection.h>
-#include <rpc-lib/connector/connector.h>
 #include <rpc-lib/service/service.h>
 #include <rpc-lib/transfer-message/transfer-message.h>
 #include <rpc-lib/closure-guard/closure-guard.h>

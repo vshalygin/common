@@ -43,7 +43,7 @@ namespace vshalygin::rpc {
         m_listen_thread = std::jthread([this](std::stop_token st) {
             while(!st.stop_requested()) {
                 try {
-                    create_new_active_connection();
+                    create_new_active_connection(); //TODO если не смогли подключиться?
                 } catch(const interrupt_exception &) {
                     //normal situation
                 } catch(...) {

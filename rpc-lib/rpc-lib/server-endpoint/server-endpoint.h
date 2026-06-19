@@ -5,7 +5,6 @@
 #include "rpc-lib/service/service.h"
 #include "rpc-lib/types/connection-state.h"
 #include "rpc-lib/types/request-exception.h"
-#include "rpc-lib/types/constants.h"
 #include "rpc-lib/channel/request-callback/request-callback.h"
 
 #include <common-lib/syncronization/guarded-value/guarded-value.h>
@@ -24,7 +23,6 @@ namespace vshalygin::rpc {
     {
         using connection_change_callback_t =
             std::function<void(uint64_t, connection_state)>;
-        using listener_change_state_handler_t = std::function<void(listener_state)>;
 
         template<typename Response>
         using request_callback_t =
