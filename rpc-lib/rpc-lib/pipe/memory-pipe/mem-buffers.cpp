@@ -7,6 +7,11 @@ namespace vshalygin::rpc {
         , m_server_to_client(thread_pool)
     {}
 
+    mem_buffers::~mem_buffers()
+    {
+        invalidate();
+    }
+
     void mem_buffers::read_async_from_server(read_callback_t &&callback)
     {
         m_server_to_client.read_async(std::move(callback));
@@ -54,5 +59,11 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         return !m_invalidated;
+    }
+
+    size_t mem_buffers::get_invalidate_callbacks_count() const
+    {
+        std::lock_guard guard(m_mtx);
+        return m_on_invalidate.size();
     }
 }

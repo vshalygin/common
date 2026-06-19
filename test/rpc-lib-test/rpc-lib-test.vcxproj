@@ -136,6 +136,7 @@
     <ClCompile Include="src\connection\connection-test.cpp" />
     <ClCompile Include="src\connector\connector-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp" />
+    <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\pipe-env-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\pipe-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">

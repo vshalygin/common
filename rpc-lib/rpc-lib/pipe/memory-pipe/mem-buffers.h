@@ -17,6 +17,8 @@ namespace vshalygin::rpc {
         mem_buffers(const mem_buffers &) = delete;
         mem_buffers &operator=(const mem_buffers &) = delete;
 
+        ~mem_buffers();
+
         void read_async_from_server(read_callback_t &&callback);
         void read_async_from_client(read_callback_t &&callback);
 
@@ -27,6 +29,8 @@ namespace vshalygin::rpc {
 
         void invalidate();
         bool is_valid() const;
+
+        size_t get_invalidate_callbacks_count() const;
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;

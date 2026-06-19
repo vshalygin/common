@@ -61,6 +61,9 @@
     <ClCompile Include="src\connector\connector-test.cpp">
       <Filter>connector</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
