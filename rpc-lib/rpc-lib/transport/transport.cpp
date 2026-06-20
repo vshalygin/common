@@ -4,13 +4,10 @@
 #include <cassert>
 
 namespace vshalygin::rpc {
-    transport::transport(std::shared_ptr<cl::thread_pool> thread_pool,
-                         std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+    transport::transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                          std::function<void()> &&stop_callback)
-        : m_thread_pool(std::move(thread_pool))
-        , m_pipe_endpoint(std::move(pipe_endpoint))
+        : m_pipe_endpoint(std::move(pipe_endpoint))
     {
-        assert(m_thread_pool);
         assert(m_pipe_endpoint && m_pipe_endpoint->is_connected());
 
         m_pipe_endpoint->set_disconnect_callback(std::move(stop_callback));

@@ -15,8 +15,7 @@ namespace vshalygin::rpc {
     class transport final
     {
     public:
-        explicit transport(std::shared_ptr<cl::thread_pool> thread_pool,
-                           std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+        explicit transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::function<void()> &&stop_callback);
 
         transport(const transport &) = delete;
@@ -36,7 +35,6 @@ namespace vshalygin::rpc {
         bool is_running() const;
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<ipipe_endpoint> m_pipe_endpoint;
 
         std::atomic_bool m_stopped_requested = false;
