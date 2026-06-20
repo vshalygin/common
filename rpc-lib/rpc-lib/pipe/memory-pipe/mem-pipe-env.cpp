@@ -46,13 +46,13 @@ namespace vshalygin::rpc {
         return ans;
     }
 
-    size_t mem_pipe_env::get_client_pipe_queue_size() const
+    size_t mem_pipe_env::get_client_pipe_endpoint_queue_size() const
     {
         std::lock_guard guard(m_mtx);
         return m_client_side_pipe_endpoints.size();
     }
 
-    size_t mem_pipe_env::get_server_pipe_queue_size() const
+    size_t mem_pipe_env::get_server_pipe_endpoint_queue_size() const
     {
         std::lock_guard guard(m_mtx);
         return m_server_side_pipe_endpoints.size();

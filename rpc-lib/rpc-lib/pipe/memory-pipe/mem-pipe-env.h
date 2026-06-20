@@ -22,8 +22,8 @@ namespace vshalygin::rpc {
         std::shared_ptr<ipipe_endpoint> create_pipe() override;
         std::shared_ptr<ipipe_endpoint> open_pipe() override;
 
-        size_t get_client_pipe_queue_size() const;
-        size_t get_server_pipe_queue_size() const;
+        size_t get_client_pipe_endpoint_queue_size() const;
+        size_t get_server_pipe_endpoint_queue_size() const;
 
     private:
         std::shared_ptr<ipipe_endpoint> create_new_pipe_end(bool is_server,
