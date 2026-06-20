@@ -1,5 +1,6 @@
 #pragma once
 #include "strand.h"
+#include "thread-pool-task.h"
 
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/thread/thread.hpp>
@@ -14,10 +15,31 @@ namespace vshalygin::cl {
         thread_pool(thread_pool &) = delete;
         thread_pool &operator=(thread_pool &) = delete;
 
-        template<typename Task>
+        template<typename Task,
+                 std::enable_if_t<!is_thread_pool_task_v<Task>, int> = 0>
         void post(Task &&task)
         {
             boost::asio::post(m_io_context, std::forward<Task>(task));
+        }
+
+        template<typename Signature, typename...Args>
+        void post(const thread_pool_task<Signature> &task, Args&&...args)
+        {
+            boost::asio::post(
+                m_io_context,
+                [task, t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+                    std::apply(task.get_proxy(), std::move(t));
+                });
+        }
+
+        template<typename Signature, typename...Args>
+        void post(thread_pool_task<Signature> &&task, Args&&...args)
+        {
+            boost::asio::post(
+                m_io_context,
+                [task = std::move(task), t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+                std::apply(task.get_proxy(), std::move(t));
+            });
         }
 
         void stop();

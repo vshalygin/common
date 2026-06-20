@@ -14,6 +14,7 @@
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
     <ClCompile Include="src\syncronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\thread-pool\strand-test.cpp" />
+    <ClCompile Include="src\thread-pool\thread-pool-task-test.cpp" />
     <ClCompile Include="src\thread-pool\thread-pool-test.cpp" />
     <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp" />
     <ClCompile Include="src\timer\periodic-timer\periodic-timer-test.cpp" />

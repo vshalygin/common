@@ -37,6 +37,9 @@
     <ClCompile Include="src\thread-pool\strand-test.cpp">
       <Filter>thread-pool</Filter>
     </ClCompile>
+    <ClCompile Include="src\thread-pool\thread-pool-task-test.cpp">
+      <Filter>thread-pool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

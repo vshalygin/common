@@ -90,6 +90,9 @@
     <ClInclude Include="common-lib\syncronization\spinlock\spinlock-guard.h">
       <Filter>syncronization\spinlock</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread-pool\thread-pool-task.h">
+      <Filter>thread-pool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">

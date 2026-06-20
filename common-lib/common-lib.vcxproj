@@ -19,6 +19,7 @@
     <ClInclude Include="common-lib\syncronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\syncronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread-pool\strand.h" />
+    <ClInclude Include="common-lib\thread-pool\thread-pool-task.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h" />
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h" />
