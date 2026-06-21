@@ -120,7 +120,7 @@ namespace vshalygin::cl {
                                        std::remove_cv_t<std::remove_reference_t<Func>>,
                                        thread_pool_task>,
                                   int> = 0>
-        explicit thread_pool_task(Func &&func)
+        thread_pool_task(Func &&func)
             : m_func(std::make_unique<internal::thread_pool_task<std::decay_t<Func>, Args...>>
                                                             (std::forward<Func>(func)))
         {}
@@ -156,12 +156,12 @@ namespace vshalygin::cl {
         }
 
     private:
-        auto get_proxy()
+        auto create_proxy()
         {
             return internal::thread_pool_task_proxy<Args...>(m_func.get());
         }
 
-        auto get_proxy() const
+        auto create_proxy() const
         {
             return internal::thread_pool_task_proxy<Args...>(m_func.get());
         }

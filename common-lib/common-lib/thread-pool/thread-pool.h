@@ -28,7 +28,7 @@ namespace vshalygin::cl {
             boost::asio::post(
                 m_io_context,
                 [task, t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                    std::apply(task.get_proxy(), std::move(t));
+                    std::apply(task.create_proxy(), std::move(t));
                 });
         }
 
@@ -38,7 +38,7 @@ namespace vshalygin::cl {
             boost::asio::post(
                 m_io_context,
                 [task = std::move(task), t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                std::apply(task.get_proxy(), std::move(t));
+                std::apply(task.create_proxy(), std::move(t));
             });
         }
 
