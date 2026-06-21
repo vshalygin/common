@@ -25,7 +25,7 @@ namespace vshalygin::rpc {
         void write_async_to_client(cl::buffer &&msg, write_callback_t &&callback);
         void write_async_to_server(cl::buffer &&msg, write_callback_t &&callback);
 
-        void set_invalidate_callback(std::function<void()> &&callback);
+        void set_invalidate_callback(cl::thread_pool_task<void()> &&callback);
 
         void invalidate();
         bool is_valid() const;
@@ -40,6 +40,6 @@ namespace vshalygin::rpc {
 
         mutable std::mutex m_mtx;
         bool m_invalidated = false;
-        std::vector<std::function<void()>> m_on_invalidate;
+        std::vector<cl::thread_pool_task<void()>> m_on_invalidate;
     };
 }

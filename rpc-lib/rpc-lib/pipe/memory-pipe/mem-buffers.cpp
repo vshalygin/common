@@ -32,7 +32,7 @@ namespace vshalygin::rpc {
         m_client_to_server.write_async(std::move(msg), std::move(callback));
     }
 
-    void mem_buffers::set_invalidate_callback(std::function<void()> &&callback)
+    void mem_buffers::set_invalidate_callback(cl::thread_pool_task<void()> &&callback)
     {
         std::lock_guard guard(m_mtx);
         if(m_invalidated) {

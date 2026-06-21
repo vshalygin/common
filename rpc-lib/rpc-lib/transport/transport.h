@@ -1,6 +1,7 @@
 #pragma once
 #include <rpc-lib/pipe/pipe-op-res.h>
 #include <common-lib/utils/buffer/buffer.h>
+#include <common-lib/thread-pool/thread-pool-task.h>
 
 #include <functional>
 #include <atomic>
@@ -15,8 +16,10 @@ namespace vshalygin::rpc {
     class transport final
     {
     public:
-        explicit transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint,
-                           std::function<void()> &&stop_callback);
+        explicit transport(std::shared_ptr<cl::thread_pool> thread_pool,
+                           std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+                           cl::thread_pool_task<void()> &&start_callback,
+                           cl::thread_pool_task<void()> &&stop_callback);
 
         transport(const transport &) = delete;
         transport &operator=(const transport &) = delete;

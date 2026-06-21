@@ -3,6 +3,7 @@
 #include "pipe-wait-res.h"
 
 #include <common-lib/utils/buffer/buffer.h>
+#include <common-lib/thread-pool/thread-pool-task.h>
 
 #include <optional>
 #include <chrono>
@@ -16,6 +17,7 @@ namespace vshalygin::rpc {
     // pipe connection may disrupt spanteneously
     // subscribe to disconnect -> вызываем сразу асинхронно, если disconnect
     // set_disconnect_callback вызывается только один раз
+    // callback не должен вызываться в потоке set_disconnect_callback
 
     class ipipe_endpoint
     {
@@ -26,7 +28,7 @@ namespace vshalygin::rpc {
         virtual ~ipipe_endpoint() = default;
 
         virtual bool is_connected() const = 0;
-        virtual void set_disconnect_callback(std::function<void()> &&callback) = 0;
+        virtual void set_disconnect_callback(cl::thread_pool_task<void()> &&callback) = 0;
 
         virtual pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const = 0;
         virtual pipe_wait_res wait_connect() const = 0;

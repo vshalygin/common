@@ -21,8 +21,9 @@ namespace vshalygin::rpc {
         , m_pipe_env(std::move(pipe_env))
     {}
 
-    std::unique_ptr<transport>
-        server_connector::create_transport(std::function<void()> &&stop_callback) const
+    std::unique_ptr<transport> server_connector::create_transport
+                                                     (std::function<void()> &&start_callback,
+                                                      std::function<void()> &&stop_callback) const
     {
         std::unique_lock guard(m_mtx);
         assert(!m_curr_pipe_endpoint);
@@ -70,6 +71,7 @@ namespace vshalygin::rpc {
             m_curr_pipe_endpoint.reset();
             return std::make_unique<transport>(m_thread_pool,
                                                std::move(pipe),
+                                               std::move(start_callback),
                                                std::move(stop_callback));
         } catch(...) {
             m_curr_pipe_endpoint.reset();

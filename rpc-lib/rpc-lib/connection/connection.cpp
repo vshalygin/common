@@ -73,13 +73,13 @@ namespace vshalygin::rpc {
 
         {
             std::lock_guard activation_guad(m_activation_mtx);
-            auto transport = m_connector->create_transport(std::move(stop_callback));
+            auto transport = m_connector->create_transport(std::move(start_callback),
+                                                           std::move(stop_callback));
             auto [guard, val] = m_transport.get();
             val = std::move(transport);
         }
 
         do_receive_async();
-        m_thread_pool->post(std::move(start_callback));
     }
 
     void connection::deactivate()

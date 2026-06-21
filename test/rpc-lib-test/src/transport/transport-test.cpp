@@ -30,6 +30,10 @@ class Transport
 protected:
     void SetUp() override
     {
+        Sequence s;
+        EXPECT_CALL(m_start_callback, Call)
+            .Times(1)
+            .WillOnce([]() {});
         EXPECT_CALL(m_stop_callback, Call)
             .Times(1)
             .WillOnce([]() {});
@@ -39,11 +43,14 @@ protected:
         m_pipe_endpoint = m_pipe_env->create_pipe();
         m_other_pipe_endpoint = m_pipe_env->open_pipe();
 
-        m_sut = std::make_unique<transport>(m_pipe_endpoint,
+        m_sut = std::make_unique<transport>(m_thread_pool,
+                                            m_pipe_endpoint,
+                                            m_stop_callback.AsStdFunction(),
                                             m_stop_callback.AsStdFunction());
     }
 
 protected:
+    MockFunction<void()> m_start_callback;
     MockFunction<void()> m_stop_callback;
 
     std::shared_ptr<thread_pool> m_thread_pool;

@@ -27,7 +27,7 @@ namespace vshalygin::rpc {
         ~mem_pipe_endpoint() override;
 
         bool is_connected() const override;
-        void set_disconnect_callback(std::function<void()> &&callback) override;
+        void set_disconnect_callback(cl::thread_pool_task<void()> &&callback) override;
 
         pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const override;
         pipe_wait_res wait_connect() const override;
@@ -50,7 +50,7 @@ namespace vshalygin::rpc {
 
         std::shared_ptr<mem_buffers> m_mem_buffers;
 
-        std::function<void()> m_on_disconnect;
+        cl::thread_pool_task<void()> m_on_disconnect;
 
         const bool m_is_server;
     };

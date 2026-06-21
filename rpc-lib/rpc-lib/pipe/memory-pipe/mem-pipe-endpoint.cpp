@@ -43,7 +43,7 @@ namespace vshalygin::rpc {
         return m_mem_buffers && m_mem_buffers->is_valid();
     }
 
-    void mem_pipe_endpoint::set_disconnect_callback(std::function<void()> &&callback)
+    void mem_pipe_endpoint::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
     {
         std::lock_guard guard(m_mtx);
         assert(!m_on_disconnect);
