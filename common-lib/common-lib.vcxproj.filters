@@ -46,6 +46,9 @@
     <Filter Include="synchronization\spinlock">
       <UniqueIdentifier>{d1d2a2e0-ec06-474f-b529-e6ca6f10263a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mpl">
+      <UniqueIdentifier>{1d528489-a74f-453f-b7e2-1b5b616f822c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\thread-pool\thread-pool.h">
@@ -95,6 +98,12 @@
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h">
       <Filter>synchronization\spinlock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\function-traits.h">
+      <Filter>mpl</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\remove-member-function-qualifiers.h">
+      <Filter>mpl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

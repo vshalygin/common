@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
+    <ClCompile Include="src\mpl\function-traits-test.cpp" />
+    <ClCompile Include="src\mpl\remove-member-function-qualifiers.cpp" />
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\thread-pool\future-test.cpp" />
     <ClCompile Include="src\thread-pool\strand-test.cpp" />
