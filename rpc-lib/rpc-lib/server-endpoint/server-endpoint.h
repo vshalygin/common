@@ -7,8 +7,8 @@
 #include "rpc-lib/types/request-exception.h"
 #include "rpc-lib/channel/request-callback/request-callback.h"
 
-#include <common-lib/syncronization/guarded-value/guarded-value.h>
-#include <common-lib/syncronization/latch/latch.h>
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/latch/latch.h>
 #include <common-lib/thread-pool/thread-pool.h>
 
 #include <unordered_map>

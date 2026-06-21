@@ -1,7 +1,7 @@
 #pragma once
 #include "ichannel.h"
 #include "rpc-lib/types/request-result.h"
-#include <common-lib/syncronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
 #include <common-lib/utils/buffer/buffer.h>
 #include <atomic>
 

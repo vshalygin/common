@@ -28,23 +28,23 @@
     <Filter Include="timer\multiple-timer">
       <UniqueIdentifier>{872ad871-352a-47d0-9da4-49cf53f80a27}</UniqueIdentifier>
     </Filter>
-    <Filter Include="syncronization">
-      <UniqueIdentifier>{d475a531-5d3e-4661-a1d0-7bb4ecb276e9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="syncronization\guarded-value">
-      <UniqueIdentifier>{27d223b0-c866-4a25-81e3-f0119cb49e5f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="syncronization\event">
-      <UniqueIdentifier>{d449d5a9-b683-46bc-97f5-5e5a887a2b10}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="syncronization\latch">
-      <UniqueIdentifier>{702e0636-e998-4fab-9a86-bbe0aec579b6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="timer\periodic-timer">
       <UniqueIdentifier>{7df212d7-73f5-4e34-a2d1-58800efa1e81}</UniqueIdentifier>
     </Filter>
-    <Filter Include="syncronization\spinlock">
-      <UniqueIdentifier>{d1ee088e-f1e1-47e1-95ec-82c142c3111c}</UniqueIdentifier>
+    <Filter Include="synchronization">
+      <UniqueIdentifier>{ef150fed-a7d1-4648-bd29-bf5a42196a9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\event">
+      <UniqueIdentifier>{c2b0a754-8959-407c-9144-909082f786f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\guarded-value">
+      <UniqueIdentifier>{e56c6fff-1c30-4d70-a21c-5f4dbec0e978}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\latch">
+      <UniqueIdentifier>{1c06f32f-8ef6-4aa7-ab62-9cc4126923d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\spinlock">
+      <UniqueIdentifier>{d1d2a2e0-ec06-474f-b529-e6ca6f10263a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,32 +69,32 @@
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h">
       <Filter>timer\multiple-timer</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\syncronization\event\event.h">
-      <Filter>syncronization\event</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h">
-      <Filter>syncronization\guarded-value</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\syncronization\latch\latch.h">
-      <Filter>syncronization\latch</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread-pool\strand.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h">
       <Filter>timer\periodic-timer</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\syncronization\spinlock\spinlock.h">
-      <Filter>syncronization\spinlock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\syncronization\spinlock\spinlock-guard.h">
-      <Filter>syncronization\spinlock</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread-pool\thread-pool-task.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\thread-pool\future.h">
       <Filter>thread-pool</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\event\event.h">
+      <Filter>synchronization\event</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h">
+      <Filter>synchronization\guarded-value</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\latch\latch.h">
+      <Filter>synchronization\latch</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h">
+      <Filter>synchronization\spinlock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h">
+      <Filter>synchronization\spinlock</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -113,20 +113,20 @@
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
       <Filter>timer\multiple-timer</Filter>
     </ClCompile>
-    <ClCompile Include="common-lib\syncronization\event\event.cpp">
-      <Filter>syncronization\event</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\syncronization\latch\latch.cpp">
-      <Filter>syncronization\latch</Filter>
-    </ClCompile>
     <ClCompile Include="common-lib\thread-pool\strand.cpp">
       <Filter>thread-pool</Filter>
     </ClCompile>
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp">
       <Filter>timer\periodic-timer</Filter>
     </ClCompile>
-    <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp">
-      <Filter>syncronization\spinlock</Filter>
+    <ClCompile Include="common-lib\synchronization\event\event.cpp">
+      <Filter>synchronization\event</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\synchronization\latch\latch.cpp">
+      <Filter>synchronization\latch</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp">
+      <Filter>synchronization\spinlock</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 #include "event.h"
-#include "common-lib/syncronization/spinlock/spinlock-guard.h"
+#include "common-lib/synchronization/spinlock/spinlock-guard.h"
 #include <condition_variable>
 #include <atomic>
 

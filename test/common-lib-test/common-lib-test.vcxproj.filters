@@ -28,9 +28,6 @@
     <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp">
       <Filter>timer\multiple-timer</Filter>
     </ClCompile>
-    <ClCompile Include="src\syncronization\guarded-value\guarded-value-test.cpp">
-      <Filter>syncronization\guarded-value</Filter>
-    </ClCompile>
     <ClCompile Include="src\timer\periodic-timer\periodic-timer-test.cpp">
       <Filter>timer\periodic-timer</Filter>
     </ClCompile>
@@ -42,6 +39,9 @@
     </ClCompile>
     <ClCompile Include="src\thread-pool\future-test.cpp">
       <Filter>thread-pool</Filter>
+    </ClCompile>
+    <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp">
+      <Filter>synchronization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -72,14 +72,11 @@
     <Filter Include="timer\multiple-timer">
       <UniqueIdentifier>{cc56a4e7-25da-4835-b0a5-157ce4c2e2c0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="syncronization">
-      <UniqueIdentifier>{76cb35ef-3b6e-45fb-baac-1fbd2849b537}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="syncronization\guarded-value">
-      <UniqueIdentifier>{6a9e4291-f5cb-4bb2-9a48-640a3bc4aaf7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="timer\periodic-timer">
       <UniqueIdentifier>{fdbc5790-7680-4e3c-a2aa-60d2564838d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization">
+      <UniqueIdentifier>{76cb35ef-3b6e-45fb-baac-1fbd2849b537}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

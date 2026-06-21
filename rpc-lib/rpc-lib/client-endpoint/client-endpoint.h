@@ -7,8 +7,8 @@
 #include "rpc-lib/types/request-exception.h"
 #include "rpc-lib/types/connection-state.h"
 
-#include <common-lib/syncronization/guarded-value/guarded-value.h>
-#include <common-lib/syncronization/event/event.h>
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/event/event.h>
 #include <common-lib/thread-pool/thread-pool.h>
 
 #include <functional>

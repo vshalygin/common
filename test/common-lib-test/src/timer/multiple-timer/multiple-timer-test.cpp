@@ -1,7 +1,7 @@
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
 #include <common-lib/thread-pool/thread-pool.h>
-#include <common-lib/syncronization/event/event.h>
-#include <common-lib/syncronization/latch/latch.h>
+#include <common-lib/synchronization/event/event.h>
+#include <common-lib/synchronization/latch/latch.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

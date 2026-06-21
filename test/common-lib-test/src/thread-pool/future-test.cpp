@@ -14,3 +14,14 @@ TEST(Future, Init)
 
     ASSERT_EQ(future.get(), 1);
 }
+
+TEST(Future, ExecutesSuccessCallback)
+{
+    thread_pool pool(2);
+    int i = 0;
+    pool.post_ex([]() { return 2; })
+        .then<int>([&i](int &&ii) { i = ii; return 0; })
+        .get();
+
+    ASSERT_EQ(i, 2);
+}

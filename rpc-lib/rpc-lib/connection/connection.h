@@ -1,7 +1,7 @@
 #pragma once
 #include "iconnection.h"
 #include "rpc-lib/types/connection-state.h"
-#include "common-lib/syncronization/guarded-value/guarded-value.h" //TODO sync
+#include "common-lib/synchronization/guarded-value/guarded-value.h" //TODO sync
 #include "common-lib/timer/multiple-timer/multiple-timer.h"
 
 #include <memory>

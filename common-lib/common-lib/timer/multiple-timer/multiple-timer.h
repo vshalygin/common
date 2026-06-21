@@ -1,6 +1,6 @@
 #pragma once
-#include <common-lib/syncronization/guarded-value/guarded-value.h>
-#include <common-lib/syncronization/event/event.h>
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/event/event.h>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <atomic>

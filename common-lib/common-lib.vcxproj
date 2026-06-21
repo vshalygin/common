@@ -13,11 +13,11 @@
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h" />
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
-    <ClInclude Include="common-lib\syncronization\event\event.h" />
-    <ClInclude Include="common-lib\syncronization\guarded-value\guarded-value.h" />
-    <ClInclude Include="common-lib\syncronization\latch\latch.h" />
-    <ClInclude Include="common-lib\syncronization\spinlock\spinlock-guard.h" />
-    <ClInclude Include="common-lib\syncronization\spinlock\spinlock.h" />
+    <ClInclude Include="common-lib\synchronization\event\event.h" />
+    <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h" />
+    <ClInclude Include="common-lib\synchronization\latch\latch.h" />
+    <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
+    <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread-pool\strand.h" />
     <ClInclude Include="common-lib\thread-pool\future.h" />
     <ClInclude Include="common-lib\thread-pool\thread-pool-task.h" />
@@ -29,9 +29,9 @@
     <ClInclude Include="common-lib\utils\buffer\buffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="common-lib\syncronization\event\event.cpp" />
-    <ClCompile Include="common-lib\syncronization\latch\latch.cpp" />
-    <ClCompile Include="common-lib\syncronization\spinlock\spinlock.cpp" />
+    <ClCompile Include="common-lib\synchronization\event\event.cpp" />
+    <ClCompile Include="common-lib\synchronization\latch\latch.cpp" />
+    <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp" />
     <ClCompile Include="common-lib\thread-pool\strand.cpp" />
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp" />
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp" />

@@ -5,7 +5,7 @@
 #include "rpc-lib/service/iservice.h"
 
 #include "common-lib/thread-pool/thread-pool.h"
-#include "common-lib/syncronization/event/event.h"
+#include "common-lib/synchronization/event/event.h"
 
 namespace vshalygin::rpc {
     namespace {
@@ -35,11 +35,11 @@ namespace vshalygin::rpc {
                                                     const std::chrono::milliseconds &req_timeout)
     {
         return std::make_shared<connection>(std::move(thread_pool),
-                                             std::move(on_change_state),
-                                             std::move(connector),
-                                             std::move(service),
-                                             req_timeout,
-                                             creator{});
+                                            std::move(on_change_state),
+                                            std::move(connector),
+                                            std::move(service),
+                                            req_timeout,
+                                            creator{});
     };
 
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,

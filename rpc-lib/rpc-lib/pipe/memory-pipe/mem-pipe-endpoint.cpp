@@ -1,6 +1,6 @@
 #include "mem-pipe-endpoint.h"
 #include "mem-buffers.h"
-#include "common-lib/syncronization/event/event.h"
+#include "common-lib/synchronization/event/event.h"
 
 #include <mutex>
 #include <condition_variable>

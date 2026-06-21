@@ -8,7 +8,7 @@
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
 #include <rpc-lib/authenticator/simple-authenticator/simple-authenticator.h>
 
-#include <common-lib/syncronization/event/event.h>
+#include <common-lib/synchronization/event/event.h>
 
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"
