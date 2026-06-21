@@ -93,6 +93,9 @@
     <ClInclude Include="common-lib\thread-pool\thread-pool-task.h">
       <Filter>thread-pool</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread-pool\future.h">
+      <Filter>thread-pool</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">

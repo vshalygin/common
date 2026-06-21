@@ -1,4 +1,5 @@
 #pragma once
+#include "future.h"
 #include "strand.h"
 #include "thread-pool-task.h"
 
@@ -40,6 +41,23 @@ namespace vshalygin::cl {
                 [task = std::move(task), t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
                 std::apply(task.create_proxy(), std::move(t));
             });
+        }
+
+        template<typename Task>
+        future<std::invoke_result_t<Task>> post_ex(Task &&task)
+        {
+            promise<std::invoke_result_t<Task>> promise(m_io_context);
+            auto future = promise.get_future();
+            auto t = [task = std::move(task), promise = std::move(promise)]() mutable {
+                try {
+                    promise.set_value(task());
+                } catch (...) {
+                    promise.set_exception(std::current_exception());
+                }
+            };
+            boost::asio::post(m_io_context, std::move(t));
+
+            return future;
         }
 
         void stop();
