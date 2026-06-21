@@ -14,6 +14,8 @@ namespace vshalygin::cl {
             virtual void call(Args...args) const = 0;
 
             virtual ithread_pool_task<Args...> *copy() const = 0;
+
+            virtual bool is_valid() const = 0;
         };
 
         template<typename Func, typename...Args>
@@ -44,37 +46,28 @@ namespace vshalygin::cl {
                 return new thread_pool_task<Func, Args...>(m_func);
             }
 
+            bool is_valid() const override
+            {
+                if constexpr(std::is_pointer_v<Func> ||
+                             std::is_convertible_v<Func, void(*)(Args...)>)
+                {
+                    return m_func != nullptr;
+                } else if constexpr(std::is_convertible_v<bool, Func>) {
+                    return static_cast<bool>(m_func);
+                } else {
+                    return true;
+                }
+            }
+
         private:
-            Func m_func;
+            mutable Func m_func;
         };
 
         template<typename... Args>
         class thread_pool_task_proxy final
         {
         public:
-            explicit thread_pool_task_proxy(ithread_pool_task<Args...> *underlying)
-                : m_underlying(underlying)
-            {}
-
-            template<typename...U>
-            void operator()(U&&...args)
-            {
-                if(!m_underlying) {
-                    throw std::logic_error("inner function is empty");
-                }
-
-                m_underlying->call(std::forward<U>(args)...);
-            }
-
-        private:
-            ithread_pool_task<Args...> *m_underlying;
-        };
-
-        template<typename... Args>
-        class thread_pool_task_const_proxy final
-        {
-        public:
-            explicit thread_pool_task_const_proxy(const ithread_pool_task<Args...> *underlying)
+            explicit thread_pool_task_proxy(const ithread_pool_task<Args...> *underlying)
                 : m_underlying(underlying)
             {}
 
@@ -120,6 +113,8 @@ namespace vshalygin::cl {
         using ithread_pool_task = internal::ithread_pool_task<Args...>;
 
     public:
+        thread_pool_task() = default;
+
         template<typename Func,
                  std::enable_if_t<!std::is_same_v<
                                        std::remove_cv_t<std::remove_reference_t<Func>>,
@@ -155,6 +150,11 @@ namespace vshalygin::cl {
         thread_pool_task(thread_pool_task &&other) = default;
         thread_pool_task &operator=(thread_pool_task &&) = default;
 
+        operator bool() const
+        {
+            return m_func && m_func->is_valid();
+        }
+
     private:
         auto get_proxy()
         {
@@ -163,7 +163,7 @@ namespace vshalygin::cl {
 
         auto get_proxy() const
         {
-            return internal::thread_pool_task_const_proxy<Args...>(m_func.get());
+            return internal::thread_pool_task_proxy<Args...>(m_func.get());
         }
 
     private:

@@ -46,6 +46,14 @@ namespace {
             move_assign_num = 0;
         }
     };
+
+    class simple_functor
+    {
+    public:
+        void operator()() {}
+    };
+
+    void simple_function() {}
 }
 
 TEST(ThreadPoolTask, Init)
@@ -278,7 +286,10 @@ TEST(ThreadPoolTask, CorrectCopyEmptyTask)
     thread_pool_task<void()> sut([]() {});
     thread_pool_task<void()> sut2(std::move(sut));
 
-    thread_pool_task<void()> sut3(std::move(sut)); sut3;
+    thread_pool_task<void()> sut3(std::move(sut));
+
+    EXPECT_FALSE(sut);
+    EXPECT_FALSE(sut3);
 }
 
 TEST(ThreadPoolTask, CorrectCopyAssignEmptyTask)
@@ -288,4 +299,72 @@ TEST(ThreadPoolTask, CorrectCopyAssignEmptyTask)
     thread_pool_task<void()> sut3([]() {});
 
     sut3 = sut;
+
+    EXPECT_FALSE(sut);
+    EXPECT_FALSE(sut3);
+}
+
+TEST(ThreadPoolTask, IsBoolConvertible)
+{
+    int i;
+    thread_pool_task<void()> sut1;
+    thread_pool_task<void()> sut2([]() {});
+    thread_pool_task<void()> sut3([&i]() {});
+    thread_pool_task<void()> sut4(simple_functor{});
+    thread_pool_task<void()> sut5(&simple_function);
+    thread_pool_task<void()> sut6(std::function<void()>([]() {}));
+    thread_pool_task<void()> sut7(std::function<void()>([&i]() {}));
+    thread_pool_task<void()> sut8(std::function<void()>(simple_functor{}));
+    thread_pool_task<void()> sut9(std::function<void()>{&simple_function});
+
+    EXPECT_FALSE(sut1);
+    EXPECT_TRUE(sut2);
+    EXPECT_TRUE(sut3);
+    EXPECT_TRUE(sut4);
+    EXPECT_TRUE(sut5);
+    EXPECT_TRUE(sut6);
+    EXPECT_TRUE(sut7);
+    EXPECT_TRUE(sut8);
+    EXPECT_TRUE(sut9);
+}
+
+TEST(ThreadPoolTask, AnyCallableObjectMayBeCalledForCall)
+{
+    thread_pool pool(1);
+    int i;
+    thread_pool_task<void()> sut1([]() {});
+    thread_pool_task<void()> sut2([&i]() {});
+    thread_pool_task<void()> sut3(simple_functor{});
+    thread_pool_task<void()> sut4(&simple_function);
+    thread_pool_task<void()> sut5(std::function<void()>([]() {}));
+    thread_pool_task<void()> sut6(std::function<void()>([&i]() {}));
+    thread_pool_task<void()> sut7(std::function<void()>(simple_functor{}));
+    thread_pool_task<void()> sut8(std::function<void()>{&simple_function});
+    const thread_pool_task<void()> sut9([]() {});
+    const thread_pool_task<void()> sut10([&i]() {});
+    const thread_pool_task<void()> sut11(simple_functor{});
+    const thread_pool_task<void()> sut12(&simple_function);
+    const thread_pool_task<void()> sut13(std::function<void()>([]() {}));
+    const thread_pool_task<void()> sut14(std::function<void()>([&i]() {}));
+    const thread_pool_task<void()> sut15(std::function<void()>(simple_functor{}));
+    const thread_pool_task<void()> sut16(std::function<void()>{&simple_function});
+
+    pool.post(sut1);
+    pool.post(sut2);
+    pool.post(sut3);
+    pool.post(sut4);
+    pool.post(sut5);
+    pool.post(sut6);
+    pool.post(sut7);
+    pool.post(sut8);
+    pool.post(sut9);
+    pool.post(sut10);
+    pool.post(sut11);
+    pool.post(sut12);
+    pool.post(sut13);
+    pool.post(sut14);
+    pool.post(sut15);
+    pool.post(sut16);
+
+    pool.stop();
 }
