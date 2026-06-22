@@ -14,7 +14,11 @@
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h" />
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
     <ClInclude Include="common-lib\mpl\function-traits.h" />
-    <ClInclude Include="common-lib\mpl\remove-member-function-qualifiers.h" />
+    <ClInclude Include="common-lib\mpl\internal\remove-function-qualifiers.h" />
+    <ClInclude Include="common-lib\mpl\type-traits.h" />
+    <ClInclude Include="common-lib\mpl\type-transform.h" />
+    <ClInclude Include="common-lib\mpl\internal\function-traits-impl.h" />
+    <ClInclude Include="common-lib\mpl\internal\remove-member-function-qualifiers.h" />
     <ClInclude Include="common-lib\synchronization\event\event.h" />
     <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\synchronization\latch\latch.h" />

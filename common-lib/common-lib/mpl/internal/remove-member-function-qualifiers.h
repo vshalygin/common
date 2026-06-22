@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vshalygin::cl {
+namespace vshalygin::cl::internal {
     template<typename T>
     struct remove_member_function_qualifiers;
 

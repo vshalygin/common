@@ -1,4 +1,4 @@
-#include <common-lib/mpl/remove-member-function-qualifiers.h>
+#include <common-lib/mpl/type-transform.h>
 #include <type_traits>
 
 using namespace vshalygin::cl;

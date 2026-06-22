@@ -106,7 +106,7 @@ static_assert(std::is_same_v<function_arg_t<0, test_function_t>, const int &>);
 static_assert(std::is_same_v<function_arg_t<1, test_function_t>, volatile double &&>);
 static_assert(std::is_same_v<function_arg_t<2, test_function_t>, char>);
 static_assert(std::is_same_v<function_ret_t<test_function_t>, float &>);
-static_assert(std::is_same_v<function_class_t<test_function_t>, no_type>);
+static_assert(std::is_same_v<function_class_t<test_function_t>, internal::no_type>);
 static_assert(std::is_same_v<function_args_as_tuple_t<test_function_t>,
     std::tuple<const int &, volatile double &&, char>>);
 static_assert(function_arg_count_v<test_function_t> == 3);
@@ -122,7 +122,7 @@ static_assert(std::is_same_v<function_arg_t<0, test_function_ptr_t>, const int &
 static_assert(std::is_same_v<function_arg_t<1, test_function_ptr_t>, volatile double &&>);
 static_assert(std::is_same_v<function_arg_t<2, test_function_ptr_t>, char>);
 static_assert(std::is_same_v<function_ret_t<test_function_ptr_t>, float &>);
-static_assert(std::is_same_v<function_class_t<test_function_ptr_t>, no_type>);
+static_assert(std::is_same_v<function_class_t<test_function_ptr_t>, internal::no_type>);
 static_assert(std::is_same_v<function_args_as_tuple_t<test_function_ptr_t>,
     std::tuple<const int &, volatile double &&, char>>);
 static_assert(function_arg_count_v<test_function_ptr_t> == 3);
