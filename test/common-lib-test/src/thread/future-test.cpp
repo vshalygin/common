@@ -28,7 +28,7 @@ protected:
 
 TEST_F(Future, Init)
 {
-    promise<int> promise(&m_pool, []() -> int { return 1; });
+    promise promise(&m_pool, []() -> int { return 1; });
     auto future = promise.resolve();
     ASSERT_EQ(future.get(), 1);
 }
@@ -36,7 +36,7 @@ TEST_F(Future, Init)
 TEST_F(Future, ExecutesSuccessCallback)
 {
     int i = 0;
-    promise<int> promise(&m_pool, []() { return 2; });
+    promise promise(&m_pool, []() { return 2; });
     auto future = promise.resolve();
     future.then([&i](int &&ii) { i = ii; return 0; })
           .get();
@@ -46,15 +46,15 @@ TEST_F(Future, ExecutesSuccessCallback)
 
 TEST_F(Future, PromiseIsValidAfterCreation)
 {
-    promise<int> sut(&m_pool, []() { return 1; });
+    promise sut(&m_pool, []() { return 1; });
 
     ASSERT_TRUE(sut.is_valid());
 }
 
 TEST_F(Future, PromiseIsNotValidAfterMove)
 {
-    promise<int> sut(&m_pool, []() { return 1; });
-    promise<int> other(std::move(sut));
+    promise sut(&m_pool, []() { return 1; });
+    promise other(std::move(sut));
 
     EXPECT_TRUE(other.is_valid());
     EXPECT_FALSE(sut.is_valid());
@@ -62,8 +62,8 @@ TEST_F(Future, PromiseIsNotValidAfterMove)
 
 TEST_F(Future, PromiseIsNotValidAfterMoveAssignment)
 {
-    promise<int> sut(&m_pool, []() { return 1; });
-    promise<int> other(&m_pool, []() { return 1; });
+    promise sut(&m_pool, []() { return 1; });
+    promise other(&m_pool, []() { return 1; });
 
     other = std::move(sut);
 
@@ -95,7 +95,7 @@ TEST_F(Future, DefaultCreatedFutureIsNotValid)
 
 TEST_F(Future, FutureCreatedFromPromiseIsValid)
 {
-    auto p = promise<int>(&m_pool, []() { return 2; });
+    auto p = promise(&m_pool, []() { return 2; });
     auto future = p.resolve();
 
     ASSERT_TRUE(future.is_valid());
@@ -104,7 +104,7 @@ TEST_F(Future, FutureCreatedFromPromiseIsValid)
 
 TEST_F(Future, FutureIsInvalidAfterMove)
 {
-    auto p = promise<int>(&m_pool, []() { return 2; });
+    auto p = promise(&m_pool, []() { return 2; });
     auto future = p.resolve();
     auto other_future(std::move(future));
 
@@ -115,8 +115,8 @@ TEST_F(Future, FutureIsInvalidAfterMove)
 
 TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 {
-    auto p1 = promise<int>(&m_pool, []() { return 1; });
-    auto p2 = promise<int>(&m_pool, []() { return 2; });
+    auto p1 = promise(&m_pool, []() { return 1; });
+    auto p2 = promise(&m_pool, []() { return 2; });
     auto future1 = p1.resolve();
     auto future2 = p2.resolve();
     future2 = std::move(future1);
@@ -128,7 +128,7 @@ TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 
 TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
 {
-    auto future = promise<int>(&m_pool, []() { return 2; }).resolve();
+    auto future = promise(&m_pool, []() { return 2; }).resolve();
 
     ASSERT_TRUE(future.is_valid());
     ASSERT_EQ(future.get(), 2);
