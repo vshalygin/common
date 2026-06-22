@@ -105,7 +105,9 @@ namespace vshalygin::cl::internal {
 
     private:
         ThreadPool *m_thread_pool = nullptr;
-        std::unique_ptr<ipromise_function<T>> m_function;
+
+        //shared_ptr for thread pools, which don't accept move-only functors
+        std::shared_ptr<ipromise_function<T>> m_function;
 
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
     };
@@ -203,7 +205,7 @@ namespace vshalygin::cl::internal {
     promise_impl<T, ThreadPool>::promise_impl(ThreadPool *thread_pool,
                                               Function &&function)
         : m_thread_pool(thread_pool)
-        , m_function(std::make_unique<promise_function<Function>>
+        , m_function(std::make_shared<promise_function<Function>>
                            (std::forward<Function>(function)))
         , m_controller(std::make_shared<future_controller<T, ThreadPool>>(thread_pool))
     {

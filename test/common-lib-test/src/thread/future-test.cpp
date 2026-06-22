@@ -60,6 +60,18 @@ namespace {
             move_assign_num = 0;
         }
     };
+
+    class thread_pool_wit_functor_copy_requirenment
+    {
+    public:
+        void post(std::function<void()> &&task)
+        {
+            m_pool.post(std::move(task));
+        }
+
+    private:
+        thread_pool m_pool{ 2 };
+    };
 }
 
 class Future
@@ -298,6 +310,14 @@ TEST_F(Future, CatchedMethodAppliedToRValue)
     auto f = promise(&m_pool, []() { return 2; })
         .resolve()
         .catched([](std::exception_ptr) { FAIL(); });
+
+    ASSERT_EQ(f.get(), 2);
+}
+
+TEST_F(Future, MayWorkOnThreadPoolWithoutMoveOnlyFunctorsSupport)
+{
+    thread_pool_wit_functor_copy_requirenment pool;
+    auto f = promise<int, decltype(pool)>(&pool, []() { return 2; }).resolve();
 
     ASSERT_EQ(f.get(), 2);
 }
