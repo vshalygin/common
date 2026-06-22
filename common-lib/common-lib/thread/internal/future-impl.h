@@ -61,7 +61,9 @@ namespace vshalygin::cl::internal {
         future_impl<function_ret_t<Func>, ThreadPool> then(Func &&task);
 
         future_impl<T, ThreadPool> &catched(
-                           std::function<void(std::exception_ptr)> &&task);
+                           std::function<void(std::exception_ptr)> &&task) &;
+        future_impl<T, ThreadPool> catched(
+            std::function<void(std::exception_ptr)> &&task) &&;
 
         bool is_valid() const;
 
@@ -168,10 +170,18 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     future_impl<T, ThreadPool> &
         future_impl<T, ThreadPool>::catched(
-            std::function<void(std::exception_ptr)> &&task)
+            std::function<void(std::exception_ptr)> &&task) &
     {
         m_controller->set_on_fail(std::move(task));
         return *this;
+    }
+
+    template<typename T, typename ThreadPool>
+    future_impl<T, ThreadPool> future_impl<T, ThreadPool>::catched(
+        std::function<void(std::exception_ptr)> &&task) &&
+    {
+        m_controller->set_on_fail(std::move(task));
+        return std::move(*this);
     }
 
     template<typename T, typename ThreadPool>

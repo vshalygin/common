@@ -3,6 +3,7 @@
 #include <common-lib/thread/thread-pool.h>
 
 #include <gtest/gtest.h>
+#include <atomic>
 
 using namespace vshalygin::cl;
 using namespace testing;
@@ -33,10 +34,10 @@ namespace {
             ++move_assign_num;
         }
 
-        inline static unsigned copy_num = 0;
-        inline static unsigned copy_assign_num = 0;
-        inline static unsigned move_num = 0;
-        inline static unsigned move_assign_num = 0;
+        inline static std::atomic<unsigned> copy_num = 0;
+        inline static std::atomic<unsigned> copy_assign_num = 0;
+        inline static std::atomic<unsigned> move_num = 0;
+        inline static std::atomic<unsigned> move_assign_num = 0;
 
         inline static void clear()
         {
