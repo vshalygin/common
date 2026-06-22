@@ -41,4 +41,6 @@ namespace vshalygin::cl {
 
     template<typename F, typename ThreadPool = thread_pool>
     promise(ThreadPool *, F &&) -> promise<function_ret_t<F>, ThreadPool>;
+
+    //TODO сделать вывод типа для перемещения
 }

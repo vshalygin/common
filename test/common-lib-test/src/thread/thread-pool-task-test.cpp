@@ -59,7 +59,7 @@ namespace {
 
 TEST(ThreadPoolTask, Init)
 {
-    thread_pool_task<void()> sut([]() {});
+    thread_pool_task sut([]() {});
     sut;
 }
 
@@ -69,7 +69,7 @@ TEST(ThreadPoolTask, LambaWithCapturedReference)
     event sync_event;
 
     int i = 0;
-    thread_pool_task<void()> sut([&]() { i = 1; sync_event.set(); });
+    thread_pool_task sut([&]() { i = 1; sync_event.set(); });
 
     pool.post(sut);
 
@@ -82,7 +82,7 @@ TEST(ThreadPoolTask, LambaWithParameter)
     thread_pool pool(2);
     event sync_event;
     int i = 0;
-    thread_pool_task<void(int)> sut([&](int v) { i = v; sync_event.set(); });
+    thread_pool_task sut([&](int v) { i = v; sync_event.set(); });
 
     pool.post(sut, 2);
 
@@ -95,7 +95,7 @@ TEST(ThreadPoolTask, LambaWithMoveOnlyParameter)
     thread_pool pool(2);
     event sync_event;
     int i = 0;
-    thread_pool_task<void(std::unique_ptr<int>)> sut(
+    thread_pool_task sut(
         [&](std::unique_ptr<int> v) { i = *v; sync_event.set(); });
 
     pool.post(sut, std::make_unique<int>(2));
@@ -109,7 +109,7 @@ TEST(ThreadPoolTask, LambaWithRValueReferenceMoveOnlyParameter)
     thread_pool pool(2);
     event sync_event;
     int i = 0;
-    thread_pool_task<void(std::unique_ptr<int> &&)> sut(
+    thread_pool_task sut(
         [&](std::unique_ptr<int> &&v) { i = *v; sync_event.set(); });
 
     auto arg = std::make_unique<int>(2);
@@ -125,7 +125,7 @@ TEST(ThreadPoolTask, DoesNotCopyInInnerPresentation)
     event sync_event;
     counter::clear();
     counter cc;
-    thread_pool_task<void()> sut([cc = std::move(cc), &sync_event]() { sync_event.set(); });
+    thread_pool_task sut([cc = std::move(cc), &sync_event]() { sync_event.set(); });
 
     pool.post(std::move(sut));
 
@@ -142,7 +142,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterIfItIsRValueRef)
     event sync_event;
     counter::clear();
     counter cc;
-    thread_pool_task<void(counter &&)> sut(
+    thread_pool_task sut(
         [&sync_event](counter &&c) { auto t = std::move(c); t; sync_event.set(); });
 
     pool.post(std::move(sut), std::move(cc));
@@ -160,7 +160,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterMoreThanNeededIfItIsLValueRef)
     event sync_event;
     counter::clear();
     counter cc;
-    thread_pool_task<void(const counter &)> sut(
+    thread_pool_task sut(
         [&](const counter &c) { auto t = c; t; sync_event.set(); });
 
     pool.post(sut, std::move(cc));
@@ -197,7 +197,7 @@ TEST(ThreadPoolTask, CopyFunctorIfHaveTo)
     counter::clear();
     counter cc;
     auto lambda = [cc, &sync_event]() { sync_event.set(); };
-    thread_pool_task<void()> sut(lambda);
+    thread_pool_task sut(lambda);
 
     pool.post(sut);
 
@@ -215,7 +215,7 @@ TEST(ThreadPoolTask, ExecutesAfterInitialFunctorDestroyes)
     counter::clear();
     counter cc;
     std::function lambda = [cc, &sync_event]() { sync_event.set(); };
-    thread_pool_task<void()> sut(lambda);
+    thread_pool_task sut(lambda);
 
     lambda = {};
     pool.post(sut);
@@ -227,8 +227,8 @@ TEST(ThreadPoolTask, IsCopyable)
 {
     counter::clear();
     counter cc;
-    thread_pool_task<void()> sut([cc]() {});
-    thread_pool_task<void()> copy(sut);
+    thread_pool_task sut([cc]() {});
+    thread_pool_task<void()> copy(sut); //TODO сделать вывод типов для copy
 
     ASSERT_EQ(counter::copy_num, 2u);
     ASSERT_EQ(counter::copy_assign_num, 0u);
@@ -240,7 +240,7 @@ TEST(ThreadPoolTask, IsMovable)
 {
     counter::clear();
     counter cc;
-    thread_pool_task<void()> sut([cc]() {});
+    thread_pool_task sut([cc]() {});
     thread_pool_task<void()> sut2(std::move(sut));
 
 
@@ -254,8 +254,8 @@ TEST(ThreadPoolTask, IsCopyAssignable)
 {
     counter::clear();
     counter cc;
-    thread_pool_task<void()> sut([cc]() {});
-    thread_pool_task<void()> other([](){});
+    thread_pool_task sut([cc]() {});
+    thread_pool_task other([](){});
 
     sut = sut;
     other = sut;
@@ -270,8 +270,8 @@ TEST(ThreadPoolTask, IsMoveAssignable)
 {
     counter::clear();
     counter cc;
-    thread_pool_task<void()> sut([cc]() {});
-    thread_pool_task<void()> other([]() {});
+    thread_pool_task sut([cc]() {});
+    thread_pool_task other([]() {});
 
     sut = std::move(sut);
     other = std::move(sut);
@@ -284,8 +284,8 @@ TEST(ThreadPoolTask, IsMoveAssignable)
 
 TEST(ThreadPoolTask, CorrectCopyEmptyTask)
 {
-    thread_pool_task<void()> sut([]() {});
-    thread_pool_task<void()> sut2(std::move(sut));
+    thread_pool_task sut([]() {});
+    thread_pool_task<void()> sut2(std::move(sut)); //Сделать вывод типа для перемещения
 
     thread_pool_task<void()> sut3(std::move(sut));
 
@@ -295,9 +295,9 @@ TEST(ThreadPoolTask, CorrectCopyEmptyTask)
 
 TEST(ThreadPoolTask, CorrectCopyAssignEmptyTask)
 {
-    thread_pool_task<void()> sut([]() {});
+    thread_pool_task sut([]() {});
     thread_pool_task<void()> sut2(std::move(sut));
-    thread_pool_task<void()> sut3([]() {});
+    thread_pool_task sut3([]() {});
 
     sut3 = sut;
 
@@ -309,14 +309,14 @@ TEST(ThreadPoolTask, IsBoolConvertible)
 {
     int i;
     thread_pool_task<void()> sut1;
-    thread_pool_task<void()> sut2([]() {});
-    thread_pool_task<void()> sut3([&i]() {});
-    thread_pool_task<void()> sut4(simple_functor{});
-    thread_pool_task<void()> sut5(&simple_function);
-    thread_pool_task<void()> sut6(std::function<void()>([]() {}));
-    thread_pool_task<void()> sut7(std::function<void()>([&i]() {}));
-    thread_pool_task<void()> sut8(std::function<void()>(simple_functor{}));
-    thread_pool_task<void()> sut9(std::function<void()>{&simple_function});
+    thread_pool_task sut2([]() {});
+    thread_pool_task sut3([&i]() {});
+    thread_pool_task sut4(simple_functor{});
+    thread_pool_task sut5(&simple_function);
+    thread_pool_task sut6(std::function<void()>([]() {}));
+    thread_pool_task sut7(std::function<void()>([&i]() {}));
+    thread_pool_task sut8(std::function<void()>(simple_functor{}));
+    thread_pool_task sut9(std::function<void()>{&simple_function});
 
     EXPECT_FALSE(sut1);
     EXPECT_TRUE(sut2);
@@ -333,22 +333,22 @@ TEST(ThreadPoolTask, AnyCallableObjectMayBeCalledForCall)
 {
     thread_pool pool(1);
     int i;
-    thread_pool_task<void()> sut1([]() {});
-    thread_pool_task<void()> sut2([&i]() {});
-    thread_pool_task<void()> sut3(simple_functor{});
-    thread_pool_task<void()> sut4(&simple_function);
-    thread_pool_task<void()> sut5(std::function<void()>([]() {}));
-    thread_pool_task<void()> sut6(std::function<void()>([&i]() {}));
-    thread_pool_task<void()> sut7(std::function<void()>(simple_functor{}));
-    thread_pool_task<void()> sut8(std::function<void()>{&simple_function});
-    const thread_pool_task<void()> sut9([]() {});
-    const thread_pool_task<void()> sut10([&i]() {});
-    const thread_pool_task<void()> sut11(simple_functor{});
-    const thread_pool_task<void()> sut12(&simple_function);
-    const thread_pool_task<void()> sut13(std::function<void()>([]() {}));
-    const thread_pool_task<void()> sut14(std::function<void()>([&i]() {}));
-    const thread_pool_task<void()> sut15(std::function<void()>(simple_functor{}));
-    const thread_pool_task<void()> sut16(std::function<void()>{&simple_function});
+    thread_pool_task sut1([]() {});
+    thread_pool_task sut2([&i]() {});
+    thread_pool_task sut3(simple_functor{});
+    thread_pool_task sut4(&simple_function);
+    thread_pool_task sut5(std::function<void()>([]() {}));
+    thread_pool_task sut6(std::function<void()>([&i]() {}));
+    thread_pool_task sut7(std::function<void()>(simple_functor{}));
+    thread_pool_task sut8(std::function<void()>{&simple_function});
+    const thread_pool_task sut9([]() {});
+    const thread_pool_task sut10([&i]() {});
+    const thread_pool_task sut11(simple_functor{});
+    const thread_pool_task sut12(&simple_function);
+    const thread_pool_task sut13(std::function<void()>([]() {}));
+    const thread_pool_task sut14(std::function<void()>([&i]() {}));
+    const thread_pool_task sut15(std::function<void()>(simple_functor{}));
+    const thread_pool_task sut16(std::function<void()>{&simple_function});
 
     pool.post(sut1);
     pool.post(sut2);

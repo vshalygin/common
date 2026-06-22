@@ -1,4 +1,5 @@
 #pragma once
+#include <common-lib/mpl/type-transform.h>
 #include <memory>
 #include <stdexcept>
 
@@ -175,4 +176,21 @@ namespace vshalygin::cl {
         std::is_base_of_v<
         internal::thread_pool_task_base,
         std::remove_cv_t<std::remove_reference_t<T>>>;
+
+
+    template<typename Ret, typename Tuple>
+    struct unpack;
+
+    template<typename Ret, typename... Args>
+    struct unpack<Ret, std::tuple<Args...>>
+    {
+        using type = Ret(Args...);
+    };
+
+    template<typename Ret, typename Tuple>
+    using unpack_t = typename unpack<Ret, Tuple>::type;
+
+    template<typename Func>
+    thread_pool_task(Func &&) ->
+        thread_pool_task<make_function_type_t<Func>>;
 }
