@@ -14,7 +14,10 @@
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h" />
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
     <ClInclude Include="common-lib\mpl\function-traits.h" />
+    <ClInclude Include="common-lib\mpl\internal\is-function-pointer.h" />
+    <ClInclude Include="common-lib\mpl\internal\remove-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\is-std-function.h" />
+    <ClInclude Include="common-lib\mpl\internal\make-function-type.h" />
     <ClInclude Include="common-lib\mpl\internal\remove-function-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\type-traits.h" />
     <ClInclude Include="common-lib\mpl\type-transform.h" />

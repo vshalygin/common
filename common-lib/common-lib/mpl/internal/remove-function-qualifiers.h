@@ -15,4 +15,8 @@ namespace vshalygin::cl::internal {
     {
         using type = R(Args...);
     };
+
+    template<typename T>
+    using remove_function_qualifiers_t =
+        typename remove_function_qualifiers<T>::type;
 }

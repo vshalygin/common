@@ -1,5 +1,10 @@
 #pragma once
-#include "../type-traits.h"
+#include "remove-type-qualifiers.h"
+#include "remove-function-qualifiers.h"
+#include "remove-member-function-qualifiers.h"
+#include "is-std-function.h"
+#include "is-function-pointer.h"
+
 #include "../type-transform.h"
 
 #include <tuple>
@@ -62,7 +67,7 @@ namespace vshalygin::cl::internal {
     template<typename F>
     struct function_traits<F, std::void_t<
                                    decltype(&remove_type_qualifiers_t<F>::operator()),
-                                   std::enable_if_t<!is_std_function_v<F>>>>
+                                   std::enable_if_t<!is_std_function<F>::value>>>
         : public function_traits<decltype(&remove_type_qualifiers_t<F>::operator())>
     {};
 

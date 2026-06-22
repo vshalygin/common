@@ -1,5 +1,5 @@
 #pragma once
-#include "../type-transform.h"
+#include "remove-type-qualifiers.h"
 #include <type_traits>
 #include <functional>
 
@@ -18,4 +18,7 @@ namespace vshalygin::cl::internal {
     struct is_std_function
         : public is_std_function_base<remove_type_qualifiers_t<T>>
     {};
+
+    template<typename T>
+    inline constexpr bool is_std_function_v = is_std_function<T>::value;
 }
