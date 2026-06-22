@@ -1,7 +1,7 @@
 #pragma once
 #include <rpc-lib/types/connection-state.h>
 
-#include <common-lib/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread-pool.h>
 #include <common-lib/synchronization/guarded-value/guarded-value.h>
 
 #include <thread>

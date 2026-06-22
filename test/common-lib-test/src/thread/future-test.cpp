@@ -1,5 +1,5 @@
-#include <common-lib/thread-pool/future.h>
-#include <common-lib/thread-pool/thread-pool.h>
+#include <common-lib/thread/future.h>
+#include <common-lib/thread/thread-pool.h>
 
 #include <gtest/gtest.h>
 

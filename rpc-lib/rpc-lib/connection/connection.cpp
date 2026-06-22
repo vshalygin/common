@@ -4,7 +4,7 @@
 #include "rpc-lib/transfer-message/transfer-message.h"
 #include "rpc-lib/service/iservice.h"
 
-#include "common-lib/thread-pool/thread-pool.h"
+#include "common-lib/thread/thread-pool.h"
 #include "common-lib/synchronization/event/event.h"
 
 namespace vshalygin::rpc {

@@ -4,9 +4,6 @@
     <Filter Include="utils">
       <UniqueIdentifier>{d9212874-65ac-4e90-81fa-8c73fd921bbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="thread-pool">
-      <UniqueIdentifier>{72468f17-1487-406e-9029-e0cbd6f63c9c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="utils\buffer">
       <UniqueIdentifier>{057eadbd-91fb-40f6-9326-1f615a78ca64}</UniqueIdentifier>
     </Filter>
@@ -52,11 +49,11 @@
     <Filter Include="mpl\internal">
       <UniqueIdentifier>{36bc51ba-c781-4b0f-a5d9-3aba650361d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thread">
+      <UniqueIdentifier>{015dead5-f7f8-4abd-a49c-9caa4ae02eb2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common-lib\thread-pool\thread-pool.h">
-      <Filter>thread-pool</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\utils\buffer\buffer.h">
       <Filter>utils\buffer</Filter>
     </ClInclude>
@@ -75,17 +72,8 @@
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h">
       <Filter>timer\multiple-timer</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread-pool\strand.h">
-      <Filter>thread-pool</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h">
       <Filter>timer\periodic-timer</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread-pool\thread-pool-task.h">
-      <Filter>thread-pool</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread-pool\future.h">
-      <Filter>thread-pool</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\event\event.h">
       <Filter>synchronization\event</Filter>
@@ -123,11 +111,20 @@
     <ClInclude Include="common-lib\mpl\internal\is-std-function.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread\future.h">
+      <Filter>thread</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\strand.h">
+      <Filter>thread</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\thread-pool.h">
+      <Filter>thread</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\thread-pool-task.h">
+      <Filter>thread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">
-      <Filter>thread-pool</Filter>
-    </ClCompile>
     <ClCompile Include="common-lib\utils\buffer\buffer.cpp">
       <Filter>utils\buffer</Filter>
     </ClCompile>
@@ -140,9 +137,6 @@
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
       <Filter>timer\multiple-timer</Filter>
     </ClCompile>
-    <ClCompile Include="common-lib\thread-pool\strand.cpp">
-      <Filter>thread-pool</Filter>
-    </ClCompile>
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp">
       <Filter>timer\periodic-timer</Filter>
     </ClCompile>
@@ -154,6 +148,12 @@
     </ClCompile>
     <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp">
       <Filter>synchronization\spinlock</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\thread\strand.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\thread\thread-pool.cpp">
+      <Filter>thread</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

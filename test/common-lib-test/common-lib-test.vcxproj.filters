@@ -10,9 +10,6 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="src\thread-pool\thread-pool-test.cpp">
-      <Filter>thread-pool</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp">
       <Filter>utils\buffer-view</Filter>
     </ClCompile>
@@ -31,15 +28,6 @@
     <ClCompile Include="src\timer\periodic-timer\periodic-timer-test.cpp">
       <Filter>timer\periodic-timer</Filter>
     </ClCompile>
-    <ClCompile Include="src\thread-pool\strand-test.cpp">
-      <Filter>thread-pool</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thread-pool\thread-pool-task-test.cpp">
-      <Filter>thread-pool</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thread-pool\future-test.cpp">
-      <Filter>thread-pool</Filter>
-    </ClCompile>
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp">
       <Filter>synchronization</Filter>
     </ClCompile>
@@ -55,6 +43,18 @@
     <ClCompile Include="src\mpl\is-std-function-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
+    <ClCompile Include="src\thread\future-test.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread\strand-test.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread\thread-pool-task-test.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread\thread-pool-test.cpp">
+      <Filter>thread</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -62,9 +62,6 @@
     </Filter>
     <Filter Include="utils">
       <UniqueIdentifier>{6121cd54-af91-45fb-914e-e16fb1714513}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="thread-pool">
-      <UniqueIdentifier>{ac62afa3-f9d2-4c4d-95cb-29d1816700e0}</UniqueIdentifier>
     </Filter>
     <Filter Include="utils\buffer">
       <UniqueIdentifier>{6caeadf5-9b30-4375-8681-b60145e65430}</UniqueIdentifier>
@@ -92,6 +89,9 @@
     </Filter>
     <Filter Include="mpl">
       <UniqueIdentifier>{14b03884-05c5-4add-8597-25684ce3a6cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread">
+      <UniqueIdentifier>{ac62afa3-f9d2-4c4d-95cb-29d1816700e0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -25,10 +25,10 @@
     <ClInclude Include="common-lib\synchronization\latch\latch.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
-    <ClInclude Include="common-lib\thread-pool\strand.h" />
-    <ClInclude Include="common-lib\thread-pool\future.h" />
-    <ClInclude Include="common-lib\thread-pool\thread-pool-task.h" />
-    <ClInclude Include="common-lib\thread-pool\thread-pool.h" />
+    <ClInclude Include="common-lib\thread\future.h" />
+    <ClInclude Include="common-lib\thread\strand.h" />
+    <ClInclude Include="common-lib\thread\thread-pool-task.h" />
+    <ClInclude Include="common-lib\thread\thread-pool.h" />
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h" />
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h" />
     <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h" />
@@ -39,8 +39,8 @@
     <ClCompile Include="common-lib\synchronization\event\event.cpp" />
     <ClCompile Include="common-lib\synchronization\latch\latch.cpp" />
     <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp" />
-    <ClCompile Include="common-lib\thread-pool\strand.cpp" />
-    <ClCompile Include="common-lib\thread-pool\thread-pool.cpp" />
+    <ClCompile Include="common-lib\thread\strand.cpp" />
+    <ClCompile Include="common-lib\thread\thread-pool.cpp" />
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp" />
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp" />
     <ClCompile Include="common-lib\utils\buffer-view\buffer-view.cpp" />

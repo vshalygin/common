@@ -15,7 +15,7 @@
 #include <google/protobuf/util/message_differencer.h>
 #pragma warning(pop)
 
-#include <common-lib/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread-pool.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

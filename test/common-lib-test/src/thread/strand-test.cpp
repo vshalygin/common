@@ -1,5 +1,5 @@
-#include <common-lib/thread-pool/strand.h>
-#include <common-lib/thread-pool/thread-pool.h>
+#include <common-lib/thread/strand.h>
+#include <common-lib/thread/thread-pool.h>
 #include <common-lib/synchronization/event/event.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
