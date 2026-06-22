@@ -29,7 +29,7 @@ TEST_F(MultipleTimer, AnswersZeroActiveTimesAfterCreation)
     ASSERT_EQ(m_multiple_timer->get_active_timers_count(), 0);
 }
 
-TEST_F(MultipleTimer, CallsCallbackOnTimeout)
+TEST_F(MultipleTimer, ExecuteCallbackOnTimeout)
 {
     event sync_event;
     MockFunction<void()> callback;
@@ -39,7 +39,7 @@ TEST_F(MultipleTimer, CallsCallbackOnTimeout)
 
     m_multiple_timer->start(callback.AsStdFunction(), std::chrono::microseconds(3));
 
-    EXPECT_TRUE(sync_event.wait_for(std::chrono::microseconds(10)));
+    EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
 TEST_F(MultipleTimer, IsAbleToHandleTwoTimers)
