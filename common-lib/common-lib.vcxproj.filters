@@ -52,6 +52,9 @@
     <Filter Include="thread">
       <UniqueIdentifier>{015dead5-f7f8-4abd-a49c-9caa4ae02eb2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thread\internal">
+      <UniqueIdentifier>{0a1d48b5-1957-4fd1-adef-47b9e7ed896c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\buffer\buffer.h">
@@ -122,6 +125,12 @@
     </ClInclude>
     <ClInclude Include="common-lib\thread\thread-pool-task.h">
       <Filter>thread</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\internal\future-impl.h">
+      <Filter>thread\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\internal\future-controller.h">
+      <Filter>thread\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

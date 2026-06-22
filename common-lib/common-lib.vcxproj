@@ -26,6 +26,8 @@
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread\future.h" />
+    <ClInclude Include="common-lib\thread\internal\future-controller.h" />
+    <ClInclude Include="common-lib\thread\internal\future-impl.h" />
     <ClInclude Include="common-lib\thread\strand.h" />
     <ClInclude Include="common-lib\thread\thread-pool-task.h" />
     <ClInclude Include="common-lib\thread\thread-pool.h" />
