@@ -120,6 +120,9 @@
     <ClInclude Include="common-lib\mpl\internal\remove-function-qualifiers.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\is-std-function.h">
+      <Filter>mpl\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread-pool\thread-pool.cpp">

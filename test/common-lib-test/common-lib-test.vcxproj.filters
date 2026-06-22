@@ -46,10 +46,13 @@
     <ClCompile Include="src\mpl\function-traits-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\remove-member-function-qualifiers.cpp">
+    <ClCompile Include="src\mpl\remove-member-function-qualifiers-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\remove-function-qualifiers.cpp">
+    <ClCompile Include="src\mpl\remove-function-qualifiers-test.cpp">
+      <Filter>mpl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\is-std-function-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
   </ItemGroup>
