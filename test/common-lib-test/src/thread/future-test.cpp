@@ -317,7 +317,84 @@ TEST_F(Future, CatchedMethodAppliedToRValue)
 TEST_F(Future, MayWorkOnThreadPoolWithoutMoveOnlyFunctorsSupport)
 {
     thread_pool_wit_functor_copy_requirenment pool;
-    auto f = promise<int, decltype(pool)>(&pool, []() { return 2; }).resolve();
+    auto f = promise<int, decltype(pool)>(&pool, []() { return 2; })
+        .resolve()
+        .then([](int i) { return i + 3; });
 
-    ASSERT_EQ(f.get(), 2);
+    ASSERT_EQ(f.get(), 5);
+}
+
+TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)
+{
+    bool flag = false;
+    event sync_event;
+    promise(&m_pool, []() { return 2; })
+        .resolve()
+        .then([](int) { return 0; })
+        .then([](int)->int { throw std::runtime_error("message"); })
+        .then([&](int)->int { flag = true; return 0; })
+        .catched([&sync_event](std::exception_ptr e) {
+                     try {
+                         std::rethrow_exception(e);
+                     }
+                     catch(const std::runtime_error &e) {
+                         EXPECT_EQ(e.what(), std::string("message"));
+                         sync_event.set();
+                     }
+                 });
+
+    sync_event.wait();
+    ASSERT_FALSE(flag);
+}
+
+TEST_F(Future, NextChainedFutureAfterFailedFutureExcutesFailHandler)
+{
+    bool flag = false;
+    event sync_event;
+    auto f = promise(&m_pool, []() { return 2; })
+        .resolve()
+        .then([](int) { return 0; })
+        .then([](int)->int { throw std::runtime_error("message"); });
+    try {
+        f.get();
+        FAIL();
+    } catch (const std::runtime_error& e) {
+        ASSERT_EQ(e.what(), std::string("message"));
+    }
+    f.then([&](int)->int { flag = true; return 0; })
+     .catched([&sync_event](std::exception_ptr e) {
+                     try {
+                         std::rethrow_exception(e);
+                     } catch(const std::runtime_error &e) {
+                         EXPECT_EQ(e.what(), std::string("message"));
+                         sync_event.set();
+                     }
+                 });
+
+    sync_event.wait();
+    ASSERT_FALSE(flag);
+}
+
+TEST_F(Future, NextChainedFutureAfterFailedFutureThrowsOnGet)
+{
+    bool flag = false;
+    auto f = promise(&m_pool, []() { return 2; })
+        .resolve()
+        .then([](int) { return 0; })
+        .then([](int)->int { throw std::runtime_error("message"); });
+    try {
+        f.get();
+        FAIL();
+    } catch(const std::runtime_error &e) {
+        ASSERT_EQ(e.what(), std::string("message"));
+    }
+
+    try {
+        f.then([&flag](int) { flag = true; return 0; }).get();
+        FAIL();
+    } catch(const std::runtime_error &e) {
+        ASSERT_EQ(e.what(), std::string("message"));
+    }
+
+    ASSERT_FALSE(flag);
 }
