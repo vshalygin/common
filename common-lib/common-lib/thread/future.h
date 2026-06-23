@@ -14,7 +14,7 @@ namespace vshalygin::cl {
     using future = internal::future_impl<T, ThreadPool>;
 
     template<typename T, typename ThreadPool = thread_pool>
-    class promise
+    class promise final
         : private internal::promise_impl<T, ThreadPool>
     {
         using base_type = internal::promise_impl<T, ThreadPool>;
