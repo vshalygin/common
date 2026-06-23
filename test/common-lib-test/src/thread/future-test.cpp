@@ -11,11 +11,13 @@
 using namespace vshalygin::cl;
 using namespace testing;
 
+//future is move only
 static_assert(!std::is_copy_constructible_v<future<int>>);
 static_assert(!std::is_copy_assignable_v<future<int>>);
 static_assert(std::is_move_constructible_v<future<int>>);
 static_assert(std::is_move_assignable_v<future<int>>);
 
+//promise is move only
 static_assert(!std::is_copy_constructible_v<promise<int>>);
 static_assert(!std::is_copy_assignable_v<promise<int>>);
 static_assert(std::is_move_constructible_v<promise<int>>);
@@ -46,6 +48,8 @@ namespace {
         {
             ++move_assign_num;
         }
+
+        void do_something() const {}
 
         inline static std::atomic<unsigned> copy_num = 0;
         inline static std::atomic<unsigned> copy_assign_num = 0;
@@ -91,7 +95,8 @@ TEST_F(Future, Init)
 {
     promise promise(&m_pool, []() -> int { return 1; });
     auto future = promise.resolve();
-    ASSERT_EQ(future.get(), 1);
+    auto data = future.get_data();
+    data.apply([](int i) { ASSERT_EQ(i, 1); });
 }
 
 TEST_F(Future, ExecutesSuccessCallback)
@@ -100,7 +105,7 @@ TEST_F(Future, ExecutesSuccessCallback)
     promise promise(&m_pool, []() { return 2; });
     auto future = promise.resolve();
     future.then([&i](int &&ii) { i = ii; return 0; })
-          .get();
+          .get_data();
 
     ASSERT_EQ(i, 2);
 }
@@ -160,7 +165,7 @@ TEST_F(Future, FutureCreatedFromPromiseIsValid)
     auto future = p.resolve();
 
     ASSERT_TRUE(future.is_valid());
-    ASSERT_EQ(future.get(), 2);
+    future.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, FutureIsInvalidAfterMove)
@@ -171,7 +176,7 @@ TEST_F(Future, FutureIsInvalidAfterMove)
 
     ASSERT_FALSE(future.is_valid());
     ASSERT_TRUE(other_future.is_valid());
-    ASSERT_EQ(other_future.get(), 2);
+    other_future.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, FutureIsInvalidAfterMoveAssign)
@@ -184,7 +189,7 @@ TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 
     ASSERT_FALSE(future1.is_valid());
     ASSERT_TRUE(future2.is_valid());
-    ASSERT_EQ(future2.get(), 1);
+    future2.get_data().apply([](int i) { ASSERT_EQ(i, 1); });
 }
 
 TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
@@ -192,7 +197,7 @@ TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
     auto future = promise(&m_pool, []() { return 2; }).resolve();
 
     ASSERT_TRUE(future.is_valid());
-    ASSERT_EQ(future.get(), 2);
+    future.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, TestChaining)
@@ -201,9 +206,9 @@ TEST_F(Future, TestChaining)
         .resolve()
         .then([](int i) { return i * 2; })
         .then([](int i) { return i + 1; })
-        .get();
+        .get_data();
 
-    ASSERT_EQ(r, 5);
+    r.apply([](int i) { ASSERT_EQ(i, 5); });
 }
 
 TEST_F(Future, CatchesExeption)
@@ -290,9 +295,9 @@ TEST_F(Future, MayGetValueAfterCatchHandlerSet)
         .catched([](std::exception_ptr) { FAIL(); })
         .then([](int i)->int { return i + 4; })
         .catched([](std::exception_ptr) { FAIL(); })
-        .get();
+        .get_data();
 
-    ASSERT_EQ(r, 9);
+    r.apply([](int i) { ASSERT_EQ(i, 9); });
 }
 
 TEST_F(Future, CatchedMethodAppliedToLValue)
@@ -311,7 +316,7 @@ TEST_F(Future, CatchedMethodAppliedToRValue)
         .resolve()
         .catched([](std::exception_ptr) { FAIL(); });
 
-    ASSERT_EQ(f.get(), 2);
+    f.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, MayWorkOnThreadPoolWithoutMoveOnlyFunctorsSupport)
@@ -321,7 +326,7 @@ TEST_F(Future, MayWorkOnThreadPoolWithoutMoveOnlyFunctorsSupport)
         .resolve()
         .then([](int i) { return i + 3; });
 
-    ASSERT_EQ(f.get(), 5);
+    f.get_data().apply([](int i) { ASSERT_EQ(i, 5); });
 }
 
 TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)
@@ -356,7 +361,7 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureExcutesFailHandler)
         .then([](int) { return 0; })
         .then([](int)->int { throw std::runtime_error("message"); });
     try {
-        f.get();
+        f.get_data();
         FAIL();
     } catch (const std::runtime_error& e) {
         ASSERT_EQ(e.what(), std::string("message"));
@@ -383,18 +388,202 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureThrowsOnGet)
         .then([](int) { return 0; })
         .then([](int)->int { throw std::runtime_error("message"); });
     try {
-        f.get();
+        f.get_data();
         FAIL();
     } catch(const std::runtime_error &e) {
         ASSERT_EQ(e.what(), std::string("message"));
     }
 
     try {
-        f.then([&flag](int) { flag = true; return 0; }).get();
+        f.then([&flag](int) { flag = true; return 0; }).get_data();
         FAIL();
     } catch(const std::runtime_error &e) {
         ASSERT_EQ(e.what(), std::string("message"));
     }
 
     ASSERT_FALSE(flag);
+}
+
+TEST_F(Future, MethodGetThrowsExceptionIfExecutingTasksThrows)
+{
+    auto f = promise(&m_pool, []() -> int { throw std::runtime_error("message"); })
+        .resolve();
+
+    try {
+        f.get_data();
+        FAIL();
+    } catch (const std::runtime_error &e) {
+        ASSERT_TRUE(e.what() == std::string("message"));
+    }
+}
+
+TEST_F(Future, ExecuteSuccessHandlerIfThisHandlerSetAfterTaskExecution)
+{
+    auto f = promise(&m_pool, []() -> int { return 0; })
+        .resolve();
+    f.get_data();
+
+    event sync_event;
+    f.then([&](int) { sync_event.set(); return 0; });
+
+    sync_event.wait();
+}
+
+TEST_F(Future, ExecuteErrorHandlerIfThisHandlerSetAfterTaskExecution)
+{
+    auto f = promise(&m_pool, []() -> int { throw std::runtime_error("message"); })
+        .resolve();
+    try {
+        f.get_data();
+    } catch(...) {
+    }
+
+    event sync_event;
+    f.catched([&](std::exception_ptr e) {
+        try {
+            std::rethrow_exception(e);
+        } catch(const std::exception &e) {
+            ASSERT_TRUE(e.what() == std::string("message"));
+            sync_event.set();
+        }
+    });
+
+    sync_event.wait();
+}
+
+TEST_F(Future, CannotSetSuccessHandlerTwice)
+{
+    auto f = promise(&m_pool, []() -> int { return 0; })
+        .resolve();
+
+    f.then([](int) { return 0; });
+    EXPECT_ANY_THROW(f.then([](int) { return 2; }));
+}
+
+TEST_F(Future, CannotSetFailHandlerTwice)
+{
+    auto f = promise(&m_pool, []() -> int { return 0; })
+        .resolve();
+
+    f.catched([](std::exception_ptr) {});
+    EXPECT_ANY_THROW(f.catched([](std::exception_ptr) {}));
+}
+
+TEST_F(Future, CannotSetFailHandlerAfterSetSuccessHandler)
+{
+    auto f = promise(&m_pool, []() -> int { return 0; })
+        .resolve();
+
+    f.then([](int) { return 0; });
+    EXPECT_ANY_THROW(f.catched([](std::exception_ptr) {}));
+}
+
+TEST_F(Future, SuccessHandlerExecutesIfCorrespondingFutureAndPromiseDestroyed)
+{
+    event sync_event1;
+    event sync_event2;
+    promise(&m_pool, [&]() -> int { sync_event1.wait(); return 0; })
+        .resolve()
+        .then([&](int) { sync_event2.set(); return 0; });
+
+    sync_event1.set();
+    sync_event2.wait();
+}
+
+TEST_F(Future, FailHandlerExecutesIfCorrespondingFutureAndPromiseDestroyed)
+{
+    event sync_event1;
+    event sync_event2;
+    promise(&m_pool, [&]() -> int { sync_event1.wait(); throw 1; })
+        .resolve()
+        .catched([&](std::exception_ptr) { sync_event2.set();});
+
+    sync_event1.set();
+    sync_event2.wait();
+}
+
+TEST_F(Future, PromiseFunctionNeverCopyIfMovedToPromiseConstructor)
+{
+    auto c = counter{};
+    auto promise_task = [c = std::move(c)]() -> int {
+        return 0;
+    };
+    auto f = promise(&m_pool, std::move(promise_task))
+        .resolve()
+        .then([&](int) { return 0; });
+
+    f.get_data();
+
+    EXPECT_EQ(counter::copy_num, 0u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_EQ(counter::move_num, 2u);
+    EXPECT_EQ(counter::move_assign_num, 0u);
+}
+
+TEST_F(Future, PromiseFunctionMayBeCopiedToPromiseConstructor)
+{
+    event sync_event;
+
+    std::function<int()> promise_task;
+    auto c = counter{};
+    promise_task = [c, &sync_event]()->int {
+        sync_event.wait();
+        c.do_something(); //check valid
+        return 0;
+    };
+    auto f = promise(&m_pool, promise_task)
+        .resolve()
+        .then([&](int) { sync_event.wait(); return 0; });
+    promise_task = {};
+    sync_event.set();
+
+    f.get_data();
+
+    EXPECT_EQ(counter::copy_num, 2u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_EQ(counter::move_num, 1u);
+    EXPECT_EQ(counter::move_assign_num, 0u);
+}
+
+TEST_F(Future, SuccessHandlerNeverCopyIfMovedToThenMethod)
+{
+    auto c = counter{};
+    auto task = [c = std::move(c)](int) -> int {
+        return 0;
+    };
+    auto f = promise(&m_pool, []() { return 1; })
+        .resolve()
+        .then(std::move(task));
+
+    f.get_data();
+
+    EXPECT_EQ(counter::copy_num, 0u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_EQ(counter::move_num, 3u);
+    EXPECT_EQ(counter::move_assign_num, 0u);
+}
+
+TEST_F(Future, SuccessMayBeCopiedToThan)
+{
+    event sync_event;
+
+    std::function<int(int)> task;
+    auto c = counter{};
+    task = [c, &sync_event](int)->int {
+        sync_event.wait();
+        c.do_something(); //check valid
+        return 0;
+    };
+    auto f = promise(&m_pool, []() { return 0; })
+        .resolve()
+        .then(task);
+    task = {};
+    sync_event.set();
+
+    f.get_data();
+
+    EXPECT_EQ(counter::copy_num, 2u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_EQ(counter::move_num, 1u);
+    EXPECT_EQ(counter::move_assign_num, 0u);
 }

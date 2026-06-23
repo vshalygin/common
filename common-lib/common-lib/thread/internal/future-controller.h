@@ -12,6 +12,32 @@
 namespace vshalygin::cl::internal {
     //TODO void specialization for all
 
+    template<typename T, typename ThreadPool>
+    class future_controller;
+
+    template<typename T, typename ThreadPool>
+    class future_data final
+    {
+        friend class future_controller<T, ThreadPool>;
+
+        explicit future_data(std::shared_ptr<future_controller<T, ThreadPool>> controller)
+            : m_controller(controller)
+        {}
+
+    public:
+        future_data(const future_data &) = delete;
+        future_data &operator=(const future_data &) = delete;
+
+        future_data(future_data &&) = default;
+        future_data &operator=(future_data &&) = default;
+
+        template<typename Func>
+        void apply(Func &&func) const;
+
+    private:
+        std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
+    };
+
     template<typename Arg>
     class ifuture_callback
     {
@@ -57,6 +83,10 @@ namespace vshalygin::cl::internal {
     class future_controller
         : public std::enable_shared_from_this<future_controller<T, ThreadPool>>
     {
+        using this_type = future_controller<T, ThreadPool>;
+
+        friend class future_data<T, ThreadPool>;
+
     public:
         explicit future_controller(ThreadPool *thread_pool);
 
@@ -73,8 +103,7 @@ namespace vshalygin::cl::internal {
         void set_exception(const std::exception_ptr &e);
 
 
-        const remove_type_qualifiers_t<T> &get() const;
-        [[nodiscard]] remove_type_qualifiers_t<T> extract();
+        future_data<T, ThreadPool> get_data() const;
 
     private:
         void post_success();
@@ -181,30 +210,17 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    const remove_type_qualifiers_t<T> &future_controller<T, ThreadPool>::get() const
+    future_data<T, ThreadPool>
+        future_controller<T, ThreadPool>::get_data() const
     {
         std::unique_lock lock(m_mtx);
         m_cv.wait(lock, [this]() { return m_val || m_exception; });
         if(m_exception) {
             std::rethrow_exception(*m_exception);
         }
+        lock.unlock();
 
-        return m_val.value();
-    }
-
-    template<typename T, typename ThreadPool>
-    remove_type_qualifiers_t<T> future_controller<T, ThreadPool>::extract()
-    {
-        std::unique_lock lock(m_mtx);
-        m_cv.wait(lock, [this]() { return m_val || m_exception; });
-        if(m_exception) {
-            std::rethrow_exception(*m_exception);
-        }
-        if(!m_val.has_value()) {
-            throw std::logic_error("value was extracted");
-        }
-
-        return std::move(m_val.value());
+        return future_data<T, ThreadPool>(const_cast<this_type *>(this)->shared_from_this());
     }
 
     template<typename T, typename ThreadPool>
@@ -221,5 +237,18 @@ namespace vshalygin::cl::internal {
         m_thread_pool->post([s = this->shared_from_this()]() {
             s->m_on_fail((*s->m_exception));
         });
+    }
+
+    template<typename T, typename ThreadPool>
+    template<typename Func>
+    void future_data<T, ThreadPool>::apply(Func &&func) const
+    {
+        static_assert(std::is_same_v<function_ret_t<Func>, void>);
+        static_assert(function_arg_count_v<Func> == 1);
+        static_assert(std::is_same_v<remove_type_qualifiers_t<function_arg_t<0, Func>>,
+                      remove_type_qualifiers_t<T>>);
+
+        std::lock_guard guard(m_controller->m_mtx);
+        func(std::forward<function_arg_t<0, Func>>(m_controller->m_val.value()));
     }
 }

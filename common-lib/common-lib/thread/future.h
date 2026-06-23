@@ -14,6 +14,9 @@ namespace vshalygin::cl {
     class promise;
 
     template<typename T, typename ThreadPool = thread_pool>
+    using future_data = internal::future_data<T, ThreadPool>;
+
+    template<typename T, typename ThreadPool = thread_pool>
     class future final
         : private internal::future_impl<T, ThreadPool>
     {
@@ -33,14 +36,9 @@ namespace vshalygin::cl {
         future(future &&) = default;
         future &operator=(future &&) = default;
 
-        const remove_type_qualifiers_t<T> &get() const
+        future_data<T, ThreadPool> get_data() const
         {
-            return base_type::get();
-        }
-
-        [[nodiscard]] remove_type_qualifiers_t<T> extract()
-        {
-            return base_type::extract();
+            return base_type::get_data();
         }
 
         template<typename Func>
