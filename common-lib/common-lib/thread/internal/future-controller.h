@@ -87,6 +87,27 @@ namespace vshalygin::cl::internal {
 
         friend class future_data<T, ThreadPool>;
 
+        class notify_all_on_destruct
+        {
+        public:
+            explicit notify_all_on_destruct(std::condition_variable *cv)
+                : m_cv(cv)
+            {}
+
+            notify_all_on_destruct(const notify_all_on_destruct &) = delete;
+            notify_all_on_destruct &operator=(const notify_all_on_destruct &) = delete;
+
+            ~notify_all_on_destruct()
+            {
+                if(m_cv) {
+                    m_cv->notify_all();
+                }
+            }
+
+        private:
+            std::condition_variable *m_cv = nullptr;
+        };
+
     public:
         explicit future_controller(ThreadPool *thread_pool);
 
@@ -106,8 +127,11 @@ namespace vshalygin::cl::internal {
         future_data<T, ThreadPool> get_data() const;
 
     private:
-        void post_success();
-        void post_fail();
+        void post_success(bool need_notify);
+        void post_fail(bool need_notify);
+
+        void call_success(bool need_notify);
+        void call_fail(bool need_notify);
 
     private:
         ThreadPool *m_thread_pool;
@@ -141,7 +165,7 @@ namespace vshalygin::cl::internal {
 
         m_on_success = std::make_unique<future_callback<Func>>(std::forward<Func>(func));
         if(m_val) {
-            post_success();
+            post_success(false);
         }
     }
 
@@ -156,7 +180,7 @@ namespace vshalygin::cl::internal {
 
         m_on_fail = std::move(func);
         if(m_exception) {
-            post_fail();
+            post_fail(false);
         }
     }
 
@@ -168,7 +192,7 @@ namespace vshalygin::cl::internal {
         if(!m_on_fail) {
             m_on_fail = std::move(func);
             if(m_exception) {
-                post_fail();
+                post_fail(false);
             }
         }
     }
@@ -177,36 +201,36 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::set_value(T &&value)
     {
         {
-            std::lock_guard guard(m_mtx);
+            std::unique_lock guard(m_mtx);
             if(m_val || m_exception) {
                 throw std::logic_error("value or exeption already set");
             }
 
             m_val = std::move(value);
             if(m_on_success) {
-                post_success();
+                post_success(true);
+            } else {
+                guard.unlock();
+                m_cv.notify_all();
             }
         }
-
-        m_cv.notify_all();
     }
 
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::set_exception(const std::exception_ptr &e)
     {
-        {
-            std::lock_guard guard(m_mtx);
-            if(m_val || m_exception) {
-                throw std::logic_error("value or exeption already set");
-            }
-
-            m_exception = e;
-            if(m_on_fail) {
-                post_fail();
-            }
+        std::unique_lock guard(m_mtx);
+        if(m_val || m_exception) {
+            throw std::logic_error("value or exeption already set");
         }
 
-        m_cv.notify_all();
+        m_exception = e;
+        if(m_on_fail) {
+            post_fail(true);
+        } else {
+            guard.unlock();
+            m_cv.notify_all();
+        }
     }
 
     template<typename T, typename ThreadPool>
@@ -224,19 +248,35 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::post_success()
+    void future_controller<T, ThreadPool>::post_success(bool need_notify)
     {
-        m_thread_pool->post([s = this->shared_from_this()]() {
-            s->m_on_success->call(*(std::move(s->m_val)));
+        m_thread_pool->post([s = this->shared_from_this(), need_notify]() {
+            s->call_success(need_notify);
         });
     }
 
     template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::post_fail()
+    void future_controller<T, ThreadPool>::post_fail(bool need_notify)
     {
-        m_thread_pool->post([s = this->shared_from_this()]() {
-            s->m_on_fail((*s->m_exception));
+        m_thread_pool->post([s = this->shared_from_this(), need_notify]() {
+            s->call_fail(need_notify);
         });
+    }
+
+    template<typename T, typename ThreadPool>
+    void future_controller<T, ThreadPool>::call_success(bool need_notify)
+    {
+        notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
+        std::lock_guard guard(m_mtx);
+        m_on_success->call(std::move(*m_val));
+    }
+
+    template<typename T, typename ThreadPool>
+    void future_controller<T, ThreadPool>::call_fail(bool need_notify)
+    {
+        notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
+        std::lock_guard guard(m_mtx);
+        m_on_fail(*m_exception);
     }
 
     template<typename T, typename ThreadPool>
