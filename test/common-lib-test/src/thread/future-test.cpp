@@ -696,3 +696,63 @@ TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
     ASSERT_TRUE(acceptor);
     ASSERT_EQ(*acceptor, 3);
 }
+
+TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
+{
+    static int i2 = 2;
+    static int i3 = 3;
+    static int i5 = 5;
+    static int i6 = 6;
+    static volatile int i8 = 8;
+    static volatile int i9 = 9;
+    static volatile int i11 = 11;
+    static volatile int i12 = 12;
+
+    auto d1 = promise(&m_pool, []()->int { return 1; }).resolve();
+    auto d2 = promise(&m_pool, []()->int &{ return i2; }).resolve();
+    auto d3 = promise(&m_pool, []()->int &&{ return std::move(i3); }).resolve();
+    auto d4 = promise(&m_pool, []()->const int { return 4; }).resolve();
+    auto d5 = promise(&m_pool, []()->const int &{ return i5; }).resolve();
+    auto d6 = promise(&m_pool, []()->const int &&{ return std::move(i6); }).resolve();
+    auto d7 = promise(&m_pool, []()->volatile int { return 7; }).resolve();
+    auto d8 = promise(&m_pool, []()->volatile int &{ return i8; }).resolve();
+    auto d9 = promise(&m_pool, []()->volatile int &&{ return std::move(i9); }).resolve();
+    auto d10 = promise(&m_pool, []()->const volatile int { return 10; }).resolve();
+    auto d11 = promise(&m_pool, []()->const volatile int &{ return i11; }).resolve();
+    auto d12 = promise(&m_pool, []()->const volatile int &&{ return std::move(i12); }).resolve();
+    
+    //Ensure that the data being saved is not a reference variable
+    d1.get_data().apply([](int &i) { i++; });
+    d2.get_data().apply([](int &i) { i++; });
+    d3.get_data().apply([](int &i) { i++; });
+    d4.get_data().apply([](int &i) { i++; });
+    d5.get_data().apply([](int &i) { i++; });
+    d6.get_data().apply([](int &i) { i++; });
+    d7.get_data().apply([](int &i) { i++; });
+    d8.get_data().apply([](int &i) { i++; });
+    d9.get_data().apply([](int &i) { i++; });
+    d10.get_data().apply([](int &i) { i++; });
+    d11.get_data().apply([](int &i) { i++; });
+    d12.get_data().apply([](int &i) { i++; });
+
+    d1.get_data().apply([](int &i) { EXPECT_EQ(2, i); });
+    d2.get_data().apply([](int &i) { EXPECT_EQ(3, i); });
+    d3.get_data().apply([](int &i) { EXPECT_EQ(4, i); });
+    d4.get_data().apply([](int &i) { EXPECT_EQ(5, i); });
+    d5.get_data().apply([](int &i) { EXPECT_EQ(6, i); });
+    d6.get_data().apply([](int &i) { EXPECT_EQ(7, i); });
+    d7.get_data().apply([](int &i) { EXPECT_EQ(8, i); });
+    d8.get_data().apply([](int &i) { EXPECT_EQ(9, i); });
+    d9.get_data().apply([](int &i) { EXPECT_EQ(10, i); });
+    d10.get_data().apply([](int &i) { EXPECT_EQ(11, i); });
+    d11.get_data().apply([](int &i) { EXPECT_EQ(12, i); });
+    d12.get_data().apply([](int &i) { EXPECT_EQ(13, i); });
+    EXPECT_EQ(i2, 2);
+    EXPECT_EQ(i3, 3);
+    EXPECT_EQ(i5, 5);
+    EXPECT_EQ(i6, 6);
+    EXPECT_EQ(i8, 8);
+    EXPECT_EQ(i9, 9);
+    EXPECT_EQ(i11, 11);
+    EXPECT_EQ(i12, 12);
+}
