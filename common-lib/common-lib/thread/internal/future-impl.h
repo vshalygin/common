@@ -95,7 +95,8 @@ namespace vshalygin::cl::internal {
         promise_impl(promise_impl &&) = default;
         promise_impl &operator=(promise_impl &&) = default;
 
-        future_impl<T, ThreadPool> resolve();
+        void resolve();
+        future_impl<T, ThreadPool> get_future();
 
         bool is_valid() const;
 
@@ -109,6 +110,7 @@ namespace vshalygin::cl::internal {
         std::shared_ptr<ipromise_function<T>> m_function;
 
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
+        mutable future_impl<T, ThreadPool> m_future;
     };
 
     template<typename T, typename ThreadPool>
@@ -184,6 +186,7 @@ namespace vshalygin::cl::internal {
     promise_impl<T, ThreadPool>::promise_impl(ThreadPool *thread_pool)
         : m_thread_pool(thread_pool)
         , m_controller(std::make_shared<future_controller<T, ThreadPool>>(thread_pool))
+        , m_future(thread_pool, m_controller)
     {
         assert(m_thread_pool);
     }
@@ -196,13 +199,14 @@ namespace vshalygin::cl::internal {
         , m_function(std::make_shared<promise_function<Function>>
                            (std::forward<Function>(function)))
         , m_controller(std::make_shared<future_controller<T, ThreadPool>>(thread_pool))
+        , m_future(thread_pool, m_controller)
     {
         static_assert(function_arg_count_v<Function> == 0);
         assert(m_thread_pool);
     }
 
     template<typename T, typename ThreadPool>
-    future_impl<T, ThreadPool> promise_impl<T, ThreadPool>::resolve()
+    void promise_impl<T, ThreadPool>::resolve()
     {
         if(!m_function) {
             throw std::logic_error("no resolve function");
@@ -216,8 +220,16 @@ namespace vshalygin::cl::internal {
                 controller->set_exception(std::current_exception());
             }
         });
+    }
 
-        return future_impl<T, ThreadPool>(m_thread_pool, m_controller);
+    template<typename T, typename ThreadPool>
+    future_impl<T, ThreadPool> promise_impl<T, ThreadPool>::get_future()
+    {
+        if(!m_future.is_valid()) {
+            throw std::logic_error("no future");
+        }
+
+        return std::move(m_future);
     }
 
     template<typename T, typename ThreadPool>

@@ -81,9 +81,14 @@ namespace vshalygin::cl {
             : base_type(thread_pool, std::forward<Function>(function))
         {}
 
-        future<T, ThreadPool> resolve()
+        void resolve()
         {
-            return base_type::resolve();
+            base_type::resolve();
+        }
+
+        future<T, ThreadPool> get_future()
+        {
+            return base_type::get_future();
         }
 
         bool is_valid() const

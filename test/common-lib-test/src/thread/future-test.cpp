@@ -94,7 +94,8 @@ protected:
 TEST_F(Future, Init)
 {
     promise promise(&m_pool, []() -> int { return 1; });
-    auto future = promise.resolve();
+    promise.resolve();
+    auto future = promise.get_future();
     auto data = future.get_data();
     data.apply([](int i) { ASSERT_EQ(i, 1); });
 }
@@ -103,7 +104,8 @@ TEST_F(Future, ExecutesSuccessCallback)
 {
     int i = 0;
     promise promise(&m_pool, []() { return 2; });
-    auto future = promise.resolve();
+    promise.resolve();
+    auto future = promise.get_future();
     future.then([&i](int &&ii) { i = ii; return 0; })
           .get_data();
 
@@ -147,7 +149,7 @@ TEST_F(Future, DefaultCreatedPromiseIsNotValid)
 TEST_F(Future, DefaultCreatedPromiseIsValidAfterAssigningValidPromise)
 {
     promise<int> sut;
-    sut = promise<int>(&m_pool, []() { return 0; });
+    sut = promise(&m_pool, []() { return 0; });
 
     ASSERT_TRUE(sut.is_valid());
 }
@@ -162,7 +164,8 @@ TEST_F(Future, DefaultCreatedFutureIsNotValid)
 TEST_F(Future, FutureCreatedFromPromiseIsValid)
 {
     auto p = promise(&m_pool, []() { return 2; });
-    auto future = p.resolve();
+    p.resolve();
+    auto future = p.get_future();
 
     ASSERT_TRUE(future.is_valid());
     future.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
@@ -171,7 +174,8 @@ TEST_F(Future, FutureCreatedFromPromiseIsValid)
 TEST_F(Future, FutureIsInvalidAfterMove)
 {
     auto p = promise(&m_pool, []() { return 2; });
-    auto future = p.resolve();
+    p.resolve();
+    auto future = p.get_future();
     auto other_future(std::move(future));
 
     ASSERT_FALSE(future.is_valid());
@@ -183,8 +187,10 @@ TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 {
     auto p1 = promise(&m_pool, []() { return 1; });
     auto p2 = promise(&m_pool, []() { return 2; });
-    auto future1 = p1.resolve();
-    auto future2 = p2.resolve();
+    p1.resolve();
+    p2.resolve();
+    auto future1 = p1.get_future();
+    auto future2 = p2.get_future();
     future2 = std::move(future1);
 
     ASSERT_FALSE(future1.is_valid());
@@ -194,7 +200,10 @@ TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 
 TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
 {
-    auto future = promise(&m_pool, []() { return 2; }).resolve();
+    auto p = std::make_unique<promise<int>>(&m_pool, []() { return 2; });
+    p->resolve();
+    auto future = p->get_future();
+    p.reset();
 
     ASSERT_TRUE(future.is_valid());
     future.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
@@ -202,8 +211,10 @@ TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
 
 TEST_F(Future, TestChaining)
 {
-    auto r = promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise promice(&m_pool, []() { return 2; });
+    promice.resolve();
+
+    auto r = promice.get_future()
         .then([](int i) { return i * 2; })
         .then([](int i) { return i + 1; })
         .get_data();
@@ -211,11 +222,12 @@ TEST_F(Future, TestChaining)
     r.apply([](int i) { ASSERT_EQ(i, 5); });
 }
 
-TEST_F(Future, CatchesExeption)
+TEST_F(Future, CatchesException)
 {
     event sync_event;
-    promise(&m_pool, []()->int{ throw std::runtime_error("message"); })
-        .resolve()
+    promise p(&m_pool, []()->int { throw std::runtime_error("message"); });
+    p.resolve();
+    p.get_future()
         .catched([&sync_event](std::exception_ptr e) {
             try {
                 std::rethrow_exception(e);
@@ -231,8 +243,8 @@ TEST_F(Future, CatchesExeption)
 TEST_F(Future, ExceptionCatchedInChainedHanler)
 {
     event sync_event;
-    promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.get_future()
         .then([](int)->int { throw std::runtime_error("message"); })
         .then([](int i) { return i + 1; })
         .catched([&sync_event](std::exception_ptr e) {
@@ -243,6 +255,7 @@ TEST_F(Future, ExceptionCatchedInChainedHanler)
                 sync_event.set();
             }
         });
+    p.resolve();
 
     sync_event.wait();
 }
@@ -250,8 +263,9 @@ TEST_F(Future, ExceptionCatchedInChainedHanler)
 TEST_F(Future, ExceptionCatchedInClosestChainedHanler)
 {
     event sync_event;
-    promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    p.get_future()
         .then([](int)->int { throw std::runtime_error("message"); })
         .catched([&sync_event](std::exception_ptr e) {
                      try {
@@ -270,8 +284,9 @@ TEST_F(Future, ExceptionCatchedInClosestChainedHanler)
 TEST_F(Future, IgnorePassedExceptionHandler)
 {
     event sync_event;
-    promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    p.get_future()
         .then([](int) { return 0; })
         .catched([](std::exception_ptr) { FAIL(); })
         .then([](int)->int{ throw std::runtime_error("message"); })
@@ -289,8 +304,9 @@ TEST_F(Future, IgnorePassedExceptionHandler)
 
 TEST_F(Future, MayGetValueAfterCatchHandlerSet)
 {
-    auto r = promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    auto r = p.get_future()
         .then([](int i) { return i + 3; })
         .catched([](std::exception_ptr) { FAIL(); })
         .then([](int i)->int { return i + 4; })
@@ -302,7 +318,9 @@ TEST_F(Future, MayGetValueAfterCatchHandlerSet)
 
 TEST_F(Future, CatchedMethodAppliedToLValue)
 {
-    auto f = promise(&m_pool, []() { return 2; }).resolve();
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    auto f = p.get_future();
     auto res = std::is_same_v<
         decltype(f.catched(std::declval<std::function<void(std::exception_ptr)>>())),
         future<int> &>;
@@ -312,18 +330,21 @@ TEST_F(Future, CatchedMethodAppliedToLValue)
 
 TEST_F(Future, CatchedMethodAppliedToRValue)
 {
-    auto f = promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    auto f = p.get_future()
+        .then([](int) { return 3; })
         .catched([](std::exception_ptr) { FAIL(); });
 
-    f.get_data().apply([](int i) { ASSERT_EQ(i, 2); });
+    f.get_data().apply([](int i) { ASSERT_EQ(i, 3); });
 }
 
 TEST_F(Future, MayWorkOnThreadPoolWithoutMoveOnlyFunctorsSupport)
 {
     thread_pool_wit_functor_copy_requirenment pool;
-    auto f = promise<int, decltype(pool)>(&pool, []() { return 2; })
-        .resolve()
+    promise p(&pool, []() { return 2; });
+    p.resolve();
+    auto f = p.get_future()
         .then([](int i) { return i + 3; });
 
     f.get_data().apply([](int i) { ASSERT_EQ(i, 5); });
@@ -333,16 +354,16 @@ TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)
 {
     bool flag = false;
     event sync_event;
-    promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    p.get_future()
         .then([](int) { return 0; })
         .then([](int)->int { throw std::runtime_error("message"); })
         .then([&](int)->int { flag = true; return 0; })
         .catched([&sync_event](std::exception_ptr e) {
                      try {
                          std::rethrow_exception(e);
-                     }
-                     catch(const std::runtime_error &e) {
+                     } catch(const std::runtime_error &e) {
                          EXPECT_EQ(e.what(), std::string("message"));
                          sync_event.set();
                      }
@@ -356,8 +377,9 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureExcutesFailHandler)
 {
     bool flag = false;
     event sync_event;
-    auto f = promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    auto f = p.get_future()
         .then([](int) { return 0; })
         .then([](int)->int { throw std::runtime_error("message"); });
     try {
@@ -383,8 +405,9 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureExcutesFailHandler)
 TEST_F(Future, NextChainedFutureAfterFailedFutureThrowsOnGet)
 {
     bool flag = false;
-    auto f = promise(&m_pool, []() { return 2; })
-        .resolve()
+    promise p(&m_pool, []() { return 2; });
+    p.resolve();
+    auto f = p.get_future()
         .then([](int) { return 0; })
         .then([](int)->int { throw std::runtime_error("message"); });
     try {
@@ -406,8 +429,9 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureThrowsOnGet)
 
 TEST_F(Future, MethodGetThrowsExceptionIfExecutingTasksThrows)
 {
-    auto f = promise(&m_pool, []() -> int { throw std::runtime_error("message"); })
-        .resolve();
+    promise p(&m_pool, []() -> int { throw std::runtime_error("message"); });
+    p.resolve();
+    auto f = p.get_future();
 
     try {
         f.get_data();
@@ -419,8 +443,9 @@ TEST_F(Future, MethodGetThrowsExceptionIfExecutingTasksThrows)
 
 TEST_F(Future, ExecuteSuccessHandlerIfThisHandlerSetAfterTaskExecution)
 {
-    auto f = promise(&m_pool, []() -> int { return 0; })
-        .resolve();
+    promise p(&m_pool, []() -> int { return 0; });
+    auto f = p.get_future();
+    p.resolve();
     f.get_data();
 
     event sync_event;
@@ -431,8 +456,9 @@ TEST_F(Future, ExecuteSuccessHandlerIfThisHandlerSetAfterTaskExecution)
 
 TEST_F(Future, ExecuteErrorHandlerIfThisHandlerSetAfterTaskExecution)
 {
-    auto f = promise(&m_pool, []() -> int { throw std::runtime_error("message"); })
-        .resolve();
+    promise p(&m_pool, []() -> int { throw std::runtime_error("message"); });
+    p.resolve();
+    auto f = p.get_future();
     try {
         f.get_data();
     } catch(...) {
@@ -453,8 +479,9 @@ TEST_F(Future, ExecuteErrorHandlerIfThisHandlerSetAfterTaskExecution)
 
 TEST_F(Future, CannotSetSuccessHandlerTwice)
 {
-    auto f = promise(&m_pool, []() -> int { return 0; })
-        .resolve();
+    promise p(&m_pool, []() -> int { return 0; });
+    p.resolve();
+    auto f = p.get_future();
 
     f.then([](int) { return 0; });
     EXPECT_ANY_THROW(f.then([](int) { return 2; }));
@@ -462,8 +489,9 @@ TEST_F(Future, CannotSetSuccessHandlerTwice)
 
 TEST_F(Future, CannotSetFailHandlerTwice)
 {
-    auto f = promise(&m_pool, []() -> int { return 0; })
-        .resolve();
+    promise p(&m_pool, []() -> int { return 0; });
+    p.resolve();
+    auto f = p.get_future();
 
     f.catched([](std::exception_ptr) {});
     EXPECT_ANY_THROW(f.catched([](std::exception_ptr) {}));
@@ -471,8 +499,9 @@ TEST_F(Future, CannotSetFailHandlerTwice)
 
 TEST_F(Future, CannotSetFailHandlerAfterSetSuccessHandler)
 {
-    auto f = promise(&m_pool, []() -> int { return 0; })
-        .resolve();
+    promise p(&m_pool, []() -> int { return 0; });
+    p.resolve();
+    auto f = p.get_future();
 
     f.then([](int) { return 0; });
     EXPECT_ANY_THROW(f.catched([](std::exception_ptr) {}));
@@ -482,8 +511,9 @@ TEST_F(Future, SuccessHandlerExecutesIfCorrespondingFutureAndPromiseDestroyed)
 {
     event sync_event1;
     event sync_event2;
-    promise(&m_pool, [&]() -> int { sync_event1.wait(); return 0; })
-        .resolve()
+    promise p(&m_pool, [&]() -> int { sync_event1.wait(); return 0; });
+    p.resolve();
+    p.get_future()
         .then([&](int) { sync_event2.set(); return 0; });
 
     sync_event1.set();
@@ -494,8 +524,9 @@ TEST_F(Future, FailHandlerExecutesIfCorrespondingFutureAndPromiseDestroyed)
 {
     event sync_event1;
     event sync_event2;
-    promise(&m_pool, [&]() -> int { sync_event1.wait(); throw 1; })
-        .resolve()
+    promise p(&m_pool, [&]() -> int { sync_event1.wait(); throw 1; });
+    p.resolve();
+    p.get_future()
         .catched([&](std::exception_ptr) { sync_event2.set();});
 
     sync_event1.set();
@@ -508,8 +539,9 @@ TEST_F(Future, PromiseFunctionNeverCopyIfMovedToPromiseConstructor)
     auto promise_task = [c = std::move(c)]() -> int {
         return 0;
     };
-    auto f = promise(&m_pool, std::move(promise_task))
-        .resolve()
+    promise p(&m_pool, std::move(promise_task));
+    p.resolve();
+    auto f = p.get_future()
         .then([&](int) { return 0; });
 
     f.get_data();
@@ -531,8 +563,10 @@ TEST_F(Future, PromiseFunctionMayBeCopiedToPromiseConstructor)
         c.do_something(); //check valid
         return 0;
     };
-    auto f = promise(&m_pool, promise_task)
-        .resolve()
+    promise p(&m_pool, promise_task);
+    p.resolve();
+
+    auto f = p.get_future()
         .then([&](int) { sync_event.wait(); return 0; });
     promise_task = {};
     sync_event.set();
@@ -551,8 +585,9 @@ TEST_F(Future, SuccessHandlerNeverCopyIfMovedToThenMethod)
     auto task = [c = std::move(c)](int) -> int {
         return 0;
     };
-    auto f = promise(&m_pool, []() { return 1; })
-        .resolve()
+    promise p(&m_pool, []() { return 1; });
+    p.resolve();
+    auto f = p.get_future()
         .then(std::move(task));
 
     f.get_data();
@@ -574,8 +609,9 @@ TEST_F(Future, SuccessHanlerMayBeCopiedToThenMethod)
         c.do_something(); //check valid
         return 0;
     };
-    auto f = promise(&m_pool, []() { return 0; })
-        .resolve()
+    promise p(&m_pool, []() { return 0; });
+    p.resolve();
+    auto f = p.get_future()
         .then(task);
     task = {};
     sync_event.set();
@@ -590,8 +626,9 @@ TEST_F(Future, SuccessHanlerMayBeCopiedToThenMethod)
 
 TEST_F(Future, FutureDataMayApplyHandlerWithOneParamerterWithAllQualificators)
 {
-    auto f = promise(&m_pool, []()->int { return 1; })
-        .resolve();
+    promise p(&m_pool, []()->int { return 1; });
+    p.resolve();
+    auto f = p.get_future();
 
     auto data = f.get_data();
     data.apply([](int i) { ASSERT_EQ(i, 1); });
@@ -613,8 +650,9 @@ TEST_F(Future, FutureDataMayApplyHandlerWithOneParamerterWithAllQualificators)
 
 TEST_F(Future, ConstFutureDataMayApplyHandlerWithNonModifyOneParameter)
 {
-    auto f = promise(&m_pool, []()->int { return 1; })
-        .resolve();
+    promise p(&m_pool, []()->int { return 1; });
+    p.resolve();
+    auto f = p.get_future();
 
     const auto data = f.get_data();
     data.apply([](int i) { ASSERT_EQ(i, 1); });
@@ -633,8 +671,9 @@ TEST_F(Future, ConstFutureDataMayApplyHandlerWithNonModifyOneParameter)
 
 TEST_F(Future, FutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
 {
-    auto f = promise(&m_pool, []()->std::string { return "data"; })
-        .resolve();
+    promise p(&m_pool, []()->std::string { return "data"; });
+    p.resolve();
+    auto f = p.get_future();
 
     auto data = f.get_data();
     data.apply([](std::string i) { EXPECT_EQ(i, "data"); });
@@ -647,8 +686,9 @@ TEST_F(Future, FutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
 
 TEST_F(Future, FutureDataMakeAcceptRValueRefParameteraziedFunctorAndMoveValue)
 {
-    auto f1 = promise(&m_pool, []()->std::string { return "data"; })
-        .resolve();
+    promise p(&m_pool, []()->std::string { return "data"; });
+    p.resolve();
+    auto f1 = p.get_future();
     auto data1 = f1.get_data();
     std::string acceptor1;
     data1.apply([&](std::string &&i) { acceptor1 = std::move(i); });
@@ -659,8 +699,9 @@ TEST_F(Future, FutureDataMakeAcceptRValueRefParameteraziedFunctorAndMoveValue)
 
 TEST_F(Future, FutureDataMakeAcceptLValueRefParameteraziedFunctorAndChangeValue)
 {
-    auto f1 = promise(&m_pool, []()->std::string { return "data"; })
-        .resolve();
+    promise p(&m_pool, []()->std::string { return "data"; });
+    p.resolve();
+    auto f1 = p.get_future();
     auto data1 = f1.get_data();
     data1.apply([&](std::string &i) { i[0] = 's'; });
 
@@ -669,8 +710,9 @@ TEST_F(Future, FutureDataMakeAcceptLValueRefParameteraziedFunctorAndChangeValue)
 
 TEST_F(Future, ConstFutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
 {
-    auto f = promise(&m_pool, []()->std::string { return "data"; })
-        .resolve();
+    promise p(&m_pool, []()->std::string { return "data"; });
+    p.resolve();
+    auto f = p.get_future();
 
     const auto data = f.get_data();
     data.apply([](std::string i) { EXPECT_EQ(i, "data"); });
@@ -683,8 +725,9 @@ TEST_F(Future, ConstFutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
 
 TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
 {
-    auto d = promise(&m_pool, []()->std::unique_ptr<int> { return std::make_unique<int>(3); })
-                 .resolve()
+    promise p(&m_pool, []()->std::unique_ptr<int> { return std::make_unique<int>(3); });
+    p.resolve();
+    auto d = p.get_future()
                  .then([](std::unique_ptr<int> &&i) { return std::move(i); })
                  .then([](std::unique_ptr<int> &&i) { return std::move(i); })
                  .then([](std::unique_ptr<int> &&i) { return std::move(i); })
@@ -708,18 +751,43 @@ TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
     static volatile int i11 = 11;
     static volatile int i12 = 12;
 
-    auto d1 = promise(&m_pool, []()->int { return 1; }).resolve();
-    auto d2 = promise(&m_pool, []()->int &{ return i2; }).resolve();
-    auto d3 = promise(&m_pool, []()->int &&{ return std::move(i3); }).resolve();
-    auto d4 = promise(&m_pool, []()->const int { return 4; }).resolve();
-    auto d5 = promise(&m_pool, []()->const int &{ return i5; }).resolve();
-    auto d6 = promise(&m_pool, []()->const int &&{ return std::move(i6); }).resolve();
-    auto d7 = promise(&m_pool, []()->volatile int { return 7; }).resolve();
-    auto d8 = promise(&m_pool, []()->volatile int &{ return i8; }).resolve();
-    auto d9 = promise(&m_pool, []()->volatile int &&{ return std::move(i9); }).resolve();
-    auto d10 = promise(&m_pool, []()->const volatile int { return 10; }).resolve();
-    auto d11 = promise(&m_pool, []()->const volatile int &{ return i11; }).resolve();
-    auto d12 = promise(&m_pool, []()->const volatile int &&{ return std::move(i12); }).resolve();
+    auto p1 = promise(&m_pool, []()->int { return 1; });
+    p1.resolve();
+    auto p2 = promise(&m_pool, []()->int &{ return i2; });
+    p2.resolve();
+    auto p3 = promise(&m_pool, []()->int &&{ return std::move(i3); });
+    p3.resolve();
+    auto p4 = promise(&m_pool, []()->const int { return 4; });
+    p4.resolve();
+    auto p5 = promise(&m_pool, []()->const int &{ return i5; });
+    p5.resolve();
+    auto p6 = promise(&m_pool, []()->const int &&{ return std::move(i6); });
+    p6.resolve();
+    auto p7 = promise(&m_pool, []()->volatile int { return 7; });
+    p7.resolve();
+    auto p8 = promise(&m_pool, []()->volatile int &{ return i8; });
+    p8.resolve();
+    auto p9 = promise(&m_pool, []()->volatile int &&{ return std::move(i9); });
+    p9.resolve();
+    auto p10 = promise(&m_pool, []()->const volatile int { return 10; });
+    p10.resolve();
+    auto p11 = promise(&m_pool, []()->const volatile int &{ return i11; });
+    p11.resolve();
+    auto p12 = promise(&m_pool, []()->const volatile int &&{ return std::move(i12); });
+    p12.resolve();
+
+    auto d1 = p1.get_future();
+    auto d2 = p2.get_future();
+    auto d3 = p3.get_future();
+    auto d4 = p4.get_future();
+    auto d5 = p5.get_future();
+    auto d6 = p6.get_future();
+    auto d7 = p7.get_future();
+    auto d8 = p8.get_future();
+    auto d9 = p9.get_future();
+    auto d10 = p10.get_future();
+    auto d11 = p11.get_future();
+    auto d12 = p12.get_future();
     
     //Ensure that the data being saved is not a reference variable
     d1.get_data().apply([](int &i) { i++; });
@@ -755,4 +823,18 @@ TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
     EXPECT_EQ(i9, 9);
     EXPECT_EQ(i11, 11);
     EXPECT_EQ(i12, 12);
+}
+
+TEST_F(Future, PromiseCannotExecuteGetFutureTwice)
+{
+    promise p(&m_pool, []() { return 1; });
+    p.get_future();
+    ASSERT_ANY_THROW(p.get_future());
+}
+
+TEST_F(Future, PromiseCannotExecuteResolveTwice)
+{
+    promise p(&m_pool, []() { return 1; });
+    p.resolve();
+    ASSERT_ANY_THROW(p.resolve());
 }
