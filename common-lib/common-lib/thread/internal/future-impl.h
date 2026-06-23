@@ -55,8 +55,8 @@ namespace vshalygin::cl::internal {
         future_impl(future_impl &&) = default;
         future_impl &operator=(future_impl &&) = default;
 
-        const T &get() const;
-        [[nodiscard]] T extract();
+        const remove_type_qualifiers_t<T> &get() const;
+        [[nodiscard]] remove_type_qualifiers_t<T> extract();
 
         template<typename Func>
         future_impl<function_ret_t<Func>, ThreadPool> then(Func &&task);
@@ -123,7 +123,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    const T &future_impl<T, ThreadPool>::get() const
+    const remove_type_qualifiers_t<T> &future_impl<T, ThreadPool>::get() const
     {
         if(!m_controller) {
             throw std::logic_error("future_impl is invalid");
@@ -133,7 +133,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    T future_impl<T, ThreadPool>::extract()
+    remove_type_qualifiers_t<T> future_impl<T, ThreadPool>::extract()
     {
         if(!m_controller) {
             throw std::logic_error("future_impl is invalid");

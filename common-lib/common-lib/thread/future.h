@@ -33,12 +33,12 @@ namespace vshalygin::cl {
         future(future &&) = default;
         future &operator=(future &&) = default;
 
-        const T &get() const
+        const remove_type_qualifiers_t<T> &get() const
         {
             return base_type::get();
         }
 
-        [[nodiscard]] T extract()
+        [[nodiscard]] remove_type_qualifiers_t<T> extract()
         {
             return base_type::extract();
         }

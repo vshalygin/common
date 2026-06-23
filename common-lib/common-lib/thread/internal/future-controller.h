@@ -73,8 +73,8 @@ namespace vshalygin::cl::internal {
         void set_exception(const std::exception_ptr &e);
 
 
-        const T &get() const;
-        [[nodiscard]] T extract();
+        const remove_type_qualifiers_t<T> &get() const;
+        [[nodiscard]] remove_type_qualifiers_t<T> extract();
 
     private:
         void post_success();
@@ -181,7 +181,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    const T &future_controller<T, ThreadPool>::get() const
+    const remove_type_qualifiers_t<T> &future_controller<T, ThreadPool>::get() const
     {
         std::unique_lock lock(m_mtx);
         m_cv.wait(lock, [this]() { return m_val || m_exception; });
@@ -193,7 +193,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    T future_controller<T, ThreadPool>::extract()
+    remove_type_qualifiers_t<T> future_controller<T, ThreadPool>::extract()
     {
         std::unique_lock lock(m_mtx);
         m_cv.wait(lock, [this]() { return m_val || m_exception; });
@@ -204,9 +204,7 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("value was extracted");
         }
 
-        auto ans = std::move(m_val.value());
-        m_val.reset();
-        return ans;
+        return std::move(m_val.value());
     }
 
     template<typename T, typename ThreadPool>
