@@ -34,6 +34,9 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         void apply(Func &&func) const;
 
+        template<typename Func>
+        void apply(Func &&func);
+
     private:
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
     };
@@ -132,6 +135,9 @@ namespace vshalygin::cl::internal {
 
         void call_success(bool need_notify);
         void call_fail(bool need_notify);
+
+        remove_type_qualifiers_t<T> &get_val_lr();
+        const remove_type_qualifiers_t<T> &get_val_clr() const;
 
     private:
         ThreadPool *m_thread_pool;
@@ -280,15 +286,54 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
+    remove_type_qualifiers_t<T> &future_controller<T, ThreadPool>::get_val_lr()
+    {
+        return m_val.value();
+    }
+
+    template<typename T, typename ThreadPool>
+    const remove_type_qualifiers_t<T> &future_controller<T, ThreadPool>::get_val_clr() const
+    {
+        return m_val.value();
+    }
+
+    template<typename T, typename ThreadPool>
     template<typename Func>
     void future_data<T, ThreadPool>::apply(Func &&func) const
     {
         static_assert(std::is_same_v<function_ret_t<Func>, void>);
         static_assert(function_arg_count_v<Func> == 1);
-        static_assert(std::is_same_v<remove_type_qualifiers_t<function_arg_t<0, Func>>,
-                      remove_type_qualifiers_t<T>>);
+
+        using arg = function_arg_t<0, Func>;
+
+        static_assert(std::is_same_v<remove_type_qualifiers_t<arg>,
+                                     remove_type_qualifiers_t<T>>);
+        static_assert(!(std::is_lvalue_reference_v<arg> &&
+                       !std::is_const_v<std::remove_reference_t<arg>>),
+                      "const lvalue reference is not allowed");
+        static_assert(!std::is_rvalue_reference_v<arg>,
+                      "rvalue reference is not allowed");
+
 
         std::lock_guard guard(m_controller->m_mtx);
-        func(std::forward<function_arg_t<0, Func>>(m_controller->m_val.value()));
+
+        func(m_controller->get_val_clr());
+    }
+
+    template<typename T, typename ThreadPool>
+    template<typename Func>
+    void future_data<T, ThreadPool>::apply(Func &&func)
+    {
+        static_assert(std::is_same_v<function_ret_t<Func>, void>);
+        static_assert(function_arg_count_v<Func> == 1);
+        static_assert(std::is_same_v<remove_type_qualifiers_t<function_arg_t<0, Func>>,
+                                     remove_type_qualifiers_t<T>>);
+
+        std::lock_guard guard(m_controller->m_mtx);
+        if constexpr(std::is_reference_v<function_arg_t<0, Func>>) {
+            func(std::forward<function_arg_t<0, Func>>(m_controller->get_val_lr()));
+        } else {
+            func(m_controller->get_val_lr());
+        }
     }
 }

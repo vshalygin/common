@@ -563,7 +563,7 @@ TEST_F(Future, SuccessHandlerNeverCopyIfMovedToThenMethod)
     EXPECT_EQ(counter::move_assign_num, 0u);
 }
 
-TEST_F(Future, SuccessMayBeCopiedToThan)
+TEST_F(Future, SuccessHanlerMayBeCopiedToThenMethod)
 {
     event sync_event;
 
@@ -586,4 +586,113 @@ TEST_F(Future, SuccessMayBeCopiedToThan)
     EXPECT_EQ(counter::copy_assign_num, 0u);
     EXPECT_EQ(counter::move_num, 1u);
     EXPECT_EQ(counter::move_assign_num, 0u);
+}
+
+TEST_F(Future, FutureDataMayApplyHandlerWithOneParamerterWithAllQualificators)
+{
+    auto f = promise(&m_pool, []()->int { return 1; })
+        .resolve();
+
+    auto data = f.get_data();
+    data.apply([](int i) { ASSERT_EQ(i, 1); });
+    data.apply([](int &i) { ASSERT_EQ(i, 1); });
+    data.apply([](int &&i) { ASSERT_EQ(i, 1); });
+    data.apply([](const int i) { ASSERT_EQ(i, 1); });
+    data.apply([](const int &i) { ASSERT_EQ(i, 1); });
+    data.apply([](const int &&i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile int i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile int &i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile int &&i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile const int i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile const int &i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile const int &&i) { ASSERT_EQ(i, 1); });
+
+    data.apply([](int &i) { i = 2; });
+    data.apply([](const int &i) { ASSERT_EQ(i, 2); });
+}
+
+TEST_F(Future, ConstFutureDataMayApplyHandlerWithNonModifyOneParameter)
+{
+    auto f = promise(&m_pool, []()->int { return 1; })
+        .resolve();
+
+    const auto data = f.get_data();
+    data.apply([](int i) { ASSERT_EQ(i, 1); });
+    //data.apply([](int &i) { ASSERT_EQ(i, 1); });
+    //data.apply([](int &&i) { ASSERT_EQ(i, 1); });
+    data.apply([](const int i) { ASSERT_EQ(i, 1); });
+    data.apply([](const int &i) { ASSERT_EQ(i, 1); });
+    //data.apply([](const int &&i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile int i) { ASSERT_EQ(i, 1); });
+    //data.apply([](volatile int &i) { ASSERT_EQ(i, 1); });
+    //data.apply([](volatile int &&i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile const int i) { ASSERT_EQ(i, 1); });
+    data.apply([](volatile const int &i) { ASSERT_EQ(i, 1); });
+    //data.apply([](volatile const int &&i) { ASSERT_EQ(i, 1); });
+}
+
+TEST_F(Future, FutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
+{
+    auto f = promise(&m_pool, []()->std::string { return "data"; })
+        .resolve();
+
+    auto data = f.get_data();
+    data.apply([](std::string i) { EXPECT_EQ(i, "data"); });
+    data.apply([](const std::string i) { EXPECT_EQ(i, "data"); });
+    data.apply([](volatile std::string) {});
+    data.apply([](const volatile std::string) {});
+
+    data.apply([](const std::string &i) { EXPECT_EQ(i, "data"); });
+}
+
+TEST_F(Future, FutureDataMakeAcceptRValueRefParameteraziedFunctorAndMoveValue)
+{
+    auto f1 = promise(&m_pool, []()->std::string { return "data"; })
+        .resolve();
+    auto data1 = f1.get_data();
+    std::string acceptor1;
+    data1.apply([&](std::string &&i) { acceptor1 = std::move(i); });
+
+    ASSERT_EQ(acceptor1, "data");
+    data1.apply([&](const std::string &i) { EXPECT_EQ(i, ""); });
+}
+
+TEST_F(Future, FutureDataMakeAcceptLValueRefParameteraziedFunctorAndChangeValue)
+{
+    auto f1 = promise(&m_pool, []()->std::string { return "data"; })
+        .resolve();
+    auto data1 = f1.get_data();
+    data1.apply([&](std::string &i) { i[0] = 's'; });
+
+    data1.apply([&](const std::string &i) { EXPECT_EQ(i, "sata"); });
+}
+
+TEST_F(Future, ConstFutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
+{
+    auto f = promise(&m_pool, []()->std::string { return "data"; })
+        .resolve();
+
+    const auto data = f.get_data();
+    data.apply([](std::string i) { EXPECT_EQ(i, "data"); });
+    data.apply([](const std::string i) { EXPECT_EQ(i, "data"); });
+    data.apply([](volatile std::string) {});
+    data.apply([](const volatile std::string) {});
+
+    data.apply([](const std::string &i) { EXPECT_EQ(i, "data"); });
+}
+
+TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
+{
+    auto d = promise(&m_pool, []()->std::unique_ptr<int> { return std::make_unique<int>(3); })
+                 .resolve()
+                 .then([](std::unique_ptr<int> &&i) { return std::move(i); })
+                 .then([](std::unique_ptr<int> &&i) { return std::move(i); })
+                 .then([](std::unique_ptr<int> &&i) { return std::move(i); })
+                 .get_data();
+
+    std::unique_ptr<int> acceptor;
+    d.apply([&](std::unique_ptr<int> &&i) { acceptor = std::move(i); });
+
+    ASSERT_TRUE(acceptor);
+    ASSERT_EQ(*acceptor, 3);
 }
