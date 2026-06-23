@@ -37,6 +37,7 @@ namespace {
         counter &operator=(const counter &)
         {
             ++copy_assign_num;
+            return *this;
         }
 
         counter(counter &&)
@@ -47,6 +48,7 @@ namespace {
         counter &operator=(counter &&)
         {
             ++move_assign_num;
+            return *this;
         }
 
         void do_something() const {}
@@ -837,4 +839,21 @@ TEST_F(Future, PromiseCannotExecuteResolveTwice)
     promise p(&m_pool, []() { return 1; });
     p.resolve();
     ASSERT_ANY_THROW(p.resolve());
+}
+
+TEST_F(Future, DoesNotCopyMovableObjectInInnerStorage)
+{
+    promise p(&m_pool, []() { return counter{}; });
+    p.resolve();
+    auto f = p.get_future()
+        .then([](counter &&c) { return std::move(c); })
+        .then([](counter &&c) { return c; });
+
+    counter acceptor;
+    f.get_data().apply([&acceptor](counter &&c) { acceptor = std::move(c); });
+
+    EXPECT_EQ(counter::copy_num, 0u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_TRUE(counter::move_num > 0u);
+    EXPECT_TRUE(counter::move_assign_num >= 0);
 }
