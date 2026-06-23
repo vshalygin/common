@@ -142,8 +142,7 @@ namespace vshalygin::cl::internal {
         using ret_t = function_ret_t<Func>;
 
         promise_impl<ret_t, ThreadPool> promise(m_thread_pool);
-        future_impl<function_ret_t<Func>, ThreadPool> future(m_thread_pool,
-                                                             promise.get_controller());
+
         auto success = [controller = promise.get_controller(),
                         task = std::forward<Func>(task)](T &&val) mutable {
             try {
@@ -158,7 +157,7 @@ namespace vshalygin::cl::internal {
         m_controller->set_on_success(std::move(success));
         m_controller->set_on_fail_if_not_set(std::move(fail));
 
-        return future;
+        return promise.get_future();
     }
 
     template<typename T, typename ThreadPool>

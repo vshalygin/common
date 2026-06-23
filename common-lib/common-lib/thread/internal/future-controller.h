@@ -147,7 +147,6 @@ namespace vshalygin::cl::internal {
 
         std::unique_ptr<ifuture_callback<remove_type_qualifiers_t<T>>> m_on_success;
         std::function<void(std::exception_ptr)> m_on_fail;
-        std::function<void(std::exception_ptr)> m_on_fail_default;
 
         mutable std::mutex m_mtx;
         mutable std::condition_variable m_cv;
