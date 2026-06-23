@@ -141,6 +141,9 @@
     <ClInclude Include="common-lib\mpl\internal\is-function-pointer.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread\internal\thread-pool-task-impl.h">
+      <Filter>thread\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\buffer\buffer.cpp">

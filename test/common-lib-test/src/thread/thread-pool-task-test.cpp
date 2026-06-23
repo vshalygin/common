@@ -178,7 +178,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterMoreThanNeededIfItIsNotRef)
     event sync_event;
     counter::clear();
     counter cc;
-    thread_pool_task<void(counter)> sut(
+    thread_pool_task sut(
         [&](counter c) { auto t = c; t; sync_event.set(); });
 
     pool.post(sut, std::move(cc));
@@ -228,7 +228,7 @@ TEST(ThreadPoolTask, IsCopyable)
     counter::clear();
     counter cc;
     thread_pool_task sut([cc]() {});
-    thread_pool_task<void()> copy(sut); //TODO сделать вывод типов для copy
+    thread_pool_task copy(sut);
 
     ASSERT_EQ(counter::copy_num, 2u);
     ASSERT_EQ(counter::copy_assign_num, 0u);
@@ -241,7 +241,7 @@ TEST(ThreadPoolTask, IsMovable)
     counter::clear();
     counter cc;
     thread_pool_task sut([cc]() {});
-    thread_pool_task<void()> sut2(std::move(sut));
+    thread_pool_task sut2(std::move(sut));
 
 
     ASSERT_EQ(counter::copy_num, 1u);
@@ -285,9 +285,9 @@ TEST(ThreadPoolTask, IsMoveAssignable)
 TEST(ThreadPoolTask, CorrectCopyEmptyTask)
 {
     thread_pool_task sut([]() {});
-    thread_pool_task<void()> sut2(std::move(sut)); //Сделать вывод типа для перемещения
+    thread_pool_task sut2(std::move(sut)); //Сделать вывод типа для перемещения
 
-    thread_pool_task<void()> sut3(std::move(sut));
+    thread_pool_task sut3(std::move(sut));
 
     EXPECT_FALSE(sut);
     EXPECT_FALSE(sut3);
@@ -296,7 +296,7 @@ TEST(ThreadPoolTask, CorrectCopyEmptyTask)
 TEST(ThreadPoolTask, CorrectCopyAssignEmptyTask)
 {
     thread_pool_task sut([]() {});
-    thread_pool_task<void()> sut2(std::move(sut));
+    thread_pool_task sut2(std::move(sut));
     thread_pool_task sut3([]() {});
 
     sut3 = sut;
