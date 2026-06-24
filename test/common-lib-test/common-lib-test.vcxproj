@@ -16,6 +16,7 @@
     <ClCompile Include="src\mpl\is-std-function-test.cpp" />
     <ClCompile Include="src\mpl\remove-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\remove-member-function-qualifiers-test.cpp" />
+    <ClCompile Include="src\mpl\type-wrapper-test.cpp" />
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\thread\future-test.cpp" />
     <ClCompile Include="src\thread\strand-test.cpp" />

@@ -55,6 +55,9 @@
     <ClCompile Include="src\thread\thread-pool-test.cpp">
       <Filter>thread</Filter>
     </ClCompile>
+    <ClCompile Include="src\mpl\type-wrapper-test.cpp">
+      <Filter>mpl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

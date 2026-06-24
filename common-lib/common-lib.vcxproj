@@ -24,6 +24,7 @@
     <ClInclude Include="common-lib\mpl\type-transform.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits-impl.h" />
     <ClInclude Include="common-lib\mpl\internal\remove-member-function-qualifiers.h" />
+    <ClInclude Include="common-lib\mpl\type-wrapper.h" />
     <ClInclude Include="common-lib\synchronization\event\event.h" />
     <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\synchronization\latch\latch.h" />
