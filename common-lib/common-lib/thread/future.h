@@ -81,6 +81,11 @@ namespace vshalygin::cl {
             : base_type(thread_pool, std::forward<Function>(function))
         {}
 
+        promise(const promise &) = delete;
+        promise &operator=(const promise &) = delete;
+        promise(promise &&) = default;
+        promise &operator=(promise &&) = default;
+
         void resolve()
         {
             base_type::resolve();

@@ -21,7 +21,7 @@ namespace vshalygin::cl::internal {
         friend class future_controller<T, ThreadPool>;
 
         explicit future_data(std::shared_ptr<future_controller<T, ThreadPool>> controller)
-            : m_controller(controller)
+            : m_controller(std::move(controller))
         {}
 
     public:
@@ -41,39 +41,68 @@ namespace vshalygin::cl::internal {
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
     };
 
+    template<typename Arg, typename Enable = void>
+    class ifuture_callback;
+
     template<typename Arg>
-    class ifuture_callback
+    class ifuture_callback<Arg,
+        std::enable_if_t<!std::is_volatile_v<Arg>>>
     {
     public:
+        static_assert(std::is_same_v<Arg, std::remove_cvref_t<Arg>>);
+
         virtual ~ifuture_callback() = default;
 
         virtual void call(Arg &&arg) = 0;
+        virtual void call(const Arg &&arg) = 0;
+    };
+
+    template<typename Arg>
+    class ifuture_callback<Arg,
+        std::enable_if_t<std::is_volatile_v<Arg>>>
+    {
+    public:
+        static_assert(!std::is_reference_v<Arg> && !std::is_const_v<Arg>);
+
+        using PureArg = std::remove_cvref_t<Arg>;
+
+        virtual ~ifuture_callback() = default;
+
+        virtual void call(volatile PureArg &&arg) = 0;
+        virtual void call(volatile const PureArg &&arg) = 0;
     };
 
     template<typename Func>
-    class future_callback
-        : public ifuture_callback<remove_type_qualifiers_t<function_arg_t<0, Func>>>
+    class future_callback_base
+        : public ifuture_callback<remove_c_ref_t<function_arg_t<0, Func>>>
     {
         static_assert(function_arg_count_v<Func> == 1);
         static_assert(std::is_same_v<function_ret_t<Func>, void>);
 
-        using FuncArg = function_arg_t<0, Func>;
+    protected:
+        using Arg = function_arg_t<0, Func>;
+        using PureArg = std::remove_cvref_t<Arg>;
 
-    public:
+    protected:
         template<typename F>
-        explicit future_callback(F &&f)
+        explicit future_callback_base(F &&f)
             : m_func(std::forward<F>(f))
         {}
 
-        future_callback(const future_callback &) = delete;
-        future_callback &operator=(const future_callback &) = delete;
+        future_callback_base(const future_callback_base &) = delete;
+        future_callback_base &operator=(const future_callback_base &) = delete;
 
-        void call(remove_type_qualifiers_t<FuncArg> &&arg) override
+        template<typename U>
+        void call(U arg)
         {
-            if constexpr(!std::is_reference_v<FuncArg>) {
+            //TODO проверить, что U конвертируется в Arg
+
+            if constexpr(!std::is_reference_v<Arg>) {
+                //copy non-reference argument
                 m_func(arg);
             } else {
-                m_func(std::forward<FuncArg>(arg));
+                //reference argument pass as expected
+                m_func(std::forward<Arg>(arg));
             }
         }
 
@@ -81,6 +110,62 @@ namespace vshalygin::cl::internal {
         remove_type_qualifiers_t<Func> m_func;
     };
 
+    template<typename Func, typename Enable = void>
+    class future_callback;
+
+    template<typename Func>
+    class future_callback<Func,
+             std::enable_if_t<!std::is_volatile_v<function_arg_t<0, Func>>>>
+        : public future_callback_base<Func>
+    {
+    public:
+        using base_class = future_callback_base<Func>;
+        using Arg = typename base_class::Arg;
+        using PureArg = typename base_class::PureArg;
+
+    public:
+        template<typename F>
+        explicit future_callback(F &&f)
+            : base_class(std::forward<F>(f))
+        {}
+
+        void call(PureArg &&arg) override
+        {
+            base_class::call(std::move(arg));
+        }
+
+        void call(const PureArg &&arg) override
+        {
+            base_class::call(std::move(arg));
+        }
+    };
+
+    template<typename Func>
+    class future_callback<Func,
+            std::enable_if_t<std::is_volatile_v<function_arg_t<0, Func>>>>
+        : public future_callback_base<Func>
+    {
+    public:
+        using base_class = future_callback_base<Func>;
+        using Arg = typename base_class::Arg;
+        using PureArg = typename base_class::PureArg;
+
+    public:
+        template<typename F>
+        explicit future_callback(F &&f)
+            : base_class(std::forward<F>(f))
+        {}
+
+        void call(volatile PureArg &&arg) override
+        {
+            base_class::call(std::move(arg));
+        }
+
+        void call(volatile const PureArg &&arg) override
+        {
+            base_class::call(std::move(arg));
+        }
+    };
 
     template<typename T, typename ThreadPool>
     class future_controller
@@ -126,7 +211,6 @@ namespace vshalygin::cl::internal {
         void set_value(T &&value);
         void set_exception(const std::exception_ptr &e);
 
-
         future_data<T, ThreadPool> get_data() const;
 
     private:
@@ -142,10 +226,10 @@ namespace vshalygin::cl::internal {
     private:
         ThreadPool *m_thread_pool;
 
-        std::optional<remove_type_qualifiers_t<T>> m_val;
+        std::optional<remove_type_qualifiers_t<T>> m_val; //TODO save as unique_ptr
         std::optional<std::exception_ptr> m_exception;
 
-        std::unique_ptr<ifuture_callback<remove_type_qualifiers_t<T>>> m_on_success;
+        std::unique_ptr<ifuture_callback<remove_c_ref_t<T>>> m_on_success;
         std::function<void(std::exception_ptr)> m_on_fail;
 
         mutable std::mutex m_mtx;
@@ -300,6 +384,7 @@ namespace vshalygin::cl::internal {
     template<typename Func>
     void future_data<T, ThreadPool>::apply(Func &&func) const
     {
+        //TODO chech T convertible to Arg 
         static_assert(std::is_same_v<function_ret_t<Func>, void>);
         static_assert(function_arg_count_v<Func> == 1);
 

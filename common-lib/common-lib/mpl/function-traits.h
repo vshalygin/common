@@ -3,6 +3,8 @@
 #include "internal/function-traits-impl.h"
 
 namespace vshalygin::cl {
+    //TODO рассмотреть случаи ссылки на функции
+
     template<size_t N, typename F>
     using function_arg_t = typename internal::function_traits<F>::template arg<N>;
 

@@ -143,10 +143,10 @@ namespace vshalygin::cl::internal {
 
         promise_impl<ret_t, ThreadPool> promise(m_thread_pool);
 
-        auto success = [controller = promise.get_controller(),
-                        task = std::forward<Func>(task)](T &&val) mutable {
+        auto success = [controller = promise.get_controller(), // На входе удаляем у T квалификаторы
+                        task = std::forward<Func>(task)](T &&val) mutable { //У T удалить квалиф
             try {
-                controller->set_value(task(std::forward<T &&>(val)));
+                controller->set_value(task(std::forward<T &&>(val)));//TODO здесь проблема
             } catch(...) {
                 controller->set_exception(std::current_exception());
             }
