@@ -1,61 +1,52 @@
 #pragma once
-#include "internal/is-std-function.h"
-#include "internal/is-function-pointer.h"
-#include "internal/check-type.h"
 #include <type_traits>
 
-namespace vshalygin::cl {
-    template<typename T>
-    inline constexpr bool is_function_pointer_v = internal::is_function_pointer_v;
-
-    template<typename T>
-    inline constexpr bool is_std_function_v = internal::is_std_function_v<T>;
-
+namespace vshalygin::cl::internal {
     template<typename T>
     inline constexpr bool is_value_v =
-        internal::is_value_v<T>;
+        std::is_same_v<T, std::remove_cvref_t<T>>;
 
     template<typename T>
     inline constexpr bool is_lvalue_ref_v =
-        internal::is_lvalue_ref_v<T>;
+        std::is_same_v<T, std::remove_cvref_t<T> &>;
 
     template<typename T>
     inline constexpr bool is_rvalue_ref_v =
-        internal::is_rvalue_ref_v<T>;
+        std::is_same_v<T, std::remove_cvref_t<T> &&>;
 
     template<typename T>
     inline constexpr bool is_const_value_v =
-        internal::is_const_value_v<T>;
+        std::is_same_v<T, const std::remove_cvref_t<T>>;
 
     template<typename T>
     inline constexpr bool is_const_lvalue_ref_v =
-        internal::is_const_lvalue_ref_v<T>;
+        std::is_same_v<T, const std::remove_cvref_t<T> &>;
 
     template<typename T>
     inline constexpr bool is_const_rvalue_ref_v =
-        internal::is_const_rvalue_ref_v<T>;
+        std::is_same_v<T, const std::remove_cvref_t<T> &&>;
 
     template<typename T>
     inline constexpr bool is_volatile_value_v =
-        internal::is_volatile_value_v<T>;
+        std::is_same_v<T, volatile std::remove_cvref_t<T>>;
 
     template<typename T>
     inline constexpr bool is_volatile_lvalue_ref_v =
-        internal::is_volatile_lvalue_ref_v<T>;
+        std::is_same_v<T, volatile std::remove_cvref_t<T> &>;
 
     template<typename T>
     inline constexpr bool is_volatile_rvalue_ref_v =
-        internal::is_volatile_rvalue_ref_v<T>;
+        std::is_same_v<T, volatile std::remove_cvref_t<T> &&>;
 
     template<typename T>
     inline constexpr bool is_const_volatile_value_v =
-        internal::is_const_volatile_value_v<T>;
+        std::is_same_v<T, const volatile std::remove_cvref_t<T>>;
 
     template<typename T>
     inline constexpr bool is_const_volatile_lvalue_ref_v =
-        internal::is_const_volatile_lvalue_ref_v<T>;
+        std::is_same_v<T, const volatile std::remove_cvref_t<T> &>;
 
     template<typename T>
     inline constexpr bool is_const_volatile_rvalue_ref_v =
-        internal::is_const_volatile_rvalue_ref_v<T>;
+        std::is_same_v<T, const volatile std::remove_cvref_t<T> &&>;
 }
