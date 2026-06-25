@@ -55,6 +55,12 @@
     <Filter Include="thread\internal">
       <UniqueIdentifier>{0a1d48b5-1957-4fd1-adef-47b9e7ed896c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="thread\future">
+      <UniqueIdentifier>{f14d47dd-2982-485f-a080-b757aad77d96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread\future\internal">
+      <UniqueIdentifier>{9873c404-4484-4955-9aeb-ba0ea4fb7bde}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\utils\buffer\buffer.h">
@@ -114,9 +120,6 @@
     <ClInclude Include="common-lib\mpl\internal\is-std-function.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future.h">
-      <Filter>thread</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread\strand.h">
       <Filter>thread</Filter>
     </ClInclude>
@@ -125,9 +128,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\thread\thread-pool-task.h">
       <Filter>thread</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future-impl.h">
-      <Filter>thread\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\make-function-type.h">
       <Filter>mpl\internal</Filter>
@@ -153,32 +153,38 @@
     <ClInclude Include="common-lib\mpl\internal\is-static-castable.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\future.h">
+      <Filter>thread\future</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future-callback.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future-controller.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-callback.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\promise.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-controller.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\promise-impl.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-controller-impl.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future-data.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-data.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future-data-impl.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-data-impl.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\future-controller-impl.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-impl.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\promise-function.h">
-      <Filter>thread\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\promise.h">
+      <Filter>thread\future\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\future\internal\promise-function.h">
+      <Filter>thread\future\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\future\internal\promise-impl.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

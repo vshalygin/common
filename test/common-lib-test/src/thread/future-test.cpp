@@ -1,4 +1,4 @@
-#include <common-lib/thread/future.h>
+#include <common-lib/thread/future/future.h>
 #include <common-lib/thread/thread-pool.h>
 #include <common-lib/synchronization/event/event.h>
 
