@@ -13,6 +13,6 @@ namespace vshalygin::cl::internal {
         : std::true_type
     {};
 
-    template<typename T, typename U>
-    inline constexpr bool is_static_castable_v = is_static_castable<T, U>::value;
+    template<typename From, typename To>
+    inline constexpr bool is_static_castable_v = is_static_castable<From, To>::value;
 }

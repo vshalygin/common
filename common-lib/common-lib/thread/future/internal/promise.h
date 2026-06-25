@@ -17,7 +17,6 @@ namespace vshalygin::cl::internal {
         template<typename U, typename TP>
         friend class future;
 
-        //TODO мне не нравится этот конструктор
         explicit promise(ThreadPool *thread_pool);
 
     public:

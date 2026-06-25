@@ -1,8 +1,9 @@
 #include <common-lib/mpl/function-traits.h>
 #include <functional>
+#include <string>
 
 using namespace vshalygin::cl;
-
+//TODO add tests
 namespace {
     template<typename T>
     class test_class
@@ -155,3 +156,5 @@ static_assert(function_arg_count_v<lambda> == 3);
 
 //various checks
 static_assert(function_arg_count_v<void()> == 0);
+static_assert(std::is_same_v<function_arg_t<0, decltype([](std::string &&) {})>,
+                             std::string &&>);

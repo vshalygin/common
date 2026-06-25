@@ -55,21 +55,13 @@ namespace vshalygin::cl::internal {
         decltype(auto) get_val()
         {
             assert(m_val);
-            if constexpr(!std::is_reference_v<T>) {
-                return (*m_val);
-            } else {
-                return *m_val;
-            }
+            return m_val->to_underlying();
         }
 
         decltype(auto) get_val() const
         {
             assert(m_val);
-            if constexpr(!std::is_reference_v<T>) {
-                return (*m_val);
-            } else {
-                return *m_val;
-            }
+            return m_val->to_underlying();
         }
 
     private:
@@ -78,7 +70,7 @@ namespace vshalygin::cl::internal {
         std::unique_ptr<type_wrapper<T>> m_val;
         std::optional<std::exception_ptr> m_exception;
 
-        std::unique_ptr<ifuture_callback<remove_c_ref_t<T>>> m_on_success;
+        std::unique_ptr<ifuture_callback<T>> m_on_success;
         std::function<void(std::exception_ptr)> m_on_fail;
 
         mutable std::mutex m_mtx;

@@ -14,7 +14,7 @@ namespace vshalygin::cl::internal {
     public:
         virtual ~ifuture_callback() = default;
 
-        virtual void call(T &&val) = 0;
+        virtual void call(std::remove_reference_t<T> &&val) = 0;
     };
 
     template<typename T, typename Func, typename Enable = void>
@@ -31,7 +31,7 @@ namespace vshalygin::cl::internal {
             : m_func(std::forward<F>(f))
         {}
 
-        void call(T &&val) override
+        void call(std::remove_reference_t<T> &&val) override
         {
             m_func(static_cast<function_arg_t<0, Func>>(val));
         }

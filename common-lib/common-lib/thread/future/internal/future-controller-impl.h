@@ -161,6 +161,7 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::call_success(bool need_notify)
     {
+        //TODO может самопроизовольно разблокироваться
         notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
         std::lock_guard guard(m_mtx);
         assert(m_val);

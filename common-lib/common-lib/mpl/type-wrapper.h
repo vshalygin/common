@@ -42,6 +42,7 @@ namespace vshalygin::cl {
             return m_val;
         }
 
+        //TODO rename to get
         const T &to_underlying() const
         {
             return m_val;

@@ -15,7 +15,7 @@ namespace vshalygin::cl {
     template<typename T, typename ThreadPool>
     class promise;
 
-    template<typename T, typename ThreadPool = thread_pool>
+    template<typename T, typename ThreadPool = thread_pool>//TODO удалить дефолты
     using future_data = internal::future_data<T, ThreadPool>;
 
     template<typename T, typename ThreadPool = thread_pool>
