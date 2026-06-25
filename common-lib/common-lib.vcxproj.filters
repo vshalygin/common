@@ -52,14 +52,17 @@
     <Filter Include="thread">
       <UniqueIdentifier>{015dead5-f7f8-4abd-a49c-9caa4ae02eb2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="thread\internal">
-      <UniqueIdentifier>{0a1d48b5-1957-4fd1-adef-47b9e7ed896c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="thread\future">
       <UniqueIdentifier>{f14d47dd-2982-485f-a080-b757aad77d96}</UniqueIdentifier>
     </Filter>
     <Filter Include="thread\future\internal">
       <UniqueIdentifier>{9873c404-4484-4955-9aeb-ba0ea4fb7bde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread\thread-pool">
+      <UniqueIdentifier>{0c642025-84c4-4795-b55b-7d0adc57580e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread\thread-pool\internal">
+      <UniqueIdentifier>{833fd6c3-5a65-4efe-9760-35dc5be2618a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -120,15 +123,6 @@
     <ClInclude Include="common-lib\mpl\internal\is-std-function.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\strand.h">
-      <Filter>thread</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\thread-pool.h">
-      <Filter>thread</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\thread-pool-task.h">
-      <Filter>thread</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\make-function-type.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
@@ -137,9 +131,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\is-function-pointer.h">
       <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\internal\thread-pool-task-impl.h">
-      <Filter>thread\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\remove-c-ref.h">
       <Filter>mpl\internal</Filter>
@@ -186,6 +177,18 @@
     <ClInclude Include="common-lib\thread\future\internal\promise-impl.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread\thread-pool\strand.h">
+      <Filter>thread\thread-pool</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\thread-pool\thread-pool.h">
+      <Filter>thread\thread-pool</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\thread-pool\thread-pool-task.h">
+      <Filter>thread\thread-pool</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\thread-pool\internal\thread-pool-task-impl.h">
+      <Filter>thread\thread-pool\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\buffer\buffer.cpp">
@@ -212,11 +215,11 @@
     <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp">
       <Filter>synchronization\spinlock</Filter>
     </ClCompile>
-    <ClCompile Include="common-lib\thread\strand.cpp">
-      <Filter>thread</Filter>
+    <ClCompile Include="common-lib\thread\thread-pool\strand.cpp">
+      <Filter>thread\thread-pool</Filter>
     </ClCompile>
-    <ClCompile Include="common-lib\thread\thread-pool.cpp">
-      <Filter>thread</Filter>
+    <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp">
+      <Filter>thread\thread-pool</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

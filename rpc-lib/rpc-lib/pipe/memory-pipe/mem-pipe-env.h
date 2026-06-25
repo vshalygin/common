@@ -1,6 +1,6 @@
 #pragma once
 #include "../ipipe-env.h"
-#include <common-lib/thread/thread-pool.h>
+#include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <queue>
 #include <mutex>

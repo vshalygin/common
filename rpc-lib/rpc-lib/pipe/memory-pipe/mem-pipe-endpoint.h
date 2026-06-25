@@ -2,7 +2,7 @@
 #include "../ipipe-endpoint.h"
 #include "mem-buffer.h"
 
-#include <common-lib/thread/thread-pool.h>
+#include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <memory>
 

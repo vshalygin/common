@@ -1,8 +1,8 @@
 #pragma once
 #include "../pipe-op-res.h"
 
-#include <common-lib/thread/thread-pool.h>
-#include <common-lib/thread/strand.h>
+#include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread-pool/strand.h>
 #include <common-lib/utils/buffer/buffer.h>
 
 #include <memory>

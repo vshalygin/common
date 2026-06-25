@@ -1,7 +1,7 @@
 #pragma once
 #include <rpc-lib/pipe/pipe-op-res.h>
 #include <common-lib/utils/buffer/buffer.h>
-#include <common-lib/thread/thread-pool-task.h>
+#include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #include <functional>
 #include <atomic>
