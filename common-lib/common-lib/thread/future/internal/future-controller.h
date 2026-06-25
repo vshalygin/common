@@ -40,9 +40,12 @@ namespace vshalygin::cl::internal {
         void set_value(T &&value);
         void set_exception(const std::exception_ptr &e);
 
-        future_data<T, ThreadPool> get() const;
+        future_data<const T, ThreadPool> get() const;
+        future_data<T, ThreadPool> get();
 
     private:
+        void wait_data_ready_or_throw() const;
+
         void post_success(bool need_notify);
         void post_fail(bool need_notify);
 
@@ -52,13 +55,21 @@ namespace vshalygin::cl::internal {
         decltype(auto) get_val()
         {
             assert(m_val);
-            return *m_val;
+            if constexpr(!std::is_reference_v<T>) {
+                return (*m_val);
+            } else {
+                return *m_val;
+            }
         }
 
         decltype(auto) get_val() const
         {
             assert(m_val);
-            return *m_val;
+            if constexpr(!std::is_reference_v<T>) {
+                return (*m_val);
+            } else {
+                return *m_val;
+            }
         }
 
     private:

@@ -118,18 +118,28 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    future_data<T, ThreadPool>
+    future_data<const T, ThreadPool>
         future_controller<T, ThreadPool>::get() const
+    {
+        wait_data_ready_or_throw();
+        return future_data<T, ThreadPool>(this->shared_from_this());
+    }
+
+    template<typename T, typename ThreadPool>
+    future_data<T, ThreadPool> future_controller<T, ThreadPool>::get()
+    {
+        wait_data_ready_or_throw();
+        return future_data<T, ThreadPool>(this->shared_from_this());
+    }
+
+    template<typename T, typename ThreadPool>
+    void future_controller<T, ThreadPool>::wait_data_ready_or_throw() const
     {
         std::unique_lock lock(m_mtx);
         m_cv.wait(lock, [this]() { return m_val || m_exception; });
         if(m_exception) {
             std::rethrow_exception(*m_exception);
         }
-        lock.unlock();
-
-        return future_data<T, ThreadPool>(
-            const_cast<this_type *>(this)->shared_from_this()); //TODO хорошо ли это?
     }
 
     template<typename T, typename ThreadPool>

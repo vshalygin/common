@@ -3,48 +3,47 @@
 #include <common-lib/mpl/type-traits.h>
 
 namespace vshalygin::cl::internal {
-    //TODO check
+    template<typename T, typename ThreadPool>
+    future_data<T, ThreadPool>::future_data(std::shared_ptr<controller_t> controller)
+        : m_controller(std::move(controller))
+    {}
+
     template<typename T, typename ThreadPool>
     template<typename Func>
     void future_data<T, ThreadPool>::apply(Func &&func) const
     {
-        static_assert(std::is_same_v<function_ret_t<Func>, void>);
-        static_assert(function_arg_count_v<Func> == 1);
-        static_assert(is_static_castable<const T &, function_arg_t<0, Func>>,
+        static_assert(std::is_same_v<function_ret_t<Func>, void>,
+                      "function return type is not void");
+        static_assert(function_arg_count_v<Func> == 1,
+                      "function must have 1 parameter");
+
+        using arg_t = function_arg_t<0, Func>;
+
+        static_assert(std::is_reference_v<decltype(m_controller->get_val())>);
+        static_assert(is_static_castable_v<decltype(m_controller->get_val()), arg_t>,
                       "unable to convert stored type to function parameter");
 
         std::lock_guard guard(m_controller->m_mtx);
-        if constexpr(std::is_reference_v<arg>) {
-            func(std::forward<arg>(m_controller->get_val()));
-        } else {
-            //copy value for handler non-reference parameter
-            func(m_controller->get_val());
-        }
+        func(static_cast<arg_t>(m_controller->get_val()));
     }
 
-    //TODO check
     template<typename T, typename ThreadPool>
     template<typename Func>
     void future_data<T, ThreadPool>::apply(Func &&func)
     {
-        static_assert(std::is_same_v<function_ret_t<Func>, void>);
-        static_assert(function_arg_count_v<Func> == 1);
+        static_assert(std::is_same_v<function_ret_t<Func>, void>,
+                      "function return type is not void");
+        static_assert(function_arg_count_v<Func> == 1,
+                      "function must have 1 parameter");
 
-        using arg = function_arg_t<0, Func>;
+        using arg_t = function_arg_t<0, Func>;
 
-        static_assert(!(!std::is_reference_v<arg> &&
-                      std::is_volatile_v<std::remove_reference_t<arg>>),
-                      "volatile non-reference value parameter is not allowed");
-        static_assert(std::is_same_v<remove_c_ref_t<arg>,
-                      remove_c_ref_t<T>>);
+        static_assert(std::is_reference_v<decltype(m_controller->get_val())>);
+        static_assert(is_static_castable_v<decltype(m_controller->get_val()), arg_t>,
+                      "unable to convert stored type to function parameter");
 
 
         std::lock_guard guard(m_controller->m_mtx);
-        if constexpr(std::is_reference_v<arg>) {
-            func(std::forward<arg>(m_controller->get_val()));
-        } else {
-            //copy value for handler parameter
-            func(m_controller->get_val());
-        }
+        func(static_cast<arg_t>(m_controller->get_val()));
     }
 }

@@ -10,9 +10,9 @@ namespace vshalygin::cl::internal {
     {
         friend class future_controller<T, ThreadPool>;
 
-        explicit future_data(std::shared_ptr<future_controller<T, ThreadPool>> controller)
-            : m_controller(std::move(controller))
-        {}
+        using controller_t = future_controller<T, ThreadPool>;
+
+        explicit future_data(std::shared_ptr<controller_t> controller);
 
     public:
         future_data(const future_data &) = delete;
@@ -28,6 +28,6 @@ namespace vshalygin::cl::internal {
         void apply(Func &&func);
 
     private:
-        std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
+        std::shared_ptr<controller_t> m_controller;
     };
 }

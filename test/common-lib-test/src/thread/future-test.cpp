@@ -98,22 +98,22 @@ TEST_F(Future, Init)
     promise promise(&m_pool, []() -> int { return 1; });
     promise.resolve();
     auto future = promise.get_future();
-    auto data = future.get_data();
+    auto data = future.get();
     data.apply([](int i) { ASSERT_EQ(i, 1); });
 }
 
-//TEST_F(Future, ExecutesSuccessCallback)
-//{
-//    int i = 0;
-//    promise promise(&m_pool, []() { return 2; });
-//    promise.resolve();
-//    auto future = promise.get_future();
-//    future.then([&i](int &&ii) { i = ii; return 0; })
-//          .get_data();
-//
-//    ASSERT_EQ(i, 2);
-//}
-//
+TEST_F(Future, ExecutesSuccessCallback)
+{
+    int i = 0;
+    promise promise(&m_pool, []() { return 2; });
+    promise.resolve();
+    auto future = promise.get_future();
+    future.then([&i](int &&ii) { i = ii; return 0; })
+          .get();
+
+    ASSERT_EQ(i, 2);
+}
+
 //TEST_F(Future, PromiseIsValidAfterCreation)
 //{
 //    promise sut(&m_pool, []() { return 1; });
