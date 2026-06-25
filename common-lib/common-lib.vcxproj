@@ -33,8 +33,16 @@
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread\future.h" />
+    <ClInclude Include="common-lib\thread\internal\future-callback.h" />
+    <ClInclude Include="common-lib\thread\internal\future-controller-impl.h" />
     <ClInclude Include="common-lib\thread\internal\future-controller.h" />
+    <ClInclude Include="common-lib\thread\internal\future-data-impl.h" />
+    <ClInclude Include="common-lib\thread\internal\future-data.h" />
     <ClInclude Include="common-lib\thread\internal\future-impl.h" />
+    <ClInclude Include="common-lib\thread\internal\future.h" />
+    <ClInclude Include="common-lib\thread\internal\promise-function.h" />
+    <ClInclude Include="common-lib\thread\internal\promise-impl.h" />
+    <ClInclude Include="common-lib\thread\internal\promise.h" />
     <ClInclude Include="common-lib\thread\internal\thread-pool-task-impl.h" />
     <ClInclude Include="common-lib\thread\strand.h" />
     <ClInclude Include="common-lib\thread\thread-pool-task.h" />

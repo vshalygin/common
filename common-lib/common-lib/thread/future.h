@@ -1,5 +1,7 @@
 #pragma once
 #include "internal/future-impl.h"
+#include "internal/promise-impl.h"
+#include "internal/future-data-impl.h"
 
 #include <functional>
 #include <condition_variable>
@@ -18,11 +20,11 @@ namespace vshalygin::cl {
 
     template<typename T, typename ThreadPool = thread_pool>
     class future final
-        : private internal::future_impl<T, ThreadPool>
+        : private internal::future<T, ThreadPool>
     {
         friend class promise<T, ThreadPool>;
 
-        using base_type = internal::future_impl<T, ThreadPool>;
+        using base_type = internal::future<T, ThreadPool>;
 
         future(base_type &&base)
             : base_type(std::move(base))
@@ -68,9 +70,9 @@ namespace vshalygin::cl {
 
     template<typename T, typename ThreadPool = thread_pool>
     class promise final
-        : private internal::promise_impl<T, ThreadPool>
+        : private internal::promise<T, ThreadPool>
     {
-        using base_type = internal::promise_impl<T, ThreadPool>;
+        using base_type = internal::promise<T, ThreadPool>;
 
     public:
         promise() = default;
