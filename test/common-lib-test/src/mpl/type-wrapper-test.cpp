@@ -5,6 +5,8 @@
 using namespace vshalygin::cl;
 using namespace testing;
 
+//TODO add test на все поддерживаемые варинты
+
 TEST(TypeWrapperValue, MayStoreValue)
 {
     type_wrapper sut(1);

@@ -14,6 +14,7 @@
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
     <ClCompile Include="src\mpl\check-type-test.cpp" />
     <ClCompile Include="src\mpl\function-traits-test.cpp" />
+    <ClCompile Include="src\mpl\is-static-castable-test.cpp" />
     <ClCompile Include="src\mpl\is-std-function-test.cpp" />
     <ClCompile Include="src\mpl\remove-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\remove-member-function-qualifiers-test.cpp" />

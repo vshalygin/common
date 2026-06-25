@@ -10,6 +10,7 @@ namespace {
     };
 }
 
+//TODO add more tests
 static_assert(!is_std_function_v<int>);
 static_assert(!is_std_function_v<void()>);
 static_assert(!is_std_function_v<const functor &>);

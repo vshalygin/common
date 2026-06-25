@@ -16,6 +16,7 @@
     <ClInclude Include="common-lib\mpl\function-traits.h" />
     <ClInclude Include="common-lib\mpl\internal\check-type.h" />
     <ClInclude Include="common-lib\mpl\internal\is-function-pointer.h" />
+    <ClInclude Include="common-lib\mpl\internal\is-static-castable.h" />
     <ClInclude Include="common-lib\mpl\internal\remove-c-ref.h" />
     <ClInclude Include="common-lib\mpl\internal\remove-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\is-std-function.h" />
