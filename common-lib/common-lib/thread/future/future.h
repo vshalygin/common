@@ -38,9 +38,9 @@ namespace vshalygin::cl {
         future(future &&) = default;
         future &operator=(future &&) = default;
 
-        future_data<T, ThreadPool> get_data() const
+        future_data<T, ThreadPool> get() const
         {
-            return base_type::get_data();
+            return base_type::get();
         }
 
         template<typename Func>

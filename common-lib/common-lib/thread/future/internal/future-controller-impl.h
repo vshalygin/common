@@ -47,7 +47,8 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("success handler already set");
         }
 
-        m_on_success = std::make_unique<future_callback<Func>>(std::forward<Func>(func));
+        m_on_success = std::make_unique<future_callback<T, Func>>
+                                           (std::forward<Func>(func));
         if(m_val) {
             post_success(false);
         }
@@ -118,7 +119,7 @@ namespace vshalygin::cl::internal {
 
     template<typename T, typename ThreadPool>
     future_data<T, ThreadPool>
-        future_controller<T, ThreadPool>::get_data() const
+        future_controller<T, ThreadPool>::get() const
     {
         std::unique_lock lock(m_mtx);
         m_cv.wait(lock, [this]() { return m_val || m_exception; });
@@ -127,7 +128,8 @@ namespace vshalygin::cl::internal {
         }
         lock.unlock();
 
-        return future_data<T, ThreadPool>(const_cast<this_type *>(this)->shared_from_this());
+        return future_data<T, ThreadPool>(
+            const_cast<this_type *>(this)->shared_from_this()); //TODO хорошо ли это?
     }
 
     template<typename T, typename ThreadPool>

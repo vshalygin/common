@@ -9,9 +9,6 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     class future
     {
-        static_assert(!(std::is_volatile_v<T> && !std::is_reference_v<T>),
-                      "volatile non-reference type is not allowed");
-
         friend class promise<T, ThreadPool>;
 
         explicit future(
@@ -26,7 +23,7 @@ namespace vshalygin::cl::internal {
         future(future &&) = default;
         future &operator=(future &&) = default;
 
-        future_data<T, ThreadPool> get_data() const;
+        future_data<T, ThreadPool> get() const;
 
         template<typename Func>
         future<function_ret_t<Func>, ThreadPool> then(Func &&task);

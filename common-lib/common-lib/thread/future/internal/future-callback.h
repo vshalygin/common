@@ -5,7 +5,7 @@
 #include <type_traits>
 
 namespace vshalygin::cl::internal {
-    template<typename Arg, typename Enable = void>
+    template<typename T, typename Enable = void>
     class ifuture_callback;
 
     template<typename T>
@@ -22,7 +22,7 @@ namespace vshalygin::cl::internal {
 
     template<typename T, typename Func>
     class future_callback<T, Func,
-        std::enable_if_t<!std::is_same_v<T, void>>>
+                std::enable_if_t<!std::is_same_v<T, void>>>
         : public ifuture_callback<T>
     {
     public:

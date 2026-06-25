@@ -13,13 +13,13 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    future_data<T, ThreadPool> future<T, ThreadPool>::get_data() const
+    future_data<T, ThreadPool> future<T, ThreadPool>::get() const
     {
         if(!m_controller) {
             throw std::logic_error("future is invalid");
         }
 
-        return m_controller->get_data();
+        return m_controller->get();
     }
 
     template<typename T, typename ThreadPool>
