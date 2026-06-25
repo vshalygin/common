@@ -18,13 +18,14 @@ namespace vshalygin::cl::internal {
                       "function must have 1 parameter");
 
         using arg_t = function_arg_t<0, Func>;
+        using val_t = std::tuple_element_t<1, decltype(m_controller->get_val())>;
 
-        static_assert(std::is_reference_v<decltype(m_controller->get_val())>);
-        static_assert(is_static_castable_v<decltype(m_controller->get_val()), arg_t>,
+        static_assert(std::is_reference_v<val_t>);
+        static_assert(is_static_castable_v<val_t, arg_t>,
                       "unable to convert stored type to function parameter");
 
-        std::lock_guard guard(m_controller->m_mtx);
-        func(static_cast<arg_t>(m_controller->get_val()));
+        auto [guard, val] = m_controller->get_val();
+        func(static_cast<arg_t>(val));
     }
 
     template<typename T, typename ThreadPool>
@@ -37,13 +38,14 @@ namespace vshalygin::cl::internal {
                       "function must have 1 parameter");
 
         using arg_t = function_arg_t<0, Func>;
+        using val_t = std::tuple_element_t<1, decltype(m_controller->get_val())>;
 
-        static_assert(std::is_reference_v<decltype(m_controller->get_val())>);
-        static_assert(is_static_castable_v<decltype(m_controller->get_val()), arg_t>,
+        static_assert(std::is_reference_v<val_t>);
+        static_assert(is_static_castable_v<val_t, arg_t>,
                       "unable to convert stored type to function parameter");
 
 
-        std::lock_guard guard(m_controller->m_mtx);
-        func(static_cast<arg_t>(m_controller->get_val()));
+        auto [guard, val] = m_controller->get_val();
+        func(static_cast<arg_t>(val));
     }
 }

@@ -6,7 +6,7 @@ namespace vshalygin::cl::internal {
     class future_controller<T, ThreadPool>::notify_all_on_destruct
     {
     public:
-        explicit notify_all_on_destruct(std::condition_variable *cv)
+        explicit notify_all_on_destruct(std::condition_variable_any *cv)
             : m_cv(cv)
         {}
 
@@ -21,7 +21,7 @@ namespace vshalygin::cl::internal {
         }
 
     private:
-        std::condition_variable *m_cv = nullptr;
+        std::condition_variable_any *m_cv = nullptr;
     };
 
     template<typename T, typename ThreadPool>
@@ -45,6 +45,35 @@ namespace vshalygin::cl::internal {
     };
 
     template<typename T, typename ThreadPool>
+    class future_controller<T, ThreadPool>::two_mutex_lock
+    {
+    public:
+        two_mutex_lock(std::mutex &mtx1, std::mutex &mtx2)
+            : m_lock1(mtx1)
+            , m_lock2(mtx2)
+        {}
+
+        two_mutex_lock(const two_mutex_lock &) = delete;
+        two_mutex_lock &operator=(const two_mutex_lock &) = delete;
+
+        void lock()
+        {
+            m_lock1.lock();
+            m_lock2.lock();
+        }
+
+        void unlock()
+        {
+            m_lock2.unlock();
+            m_lock1.unlock();
+        }
+
+    private:
+        std::unique_lock<std::mutex> m_lock1;
+        std::unique_lock<std::mutex> m_lock2;
+    };
+
+    template<typename T, typename ThreadPool>
     future_controller<T, ThreadPool>::future_controller(ThreadPool *thread_pool)
         : m_thread_pool(thread_pool)
     {
@@ -62,13 +91,15 @@ namespace vshalygin::cl::internal {
         static_assert(is_static_castable_v<T &&, function_arg_t<0, Func>>,
                       "value cannot be converted to success callback parameter");
 
-        std::lock_guard guard(m_mtx);
+        std::lock_guard guard(m_on_success_mtx);
         if(m_on_success) {
             throw std::logic_error("success handler already set");
         }
 
         m_on_success = std::make_unique<future_callback<T, Func>>
-                                           (std::forward<Func>(func));
+                                              (std::forward<Func>(func));
+
+        std::lock_guard g(m_val_mtx);
         if(m_val) {
             post_success(false);
         }
@@ -78,12 +109,14 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::set_on_fail(
         std::function<void(std::exception_ptr)> &&func)
     {
-        std::lock_guard guard(m_mtx);
+        std::lock_guard guard(m_on_fail_mtx);
         if(m_on_fail) {
             throw std::logic_error("fail handler already set");
         }
 
         m_on_fail = std::move(func);
+
+        std::lock_guard g(m_exception_mtx);
         if(m_exception) {
             post_fail(false);
         }
@@ -93,9 +126,11 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::set_on_fail_if_not_set(
         std::function<void(std::exception_ptr)> &&func)
     {
-        std::lock_guard guard(m_mtx);
+        std::lock_guard guard(m_on_fail_mtx);
         if(!m_on_fail) {
             m_on_fail = std::move(func);
+
+            std::lock_guard g(m_exception_mtx);
             if(m_exception) {
                 post_fail(false);
             }
@@ -105,18 +140,27 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::set_value(T &&value)
     {
-        std::unique_lock guard(m_mtx);
-        if(m_val || m_exception) {
-            throw std::logic_error("value or exception already set");
+        bool need_notify = false;
+
+        {
+            std::lock_guard g1(m_on_success_mtx);
+            std::lock_guard g2(m_val_mtx);
+            std::lock_guard g3(m_exception_mtx);
+            if(m_val || m_exception) {
+                throw std::logic_error("value or exception already set");
+            }
+
+            m_val = std::make_unique<type_wrapper<T>>(std::forward<T>(value));
+
+            if(m_on_success) {
+                post_success(true);
+            } else {
+                m_is_value_ready = true;
+                need_notify = true;
+            }
         }
 
-        m_val = std::make_unique<type_wrapper<T>>(std::forward<T>(value));
-
-        if(m_on_success) {
-            post_success(true);
-        } else {
-            m_is_set = true;
-            guard.unlock();
+        if(need_notify) {
             m_cv.notify_all();
         }
     }
@@ -124,17 +168,26 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::set_exception(const std::exception_ptr &e)
     {
-        std::unique_lock guard(m_mtx);
-        if(m_val || m_exception) {
-            throw std::logic_error("value or exeption already set");
+        bool need_notify = false;
+
+        {
+            std::lock_guard g1(m_on_fail_mtx);
+            std::lock_guard g2(m_val_mtx);
+            std::lock_guard g3(m_exception_mtx);
+            if(m_val || m_exception) {
+                throw std::logic_error("value or exeption already set");
+            }
+
+            m_exception = e;
+            if(m_on_fail) {
+                post_fail(true);
+            } else {
+                m_is_exception_ready = true;
+                need_notify = true;
+            }
         }
 
-        m_exception = e;
-        if(m_on_fail) {
-            post_fail(true);
-        } else {
-            m_is_set = true;
-            guard.unlock();
+        if(need_notify) {
             m_cv.notify_all();
         }
     }
@@ -157,8 +210,8 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::wait_data_ready_or_throw() const
     {
-        std::unique_lock lock(m_mtx);
-        m_cv.wait(lock, [this]() { return m_is_set; });
+        two_mutex_lock lock(m_val_mtx, m_exception_mtx);
+        m_cv.wait(lock, [this]() { return m_is_value_ready || m_is_exception_ready; });
         if(m_exception) {
             std::rethrow_exception(*m_exception);
         }
@@ -184,9 +237,11 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::call_success(bool need_notify)
     {
         notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
-        std::lock_guard guard(m_mtx);
-        set_true_on_destruct s(m_is_set);
+        std::lock_guard guard(m_val_mtx);
+        set_true_on_destruct s(m_is_value_ready);
 
+        //m_on_success here is defined and will not change,
+        //no need m_on_success_mtx block
         assert(m_val);
         m_on_success->call(std::move(m_val->to_underlying()));
     }
@@ -195,9 +250,11 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::call_fail(bool need_notify)
     {
         notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
-        std::lock_guard guard(m_mtx);
-        set_true_on_destruct s(m_is_set);
+        std::lock_guard guard(m_exception_mtx);
+        set_true_on_destruct s(m_is_exception_ready);
 
+        //m_exception here is defined and will not change,
+        //no need m_on_fail_mtx block
         assert(m_exception);
         m_on_fail(*m_exception);
     }

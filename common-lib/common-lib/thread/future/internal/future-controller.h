@@ -21,10 +21,9 @@ namespace vshalygin::cl::internal {
     {
         using this_type = future_controller<T, ThreadPool>;
 
-        friend class future_data<T, ThreadPool>;
-
         class notify_all_on_destruct;
         class set_true_on_destruct;
+        class two_mutex_lock;
 
     public:
         explicit future_controller(ThreadPool *thread_pool);
@@ -44,6 +43,24 @@ namespace vshalygin::cl::internal {
         future_data<const T, ThreadPool> get() const;
         future_data<T, ThreadPool> get();
 
+        auto get_val()
+        {
+            using val_t = decltype(m_val->to_underlying());
+            using tuple_t = std::tuple<std::unique_lock<std::mutex>, val_t>;
+
+            assert(m_val);
+            return tuple_t{ std::unique_lock{ m_val_mtx }, m_val->to_underlying() };
+        }
+
+        auto get_val() const
+        {
+            using val_t = decltype(m_val->to_underlying());
+            using tuple_t = std::tuple<std::unique_lock<std::mutex>, val_t>;
+
+            assert(m_val);
+            return tuple_t{ std::unique_lock{ m_val_mtx }, m_val->to_underlying() };
+        }
+
     private:
         void wait_data_ready_or_throw() const;
 
@@ -53,29 +70,23 @@ namespace vshalygin::cl::internal {
         void call_success(bool need_notify);
         void call_fail(bool need_notify);
 
-        decltype(auto) get_val()
-        {
-            assert(m_val);
-            return m_val->to_underlying();
-        }
-
-        decltype(auto) get_val() const
-        {
-            assert(m_val);
-            return m_val->to_underlying();
-        }
-
     private:
         ThreadPool *m_thread_pool;
 
+        mutable std::mutex m_val_mtx;
         std::unique_ptr<type_wrapper<T>> m_val;
-        std::optional<std::exception_ptr> m_exception;
+        bool m_is_value_ready = false;
 
+        mutable std::mutex m_exception_mtx;
+        std::optional<std::exception_ptr> m_exception;
+        bool m_is_exception_ready = false;
+
+        mutable std::mutex m_on_success_mtx;
         std::unique_ptr<ifuture_callback<T>> m_on_success;
+
+        mutable std::mutex m_on_fail_mtx;
         std::function<void(std::exception_ptr)> m_on_fail;
 
-        mutable std::mutex m_mtx;
-        mutable std::condition_variable m_cv;
-        bool m_is_set = false;
+        mutable std::condition_variable_any m_cv;
     };
 }
