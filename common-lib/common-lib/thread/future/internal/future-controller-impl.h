@@ -25,6 +25,26 @@ namespace vshalygin::cl::internal {
     };
 
     template<typename T, typename ThreadPool>
+    class future_controller<T, ThreadPool>::set_true_on_destruct
+    {
+    public:
+        explicit set_true_on_destruct(bool &val)
+            : m_val(val)
+        {}
+
+        set_true_on_destruct(const set_true_on_destruct &) = delete;
+        set_true_on_destruct &operator=(const set_true_on_destruct &) = delete;
+
+        ~set_true_on_destruct()
+        {
+            m_val = true;
+        }
+
+    private:
+        bool &m_val;
+    };
+
+    template<typename T, typename ThreadPool>
     future_controller<T, ThreadPool>::future_controller(ThreadPool *thread_pool)
         : m_thread_pool(thread_pool)
     {
@@ -95,6 +115,7 @@ namespace vshalygin::cl::internal {
         if(m_on_success) {
             post_success(true);
         } else {
+            m_is_set = true;
             guard.unlock();
             m_cv.notify_all();
         }
@@ -112,6 +133,7 @@ namespace vshalygin::cl::internal {
         if(m_on_fail) {
             post_fail(true);
         } else {
+            m_is_set = true;
             guard.unlock();
             m_cv.notify_all();
         }
@@ -136,7 +158,7 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::wait_data_ready_or_throw() const
     {
         std::unique_lock lock(m_mtx);
-        m_cv.wait(lock, [this]() { return m_val || m_exception; });
+        m_cv.wait(lock, [this]() { return m_is_set; });
         if(m_exception) {
             std::rethrow_exception(*m_exception);
         }
@@ -161,9 +183,10 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::call_success(bool need_notify)
     {
-        //TODO может самопроизовольно разблокироваться
         notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
         std::lock_guard guard(m_mtx);
+        set_true_on_destruct s(m_is_set);
+
         assert(m_val);
         m_on_success->call(std::move(m_val->to_underlying()));
     }
@@ -173,6 +196,8 @@ namespace vshalygin::cl::internal {
     {
         notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
         std::lock_guard guard(m_mtx);
+        set_true_on_destruct s(m_is_set);
+
         assert(m_exception);
         m_on_fail(*m_exception);
     }

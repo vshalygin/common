@@ -24,6 +24,7 @@ namespace vshalygin::cl::internal {
         friend class future_data<T, ThreadPool>;
 
         class notify_all_on_destruct;
+        class set_true_on_destruct;
 
     public:
         explicit future_controller(ThreadPool *thread_pool);
@@ -75,5 +76,6 @@ namespace vshalygin::cl::internal {
 
         mutable std::mutex m_mtx;
         mutable std::condition_variable m_cv;
+        bool m_is_set = false;
     };
 }
