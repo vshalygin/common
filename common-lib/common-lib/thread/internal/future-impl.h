@@ -16,7 +16,7 @@ namespace vshalygin::cl::internal {
         : public ipromise_function<function_ret_t<Func>>
     {
     public:
-        template<typename F> //TODO check convertible static
+        template<typename F>
         explicit promise_function(F &&func)
             : m_func(std::forward<F>(func))
         {
@@ -41,6 +41,9 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     class future_impl
     {
+        static_assert(!(std::is_volatile_v<T> && !std::is_reference_v<T>),
+                      "volatile non-reference type is not allowed");
+
         friend class promise_impl<T, ThreadPool>;
 
         explicit future_impl(
@@ -74,6 +77,9 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     class promise_impl
     {
+        static_assert(!(std::is_volatile_v<T> && !std::is_reference_v<T>),
+                      "volatile non-reference type is not allowed");
+
         template<typename U, typename TP>
         friend class promise_impl;
 
