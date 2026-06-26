@@ -73,6 +73,9 @@
     <ClCompile Include="src\utils\swap-first-two-tuple-elements-test.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\merge-tuples-test.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

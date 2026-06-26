@@ -204,6 +204,12 @@
     <ClInclude Include="common-lib\utils\internal\swap-first-two-tuple-elements.h">
       <Filter>utils\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\utils\internal\make-tuple-index-sequense.h">
+      <Filter>utils\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\internal\merge-tuples.h">
+      <Filter>utils\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\buffer\buffer.cpp">
