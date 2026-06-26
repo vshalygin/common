@@ -12,10 +12,12 @@ namespace vshalygin::cl::internal {
                                Tuple2 &&t2,
                                std::index_sequence<I2...>)
     {
-        using res_tuple = std::tuple<std::tuple_element_t<I1, remove_type_qualifiers_t<Tuple1>>...,
-                                     std::tuple_element_t<I2, remove_type_qualifiers_t<Tuple2>>...>;
-        return res_tuple{ std::get<I1>(std::forward<Tuple1>(t1))...,
-                          std::get<I2>(std::forward<Tuple2>(t2))... };
+        using T1 = remove_type_qualifiers_t<Tuple1>;
+        using T2 = remove_type_qualifiers_t<Tuple2>;
+        using res_t = std::tuple<std::tuple_element_t<I1, T1>...,
+                                 std::tuple_element_t<I2, T2>...>;
+        return res_t{ std::get<I1>(std::forward<Tuple1>(t1))...,
+                      std::get<I2>(std::forward<Tuple2>(t2))... };
     }
 
     template<typename Tuple1, typename Tuple2>

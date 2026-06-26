@@ -4,7 +4,7 @@
 
 namespace vshalygin::cl {
     template<typename T, typename Enable = void>
-    class type_wrapper
+    class type_wrapper final
     {
     public:
         explicit type_wrapper(const T &val)

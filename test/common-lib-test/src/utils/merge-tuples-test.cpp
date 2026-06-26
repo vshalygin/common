@@ -72,3 +72,17 @@ TEST(MergeTuples, ValidOnMergingOneTuple)
 
     EXPECT_EQ(std::get<0>(r), 6);
 }
+
+TEST(MergeTuples, MergesReferenceTypeValues)
+{
+    int i = 10;
+    int ii = 20;
+    std::tuple<int &> t1{ i };
+    std::tuple<int &> t2{ ii };
+
+    auto r = merge_tuples(std::move(t1), t2);
+
+    i++, ii++;
+    EXPECT_EQ(std::get<0>(r), 11);
+    EXPECT_EQ(std::get<1>(r), 21);
+}

@@ -5,6 +5,7 @@
 #include "internal/check-type.h"
 #include "internal/is-lvalue-static-castable.h"
 #include "internal/is-lockable.h"
+#include "internal/tuple-size.h"
 
 #include <type_traits>
 
@@ -20,6 +21,10 @@ namespace vshalygin::cl {
     template<typename T>
     inline constexpr bool is_std_tuple_v =
         internal::is_std_tuple_v<T>;
+
+    template<typename Tuple>
+    inline constexpr size_t tuple_size_v =
+        internal::tuple_size_v<Tuple>;
 
     template<typename T>
     inline constexpr bool is_lockable_v =

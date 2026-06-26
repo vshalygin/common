@@ -1,6 +1,7 @@
 #pragma once
 #include "internal/swap-first-two-tuple-elements.h"
 #include "internal/merge-tuples.h"
+#include "internal/extract-first-tuple-element.h"
 
 namespace vshalygin::cl {
     template<typename Tuple>
@@ -13,5 +14,11 @@ namespace vshalygin::cl {
     auto merge_tuples(Tuples&&...tuples)
     {
         return internal::merge_tuples(std::forward<Tuples>(tuples)...);
+    }
+
+    template<typename Tuple>
+    auto extract_first_tuple_element(Tuple &&tuple)
+    {
+        return internal::extract_first_tuple_element(std::forward<Tuple>(tuple));
     }
 }
