@@ -30,6 +30,7 @@
     <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer\buffer-test.cpp" />
+    <ClCompile Include="src\utils\swap-first-two-tuple-elements-test.cpp" />
     <ClCompile Include="src\utils\type-wrapper-test.cpp" />
   </ItemGroup>
   <ItemGroup>

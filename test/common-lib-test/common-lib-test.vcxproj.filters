@@ -70,6 +70,9 @@
     <ClCompile Include="src\mpl\is-std-tuple-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\swap-first-two-tuple-elements-test.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
