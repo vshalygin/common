@@ -32,6 +32,8 @@ TEST(SwapFirstTwoTupleElements, MoveObjects)
     EXPECT_EQ(std::get<0>(r), 4);
     EXPECT_EQ(*std::get<1>(r), 2);
     EXPECT_EQ(*std::get<2>(r), 8.0);
+    EXPECT_FALSE(std::get<0>(t));
+    EXPECT_FALSE(std::get<2>(t));
 }
 
 TEST(SwapFirstTwoTupleElements, SwapsReferenceTypeValues)

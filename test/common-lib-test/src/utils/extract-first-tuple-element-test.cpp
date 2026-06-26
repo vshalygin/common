@@ -31,6 +31,8 @@ TEST(ExtractFirstTupleElement, MoveObjects)
 
     EXPECT_EQ(*r.first, 9);
     EXPECT_EQ(*std::get<0>(r.second), 13);
+    EXPECT_FALSE(std::get<0>(t));
+    EXPECT_FALSE(std::get<1>(t));
 }
 
 TEST(ExtractFirstTupleElement, WorkOnArgumentWithOneValue)

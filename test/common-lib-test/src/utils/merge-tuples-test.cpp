@@ -46,6 +46,8 @@ TEST(MergeTuples, MoveObjects)
     EXPECT_EQ(*std::get<1>(r), 34);
     EXPECT_EQ(std::get<2>(r), 5);
     EXPECT_EQ(*std::get<3>(r), 60);
+    EXPECT_FALSE(std::get<1>(t1));
+    EXPECT_FALSE(std::get<1>(t2));
 }
 
 TEST(MergeTuples, MayMergeMoreThanTwoObject)
@@ -85,4 +87,26 @@ TEST(MergeTuples, MergesReferenceTypeValues)
     i++, ii++;
     EXPECT_EQ(std::get<0>(r), 11);
     EXPECT_EQ(std::get<1>(r), 21);
+}
+
+TEST(MergeTuples, MergeEmptyTuples)
+{
+    std::tuple<> t1{};
+    std::tuple<> t2{};
+
+    auto r = merge_tuples(std::move(t1), t2);
+
+    static_assert(std::tuple_size_v<decltype(r)> == 0);
+}
+
+TEST(MergeTuples, MergeOneEmptyTuple)
+{
+    std::tuple<> t1{};
+    std::tuple<int> t2{ 6};
+
+    auto r1 = merge_tuples(t1, t2); r1;
+    auto r2 = merge_tuples(t2, t1); r2;
+
+    static_assert(std::is_same_v<decltype(r1), std::tuple<int>>);
+    static_assert(std::is_same_v<decltype(r2), std::tuple<int>>);
 }
