@@ -11,11 +11,11 @@ namespace vshalygin::cl::internal {
                                           std::index_sequence<I...>)
     {
         using T = remove_type_qualifiers_t<Tuple>;
-        using left_t = std::tuple_element_t<0, T>;
+        using left_t = std::tuple<std::tuple_element_t<0, T>>;
         using right_t = std::tuple<std::tuple_element_t<I + 1, T>...>;
         using res_t = std::pair<left_t, right_t>;
 
-        return res_t{ std::get<0>(std::forward<Tuple>(tuple)),
+        return res_t{ left_t { std::get<0>(std::forward<Tuple>(tuple)) } ,
                       right_t{ std::get<I + 1>(std::forward<Tuple>(tuple))...} };
     }
 
