@@ -88,7 +88,7 @@ namespace vshalygin::cl::internal {
                       "success callback return type is not void");
         static_assert(function_arg_count_v<Func> == 1,
                       "success callback arg count is not 1");
-        static_assert(is_static_castable_v<T &&, function_arg_t<0, Func>>,
+        static_assert(is_lvalue_static_castable_v<T &&, function_arg_t<0, Func>>,
                       "value cannot be converted to success callback parameter");
 
         std::lock_guard guard(m_on_success_mtx);
@@ -243,6 +243,7 @@ namespace vshalygin::cl::internal {
         //m_on_success here is defined and will not change,
         //no need m_on_success_mtx block
         assert(m_val);
+        assert(m_on_success);
         m_on_success->call(std::move(m_val->to_underlying()));
     }
 
@@ -256,6 +257,7 @@ namespace vshalygin::cl::internal {
         //m_exception here is defined and will not change,
         //no need m_on_fail_mtx block
         assert(m_exception);
+        assert(m_on_fail);
         m_on_fail(*m_exception);
     }
 }

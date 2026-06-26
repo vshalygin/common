@@ -141,7 +141,7 @@
     <ClInclude Include="common-lib\mpl\internal\check-type.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\is-static-castable.h">
+    <ClInclude Include="common-lib\mpl\internal\is-lvalue-static-castable.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\thread\future\future.h">

@@ -2,7 +2,7 @@
 #include "internal/is-std-function.h"
 #include "internal/is-function-pointer.h"
 #include "internal/check-type.h"
-#include "internal/is-static-castable.h"
+#include "internal/is-lvalue-static-castable.h"
 #include <type_traits>
 
 namespace vshalygin::cl {
@@ -15,8 +15,8 @@ namespace vshalygin::cl {
         internal::is_std_function_v<T>;
 
     template<typename From, typename To>
-    inline constexpr bool is_static_castable_v =
-        internal::is_static_castable_v<From, To>;
+    inline constexpr bool is_lvalue_static_castable_v =
+        internal::is_lvalue_static_castable_v<From, To>;
 
     template<typename T>
     inline constexpr bool is_value_v =
