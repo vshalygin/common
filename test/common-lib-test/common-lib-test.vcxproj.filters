@@ -79,9 +79,6 @@
     <ClCompile Include="src\utils\extract-first-tuple-element-test.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\add-first-tuple-element-test.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\extract-last-tuple-element-test.cpp">
       <Filter>utils</Filter>
     </ClCompile>

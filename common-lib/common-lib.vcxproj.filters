@@ -216,9 +216,6 @@
     <ClInclude Include="common-lib\mpl\internal\tuple-size.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\utils\internal\add-first-tuple-element.h">
-      <Filter>utils\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\utils\internal\extract-last-tuple-element.h">
       <Filter>utils\internal</Filter>
     </ClInclude>
