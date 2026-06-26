@@ -3,7 +3,7 @@
 #include "future-data.h"
 
 #include <common-lib/mpl/type-traits.h>
-#include <common-lib/mpl/type-wrapper.h>
+#include <common-lib/utils/type-wrapper.h>
 
 #include <memory>
 #include <cassert>

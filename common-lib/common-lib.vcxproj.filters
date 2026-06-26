@@ -135,9 +135,6 @@
     <ClInclude Include="common-lib\mpl\internal\remove-c-ref.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\type-wrapper.h">
-      <Filter>mpl</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\check-type.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
@@ -188,6 +185,9 @@
     </ClInclude>
     <ClInclude Include="common-lib\thread\thread-pool\internal\thread-pool-task-impl.h">
       <Filter>thread\thread-pool\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\type-wrapper.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
