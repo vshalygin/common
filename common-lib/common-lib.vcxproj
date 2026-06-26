@@ -56,6 +56,7 @@
     <ClInclude Include="common-lib\utils\buffer\buffer.h" />
     <ClInclude Include="common-lib\utils\internal\add-first-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\extract-first-tuple-element.h" />
+    <ClInclude Include="common-lib\utils\internal\extract-last-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\make-tuple-index-sequense.h" />
     <ClInclude Include="common-lib\utils\internal\merge-tuples.h" />
     <ClInclude Include="common-lib\utils\internal\swap-first-two-tuple-elements.h" />

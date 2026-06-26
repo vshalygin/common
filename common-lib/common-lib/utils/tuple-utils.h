@@ -2,6 +2,7 @@
 #include "internal/swap-first-two-tuple-elements.h"
 #include "internal/merge-tuples.h"
 #include "internal/extract-first-tuple-element.h"
+#include "internal/extract-last-tuple-element.h"
 #include "internal/add-first-tuple-element.h"
 
 namespace vshalygin::cl {
@@ -21,6 +22,12 @@ namespace vshalygin::cl {
     auto extract_first_tuple_element(Tuple &&tuple)
     {
         return internal::extract_first_tuple_element(std::forward<Tuple>(tuple));
+    }
+
+    template<typename Tuple>
+    auto extract_last_tuple_element(Tuple &&tuple)
+    {
+        return internal::extract_last_tuple_element(std::forward<Tuple>(tuple));
     }
 
     template<typename Tuple, typename U>
