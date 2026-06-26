@@ -17,6 +17,7 @@
     <ClCompile Include="src\mpl\is-lockable-test.cpp" />
     <ClCompile Include="src\mpl\is-lvalue-static-castable-test.cpp" />
     <ClCompile Include="src\mpl\is-std-function-test.cpp" />
+    <ClCompile Include="src\mpl\is-std-tuple-test.cpp" />
     <ClCompile Include="src\mpl\remove-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />

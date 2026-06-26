@@ -18,6 +18,7 @@
     <ClInclude Include="common-lib\mpl\internal\is-function-pointer.h" />
     <ClInclude Include="common-lib\mpl\internal\is-lockable.h" />
     <ClInclude Include="common-lib\mpl\internal\is-lvalue-static-castable.h" />
+    <ClInclude Include="common-lib\mpl\internal\is-std-tuple.h" />
     <ClInclude Include="common-lib\mpl\internal\remove-c-ref.h" />
     <ClInclude Include="common-lib\mpl\internal\remove-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\is-std-function.h" />
