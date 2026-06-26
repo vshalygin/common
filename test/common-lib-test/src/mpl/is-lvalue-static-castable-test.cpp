@@ -313,3 +313,6 @@ static_assert(is_lvalue_static_castable_v<const volatile int &&, volatile double
 static_assert(is_lvalue_static_castable_v<const volatile int &&, const volatile double>);
 static_assert(!is_lvalue_static_castable_v<const volatile int &&, const volatile double &>);
 static_assert(is_lvalue_static_castable_v<const volatile int &&, const volatile double &&>);
+
+
+//TODO add tests for std::unique_ptr -> bool

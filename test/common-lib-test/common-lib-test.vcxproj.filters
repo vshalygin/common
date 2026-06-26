@@ -58,11 +58,14 @@
     <ClCompile Include="src\mpl\check-type-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\is-static-castable-test.cpp">
+    <ClCompile Include="src\mpl\is-lvalue-static-castable-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\type-wrapper-test.cpp">
       <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\is-lockable-test.cpp">
+      <Filter>mpl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

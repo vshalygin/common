@@ -3,6 +3,8 @@
 #include "internal/is-function-pointer.h"
 #include "internal/check-type.h"
 #include "internal/is-lvalue-static-castable.h"
+#include "internal/is-lockable.h"
+
 #include <type_traits>
 
 namespace vshalygin::cl {
@@ -13,6 +15,10 @@ namespace vshalygin::cl {
     template<typename T>
     inline constexpr bool is_std_function_v =
         internal::is_std_function_v<T>;
+
+    template<typename T>
+    inline constexpr bool is_lockable_v =
+        internal::is_lockable_v<T>;
 
     template<typename From, typename To>
     inline constexpr bool is_lvalue_static_castable_v =
