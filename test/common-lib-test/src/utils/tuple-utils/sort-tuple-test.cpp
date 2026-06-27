@@ -14,6 +14,15 @@ namespace {
         }
     };
 
+    struct value_comparator2
+    {
+        template<typename T, typename U>
+        static constexpr bool compare()
+        {
+            return T::value > U::value;
+        }
+    };
+
     class test1
     {
     public:
@@ -153,6 +162,7 @@ TEST(SortTuple, BasicTest)
     auto s = sort_tuple<value_comparator>(t); s;
 
     static_assert(std::is_same_v<decltype(s), std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t)>, decltype(s)>);
 }
 
 TEST(SortTuple, SortBasedOnSortCriterionTupleWithAnyTypeQualifiers)
@@ -191,6 +201,21 @@ TEST(SortTuple, SortBasedOnSortCriterionTupleWithAnyTypeQualifiers)
     static_assert(std::is_same_v<decltype(s11), std::tuple<test1, test2, test3>>);
     static_assert(std::is_same_v<decltype(s12), std::tuple<test1, test2, test3>>);
     static_assert(std::is_same_v<decltype(s13), std::tuple<test1, test2, test3>>);
+
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t1)>,
+                  std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t2)>,
+                  std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t3)>,
+                  std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t4)>,
+                  std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t5)>,
+                  std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t6)>,
+                  std::tuple<test1, test2, test3>>);
+
+
 }
 
 TEST(SortTuple, SortTuplesWithAnyElementTypeQualifiers)
@@ -230,6 +255,19 @@ TEST(SortTuple, SortTuplesWithAnyElementTypeQualifiers)
     static_assert(std::is_same_v<decltype(s10), std::tuple<test1 &, const test2 &&, const test3 &>>);
     static_assert(std::is_same_v<decltype(s11), std::tuple<const test1, test2, const test3 &&>>);
     static_assert(std::is_same_v<decltype(s12), std::tuple<const test1, test2, const test3 &&>>);
+
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t1)>,
+                  std::tuple<test1 &, test2, test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t2)>,
+                  std::tuple<test1, test2, test3 &>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t3)>,
+                  std::tuple<const test1, test2, test3 &&>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t4)>,
+                  std::tuple<test1, test2 &, const test3>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t5)>,
+                  std::tuple<test1 &, const test2 &&, const test3 &>>);
+    static_assert(std::is_same_v<sorted_tuple_t<value_comparator, decltype(t6)>,
+                  std::tuple<const test1, test2, const test3 &&>>);
 }
 
 TEST(SortTuple, TestValuesInNewTuple)
@@ -304,4 +342,15 @@ TEST(SortTuple, CopiesObjectsOnlyOnce)
 
     EXPECT_EQ(copy_only_counter::copy_count, 2);
     EXPECT_EQ(copy_only_counter::copy_assign_count, 0);
+}
+
+TEST(SortTuple, CheckVariousComparators)
+{
+    std::tuple<test3, test1, test2> t{};
+
+    auto s1 = sort_tuple<value_comparator>(t);
+    auto s2 = sort_tuple<value_comparator2>(t);
+
+    static_assert(std::is_same_v<decltype(s1), std::tuple<test1, test2, test3>>);
+    static_assert(std::is_same_v<decltype(s2), std::tuple<test3, test2, test1>>);
 }

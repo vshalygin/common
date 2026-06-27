@@ -37,6 +37,9 @@ namespace vshalygin::cl {
         return internal::sort_tuple<Comparator>(std::forward<Tuple>(t));
     }
 
+    template<typename Comparator, typename Tuple>
+    using sorted_tuple_t = decltype(sort_tuple<Comparator>(std::declval<Tuple>()));
+
     template<size_t I, typename Tuple>
     constexpr decltype(auto) forward_tuple_element(Tuple &&tuple) noexcept
     {
