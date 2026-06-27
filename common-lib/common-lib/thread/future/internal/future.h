@@ -1,5 +1,5 @@
 #pragma once
-#include "future-controller-impl.h"
+#include "future-controller-all.h"
 #include "future-data-impl.h"
 
 namespace vshalygin::cl::internal {

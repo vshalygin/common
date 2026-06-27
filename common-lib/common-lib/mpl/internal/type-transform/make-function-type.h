@@ -1,5 +1,5 @@
 #pragma once
-#include "function-traits-impl.h"
+#include "../function-traits/function-traits.h"
 
 namespace vshalygin::cl::internal {
     template<typename Ret, typename Tuple>

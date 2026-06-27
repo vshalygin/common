@@ -1,11 +1,9 @@
 #pragma once
-#include "remove-type-qualifiers.h"
-#include "remove-function-qualifiers.h"
-#include "remove-member-function-qualifiers.h"
-#include "is-std-function.h"
-#include "is-function-pointer.h"
-
-#include "../type-transform.h"
+#include "../type-transform/remove-type-qualifiers.h"
+#include "../type-transform/remove-function-qualifiers.h"
+#include "../type-transform/remove-member-function-qualifiers.h"
+#include "../type-traits/is-std-function.h"
+#include "../type-traits/is-function-pointer.h"
 
 #include <tuple>
 #include <type_traits>

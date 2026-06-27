@@ -5,26 +5,25 @@
 #include <type_traits>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename Enable = void>
-    class ifuture_callback;
-
     template<typename T>
-    class ifuture_callback<T, std::enable_if_t<!std::is_same_v<T, void>>>
+    class ifuture_callback
     {
     public:
         virtual ~ifuture_callback() = default;
 
+        //TODO make T &val
         virtual void call(std::remove_reference_t<T> &&val) = 0;
     };
 
-    template<typename T, typename Func, typename Enable = void>
-    class future_callback;
-
     template<typename T, typename Func>
-    class future_callback<T, Func,
-                std::enable_if_t<!std::is_same_v<T, void>>>
+    class future_callback
         : public ifuture_callback<T>
     {
+        static_assert(std::is_same_v<function_ret_t<Func>, void>,
+                      "internal: future_callback must have void return type");
+        static_assert(function_arg_count_v<Func> == 1,
+                      "internal: future_callback must have one argument");
+
     public:
         template<typename F>
         explicit future_callback(F &&f)

@@ -1,12 +1,12 @@
 #pragma once
-#include "internal/is-std-function.h"
-#include "internal/is-std-tuple.h"
-#include "internal/is-function-pointer.h"
-#include "internal/check-type.h"
-#include "internal/is-lvalue-static-castable.h"
-#include "internal/is-lockable.h"
-#include "internal/tuple-size.h"
-#include "internal/tuple-element.h"
+#include "internal/type-traits/is-std-function.h"
+#include "internal/type-traits/is-std-tuple.h"
+#include "internal/type-traits/is-function-pointer.h"
+#include "internal/type-traits/check-type.h"
+#include "internal/type-traits/is-lvalue-static-castable.h"
+#include "internal/type-traits/is-lockable.h"
+#include "internal/type-traits/tuple-size.h"
+#include "internal/type-traits/tuple-element.h"
 
 #include <type_traits>
 

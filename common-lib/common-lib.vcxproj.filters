@@ -70,6 +70,15 @@
     <Filter Include="utils\internal\buffer">
       <UniqueIdentifier>{057eadbd-91fb-40f6-9326-1f615a78ca64}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mpl\internal\function-traits">
+      <UniqueIdentifier>{3eae1e77-9a7f-4c7f-84dc-3c1f04a1f59b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mpl\internal\type-traits">
+      <UniqueIdentifier>{d3b2cb06-7c3d-40b3-8af6-16d80f23154e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mpl\internal\type-transform">
+      <UniqueIdentifier>{b48c7bc3-6c72-4371-93dd-26b760651a6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
@@ -102,41 +111,11 @@
     <ClInclude Include="common-lib\mpl\function-traits.h">
       <Filter>mpl</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\function-traits-impl.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\remove-member-function-qualifiers.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\mpl\type-transform.h">
       <Filter>mpl</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\type-traits.h">
       <Filter>mpl</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\remove-function-qualifiers.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\is-std-function.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\make-function-type.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\remove-type-qualifiers.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\is-function-pointer.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\remove-c-ref.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\check-type.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\is-lvalue-static-castable.h">
-      <Filter>mpl\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\thread\future\future.h">
       <Filter>thread\future</Filter>
@@ -186,23 +165,23 @@
     <ClInclude Include="common-lib\utils\type-wrapper.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\is-lockable.h">
-      <Filter>mpl\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-callback-all.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\is-std-tuple.h">
-      <Filter>mpl\internal</Filter>
+    <ClInclude Include="common-lib\thread\future\internal\future-callback-void.h">
+      <Filter>thread\future\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\future\internal\future-controller-all.h">
+      <Filter>thread\future\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\future\internal\future-controller-void.h">
+      <Filter>thread\future\internal</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\scoped-lock.h">
+      <Filter>synchronization</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\utils\tuple-utils.h">
       <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\tuple-size.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\remove-const.h">
-      <Filter>mpl\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\tuple-element.h">
-      <Filter>mpl\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-first-tuple-element.h">
       <Filter>utils\internal\tuple-utils</Filter>
@@ -234,8 +213,53 @@
     <ClInclude Include="common-lib\utils\cbuffer-view.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\add-const.h">
-      <Filter>mpl\internal</Filter>
+    <ClInclude Include="common-lib\mpl\internal\function-traits\function-traits.h">
+      <Filter>mpl\internal\function-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\add-const.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\make-function-type.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-const.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-c-ref.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-function-qualifiers.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-member-function-qualifiers.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-type-qualifiers.h">
+      <Filter>mpl\internal\type-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\check-type.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\is-function-pointer.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\is-lockable.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-function.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-tuple.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-element.h">
+      <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-size.h">
+      <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

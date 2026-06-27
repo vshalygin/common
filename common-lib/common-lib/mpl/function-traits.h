@@ -1,6 +1,6 @@
 #pragma once
 #include "type-transform.h"
-#include "internal/function-traits-impl.h"
+#include "internal/function-traits/function-traits.h"
 
 namespace vshalygin::cl {
     //TODO рассмотреть случаи ссылки на функции

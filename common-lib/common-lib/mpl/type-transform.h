@@ -1,13 +1,11 @@
 #pragma once
-#include "internal/remove-member-function-qualifiers.h"
-#include "internal/remove-function-qualifiers.h"
-#include "internal/make-function-type.h"
-#include "internal/remove-function-qualifiers.h"
-#include "internal/remove-c-ref.h"
-#include "internal/remove-const.h"
-#include "internal/add-const.h"
-
-#include <type_traits>
+#include "internal/type-transform/remove-member-function-qualifiers.h"
+#include "internal/type-transform/remove-function-qualifiers.h"
+#include "internal/type-transform/make-function-type.h"
+#include "internal/type-transform/remove-function-qualifiers.h"
+#include "internal/type-transform/remove-c-ref.h"
+#include "internal/type-transform/remove-const.h"
+#include "internal/type-transform/add-const.h"
 
 namespace vshalygin::cl {
     template<typename T>

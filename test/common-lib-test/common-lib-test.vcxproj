@@ -12,17 +12,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
-    <ClCompile Include="src\mpl\add-const-test.cpp" />
-    <ClCompile Include="src\mpl\check-type-test.cpp" />
-    <ClCompile Include="src\mpl\function-traits-test.cpp" />
-    <ClCompile Include="src\mpl\is-lockable-test.cpp" />
-    <ClCompile Include="src\mpl\is-lvalue-static-castable-test.cpp" />
-    <ClCompile Include="src\mpl\is-std-function-test.cpp" />
-    <ClCompile Include="src\mpl\is-std-tuple-test.cpp" />
-    <ClCompile Include="src\mpl\remove-const-test.cpp" />
-    <ClCompile Include="src\mpl\remove-function-qualifiers-test.cpp" />
-    <ClCompile Include="src\mpl\remove-member-function-qualifiers-test.cpp" />
-    <ClCompile Include="src\mpl\tuple-element-test.cpp" />
+    <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp" />
+    <ClCompile Include="src\mpl\type-traits\check-type-test.cpp" />
+    <ClCompile Include="src\mpl\type-traits\is-lockable-test.cpp" />
+    <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp" />
+    <ClCompile Include="src\mpl\type-traits\is-std-function-test.cpp" />
+    <ClCompile Include="src\mpl\type-traits\is-std-tuple-test.cpp" />
+    <ClCompile Include="src\mpl\type-traits\tuple-element-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\add-const-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\remove-function-qualifiers-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\thread\future-test.cpp" />
     <ClCompile Include="src\thread\strand-test.cpp" />
