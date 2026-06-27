@@ -97,6 +97,9 @@
     <ClCompile Include="src\mpl\type-traits\tuple-element-test.cpp">
       <Filter>mpl\type-traits</Filter>
     </ClCompile>
+    <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp">
+      <Filter>synchronization\ordered-lock</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -149,6 +152,9 @@
     </Filter>
     <Filter Include="mpl\type-transform">
       <UniqueIdentifier>{23bf6b4f-c6fb-46fa-bd87-fa9aacf72791}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\ordered-lock">
+      <UniqueIdentifier>{329a462a-3515-42ff-8bfc-4409370494a7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

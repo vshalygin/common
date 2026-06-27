@@ -24,6 +24,7 @@
     <ClCompile Include="src\mpl\type-transform\remove-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />
+    <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp" />
     <ClCompile Include="src\thread\future-test.cpp" />
     <ClCompile Include="src\thread\strand-test.cpp" />
     <ClCompile Include="src\thread\thread-pool-task-test.cpp" />

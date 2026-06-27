@@ -79,6 +79,15 @@
     <Filter Include="mpl\internal\type-transform">
       <UniqueIdentifier>{b48c7bc3-6c72-4371-93dd-26b760651a6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="synchronization\ordered-lockable">
+      <UniqueIdentifier>{283267d2-652a-4529-9e66-0387f852d884}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\internal">
+      <UniqueIdentifier>{b9a4fed4-2ebc-4df4-883e-70b37b46e87c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\internal\ordered-lock">
+      <UniqueIdentifier>{b2e5c32a-1323-4e8e-9ed0-583ea31acc7f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
@@ -177,7 +186,7 @@
     <ClInclude Include="common-lib\thread\future\internal\future-controller-void.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\synchronization\scoped-lock.h">
+    <ClInclude Include="common-lib\synchronization\ordered-lock.h">
       <Filter>synchronization</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\utils\tuple-utils.h">
@@ -260,6 +269,12 @@
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-size.h">
       <Filter>mpl\internal\type-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\has-integral-order-static-member.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
