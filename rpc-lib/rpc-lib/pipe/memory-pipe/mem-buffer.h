@@ -3,7 +3,7 @@
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/thread/thread-pool/strand.h>
-#include <common-lib/utils/buffer/buffer.h>
+#include <common-lib/utils/buffer.h>
 
 #include <memory>
 #include <queue>

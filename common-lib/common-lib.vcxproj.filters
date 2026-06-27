@@ -4,12 +4,6 @@
     <Filter Include="utils">
       <UniqueIdentifier>{d9212874-65ac-4e90-81fa-8c73fd921bbd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utils\buffer">
-      <UniqueIdentifier>{057eadbd-91fb-40f6-9326-1f615a78ca64}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="utils\buffer-view">
-      <UniqueIdentifier>{3ee5ee4d-c3d4-4a80-a26f-740f984a0577}</UniqueIdentifier>
-    </Filter>
     <Filter Include="memory">
       <UniqueIdentifier>{7840e649-abb3-464c-a00d-dca379f24b1b}</UniqueIdentifier>
     </Filter>
@@ -70,17 +64,14 @@
     <Filter Include="utils\internal\tuple-utils">
       <UniqueIdentifier>{970cfb52-3099-456d-9207-8352d6ee364d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\internal\buffer-view">
+      <UniqueIdentifier>{3ee5ee4d-c3d4-4a80-a26f-740f984a0577}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\internal\buffer">
+      <UniqueIdentifier>{057eadbd-91fb-40f6-9326-1f615a78ca64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common-lib\utils\buffer\buffer.h">
-      <Filter>utils\buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h">
-      <Filter>utils\buffer-view</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h">
-      <Filter>utils\buffer-view</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
       <Filter>memory\allocator</Filter>
     </ClInclude>
@@ -234,17 +225,17 @@
     <ClInclude Include="common-lib\utils\internal\tuple-utils\swap-first-two-tuple-elements.h">
       <Filter>utils\internal\tuple-utils</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\utils\buffer.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\buffer-view.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\cbuffer-view.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="common-lib\utils\buffer\buffer.cpp">
-      <Filter>utils\buffer</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\utils\buffer-view\buffer-view.cpp">
-      <Filter>utils\buffer-view</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\utils\buffer-view\cbuffer-view.cpp">
-      <Filter>utils\buffer-view</Filter>
-    </ClCompile>
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
       <Filter>timer\multiple-timer</Filter>
     </ClCompile>
@@ -265,6 +256,15 @@
     </ClCompile>
     <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp">
       <Filter>thread\thread-pool</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\utils\internal\buffer\buffer.cpp">
+      <Filter>utils\internal\buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\utils\internal\buffer-view\buffer-view.cpp">
+      <Filter>utils\internal\buffer-view</Filter>
+    </ClCompile>
+    <ClCompile Include="common-lib\utils\internal\buffer-view\cbuffer-view.cpp">
+      <Filter>utils\internal\buffer-view</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

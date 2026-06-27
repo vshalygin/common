@@ -1,4 +1,4 @@
-#include <common-lib/utils/buffer-view/buffer-view.h>
+#include <common-lib/utils/buffer-view.h>
 
 #include <gtest/gtest.h>
 

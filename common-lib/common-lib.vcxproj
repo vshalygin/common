@@ -53,9 +53,9 @@
     <ClInclude Include="common-lib\thread\thread-pool\thread-pool.h" />
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h" />
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h" />
-    <ClInclude Include="common-lib\utils\buffer-view\buffer-view.h" />
-    <ClInclude Include="common-lib\utils\buffer-view\cbuffer-view.h" />
-    <ClInclude Include="common-lib\utils\buffer\buffer.h" />
+    <ClInclude Include="common-lib\utils\buffer-view.h" />
+    <ClInclude Include="common-lib\utils\buffer.h" />
+    <ClInclude Include="common-lib\utils\cbuffer-view.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-first-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-last-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\forward-tuple-element.h" />
@@ -74,9 +74,9 @@
     <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp" />
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp" />
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp" />
-    <ClCompile Include="common-lib\utils\buffer-view\buffer-view.cpp" />
-    <ClCompile Include="common-lib\utils\buffer-view\cbuffer-view.cpp" />
-    <ClCompile Include="common-lib\utils\buffer\buffer.cpp" />
+    <ClCompile Include="common-lib\utils\internal\buffer-view\buffer-view.cpp" />
+    <ClCompile Include="common-lib\utils\internal\buffer-view\cbuffer-view.cpp" />
+    <ClCompile Include="common-lib\utils\internal\buffer\buffer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

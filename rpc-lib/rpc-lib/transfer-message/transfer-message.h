@@ -2,8 +2,8 @@
 #include "rpc-lib/types/request-result.h"
 #include "rpc-lib/types/response-result.h"
 
-#include <common-lib/utils/buffer-view/cbuffer-view.h>
-#include <common-lib/utils/buffer/buffer.h>
+#include <common-lib/utils/cbuffer-view.h>
+#include <common-lib/utils/buffer.h>
 
 #pragma warning(push, 0)
 #include <google/protobuf/message.h>

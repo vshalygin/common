@@ -2,7 +2,7 @@
 //TODO delete this interface
 
 #include "rpc-lib/types/request-result.h"
-#include <common-lib/utils/buffer/buffer.h>
+#include <common-lib/utils/buffer.h>
 #include <functional>
 
 namespace vshalygin::rpc {

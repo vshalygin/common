@@ -1,5 +1,5 @@
 #pragma once
-#include <common-lib/utils/buffer/buffer.h>
+#include <common-lib/utils/buffer.h>
 #include <memory>
 #include <functional>
 
