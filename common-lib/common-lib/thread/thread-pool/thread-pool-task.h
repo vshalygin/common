@@ -22,7 +22,7 @@ namespace vshalygin::cl {
                  std::enable_if_t<!std::is_same_v<
                                std::remove_cv_t<std::remove_reference_t<Func>>,
                                thread_pool_task<Signature>>, int> = 0>
-        explicit thread_pool_task(Func &&func)
+        thread_pool_task(Func &&func)
             : base_type(std::forward<Func>(func))
         {}
 
