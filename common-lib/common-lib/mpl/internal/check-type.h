@@ -3,6 +3,10 @@
 
 namespace vshalygin::cl::internal {
     template<typename T>
+    inline constexpr bool is_const_v =
+        std::is_const_v<std::remove_reference_t<T>>;
+
+    template<typename T>
     inline constexpr bool is_value_v =
         std::is_same_v<T, std::remove_cvref_t<T>>;
 

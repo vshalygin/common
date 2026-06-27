@@ -5,6 +5,7 @@
 #include "internal/remove-function-qualifiers.h"
 #include "internal/remove-c-ref.h"
 #include "internal/remove-const.h"
+#include "internal/add-const.h"
 
 #include <type_traits>
 
@@ -25,6 +26,9 @@ namespace vshalygin::cl {
 
     template<typename T>
     using remove_c_ref_t = internal::remove_c_ref_t<T>;
+
+    template<typename T>
+    using add_const_t = internal::add_const_t<T>;
 
     template<typename T>
     using remove_const_t = internal::remove_const_t<T>;

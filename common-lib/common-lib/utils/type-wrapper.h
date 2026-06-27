@@ -1,5 +1,6 @@
 #pragma once
 #include <common-lib/mpl/type-transform.h>
+#include <common-lib/mpl/type-traits.h>
 #include <type_traits>
 
 namespace vshalygin::cl {
@@ -23,7 +24,8 @@ namespace vshalygin::cl {
 
         template<typename U,
             std::enable_if_t<!std::is_const_v<T> &&
-                             std::is_same_v<remove_type_qualifiers_t<U>, T>, int> = 0>
+                             std::is_same_v<remove_type_qualifiers_t<U>,
+                                            remove_type_qualifiers_t<T>>, int> = 0>
         type_wrapper &operator=(U &&val)
         {
             if(std::addressof(val) != std::addressof(m_val)) {
@@ -34,15 +36,14 @@ namespace vshalygin::cl {
 
         operator const T &() const
         {
-            return m_val;
+            return to_underlying();
         }
 
         operator T &()
         {
-            return m_val;
+            return to_underlying();
         }
 
-        //TODO rename to get
         const T &to_underlying() const
         {
             return m_val;
@@ -68,23 +69,19 @@ namespace vshalygin::cl {
         type_wrapper(const type_wrapper &) = default;
         type_wrapper &operator=(const type_wrapper &) = delete;
 
-        type_wrapper &operator=(const remove_c_ref_t<T> &val)
+        template<typename U,
+            std::enable_if_t<!is_const_v<T> &&
+                              std::is_same_v<remove_type_qualifiers_t<U>,
+                                             remove_type_qualifiers_t<T>>, int> = 0>
+        type_wrapper &operator=(U &&val)
         {
             if(std::addressof(val) != std::addressof(m_val)) {
-                m_val = val;
+                m_val = std::forward<U>(val);
             }
             return *this;
         }
 
-        type_wrapper &operator=(remove_c_ref_t<T> &&val)
-        {
-            if(std::addressof(val) != std::addressof(m_val)) {
-                m_val = std::move(val);
-            }
-            return *this;
-        }
-
-        operator const T() const
+        operator add_const_t<T>() const
         {
             return to_underlying();
         }
@@ -94,18 +91,14 @@ namespace vshalygin::cl {
             return to_underlying();
         }
 
-        const T to_underlying() const
+        add_const_t<T> to_underlying() const
         {
-            return m_val;
+            return std::forward<T>(m_val);
         }
 
         T to_underlying()
         {
-            if constexpr(std::is_rvalue_reference_v<T>) {
-                return std::move(m_val);
-            } else {
-                return m_val;
-            }
+            return std::forward<T>(m_val);
         }
 
     private:

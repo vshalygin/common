@@ -2,6 +2,14 @@
 
 using namespace vshalygin::cl;
 
+static_assert(!is_const_v<int>);
+static_assert(is_const_v<const int>);
+static_assert(is_const_v<const int&>);
+static_assert(is_const_v<const int&&>);
+static_assert(is_const_v<volatile const int>);
+static_assert(is_const_v<volatile const int&>);
+static_assert(is_const_v<volatile const int&&>);
+
 static_assert(is_value_v<int>);
 static_assert(!is_value_v<int &>);
 

@@ -52,6 +52,10 @@ namespace vshalygin::cl {
         internal::is_rvalue_ref_v<T>;
 
     template<typename T>
+    inline constexpr bool is_const_v =
+        internal::is_const_v<T>;
+
+    template<typename T>
     inline constexpr bool is_const_value_v =
         internal::is_const_value_v<T>;
 
