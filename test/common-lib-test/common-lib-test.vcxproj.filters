@@ -85,6 +85,9 @@
     <ClCompile Include="src\utils\sort-tuple-test.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\mpl\remove-const-test.cpp">
+      <Filter>mpl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
