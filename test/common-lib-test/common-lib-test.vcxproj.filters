@@ -91,6 +91,9 @@
     <ClCompile Include="src\mpl\tuple-element-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\forward-tuple-element.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

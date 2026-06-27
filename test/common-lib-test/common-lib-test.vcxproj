@@ -33,6 +33,7 @@
     <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer\buffer-test.cpp" />
     <ClCompile Include="src\utils\extract-last-tuple-element-test.cpp" />
+    <ClCompile Include="src\utils\forward-tuple-element.cpp" />
     <ClCompile Include="src\utils\merge-tuples-test.cpp" />
     <ClCompile Include="src\utils\extract-first-tuple-element-test.cpp" />
     <ClCompile Include="src\utils\sort-tuple-test.cpp" />

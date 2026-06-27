@@ -4,6 +4,7 @@
 #include "internal/extract-first-tuple-element.h"
 #include "internal/extract-last-tuple-element.h"
 #include "internal/sort-tuple.h"
+#include "internal/forward-tuple-element.h"
 
 namespace vshalygin::cl {
     template<typename Tuple>
@@ -34,5 +35,11 @@ namespace vshalygin::cl {
     auto sort_tuple(Tuple &&t)
     {
         return internal::sort_tuple<Comparator>(std::forward<Tuple>(t));
+    }
+
+    template<size_t I, typename Tuple>
+    constexpr decltype(auto) forward_tuple_element(Tuple &&tuple) noexcept
+    {
+        return internal::forward_tuple_element<I>(std::forward<Tuple>(tuple));
     }
 }

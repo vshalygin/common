@@ -3,6 +3,7 @@
 #include "swap-first-two-tuple-elements.h"
 #include "extract-first-tuple-element.h"
 #include "merge-tuples.h"
+#include "forward-tuple-element.h"
 
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/type-traits.h>
@@ -26,18 +27,6 @@ namespace vshalygin::cl::internal {
 
         ref_type ref;
     };
-
-    //TODO вынести
-    template<size_t I, typename Tuple>
-    constexpr decltype(auto) forward_tuple_element(Tuple &&tuple) noexcept
-    {
-        using type = tuple_element_t<Tuple, I>;
-        if constexpr(std::is_reference_v<type>) {
-            return static_cast<type>(std::get<I>(std::forward<Tuple>(tuple)));
-        } else {
-            return std::get<I>(std::forward<Tuple>(tuple));
-        }
-    }
 
     template<std::size_t... I, typename Tuple>
     auto make_ref_tuple_impl(Tuple &&tuple,
