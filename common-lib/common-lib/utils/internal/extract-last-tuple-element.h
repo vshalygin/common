@@ -26,7 +26,8 @@ namespace vshalygin::cl::internal {
                       "type must be std::tuple");
         static_assert(std::tuple_size_v<remove_type_qualifiers_t<Tuple>> > 0,
                       "tuple type cannot be empty");
-
+        static_assert(!std::is_volatile_v<std::remove_reference_t<Tuple>>,
+                      "volatile tuple is not supported");
 
         return extract_last_tuple_element_impl(
                                     std::forward<Tuple>(tuple),

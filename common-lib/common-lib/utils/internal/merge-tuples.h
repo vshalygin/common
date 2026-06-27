@@ -50,6 +50,10 @@ namespace vshalygin::cl::internal {
                       is_std_tuple_v<SecondTuple> &&
                       (is_std_tuple_v<RestTuples> && ...),
                       "types must be std::tuple");
+        static_assert(!std::is_volatile_v<std::remove_reference_t<FirstTuple>> &&
+                      !std::is_volatile_v<std::remove_reference_t<SecondTuple>> &&
+                      !(std::is_volatile_v<std::remove_reference_t<RestTuples>> || ...),
+                      "volatile tuples are not supported");
 
         auto merged = merge_two_tuples(std::forward<FirstTuple>(first_tuple),
                                        std::forward<SecondTuple>(second_tuple));

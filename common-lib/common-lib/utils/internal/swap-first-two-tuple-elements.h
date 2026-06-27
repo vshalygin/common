@@ -27,6 +27,8 @@ namespace vshalygin::cl::internal {
     {
         static_assert(is_std_tuple_v<Tuple>,
                       "argument is not std::tuple");
+        static_assert(!std::is_volatile_v<std::remove_reference_t<Tuple>>,
+                      "volatile tuple is not supported");
         static_assert(std::tuple_size_v<remove_type_qualifiers_t<Tuple>> > 1,
                       "tuple size must be greater than 1");
 
