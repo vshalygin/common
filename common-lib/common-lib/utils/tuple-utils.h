@@ -3,6 +3,7 @@
 #include "internal/merge-tuples.h"
 #include "internal/extract-first-tuple-element.h"
 #include "internal/extract-last-tuple-element.h"
+#include "internal/sort-tuple.h"
 
 namespace vshalygin::cl {
     template<typename Tuple>
@@ -27,5 +28,11 @@ namespace vshalygin::cl {
     auto extract_last_tuple_element(Tuple &&tuple)
     {
         return internal::extract_last_tuple_element(std::forward<Tuple>(tuple));
+    }
+
+    template<typename Comparator, typename Tuple>
+    auto sort_tuple(Tuple &&t)
+    {
+        return internal::sort_tuple<Comparator>(std::forward<Tuple>(t));
     }
 }

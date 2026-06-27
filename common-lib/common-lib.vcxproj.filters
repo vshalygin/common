@@ -219,6 +219,9 @@
     <ClInclude Include="common-lib\utils\internal\extract-last-tuple-element.h">
       <Filter>utils\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\utils\internal\sort-tuple.h">
+      <Filter>utils\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\buffer\buffer.cpp">

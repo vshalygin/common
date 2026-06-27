@@ -47,7 +47,7 @@ TEST(ExtractLastTupleElement, WorkOnArgumentWithOneValue)
     EXPECT_EQ(std::tuple_size_v<decltype(r.second)>, 0);
 }
 
-TEST(ExtractLastTupleElement, ExtractReferenceTypeValues)
+TEST(ExtractLastTupleElement, ExtractLValueReferenceTypeValues)
 {
     int i = 10;
     int ii = 20;
@@ -55,6 +55,21 @@ TEST(ExtractLastTupleElement, ExtractReferenceTypeValues)
 
     auto r = extract_last_tuple_element(std::move(t));
     static_assert(std::is_same_v<decltype(r), std::pair<std::tuple<int &>, std::tuple<int &>>>);
+
+    i++; ii++;
+    EXPECT_EQ(std::get<0>(r.first), 21);
+    EXPECT_EQ(std::get<0>(r.second), 11);
+}
+
+TEST(ExtractLastTupleElement, ExtractRValueReferenceTypeValues)
+{
+    int i = 10;
+    int ii = 20;
+    std::tuple<int &&, int &&> t{ std::move(i), std::move(ii) };
+
+    auto r = extract_last_tuple_element(std::move(t));
+    static_assert(std::is_same_v<decltype(r), std::pair<std::tuple<int &&>,
+                                                        std::tuple<int &&>>>);
 
     i++; ii++;
     EXPECT_EQ(std::get<0>(r.first), 21);

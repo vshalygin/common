@@ -58,6 +58,7 @@
     <ClInclude Include="common-lib\utils\internal\extract-last-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\make-tuple-index-sequense.h" />
     <ClInclude Include="common-lib\utils\internal\merge-tuples.h" />
+    <ClInclude Include="common-lib\utils\internal\sort-tuple.h" />
     <ClInclude Include="common-lib\utils\internal\swap-first-two-tuple-elements.h" />
     <ClInclude Include="common-lib\utils\tuple-utils.h" />
     <ClInclude Include="common-lib\utils\type-wrapper.h" />

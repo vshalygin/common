@@ -33,6 +33,7 @@
     <ClCompile Include="src\utils\extract-last-tuple-element-test.cpp" />
     <ClCompile Include="src\utils\merge-tuples-test.cpp" />
     <ClCompile Include="src\utils\extract-first-tuple-element-test.cpp" />
+    <ClCompile Include="src\utils\sort-tuple-test.cpp" />
     <ClCompile Include="src\utils\swap-first-two-tuple-elements-test.cpp" />
     <ClCompile Include="src\utils\type-wrapper-test.cpp" />
   </ItemGroup>
