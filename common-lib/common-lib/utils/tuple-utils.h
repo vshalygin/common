@@ -1,10 +1,10 @@
 #pragma once
-#include "internal/swap-first-two-tuple-elements.h"
-#include "internal/merge-tuples.h"
-#include "internal/extract-first-tuple-element.h"
-#include "internal/extract-last-tuple-element.h"
-#include "internal/sort-tuple.h"
-#include "internal/forward-tuple-element.h"
+#include "internal/tuple-utils/swap-first-two-tuple-elements.h"
+#include "internal/tuple-utils/merge-tuples.h"
+#include "internal/tuple-utils/extract-first-tuple-element.h"
+#include "internal/tuple-utils/extract-last-tuple-element.h"
+#include "internal/tuple-utils/sort-tuple.h"
+#include "internal/tuple-utils/forward-tuple-element.h"
 
 namespace vshalygin::cl {
     template<typename Tuple>

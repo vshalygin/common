@@ -61,29 +61,11 @@
     <ClCompile Include="src\mpl\is-lvalue-static-castable-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\type-wrapper-test.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="src\mpl\is-lockable-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
     <ClCompile Include="src\mpl\is-std-tuple-test.cpp">
       <Filter>mpl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils\swap-first-two-tuple-elements-test.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils\merge-tuples-test.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils\extract-first-tuple-element-test.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils\extract-last-tuple-element-test.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils\sort-tuple-test.cpp">
-      <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="src\mpl\remove-const-test.cpp">
       <Filter>mpl</Filter>
@@ -91,7 +73,25 @@
     <ClCompile Include="src\mpl\tuple-element-test.cpp">
       <Filter>mpl</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\forward-tuple-element.cpp">
+    <ClCompile Include="src\utils\tuple-utils\extract-first-tuple-element-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\extract-last-tuple-element-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\forward-tuple-element.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\merge-tuples-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\sort-tuple-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\swap-first-two-tuple-elements-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\type-wrapper-test.cpp">
       <Filter>utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -131,6 +131,9 @@
     </Filter>
     <Filter Include="thread">
       <UniqueIdentifier>{ac62afa3-f9d2-4c4d-95cb-29d1816700e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\tuple-utils">
+      <UniqueIdentifier>{3a3ac89a-9544-4660-a13b-4ae75e812aab}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
