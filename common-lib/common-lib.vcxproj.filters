@@ -225,6 +225,9 @@
     <ClInclude Include="common-lib\mpl\internal\remove-const.h">
       <Filter>mpl\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-element.h">
+      <Filter>mpl\internal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\utils\buffer\buffer.cpp">

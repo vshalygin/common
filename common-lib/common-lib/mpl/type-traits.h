@@ -6,6 +6,7 @@
 #include "internal/is-lvalue-static-castable.h"
 #include "internal/is-lockable.h"
 #include "internal/tuple-size.h"
+#include "internal/tuple-element.h"
 
 #include <type_traits>
 
@@ -25,6 +26,10 @@ namespace vshalygin::cl {
     template<typename Tuple>
     inline constexpr size_t tuple_size_v =
         internal::tuple_size_v<Tuple>;
+
+    template<typename Tuple, std::size_t I>
+    using tuple_element_t =
+        internal::tuple_element_t<Tuple, I>;
 
     template<typename T>
     inline constexpr bool is_lockable_v =

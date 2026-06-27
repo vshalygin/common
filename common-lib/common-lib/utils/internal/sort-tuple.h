@@ -8,10 +8,6 @@
 #include <common-lib/mpl/type-traits.h>
 
 namespace vshalygin::cl::internal {
-    //TODO move to mpl
-    template<typename Tuple, std::size_t I>
-    using tuple_element_t = std::tuple_element_t<I, remove_type_qualifiers_t<Tuple>>;
-
     template<typename RefT, typename T>
     struct tuple_element_ref
     {
