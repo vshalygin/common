@@ -15,11 +15,11 @@
     <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
     <ClInclude Include="common-lib\mpl\function-traits.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits\function-traits.h" />
+    <ClInclude Include="common-lib\mpl\internal\function-traits\is-function-pointer.h" />
+    <ClInclude Include="common-lib\mpl\internal\function-traits\is-std-function.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\check-type.h" />
-    <ClInclude Include="common-lib\mpl\internal\type-traits\is-function-pointer.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lockable.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h" />
-    <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-function.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-tuple.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-element.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-size.h" />

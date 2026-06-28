@@ -1,4 +1,4 @@
-#include "common-lib/mpl/type-traits.h"
+#include "common-lib/mpl/function-traits.h"
 
 using namespace vshalygin::cl;
 

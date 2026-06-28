@@ -1,10 +1,19 @@
 #pragma once
 #include "type-transform.h"
 #include "internal/function-traits/function-traits.h"
+#include "internal/function-traits/is-function-pointer.h"
+#include "internal/function-traits/is-std-function.h"
 
 namespace vshalygin::cl {
-    //TODO рассмотреть случаи ссылки на функции
+    template<typename T>
+    inline constexpr bool is_function_pointer_v =
+        internal::is_function_pointer_v<T>;
 
+    template<typename T>
+    inline constexpr bool is_std_function_v =
+        internal::is_std_function_v<T>;
+
+    //TODO рассмотреть случаи ссылки на функции
     template<size_t N, typename F>
     using function_arg_t = typename internal::function_traits<F>::template arg<N>;
 

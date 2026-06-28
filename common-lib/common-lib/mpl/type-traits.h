@@ -1,7 +1,5 @@
 #pragma once
-#include "internal/type-traits/is-std-function.h"
 #include "internal/type-traits/is-std-tuple.h"
-#include "internal/type-traits/is-function-pointer.h"
 #include "internal/type-traits/check-type.h"
 #include "internal/type-traits/is-lvalue-static-castable.h"
 #include "internal/type-traits/is-lockable.h"
@@ -11,14 +9,6 @@
 #include <type_traits>
 
 namespace vshalygin::cl {
-    template<typename T>
-    inline constexpr bool is_function_pointer_v =
-        internal::is_function_pointer_v;
-
-    template<typename T>
-    inline constexpr bool is_std_function_v =
-        internal::is_std_function_v<T>;
-
     template<typename T>
     inline constexpr bool is_std_tuple_v =
         internal::is_std_tuple_v<T>;

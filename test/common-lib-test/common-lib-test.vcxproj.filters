@@ -88,9 +88,6 @@
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp">
       <Filter>mpl\type-traits</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\type-traits\is-std-function-test.cpp">
-      <Filter>mpl\type-traits</Filter>
-    </ClCompile>
     <ClCompile Include="src\mpl\type-traits\is-std-tuple-test.cpp">
       <Filter>mpl\type-traits</Filter>
     </ClCompile>
@@ -99,6 +96,12 @@
     </ClCompile>
     <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp">
       <Filter>synchronization\ordered-lock</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\function-traits\is-std-function-test.cpp">
+      <Filter>mpl\function-traits</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\function-traits\is-function-pointer-test.cpp">
+      <Filter>mpl\function-traits</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

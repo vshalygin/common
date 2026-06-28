@@ -249,16 +249,10 @@
     <ClInclude Include="common-lib\mpl\internal\type-traits\check-type.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\is-function-pointer.h">
-      <Filter>mpl\internal\type-traits</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lockable.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h">
-      <Filter>mpl\internal\type-traits</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-function.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-tuple.h">
@@ -275,6 +269,12 @@
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h">
       <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\function-traits\is-function-pointer.h">
+      <Filter>mpl\internal\function-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\function-traits\is-std-function.h">
+      <Filter>mpl\internal\function-traits</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
