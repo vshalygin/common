@@ -77,6 +77,7 @@
     <ClInclude Include="common-lib\utils\internal\tuple-utils\make-tuple-index-sequense.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\merge-tuples.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\sort-tuple.h" />
+    <ClInclude Include="common-lib\utils\internal\tuple-utils\sort-tuple2.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\swap-first-two-tuple-elements.h" />
     <ClInclude Include="common-lib\utils\tuple-utils.h" />
     <ClInclude Include="common-lib\utils\type-wrapper.h" />

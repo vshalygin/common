@@ -62,7 +62,8 @@ namespace {
 
         explicit move_only_test1(int v)
             : val(v)
-        {}
+        {
+        }
 
         move_only_test1(const move_only_test1 &) = delete;
         move_only_test1 &operator=(const move_only_test1 &) = delete;
@@ -83,7 +84,8 @@ namespace {
 
         explicit move_only_test2(int v)
             : val(v)
-        {}
+        {
+        }
 
         move_only_test2(const move_only_test2 &) = delete;
         move_only_test2 &operator=(const move_only_test2 &) = delete;
@@ -155,16 +157,16 @@ namespace {
     };
 }
 
-TEST(SortTuple, BasicTest)
+TEST(SortTuple2, BasicTest)
 {
     std::tuple<test1, test2, test3> t{};
 
-    auto s = sort_tuple<value_comparator>(t); s;
+    auto s = sort_tuple2<value_comparator>(t); s;
 
     static_assert(std::is_same_v<decltype(s), std::tuple<test1, test2, test3>>);
 }
 
-TEST(SortTuple, SortBasedOnSortCriterionTupleWithAnyTypeQualifiers)
+TEST(SortTuple2, SortBasedOnSortCriterionTupleWithAnyTypeQualifiers)
 {
     std::tuple<test3, test1, test2> t1{};
     const std::tuple<test3, test1, test2> t2{};
@@ -173,19 +175,19 @@ TEST(SortTuple, SortBasedOnSortCriterionTupleWithAnyTypeQualifiers)
     std::tuple<test3, test1, test2> &&t5 = std::move(t1);
     const std::tuple<test3, test1, test2> &&t6 = std::move(t1);
 
-    auto s1 = sort_tuple<value_comparator>(std::tuple<test3, test1, test2>{});
-    auto s2 = sort_tuple<value_comparator>(t1);
-    auto s3 = sort_tuple<value_comparator>(std::move(t1));
-    auto s4 = sort_tuple<value_comparator>(t2);
-    auto s5 = sort_tuple<value_comparator>(std::move(t2));
-    auto s6 = sort_tuple<value_comparator>(t3);
-    auto s7 = sort_tuple<value_comparator>(std::move(t3));
-    auto s8 = sort_tuple<value_comparator>(t4);
-    auto s9 = sort_tuple<value_comparator>(std::move(t4));
-    auto s10 = sort_tuple<value_comparator>(t5);
-    auto s11 = sort_tuple<value_comparator>(std::move(t5));
-    auto s12 = sort_tuple<value_comparator>(t6);
-    auto s13 = sort_tuple<value_comparator>(std::move(t6));
+    auto s1 = sort_tuple2<value_comparator>(std::tuple<test3, test1, test2>{});
+    auto s2 = sort_tuple2<value_comparator>(t1);
+    auto s3 = sort_tuple2<value_comparator>(std::move(t1));
+    auto s4 = sort_tuple2<value_comparator>(t2);
+    auto s5 = sort_tuple2<value_comparator>(std::move(t2));
+    auto s6 = sort_tuple2<value_comparator>(t3);
+    auto s7 = sort_tuple2<value_comparator>(std::move(t3));
+    auto s8 = sort_tuple2<value_comparator>(t4);
+    auto s9 = sort_tuple2<value_comparator>(std::move(t4));
+    auto s10 = sort_tuple2<value_comparator>(t5);
+    auto s11 = sort_tuple2<value_comparator>(std::move(t5));
+    auto s12 = sort_tuple2<value_comparator>(t6);
+    auto s13 = sort_tuple2<value_comparator>(std::move(t6));
 
     static_assert(std::is_same_v<decltype(s1), std::tuple<test1, test2, test3>>);
     static_assert(std::is_same_v<decltype(s2), std::tuple<test1, test2, test3>>);
@@ -202,7 +204,7 @@ TEST(SortTuple, SortBasedOnSortCriterionTupleWithAnyTypeQualifiers)
     static_assert(std::is_same_v<decltype(s13), std::tuple<test1, test2, test3>>);
 }
 
-TEST(SortTuple, SortTuplesWithAnyElementTypeQualifiers)
+TEST(SortTuple2, SortTuplesWithAnyElementTypeQualifiers)
 {
     test1 v1;
     test2 v2;
@@ -214,18 +216,18 @@ TEST(SortTuple, SortTuplesWithAnyElementTypeQualifiers)
     std::tuple<const test3 &, test1 &, const test2 &&> t5{ v3, v1, std::move(v2) };
     std::tuple<const test3 &&, const test1, test2> t6{ std::move(v3), v1, v2 };
 
-    auto s1 = sort_tuple<value_comparator>(t1);
-    auto s2 = sort_tuple<value_comparator>(std::move(t1));
-    auto s3 = sort_tuple<value_comparator>(t2);
-    auto s4 = sort_tuple<value_comparator>(std::move(t2));
-    auto s5 = sort_tuple<value_comparator>(t3);
-    auto s6 = sort_tuple<value_comparator>(std::move(t3));
-    auto s7 = sort_tuple<value_comparator>(t4);
-    auto s8 = sort_tuple<value_comparator>(std::move(t4));
-    auto s9 = sort_tuple<value_comparator>(t5);
-    auto s10 = sort_tuple<value_comparator>(std::move(t5));
-    auto s11 = sort_tuple<value_comparator>(t6);
-    auto s12 = sort_tuple<value_comparator>(std::move(t6));
+    auto s1 = sort_tuple2<value_comparator>(t1);
+    auto s2 = sort_tuple2<value_comparator>(std::move(t1));
+    auto s3 = sort_tuple2<value_comparator>(t2);
+    auto s4 = sort_tuple2<value_comparator>(std::move(t2));
+    auto s5 = sort_tuple2<value_comparator>(t3);
+    auto s6 = sort_tuple2<value_comparator>(std::move(t3));
+    auto s7 = sort_tuple2<value_comparator>(t4);
+    auto s8 = sort_tuple2<value_comparator>(std::move(t4));
+    auto s9 = sort_tuple2<value_comparator>(t5);
+    auto s10 = sort_tuple2<value_comparator>(std::move(t5));
+    auto s11 = sort_tuple2<value_comparator>(t6);
+    auto s12 = sort_tuple2<value_comparator>(std::move(t6));
 
     static_assert(std::is_same_v<decltype(s1), std::tuple<test1 &, test2, test3>>);
     static_assert(std::is_same_v<decltype(s2), std::tuple<test1 &, test2, test3 >>);
@@ -241,18 +243,18 @@ TEST(SortTuple, SortTuplesWithAnyElementTypeQualifiers)
     static_assert(std::is_same_v<decltype(s12), std::tuple<const test1, test2, const test3 &&>>);
 }
 
-TEST(SortTuple, TestValuesInNewTuple)
+TEST(SortTuple2, TestValuesInNewTuple)
 {
     std::tuple<test3, test1, test2> t{ {5}, {7}, {3} };
 
-    auto s = sort_tuple<value_comparator>(t);
+    auto s = sort_tuple2<value_comparator>(t);
 
     EXPECT_EQ(std::get<0>(s).val, 7);
     EXPECT_EQ(std::get<1>(s).val, 3);
     EXPECT_EQ(std::get<2>(s).val, 5);
 }
 
-TEST(SortTuple, ReferenceAsTupleElement)
+TEST(SortTuple2, ReferenceAsTupleElement)
 {
     test1 t1{ 7 };
     test2 t2{ 3 };
@@ -260,11 +262,11 @@ TEST(SortTuple, ReferenceAsTupleElement)
     const test4 t4{ 10 };
 
     std::tuple<const test3 &, test1 &, const test4 &&, test2 &&> t
-                             { t3, t1, std::move(t4), std::move(t2) };
+    { t3, t1, std::move(t4), std::move(t2) };
 
-    auto s = sort_tuple<value_comparator>(t);
+    auto s = sort_tuple2<value_comparator>(t);
     static_assert(std::is_same_v<decltype(s), std::tuple<test1 &, test2 &&,
-                                                         const test3 &, const test4 &&>>);
+                  const test3 &, const test4 &&>>);
 
     t1.val = 15; t2.val = 40;
     EXPECT_EQ(std::get<0>(s).val, 15);
@@ -278,11 +280,11 @@ TEST(SortTuple, ReferenceAsTupleElement)
     EXPECT_EQ(&std::get<3>(s), &t4);
 }
 
-TEST(SortTuple, MovesObjects)
+TEST(SortTuple2, MovesObjects)
 {
     std::tuple t{ move_only_test2{4}, move_only_test1{8} };
 
-    auto s = sort_tuple<value_comparator>(std::move(t));
+    auto s = sort_tuple2<value_comparator>(std::move(t));
 
     EXPECT_EQ(std::get<0>(s).val, 8);
     EXPECT_EQ(std::get<1>(s).val, 4);
@@ -291,36 +293,36 @@ TEST(SortTuple, MovesObjects)
     EXPECT_EQ(std::get<1>(t).val, 0);
 }
 
-TEST(SortTuple, MovesObjectsOnlyOnce)
+TEST(SortTuple2, MovesObjectsOnlyOnce)
 {
     move_only_counter::clear();
 
     std::tuple<move_only_counter, move_only_counter> t;
 
-    auto s = sort_tuple<value_comparator>(std::move(t));
+    auto s = sort_tuple2<value_comparator>(std::move(t));
 
     EXPECT_EQ(move_only_counter::move_count, 2);
     EXPECT_EQ(move_only_counter::move_assign_count, 0);
 }
 
-TEST(SortTuple, CopiesObjectsOnlyOnce)
+TEST(SortTuple2, CopiesObjectsOnlyOnce)
 {
     copy_only_counter::clear();
 
     std::tuple<copy_only_counter, copy_only_counter> t;
 
-    auto s = sort_tuple<value_comparator>(std::move(t));
+    auto s = sort_tuple2<value_comparator>(std::move(t));
 
     EXPECT_EQ(copy_only_counter::copy_count, 2);
     EXPECT_EQ(copy_only_counter::copy_assign_count, 0);
 }
 
-TEST(SortTuple, CheckVariousComparators)
+TEST(SortTuple2, CheckVariousComparators)
 {
     std::tuple<test3, test1, test2> t{};
 
-    auto s1 = sort_tuple<value_comparator>(t);
-    auto s2 = sort_tuple<value_comparator2>(t);
+    auto s1 = sort_tuple2<value_comparator>(t);
+    auto s2 = sort_tuple2<value_comparator2>(t);
 
     static_assert(std::is_same_v<decltype(s1), std::tuple<test1, test2, test3>>);
     static_assert(std::is_same_v<decltype(s2), std::tuple<test3, test2, test1>>);

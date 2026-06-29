@@ -121,6 +121,9 @@
     <ClCompile Include="src\mpl\tuple-transform\remove-last-tuple-element-test.cpp">
       <Filter>mpl\tuple-transform</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\sort-tuple2-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

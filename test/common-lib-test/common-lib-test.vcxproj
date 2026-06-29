@@ -46,6 +46,7 @@
     <ClCompile Include="src\utils\tuple-utils\forward-tuple-element.cpp" />
     <ClCompile Include="src\utils\tuple-utils\merge-tuples-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\sort-tuple-test.cpp" />
+    <ClCompile Include="src\utils\tuple-utils\sort-tuple2-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\swap-first-two-tuple-elements-test.cpp" />
     <ClCompile Include="src\utils\type-wrapper\type-wrapper-test.cpp" />
   </ItemGroup>

@@ -71,14 +71,14 @@ namespace vshalygin::cl::internal {
                 typename sort_tuple_base<rest_tuple_to_sort, Comparator>::type,
                 std::tuple<max_type>>;
         };
+
+        template<typename Tuple, typename Comparator>
+        struct sort_tuple
+            : sort_tuple_base<remove_type_qualifiers_t<Tuple>, Comparator>
+        {};
     }
     
     template<typename Tuple, typename Comparator>
-    struct sort_tuple
-        : sort_tuple_impl::sort_tuple_base<remove_type_qualifiers_t<Tuple>, Comparator>
-    {};
-    
-    template<typename Tuple, typename Comparator>
     using sort_tuple_t =
-        typename sort_tuple<Tuple, Comparator>::type;
+        typename sort_tuple_impl::sort_tuple<Tuple, Comparator>::type;
 }
