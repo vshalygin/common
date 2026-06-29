@@ -24,7 +24,6 @@
     <ClCompile Include="src\mpl\tuple-transform\last-tuple-type-test.cpp" />
     <ClCompile Include="src\mpl\tuple-transform\swap-first-two-tuple-types-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\check-type-test.cpp" />
-    <ClCompile Include="src\mpl\type-traits\is-lockable-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\add-const-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp" />
@@ -32,6 +31,8 @@
     <ClCompile Include="src\mpl\type-transform\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp" />
+    <ClCompile Include="src\synchronization\ordered-lock\is-lockable-test.cpp" />
+    <ClCompile Include="src\synchronization\ordered-lock\ordered-lock-test.cpp" />
     <ClCompile Include="src\thread\future-test.cpp" />
     <ClCompile Include="src\thread\strand-test.cpp" />
     <ClCompile Include="src\thread\thread-pool-task-test.cpp" />
@@ -43,6 +44,8 @@
     <ClCompile Include="src\utils\buffer\buffer-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\extract-first-tuple-element-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\extract-last-tuple-element-test.cpp" />
+    <ClCompile Include="src\utils\tuple-utils\for-each-tuple-element-reverse-test.cpp" />
+    <ClCompile Include="src\utils\tuple-utils\for-each-tuple-element-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\forward-tuple-element.cpp" />
     <ClCompile Include="src\utils\tuple-utils\merge-tuples-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\sort-tuple-test.cpp" />

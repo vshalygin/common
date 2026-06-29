@@ -16,6 +16,6 @@ namespace vshalygin::cl::internal {
     {};
 
     template<typename T>
-    inline constexpr bool has_integral_order_static_member_t =
+    inline constexpr bool has_integral_order_static_member_v =
         has_integral_order_static_member<T>::value;
 }

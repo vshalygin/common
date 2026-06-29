@@ -6,6 +6,8 @@
 #include "internal/tuple-utils/sort-tuple.h"
 #include "internal/tuple-utils/sort-tuple2.h"
 #include "internal/tuple-utils/forward-tuple-element.h"
+#include "internal/tuple-utils/for-each-tuple-element.h"
+#include "internal/tuple-utils/for-each-tuple-element-reverse.h"
 
 namespace vshalygin::cl {
     template<typename Tuple>
@@ -48,5 +50,19 @@ namespace vshalygin::cl {
     constexpr decltype(auto) forward_tuple_element(Tuple &&tuple) noexcept
     {
         return internal::forward_tuple_element<I>(std::forward<Tuple>(tuple));
+    }
+
+    template<typename Tuple, typename F>
+    void for_each_tuple_element(Tuple &&tuple, F &&f)
+    {
+        internal::for_each_tuple_element(std::forward<Tuple>(tuple),
+                                         std::forward<F>(f));
+    }
+
+    template<typename Tuple, typename F>
+    void for_each_tuple_element_reverse(Tuple &&tuple, F &&f)
+    {
+        internal::for_each_tuple_element_reverse(std::forward<Tuple>(tuple),
+                                                 std::forward<F>(f));
     }
 }

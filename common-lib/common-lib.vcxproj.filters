@@ -79,9 +79,6 @@
     <Filter Include="mpl\internal\type-transform">
       <UniqueIdentifier>{b48c7bc3-6c72-4371-93dd-26b760651a6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="synchronization\ordered-lockable">
-      <UniqueIdentifier>{283267d2-652a-4529-9e66-0387f852d884}</UniqueIdentifier>
-    </Filter>
     <Filter Include="synchronization\internal">
       <UniqueIdentifier>{b9a4fed4-2ebc-4df4-883e-70b37b46e87c}</UniqueIdentifier>
     </Filter>
@@ -255,9 +252,6 @@
     <ClInclude Include="common-lib\mpl\internal\type-traits\check-type-qualifiers.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\is-lockable.h">
-      <Filter>mpl\internal\type-traits</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
@@ -304,6 +298,36 @@
       <Filter>mpl\internal\tuple-transform</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\utils\internal\tuple-utils\sort-tuple2.h">
+      <Filter>utils\internal\tuple-utils</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-lockable.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\internal\tuple-utils\for-each-tuple-element.h">
+      <Filter>utils\internal\tuple-utils</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-comparator.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-lock-base.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-lock-base-impl.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-locked.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-locked-impl.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-unlocked.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-unlock-impl.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\internal\tuple-utils\for-each-tuple-element-reverse.h">
       <Filter>utils\internal\tuple-utils</Filter>
     </ClInclude>
   </ItemGroup>
