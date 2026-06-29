@@ -18,6 +18,11 @@
     <ClCompile Include="src\mpl\tuple-traits\is-std-tuple-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\tuple-element-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\merge-tuples-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\remove-last-tuple-element-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\sort-tuple-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\last-tuple-type-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\swap-first-two-tuple-types-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\check-type-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\is-lockable-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp" />

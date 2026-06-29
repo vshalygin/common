@@ -106,6 +106,21 @@
     <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp">
       <Filter>mpl\tuple-traits</Filter>
     </ClCompile>
+    <ClCompile Include="src\mpl\tuple-transform\merge-tuples-test.cpp">
+      <Filter>mpl\tuple-transform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-transform\swap-first-two-tuple-types-test.cpp">
+      <Filter>mpl\tuple-transform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-transform\sort-tuple-test.cpp">
+      <Filter>mpl\tuple-transform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-transform\last-tuple-type-test.cpp">
+      <Filter>mpl\tuple-transform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-transform\remove-last-tuple-element-test.cpp">
+      <Filter>mpl\tuple-transform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -164,6 +179,9 @@
     </Filter>
     <Filter Include="mpl\tuple-traits">
       <UniqueIdentifier>{e61312f0-78b8-4aef-a1ed-b01035af460d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mpl\tuple-transform">
+      <UniqueIdentifier>{10da8395-5375-46a2-a182-f8d168604254}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -1,5 +1,5 @@
 #pragma once
-#include "internal/type-traits/check-type.h"
+#include "internal/type-traits/check-type-qualifiers.h"
 #include "internal/type-traits/is-lvalue-static-castable.h"
 #include "internal/type-traits/is-lockable.h"
 

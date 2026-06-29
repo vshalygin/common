@@ -91,6 +91,9 @@
     <Filter Include="mpl\internal\tuple-traits">
       <UniqueIdentifier>{0a3f88f7-38f0-40bf-b91d-06b6a6ffd033}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mpl\internal\tuple-transform">
+      <UniqueIdentifier>{3bea86cc-97f5-4f72-b2e2-d447cdc9dac8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
@@ -249,7 +252,7 @@
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-type-qualifiers.h">
       <Filter>mpl\internal\type-transform</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\check-type.h">
+    <ClInclude Include="common-lib\mpl\internal\type-traits\check-type-qualifiers.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lockable.h">
@@ -281,6 +284,24 @@
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-size.h">
       <Filter>mpl\internal\tuple-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\swap-first-two-tuple-types.h">
+      <Filter>mpl\internal\tuple-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\tuple-transform.h">
+      <Filter>mpl</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\merge-tuples.h">
+      <Filter>mpl\internal\tuple-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\sort-tuple.h">
+      <Filter>mpl\internal\tuple-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\last-tuple-type.h">
+      <Filter>mpl\internal\tuple-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\remove-last-tuple-type.h">
+      <Filter>mpl\internal\tuple-transform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

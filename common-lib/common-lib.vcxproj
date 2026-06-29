@@ -20,7 +20,12 @@
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\is-std-tuple.h" />
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-element.h" />
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-size.h" />
-    <ClInclude Include="common-lib\mpl\internal\type-traits\check-type.h" />
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\remove-last-tuple-type.h" />
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\last-tuple-type.h" />
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\merge-tuples.h" />
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\sort-tuple.h" />
+    <ClInclude Include="common-lib\mpl\internal\tuple-transform\swap-first-two-tuple-types.h" />
+    <ClInclude Include="common-lib\mpl\internal\type-traits\check-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lockable.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\add-const.h" />
@@ -31,6 +36,7 @@
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-member-function-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\tuple-traits.h" />
+    <ClInclude Include="common-lib\mpl\tuple-transform.h" />
     <ClInclude Include="common-lib\mpl\type-traits.h" />
     <ClInclude Include="common-lib\mpl\type-transform.h" />
     <ClInclude Include="common-lib\synchronization\event\event.h" />
