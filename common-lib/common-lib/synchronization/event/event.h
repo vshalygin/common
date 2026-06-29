@@ -24,6 +24,7 @@ namespace vshalygin::cl {
         bool wait_for(const std::chrono::microseconds &mcs);
 
     private:
+        //TODO удалить impl
         class impl;
         std::unique_ptr<impl> m_impl;
     };

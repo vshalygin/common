@@ -1,26 +1,11 @@
 #pragma once
-#include "internal/type-traits/is-std-tuple.h"
 #include "internal/type-traits/check-type.h"
 #include "internal/type-traits/is-lvalue-static-castable.h"
 #include "internal/type-traits/is-lockable.h"
-#include "internal/type-traits/tuple-size.h"
-#include "internal/type-traits/tuple-element.h"
 
 #include <type_traits>
 
 namespace vshalygin::cl {
-    template<typename T>
-    inline constexpr bool is_std_tuple_v =
-        internal::is_std_tuple_v<T>;
-
-    template<typename Tuple>
-    inline constexpr size_t tuple_size_v =
-        internal::tuple_size_v<Tuple>;
-
-    template<typename Tuple, std::size_t I>
-    using tuple_element_t =
-        internal::tuple_element_t<Tuple, I>;
-
     template<typename T>
     inline constexpr bool is_lockable_v =
         internal::is_lockable_v<T>;

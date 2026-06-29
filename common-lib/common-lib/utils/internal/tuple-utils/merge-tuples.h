@@ -1,6 +1,6 @@
 #pragma once
 #include "make-tuple-index-sequense.h"
-#include <common-lib/mpl/type-traits.h>
+#include <common-lib/mpl/tuple-traits.h>
 #include <common-lib/mpl/type-transform.h>
 
 #include <tuple>

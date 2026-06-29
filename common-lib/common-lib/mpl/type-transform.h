@@ -17,17 +17,22 @@ namespace vshalygin::cl {
         internal::remove_function_qualifiers_t<T>;
 
     template<typename T>
-    using remove_type_qualifiers_t = internal::remove_type_qualifiers_t<T>;
+    using remove_type_qualifiers_t =
+        internal::remove_type_qualifiers_t<T>;
 
     template<typename T>
-    using make_function_type_t = internal::make_function_type_t<T>;
+    using make_function_type_t =
+        internal::make_function_type_t<T>;
 
     template<typename T>
-    using remove_c_ref_t = internal::remove_c_ref_t<T>;
+    using remove_c_ref_t =
+        internal::remove_c_ref_t<T>;
 
     template<typename T>
-    using add_const_t = internal::add_const_t<T>;
+    using add_const_t =
+        internal::add_const_t<T>;
 
     template<typename T>
-    using remove_const_t = internal::remove_const_t<T>;
+    using remove_const_t =
+        internal::remove_const_t<T>;
 }

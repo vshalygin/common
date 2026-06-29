@@ -88,12 +88,6 @@
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp">
       <Filter>mpl\type-traits</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\type-traits\is-std-tuple-test.cpp">
-      <Filter>mpl\type-traits</Filter>
-    </ClCompile>
-    <ClCompile Include="src\mpl\type-traits\tuple-element-test.cpp">
-      <Filter>mpl\type-traits</Filter>
-    </ClCompile>
     <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp">
       <Filter>synchronization\ordered-lock</Filter>
     </ClCompile>
@@ -102,6 +96,15 @@
     </ClCompile>
     <ClCompile Include="src\mpl\function-traits\is-function-pointer-test.cpp">
       <Filter>mpl\function-traits</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-traits\is-std-tuple-test.cpp">
+      <Filter>mpl\tuple-traits</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-traits\tuple-element-test.cpp">
+      <Filter>mpl\tuple-traits</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp">
+      <Filter>mpl\tuple-traits</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +161,9 @@
     </Filter>
     <Filter Include="synchronization\ordered-lock">
       <UniqueIdentifier>{329a462a-3515-42ff-8bfc-4409370494a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mpl\tuple-traits">
+      <UniqueIdentifier>{e61312f0-78b8-4aef-a1ed-b01035af460d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

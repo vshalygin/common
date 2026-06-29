@@ -1,6 +1,7 @@
 #pragma once
 
 namespace vshalygin::cl::internal {
+    //TODO add reference
     template<typename T>
     struct remove_function_qualifiers;
 

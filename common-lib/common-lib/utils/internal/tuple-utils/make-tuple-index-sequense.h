@@ -1,6 +1,6 @@
 #pragma once
 #include <common-lib/mpl/type-transform.h>
-#include <common-lib/mpl/type-traits.h>
+#include <common-lib/mpl/tuple-traits.h>
 
 namespace vshalygin::cl::internal {
     template<typename Tuple>

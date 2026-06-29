@@ -15,11 +15,12 @@
     <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-function-pointer-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-std-function-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-traits\is-std-tuple-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-traits\tuple-element-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\check-type-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\is-lockable-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp" />
-    <ClCompile Include="src\mpl\type-traits\is-std-tuple-test.cpp" />
-    <ClCompile Include="src\mpl\type-traits\tuple-element-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\add-const-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-function-qualifiers-test.cpp" />

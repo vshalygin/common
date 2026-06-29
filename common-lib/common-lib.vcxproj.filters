@@ -88,6 +88,9 @@
     <Filter Include="synchronization\internal\ordered-lock">
       <UniqueIdentifier>{b2e5c32a-1323-4e8e-9ed0-583ea31acc7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mpl\internal\tuple-traits">
+      <UniqueIdentifier>{0a3f88f7-38f0-40bf-b91d-06b6a6ffd033}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
@@ -255,15 +258,6 @@
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h">
       <Filter>mpl\internal\type-traits</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\is-std-tuple.h">
-      <Filter>mpl\internal\type-traits</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-element.h">
-      <Filter>mpl\internal\type-traits</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-traits\tuple-size.h">
-      <Filter>mpl\internal\type-traits</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\has-integral-order-static-member.h">
       <Filter>synchronization\internal\ordered-lock</Filter>
     </ClInclude>
@@ -275,6 +269,18 @@
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\function-traits\is-std-function.h">
       <Filter>mpl\internal\function-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\tuple-traits.h">
+      <Filter>mpl</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-traits\is-std-tuple.h">
+      <Filter>mpl\internal\tuple-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-element.h">
+      <Filter>mpl\internal\tuple-traits</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-size.h">
+      <Filter>mpl\internal\tuple-traits</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
