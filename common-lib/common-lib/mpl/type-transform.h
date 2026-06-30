@@ -8,6 +8,7 @@
 #include "internal/type-transform/add-const.h"
 
 namespace vshalygin::cl {
+    //TODO перенести в function_transform
     template<typename T>
     using remove_member_function_qualifiers_t =
         internal::remove_member_function_qualifiers_t<T>;

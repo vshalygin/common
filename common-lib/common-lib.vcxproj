@@ -42,13 +42,9 @@
     <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\has-integral-order-static-member.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-lockable.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-there-repeating-order-number.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-comparator.h" />
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-lock-base-impl.h" />
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-lock-base.h" />
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-locked-impl.h" />
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-locked.h" />
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-unlock-impl.h" />
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-unlocked.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-impl.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h" />
     <ClInclude Include="common-lib\synchronization\latch\latch.h" />
     <ClInclude Include="common-lib\synchronization\ordered-lock.h" />
@@ -78,6 +74,8 @@
     <ClInclude Include="common-lib\utils\buffer-view.h" />
     <ClInclude Include="common-lib\utils\buffer.h" />
     <ClInclude Include="common-lib\utils\cbuffer-view.h" />
+    <ClInclude Include="common-lib\utils\do-on-destruct.h" />
+    <ClInclude Include="common-lib\utils\internal\do-on-destruct\do-on-destruct.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-first-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-last-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\for-each-tuple-element-reverse.h" />

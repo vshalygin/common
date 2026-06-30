@@ -11,7 +11,7 @@ namespace vshalygin::cl::internal {
     template<typename T>
     struct has_integral_order_static_member<T,
                    std::enable_if_t<std::is_integral_v<
-                            decltype(std::declval<remove_type_qualifiers_t<T> &>().order)>>>
+                            decltype(remove_type_qualifiers_t<T>::order)>>>
         : public std::true_type
     {};
 

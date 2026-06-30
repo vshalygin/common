@@ -103,13 +103,13 @@
     <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp">
       <Filter>mpl\tuple-traits</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\tuple-transform\merge-tuples-test.cpp">
+    <ClCompile Include="src\mpl\tuple-transform\mpl-merge-tuples-test.cpp">
       <Filter>mpl\tuple-transform</Filter>
     </ClCompile>
     <ClCompile Include="src\mpl\tuple-transform\swap-first-two-tuple-types-test.cpp">
       <Filter>mpl\tuple-transform</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\tuple-transform\sort-tuple-test.cpp">
+    <ClCompile Include="src\mpl\tuple-transform\mpl-sort-tuple-test.cpp">
       <Filter>mpl\tuple-transform</Filter>
     </ClCompile>
     <ClCompile Include="src\mpl\tuple-transform\last-tuple-type-test.cpp">
@@ -132,6 +132,12 @@
     </ClCompile>
     <ClCompile Include="src\utils\tuple-utils\for-each-tuple-element-reverse-test.cpp">
       <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\synchronization\ordered-lock\is-there-repeating-order-number-test.cpp">
+      <Filter>synchronization\ordered-lock</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\do-on-destruct\do-on-destruct-test.cpp">
+      <Filter>utils\do-on-destruct</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -194,6 +200,9 @@
     </Filter>
     <Filter Include="mpl\tuple-transform">
       <UniqueIdentifier>{10da8395-5375-46a2-a182-f8d168604254}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\do-on-destruct">
+      <UniqueIdentifier>{07f0cf32-6b84-4c1f-9390-a88eb62cf417}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

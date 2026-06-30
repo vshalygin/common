@@ -3,7 +3,7 @@
 #include <type_traits>
 
 namespace vshalygin::cl::internal {
-    namespace is_lockable_impl {
+    namespace ordered_lock_impl {
         template<typename T, typename Enable = void>
         struct is_lockable
             : std::false_type
@@ -19,5 +19,5 @@ namespace vshalygin::cl::internal {
 
     template<typename T>
     inline constexpr bool is_lockable_v =
-        is_lockable_impl::is_lockable<remove_type_qualifiers_t<T>>::value;
+        ordered_lock_impl::is_lockable<remove_type_qualifiers_t<T>>::value;
 }

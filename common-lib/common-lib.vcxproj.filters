@@ -91,6 +91,9 @@
     <Filter Include="mpl\internal\tuple-transform">
       <UniqueIdentifier>{3bea86cc-97f5-4f72-b2e2-d447cdc9dac8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utils\internal\do-on-destruct">
+      <UniqueIdentifier>{7445fbb3-0c68-4f56-a77c-73d3984afb8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
@@ -309,26 +312,20 @@
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-comparator.h">
       <Filter>synchronization\internal\ordered-lock</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-lock-base.h">
-      <Filter>synchronization\internal\ordered-lock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-lock-base-impl.h">
-      <Filter>synchronization\internal\ordered-lock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-locked.h">
-      <Filter>synchronization\internal\ordered-lock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-locked-impl.h">
-      <Filter>synchronization\internal\ordered-lock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-unlocked.h">
-      <Filter>synchronization\internal\ordered-lock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-unlock-impl.h">
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-impl.h">
       <Filter>synchronization\internal\ordered-lock</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\utils\internal\tuple-utils\for-each-tuple-element-reverse.h">
       <Filter>utils\internal\tuple-utils</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\do-on-destruct.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-there-repeating-order-number.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\utils\internal\do-on-destruct\do-on-destruct.h">
+      <Filter>utils\internal\do-on-destruct</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

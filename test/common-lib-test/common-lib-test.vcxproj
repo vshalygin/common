@@ -18,9 +18,9 @@
     <ClCompile Include="src\mpl\tuple-traits\is-std-tuple-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\tuple-element-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp" />
-    <ClCompile Include="src\mpl\tuple-transform\merge-tuples-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\mpl-merge-tuples-test.cpp" />
     <ClCompile Include="src\mpl\tuple-transform\remove-last-tuple-element-test.cpp" />
-    <ClCompile Include="src\mpl\tuple-transform\sort-tuple-test.cpp" />
+    <ClCompile Include="src\mpl\tuple-transform\mpl-sort-tuple-test.cpp" />
     <ClCompile Include="src\mpl\tuple-transform\last-tuple-type-test.cpp" />
     <ClCompile Include="src\mpl\tuple-transform\swap-first-two-tuple-types-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\check-type-test.cpp" />
@@ -32,6 +32,7 @@
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\is-lockable-test.cpp" />
+    <ClCompile Include="src\synchronization\ordered-lock\is-there-repeating-order-number-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\ordered-lock-test.cpp" />
     <ClCompile Include="src\thread\future-test.cpp" />
     <ClCompile Include="src\thread\strand-test.cpp" />
@@ -42,6 +43,7 @@
     <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\cbuffer-view-test.cpp" />
     <ClCompile Include="src\utils\buffer\buffer-test.cpp" />
+    <ClCompile Include="src\utils\do-on-destruct\do-on-destruct-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\extract-first-tuple-element-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\extract-last-tuple-element-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\for-each-tuple-element-reverse-test.cpp" />
