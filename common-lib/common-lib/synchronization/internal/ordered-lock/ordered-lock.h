@@ -3,6 +3,8 @@
 #include "is-ordered-lockable-types-valid.h"
 #include "ordered-lock-functions.h"
 
+#include <common-lib/utils/tuple-utils.h>
+
 namespace vshalygin::cl::internal {
     struct defer_lock_t
     {};
@@ -16,16 +18,21 @@ namespace vshalygin::cl::internal {
         static_assert(is_ordered_lockable_types_valid_v<OrderedLockable...>,
                       "ordered lockable type are invalid");
 
+        template<typename...OrderedLockable2>
+        friend class ordered_lock;
+
         template<typename...Lockables, typename...AddLockables>
         friend ordered_lock<Lockables..., AddLockables...> push_back
                                      (ordered_lock<Lockables...> &&lock,
                                       AddLockables&...add_locables);
 
         using init_ptr_tuple = std::tuple<std::add_pointer_t<OrderedLockable>...>;
+        using init_ptr_ref_tuple = std::tuple<std::add_pointer_t<OrderedLockable> &...>;
         using ordered_ptr_tuple = sort_tuple_t<init_ptr_tuple, order_comparator>;
+        using ordered_ptr_ref_tuple = sort_tuple_t<init_ptr_ref_tuple, order_comparator>;
 
     public:
-        ordered_lock() noexcept = default;
+        ordered_lock() noexcept;
 
         explicit ordered_lock(OrderedLockable&...lockables);
         explicit ordered_lock(defer_lock_t, OrderedLockable&...lockables) noexcept;
@@ -41,14 +48,16 @@ namespace vshalygin::cl::internal {
                         sort_tuple_t<std::tuple<OrderedLockable...>, order_comparator>,
                         sort_tuple_t<std::tuple<OrderedLockable2...>, order_comparator>>, int> = 0>
         ordered_lock(ordered_lock<OrderedLockable2...> &&other)
-            : m_is_locked(other.m_is_locked)
-            , m_ordered_ptr_tuple(other.m_ordered_ptr_tuple)
+            : ordered_lock()
         {
+            m_is_locked = other.m_is_locked;
+            m_ordered_ptr_ref_tuple = other.m_ordered_ptr_ref_tuple;
+
             other.clear();
             other.m_is_locked = false;
         }
 
-        ordered_lock &operator=(ordered_lock<OrderedLockable...> &&other);
+        //ordered_lock &operator=(ordered_lock<OrderedLockable...> &&other);
 
         void lock();
         void unlock() noexcept;
@@ -72,7 +81,7 @@ namespace vshalygin::cl::internal {
 
     private:
         init_ptr_tuple m_init_ptr_tuple; 
-        ordered_ptr_tuple m_ordered_ptr_tuple;
+        ordered_ptr_ref_tuple m_ordered_ptr_ref_tuple;
         bool m_is_locked = false;
     };
 

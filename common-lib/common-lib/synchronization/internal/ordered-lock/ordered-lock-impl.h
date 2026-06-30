@@ -2,14 +2,20 @@
 #include "ordered-lock.h"
 #include "compare-ordered-lockable-tuples.h"
 
-#include <common-lib/utils/tuple-utils.h>
 #include <common-lib/utils/do-on-destruct.h>
 
 namespace vshalygin::cl::internal {
     template<typename...OrderedLockable>
+    ordered_lock<OrderedLockable...>::ordered_lock() noexcept
+        : m_init_ptr_tuple()
+        , m_ordered_ptr_ref_tuple(sort_tuple2<order_comparator>(tie_tuple(m_init_ptr_tuple)))
+        , m_is_locked(false)
+    {}
+
+    template<typename...OrderedLockable>
     ordered_lock<OrderedLockable...>::ordered_lock(OrderedLockable&...lockables)
         : m_init_ptr_tuple(&lockables...)
-        , m_ordered_ptr_tuple(sort_tuple2<order_comparator>(m_init_ptr_tuple))
+        , m_ordered_ptr_ref_tuple(sort_tuple2<order_comparator>(tie_tuple(m_init_ptr_tuple)))
         , m_is_locked(false)
     {
         lock();
@@ -18,14 +24,14 @@ namespace vshalygin::cl::internal {
     template<typename...OrderedLockable>
     ordered_lock<OrderedLockable...>::ordered_lock(defer_lock_t, OrderedLockable&...lockables) noexcept
         : m_init_ptr_tuple(&lockables...)
-        , m_ordered_ptr_tuple(sort_tuple2<order_comparator>(m_init_ptr_tuple))
+        , m_ordered_ptr_ref_tuple(sort_tuple2<order_comparator>(tie_tuple(m_init_ptr_tuple)))
         , m_is_locked(false)
     {}
 
     template<typename...OrderedLockable>
     ordered_lock<OrderedLockable...>::ordered_lock(adopt_lock_t, OrderedLockable&...lockables) noexcept
         : m_init_ptr_tuple(&lockables...)
-        , m_ordered_ptr_tuple(sort_tuple2<order_comparator>(m_init_ptr_tuple))
+        , m_ordered_ptr_ref_tuple(sort_tuple2<order_comparator>(tie_tuple(m_init_ptr_tuple)))
         , m_is_locked(true)
     {}
 
@@ -37,27 +43,27 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename...OrderedLockable>
-    ordered_lock<OrderedLockable...> &ordered_lock<OrderedLockable...>::operator=
-                                             (ordered_lock<OrderedLockable...> &&other)
-    {
-        if(this != &other) {
-            if(is_locked()) {
-                unlock();
-            }
-            m_ordered_ptr_tuple = other.m_ordered_ptr_tuple;
-
-            other.clear();
-            other.m_is_locked = false;
-        }
-
-        return *this;
-    }
+    //template<typename...OrderedLockable>
+    //ordered_lock<OrderedLockable...> &ordered_lock<OrderedLockable...>::operator=
+    //                                         (ordered_lock<OrderedLockable...> &&other)
+    //{
+    //    if(this != &other) {
+    //        if(is_locked()) {
+    //            unlock();
+    //        }
+    //        m_ordered_ptr_tuple = other.m_ordered_ptr_tuple;
+    //
+    //        other.clear();
+    //        other.m_is_locked = false;
+    //    }
+    //
+    //    return *this;
+    //}
 
     template<typename...OrderedLockable>
     void ordered_lock<OrderedLockable...>::lock()
     {
-        do_safe_lock(std::make_index_sequence<tuple_size_v<ordered_ptr_tuple>>());
+        do_safe_lock(std::make_index_sequence<tuple_size_v<init_ptr_tuple>>());
         m_is_locked = true;
     }
 
@@ -66,7 +72,7 @@ namespace vshalygin::cl::internal {
     void ordered_lock<OrderedLockable...>::do_safe_lock(std::index_sequence<I...>)
     {
         ordered_ptr_tuple locked;
-        do_on_destruct d([&locked]() {
+        do_on_destruct d([&locked]() mutable {
             for_each_tuple_element_reverse(locked, [](auto el_ptr) {
                 if(el_ptr) {
                     el_ptr->unlock();
@@ -74,8 +80,8 @@ namespace vshalygin::cl::internal {
             });
         });
 
-        ((std::get<I>(m_ordered_ptr_tuple)->lock(),
-          std::get<I>(locked) = std::get<I>(m_ordered_ptr_tuple)), ...);
+        ((std::get<I>(m_ordered_ptr_ref_tuple)->lock(),
+          std::get<I>(locked) = std::get<I>(m_ordered_ptr_ref_tuple)), ...);
 
         d.release();
     }
@@ -83,7 +89,7 @@ namespace vshalygin::cl::internal {
     template<typename...OrderedLockable>
     void ordered_lock<OrderedLockable...>::unlock() noexcept
     {
-        for_each_tuple_element_reverse(m_ordered_ptr_tuple, [](auto el_ptr) {
+        for_each_tuple_element_reverse(m_ordered_ptr_ref_tuple, [](auto el_ptr) {
             el_ptr->unlock();
         });
 
@@ -99,16 +105,13 @@ namespace vshalygin::cl::internal {
     template<typename...OrderedLockable>
     ordered_lock<OrderedLockable...>::operator bool() const noexcept
     {
-        return std::get<0>(m_ordered_ptr_tuple);
+        return std::get<0>(m_init_ptr_tuple);
     }
 
     template<typename...OrderedLockable>
     void ordered_lock<OrderedLockable...>::clear() noexcept
     {
         for_each_tuple_element(m_init_ptr_tuple, [](auto &el_ptr) {
-            el_ptr = nullptr;
-        });
-        for_each_tuple_element(m_ordered_ptr_tuple, [](auto &el_ptr) {
             el_ptr = nullptr;
         });
     }
