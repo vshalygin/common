@@ -139,6 +139,9 @@
     <ClCompile Include="src\utils\do-on-destruct\do-on-destruct-test.cpp">
       <Filter>utils\do-on-destruct</Filter>
     </ClCompile>
+    <ClCompile Include="src\synchronization\ordered-lock\compare-ordered-lockable-tuples-test.cpp">
+      <Filter>synchronization\ordered-lock</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

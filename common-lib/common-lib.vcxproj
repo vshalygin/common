@@ -40,10 +40,15 @@
     <ClInclude Include="common-lib\mpl\type-transform.h" />
     <ClInclude Include="common-lib\synchronization\event\event.h" />
     <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\compare-ordered-lockable-tuples.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\has-integral-order-static-member.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-lockable.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-ordered-lockable-types-valid.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-there-repeating-order-number.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\order-comparator.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-all.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-functions-impl.h" />
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-functions.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-impl.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h" />
     <ClInclude Include="common-lib\synchronization\latch\latch.h" />

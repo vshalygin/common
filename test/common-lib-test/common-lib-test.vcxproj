@@ -34,6 +34,7 @@
     <ClCompile Include="src\synchronization\ordered-lock\is-lockable-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\is-there-repeating-order-number-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\ordered-lock-test.cpp" />
+    <ClCompile Include="src\synchronization\ordered-lock\compare-ordered-lockable-tuples-test.cpp" />
     <ClCompile Include="src\thread\future-test.cpp" />
     <ClCompile Include="src\thread\strand-test.cpp" />
     <ClCompile Include="src\thread\thread-pool-task-test.cpp" />

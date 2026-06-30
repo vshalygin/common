@@ -1,38 +1,53 @@
 #pragma once
-#include "has-integral-order-static-member.h"
-#include "is-lockable.h"
-#include "is-there-repeating-order-number.h"
 #include "order-comparator.h"
+#include "is-ordered-lockable-types-valid.h"
+#include "ordered-lock-functions.h"
 
 namespace vshalygin::cl::internal {
+    struct defer_lock_t
+    {};
+
+    struct adopt_lock_t
+    {};
+
     template<typename...OrderedLockable>
     class ordered_lock
     {
-        static_assert((std::is_same_v<OrderedLockable,
-                      remove_type_qualifiers_t<OrderedLockable>> && ...),
-                      "no type qualifiers allowed");
-        static_assert((is_lockable_v<OrderedLockable> && ...),
-                      "all types must have lock() and unlock()");
-        static_assert((has_integral_order_static_member_v<OrderedLockable> && ...),
-                      "all ordered types must have integral static member named 'order'");
-        static_assert(sizeof...(OrderedLockable) > 0),
-                      "must be at least one lockable object");
-        static_assert(!is_there_repeating_order_number_v<OrderedLockable...>),
-                      "repeating order number are not allowed");
+        static_assert(is_ordered_lockable_types_valid_v<OrderedLockable...>,
+                      "ordered lockable type are invalid");
+
+        template<typename...Lockables, typename...AddLockables>
+        friend ordered_lock<Lockables..., AddLockables...> push_back
+                                     (ordered_lock<Lockables...> &&lock,
+                                      AddLockables&...add_locables);
 
         using init_ptr_tuple = std::tuple<std::add_pointer_t<OrderedLockable>...>;
         using ordered_ptr_tuple = sort_tuple_t<init_ptr_tuple, order_comparator>;
 
     public:
-        ordered_lock() = default;
+        ordered_lock() noexcept = default;
+
         explicit ordered_lock(OrderedLockable&...lockables);
+        explicit ordered_lock(defer_lock_t, OrderedLockable&...lockables) noexcept;
+        explicit ordered_lock(adopt_lock_t, OrderedLockable&...lockables) noexcept;
 
         ~ordered_lock();
 
         ordered_lock(const ordered_lock &) = delete;
         ordered_lock &operator=(const ordered_lock &) = delete;
 
-        ordered_lock(ordered_lock<OrderedLockable...> &&other);
+        template<typename...OrderedLockable2,
+                 std::enable_if_t<std::is_same_v<
+                        sort_tuple_t<std::tuple<OrderedLockable...>, order_comparator>,
+                        sort_tuple_t<std::tuple<OrderedLockable2...>, order_comparator>>, int> = 0>
+        ordered_lock(ordered_lock<OrderedLockable2...> &&other)
+            : m_is_locked(other.m_is_locked)
+            , m_ordered_ptr_tuple(other.m_ordered_ptr_tuple)
+        {
+            other.clear();
+            other.m_is_locked = false;
+        }
+
         ordered_lock &operator=(ordered_lock<OrderedLockable...> &&other);
 
         void lock();
@@ -47,8 +62,26 @@ namespace vshalygin::cl::internal {
         template<size_t...I>
         void do_safe_lock(std::index_sequence<I...>);
 
+        template<typename...AddLockables>
+        ordered_lock<OrderedLockable..., AddLockables...> push_back
+                                                   (AddLockables&...add_locables);
+        template<typename...AddLockables, size_t...SelfIdx>
+        ordered_lock<OrderedLockable..., AddLockables...> push_back_impl
+                                                   (AddLockables&...add_locables,
+                                                    std::index_sequence<SelfIdx...>);
+
     private:
-        bool m_is_locked = false;
+        init_ptr_tuple m_init_ptr_tuple; 
         ordered_ptr_tuple m_ordered_ptr_tuple;
+        bool m_is_locked = false;
     };
+
+    template<typename...OrderedLockable>
+    ordered_lock(OrderedLockable&...) -> ordered_lock<OrderedLockable...>;
+
+    template<typename...OrderedLockable>
+    ordered_lock(defer_lock_t, OrderedLockable&...) -> ordered_lock<OrderedLockable...>;
+
+    template<typename...OrderedLockable>
+    ordered_lock(adopt_lock_t, OrderedLockable&...) -> ordered_lock<OrderedLockable...>;
 }

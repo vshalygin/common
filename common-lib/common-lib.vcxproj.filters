@@ -327,6 +327,21 @@
     <ClInclude Include="common-lib\utils\internal\do-on-destruct\do-on-destruct.h">
       <Filter>utils\internal\do-on-destruct</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-functions.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-functions-impl.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-ordered-lockable-types-valid.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\compare-ordered-lockable-tuples.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-all.h">
+      <Filter>synchronization\internal\ordered-lock</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
