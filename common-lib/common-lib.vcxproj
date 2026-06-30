@@ -28,6 +28,7 @@
     <ClInclude Include="common-lib\mpl\internal\type-traits\check-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\add-const.h" />
+    <ClInclude Include="common-lib\mpl\internal\type-transform\add-lvalue-ref-to-value.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\make-function-type.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-c-ref.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-const.h" />
@@ -91,6 +92,7 @@
     <ClInclude Include="common-lib\utils\internal\tuple-utils\sort-tuple.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\sort-tuple2.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\swap-first-two-tuple-elements.h" />
+    <ClInclude Include="common-lib\utils\internal\tuple-utils\tie-tuple.h" />
     <ClInclude Include="common-lib\utils\tuple-utils.h" />
     <ClInclude Include="common-lib\utils\type-wrapper.h" />
   </ItemGroup>

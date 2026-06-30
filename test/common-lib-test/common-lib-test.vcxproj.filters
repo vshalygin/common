@@ -142,6 +142,12 @@
     <ClCompile Include="src\synchronization\ordered-lock\compare-ordered-lockable-tuples-test.cpp">
       <Filter>synchronization\ordered-lock</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\tuple-utils\tie-tuple-test.cpp">
+      <Filter>utils\tuple-utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\type-transform\add-lvalue-ref-to-value-test.cpp">
+      <Filter>mpl\type-transform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

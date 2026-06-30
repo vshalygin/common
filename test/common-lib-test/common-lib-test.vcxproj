@@ -26,6 +26,7 @@
     <ClCompile Include="src\mpl\type-traits\check-type-test.cpp" />
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\add-const-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\add-lvalue-ref-to-value-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-member-function-qualifiers-test.cpp" />
@@ -54,6 +55,7 @@
     <ClCompile Include="src\utils\tuple-utils\sort-tuple-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\sort-tuple2-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\swap-first-two-tuple-elements-test.cpp" />
+    <ClCompile Include="src\utils\tuple-utils\tie-tuple-test.cpp" />
     <ClCompile Include="src\utils\type-wrapper\type-wrapper-test.cpp" />
   </ItemGroup>
   <ItemGroup>

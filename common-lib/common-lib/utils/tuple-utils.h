@@ -8,6 +8,7 @@
 #include "internal/tuple-utils/forward-tuple-element.h"
 #include "internal/tuple-utils/for-each-tuple-element.h"
 #include "internal/tuple-utils/for-each-tuple-element-reverse.h"
+#include "internal/tuple-utils/tie-tuple.h"
 
 namespace vshalygin::cl {
     template<typename Tuple>
@@ -64,5 +65,11 @@ namespace vshalygin::cl {
     {
         internal::for_each_tuple_element_reverse(std::forward<Tuple>(tuple),
                                                  std::forward<F>(f));
+    }
+
+    template<typename... Ts>
+    auto tie_tuple(std::tuple<Ts...> &t)
+    {
+        return internal::tie_tuple(t);
     }
 }
