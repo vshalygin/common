@@ -21,7 +21,6 @@ namespace vshalygin::cl::internal {
         , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
-        static_assert(function_arg_count_v<Function> == 0);
         assert(m_thread_pool);
     }
 
@@ -34,12 +33,17 @@ namespace vshalygin::cl::internal {
         }
 
         m_thread_pool->post([controller = m_controller,
-                            func = std::move(m_function)]() mutable {
+                             func = std::move(m_function),
+                             args = std::tuple(std::forward<Args>(args)...)]() mutable {
             try {
                 if constexpr(!std::is_void_v<T>) {
-                    controller->set_value(func->call());
+                    controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
+                        return func->call(std::move(arg)...);
+                    }, std::move(args)));
                 } else {
-                    func->call();
+                    std::apply([&func](auto&&...arg) {
+                        func->call(std::move(arg)...);
+                    }, std::move(args));
                     controller->set_value();
                 }
             } catch(...) {

@@ -889,3 +889,45 @@ TEST_F(Future, DoChainingWithVoidReturnCallback)
     f.get();
     ASSERT_EQ(i, 22);
 }
+
+TEST_F(Future, PromiseAcceptParametersToResolve)
+{
+    int i = 0;
+    double d = 0;
+    auto p = make_promise(&m_pool, [&](int ii, double dd) { i = ii; d = dd; });
+    p.resolve(1, 9);
+    p.get_future().get();
+
+    EXPECT_EQ(i, 1);
+    EXPECT_EQ(d, 9);
+}
+
+TEST_F(Future, PromiseMovesParametersToResolve)
+{
+    int r = 0;
+    auto i = std::make_unique<int>(2);
+    counter c;
+    auto p = make_promise(&m_pool, [&](std::unique_ptr<int> ii, counter &&) { r = *ii; });
+    p.resolve(std::move(i), std::move(c));
+    p.get_future().get();
+
+    EXPECT_FALSE(i);
+    EXPECT_EQ(r, 2);
+    EXPECT_EQ(counter::copy_num, 0u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_TRUE(counter::move_num > 0u);
+    EXPECT_EQ(counter::move_assign_num, 0u);
+}
+
+TEST_F(Future, PromiseCopiesParametersToResolve)
+{
+    counter c;
+    auto p = make_promise(&m_pool, [](const counter &) { return 1; });
+    p.resolve(c);
+    p.get_future().get();
+
+    EXPECT_EQ(counter::copy_num, 1u);
+    EXPECT_EQ(counter::copy_assign_num, 0u);
+    EXPECT_TRUE(counter::move_num > 0u);
+    EXPECT_EQ(counter::move_assign_num, 0u);
+}
