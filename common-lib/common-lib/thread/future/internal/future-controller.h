@@ -20,9 +20,13 @@ namespace vshalygin::cl::internal {
     class future_controller
         : public std::enable_shared_from_this<future_controller<T, ThreadPool>>
     {
-        //TODO add shared ptr creator
+        class creator
+        {};
+
     public:
-        explicit future_controller(ThreadPool *thread_pool);
+        static std::shared_ptr<future_controller> create(ThreadPool *thread_pool);
+
+        explicit future_controller(ThreadPool *thread_pool, creator);
 
         future_controller(const future_controller &) = delete;
         future_controller &operator=(const future_controller &) = delete;

@@ -5,7 +5,7 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     promise<T, ThreadPool>::promise(ThreadPool *thread_pool)
         : m_thread_pool(thread_pool)
-        , m_controller(std::make_shared<future_controller<T, ThreadPool>>(thread_pool))
+        , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
         assert(m_thread_pool);
@@ -18,7 +18,7 @@ namespace vshalygin::cl::internal {
         : m_thread_pool(thread_pool)
         , m_function(std::make_shared<promise_function<Function>>
                      (std::forward<Function>(function)))
-        , m_controller(std::make_shared<future_controller<T, ThreadPool>>(thread_pool))
+        , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
         static_assert(function_arg_count_v<Function> == 0);

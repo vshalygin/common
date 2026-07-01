@@ -5,7 +5,14 @@
 
 namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
-    future_controller<T, ThreadPool>::future_controller(ThreadPool *thread_pool)
+    std::shared_ptr<future_controller<T, ThreadPool>>
+        future_controller<T, ThreadPool>::create(ThreadPool *thread_pool)
+    {
+        return std::make_shared<future_controller>(thread_pool, creator{});
+    }
+
+    template<typename T, typename ThreadPool>
+    future_controller<T, ThreadPool>::future_controller(ThreadPool *thread_pool, creator)
         : m_thread_pool(thread_pool)
     {
         assert(m_thread_pool);
