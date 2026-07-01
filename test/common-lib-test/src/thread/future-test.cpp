@@ -872,22 +872,22 @@ TEST_F(Future, CallbacksMayReturnVoidType)
                 .then([](){});
 
     f.get();
+    static_assert(std::is_void_v<decltype(f.get())>);
 }
 
-//TEST_F(Future, DoChainingWithVoidReturnCallback)
-//{
-//    int i = 0;
-//    promise p(&m_pool, []() {});
-//    p.resolve();
-//    auto f = p.get_future()
-//        .then([]() {})
-//        .then([]() {})
-//        .then([]() { return 1; });
-//        //.then([](int) {})
-//        //.then([]() {return 22; })
-//        //.then([&i](int ii) { i = ii; });
-//
-//    f.get();
-//    ASSERT_EQ(i, 22);
-//}
-//
+TEST_F(Future, DoChainingWithVoidReturnCallback)
+{
+    int i = 0;
+    promise p(&m_pool, []() {});
+    p.resolve();
+    auto f = p.get_future()
+        .then([]() {})
+        .then([]() {})
+        .then([]() { return 1; })
+        .then([](int) {})
+        .then([]() {return 22; })
+        .then([&i](int ii) { i = ii; });
+
+    f.get();
+    ASSERT_EQ(i, 22);
+}

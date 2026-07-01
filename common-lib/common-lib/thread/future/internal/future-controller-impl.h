@@ -93,9 +93,9 @@ namespace vshalygin::cl::internal {
             if constexpr(std::is_void_v<T>) {
                 m_val = std::make_unique<type_wrapper<T>>();
             } else {
-                m_val = std::make_unique<type_wrapper<T>>(std::forward<T>(value...)); //TODO это точно работает?
+                m_val = std::make_unique<type_wrapper<T>>(std::forward<decltype(value)>(value)...);
             }
-            
+
             if(m_on_success) {
                 post_success(true);
             } else {

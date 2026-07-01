@@ -25,6 +25,9 @@ namespace vshalygin::cl {
         template<typename U, typename ThreadPool2>//TODO плохо!
         friend class promise;
 
+        template<typename U, typename ThreadPool2>//TODO плохо!
+        friend class future;
+
         using base_type = internal::future<T, ThreadPool>;
 
         future(base_type &&base)

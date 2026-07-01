@@ -24,8 +24,7 @@ namespace vshalygin::cl::internal {
 
     template<typename T, typename ThreadPool>
     template<typename Func>
-    future<function_ret_t<Func>, ThreadPool>
-        future<T, ThreadPool>::then(Func &&task)
+    future<function_ret_t<Func>, ThreadPool> future<T, ThreadPool>::then(Func &&task)
     {
         using ret_t = function_ret_t<Func>;
 
@@ -35,7 +34,12 @@ namespace vshalygin::cl::internal {
             m_controller->set_on_success([controller = promise.get_controller(),
                                           task = std::forward<Func>(task)](T &&val) mutable {
                 try {
-                    controller->set_value(task(std::forward<T &&>(val)));
+                    if constexpr(!std::is_void_v<ret_t>) {
+                        controller->set_value(task(std::forward<T>(val)));
+                    } else {
+                        task(std::forward<T &&>(val));
+                        controller->set_value();
+                    }
                 } catch(...) {
                     controller->set_exception(std::current_exception());
                 }
@@ -44,8 +48,12 @@ namespace vshalygin::cl::internal {
             m_controller->set_on_success([controller = promise.get_controller(),
                                           task = std::forward<Func>(task)]() mutable {
                 try {
-                    task();
-                    controller->set_value();
+                    if constexpr(!std::is_void_v<ret_t>) {
+                        controller->set_value(task());
+                    } else {
+                        task();
+                        controller->set_value();
+                    }
                 } catch(...) {
                     controller->set_exception(std::current_exception());
                 }
