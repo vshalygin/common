@@ -3,19 +3,20 @@
 #include <type_traits>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename Enable = void>
-    struct has_integral_order_static_member
-        : public std::false_type
-    {};
+    namespace ordered_lock_impl {
+        template<typename T, typename Enable = void>
+        struct has_integral_order_static_member
+            : public std::false_type
+        {};
 
-    template<typename T>
-    struct has_integral_order_static_member<T,
-                   std::enable_if_t<std::is_integral_v<
-                            decltype(remove_type_qualifiers_t<T>::order)>>>
-        : public std::true_type
-    {};
-
+        template<typename T>
+        struct has_integral_order_static_member<T,
+            std::enable_if_t<std::is_integral_v<
+            decltype(remove_type_qualifiers_t<T>::order)>>>
+            : public std::true_type
+        {};
+    }
     template<typename T>
     inline constexpr bool has_integral_order_static_member_v =
-        has_integral_order_static_member<T>::value;
+        ordered_lock_impl::has_integral_order_static_member<T>::value;
 }
