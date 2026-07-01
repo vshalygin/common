@@ -3,19 +3,20 @@
 #include "future-data-impl.h"
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T, typename...ResolveArgs>
     class promise;
 
     template<typename T, typename ThreadPool>
     class future
     {
-        friend class promise<T, ThreadPool>;
+        template<typename, typename, typename...>
+        friend class promise;
 
         explicit future(
             ThreadPool *thread_pool,
             std::shared_ptr<future_controller<T, ThreadPool>> controller);
 
-    protected:
+    public:
         future() = default;
 
         future(const future &) = delete;
@@ -28,9 +29,8 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         future<function_ret_t<Func>, ThreadPool> then(Func &&task);
 
-        void catched(std::function<void(std::exception_ptr)> &&task);
-        future<T, ThreadPool> catch_and_release_itself(
-                                   std::function<void(std::exception_ptr)> &&task);
+        void catched(std::function<void(std::exception_ptr)> &&task) &;
+        future<T, ThreadPool> catched(std::function<void(std::exception_ptr)> &&task) &&;
 
         bool is_valid() const;
 

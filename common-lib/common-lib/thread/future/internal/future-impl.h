@@ -28,7 +28,7 @@ namespace vshalygin::cl::internal {
     {
         using ret_t = function_ret_t<Func>;
 
-        promise<ret_t, ThreadPool> promise(m_thread_pool);
+        promise<ThreadPool, ret_t> promise(m_thread_pool);
 
         if constexpr(!std::is_void_v<T>) {
             m_controller->set_on_success([controller = promise.get_controller(),
@@ -69,14 +69,14 @@ namespace vshalygin::cl::internal {
 
     template<typename T, typename ThreadPool>
     void future<T, ThreadPool>::catched(
-            std::function<void(std::exception_ptr)> &&task)
+            std::function<void(std::exception_ptr)> &&task) &
     {
         m_controller->set_on_fail(std::move(task));
     }
 
     template<typename T, typename ThreadPool>
-    future<T, ThreadPool> future<T, ThreadPool>::catch_and_release_itself(
-                                     std::function<void(std::exception_ptr)> &&task)
+    future<T, ThreadPool> future<T, ThreadPool>::catched(
+                                     std::function<void(std::exception_ptr)> &&task) &&
     {
         m_controller->set_on_fail(std::move(task));
         return std::move(*this);

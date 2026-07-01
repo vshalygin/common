@@ -8,10 +8,10 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     class future;
 
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T, typename...ResolveArgs>
     class promise
     {
-        template<typename, typename>
+        template<typename, typename, typename...>
         friend class promise;
 
         template<typename, typename>
@@ -19,7 +19,7 @@ namespace vshalygin::cl::internal {
 
         explicit promise(ThreadPool *thread_pool);
 
-    protected:
+    public:
         promise() = default;
 
         template<typename Function>
