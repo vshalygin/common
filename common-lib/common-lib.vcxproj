@@ -54,6 +54,7 @@
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h" />
     <ClInclude Include="common-lib\synchronization\latch\latch.h" />
     <ClInclude Include="common-lib\synchronization\ordered-lock.h" />
+    <ClInclude Include="common-lib\synchronization\ordered-mutex.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread\future\future.h" />

@@ -26,7 +26,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename...Ts>
-    auto tie_tuple(std::tuple<Ts...> &t)
+    auto do_tie_tuple(std::tuple<Ts...> &t)
     {
         return tie_tuple_impl::tie_tuple(t, std::index_sequence_for<Ts...>{});
     }

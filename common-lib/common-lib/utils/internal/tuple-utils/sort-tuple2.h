@@ -54,7 +54,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename Comparator, typename Tuple>
-    auto sort_tuple2(Tuple &&tuple)
+    auto do_sort_tuple2(Tuple &&tuple)
     {
         static_assert(is_std_tuple_v<Tuple>,
                       "bad tuple");

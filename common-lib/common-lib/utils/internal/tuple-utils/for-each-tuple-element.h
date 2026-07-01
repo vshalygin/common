@@ -4,7 +4,7 @@
 
 namespace vshalygin::cl::internal {
     template<typename Tuple, typename F>
-    void for_each_tuple_element(Tuple &&tuple, F &&f)
+    void do_for_each_tuple_element(Tuple &&tuple, F &&f)
     {
         static_assert(is_std_tuple_v<Tuple>,
                       "bad tuple type");

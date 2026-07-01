@@ -2,7 +2,7 @@
 
 namespace vshalygin::cl::internal {
     template<size_t I, typename Tuple>
-    constexpr decltype(auto) forward_tuple_element(Tuple &&tuple) noexcept
+    constexpr decltype(auto) do_forward_tuple_element(Tuple &&tuple) noexcept
     {
         using type = tuple_element_t<Tuple, I>;
         if constexpr(std::is_reference_v<type>) {

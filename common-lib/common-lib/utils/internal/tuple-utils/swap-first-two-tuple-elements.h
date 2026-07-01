@@ -4,26 +4,28 @@
 #include <tuple>
 
 namespace vshalygin::cl::internal {
-    template<std::size_t... I, class Arg1, class Arg2, class... Args>
-    std::tuple<Arg2, Arg1, Args...> swap_first_two_tuple_elements_impl2
-                                           (std::tuple<Arg1, Arg2, Args...> &&t,
-                                            std::index_sequence<I...>)
-    {
-        return { std::get<1>(std::move(t)),
-                 std::get<0>(std::move(t)),
-                 std::get<I + 2>(std::move(t))... };
-    }
+    namespace swap_first_two_tuple_elements_impl {
+        template<std::size_t... I, class Arg1, class Arg2, class... Args>
+        std::tuple<Arg2, Arg1, Args...> swap_first_two_tuple_elements2
+                                                   (std::tuple<Arg1, Arg2, Args...> &&t,
+                                                    std::index_sequence<I...>)
+        {
+            return { std::get<1>(std::move(t)),
+                     std::get<0>(std::move(t)),
+                     std::get<I + 2>(std::move(t))... };
+        }
 
-    template<class Arg1, class Arg2, class... Args>
-    std::tuple<Arg2, Arg1, Args...> swap_first_two_tuple_elements_impl
-                                            (std::tuple<Arg1, Arg2, Args...> t)
-    {
-        return swap_first_two_tuple_elements_impl2(std::move(t),
-                                                   std::index_sequence_for<Args...>{});
+        template<class Arg1, class Arg2, class... Args>
+        std::tuple<Arg2, Arg1, Args...> swap_first_two_tuple_elements
+        (std::tuple<Arg1, Arg2, Args...> t)
+        {
+            return swap_first_two_tuple_elements2(std::move(t),
+                                                  std::index_sequence_for<Args...>{});
+        }
     }
-
+    
     template<typename Tuple>
-    auto swap_first_two_tuple_elements (Tuple &&t)
+    auto do_swap_first_two_tuple_elements (Tuple &&t)
     {
         static_assert(is_std_tuple_v<Tuple>,
                       "argument is not std::tuple");
@@ -32,6 +34,7 @@ namespace vshalygin::cl::internal {
         static_assert(std::tuple_size_v<remove_type_qualifiers_t<Tuple>> > 1,
                       "tuple size must be greater than 1");
 
-        return swap_first_two_tuple_elements_impl(std::forward<Tuple>(t));
+        return swap_first_two_tuple_elements_impl::swap_first_two_tuple_elements(
+                                                                    std::forward<Tuple>(t));
     }
 }
