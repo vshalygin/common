@@ -16,8 +16,7 @@ namespace vshalygin::cl::internal {
     promise<T, ThreadPool>::promise(ThreadPool *thread_pool,
                                     Function &&function)
         : m_thread_pool(thread_pool)
-        , m_function(std::make_shared<promise_function<Function>>
-                     (std::forward<Function>(function)))
+        , m_function(std::make_shared<promise_function<Function>>(std::forward<Function>(function)))
         , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
@@ -26,7 +25,8 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    void promise<T, ThreadPool>::resolve()
+    template<typename...Args>
+    void promise<T, ThreadPool>::resolve(Args&&...args)
     {
         if(!m_function) {
             throw std::logic_error("no resolve function");
@@ -64,8 +64,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    std::shared_ptr<future_controller<T, ThreadPool>>
-        promise<T, ThreadPool>::get_controller() const
+    std::shared_ptr<future_controller<T, ThreadPool>> promise<T, ThreadPool>::get_controller() const
     {
         return m_controller;
     }

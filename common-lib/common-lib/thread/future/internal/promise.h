@@ -32,7 +32,9 @@ namespace vshalygin::cl::internal {
         promise(promise &&) = default;
         promise &operator=(promise &&) = default;
 
-        void resolve();
+        template<typename...Args>
+        void resolve(Args&&...args);
+
         future<T, ThreadPool> get_future();
 
         bool is_valid() const;
