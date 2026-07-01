@@ -1,49 +1,8 @@
 #pragma once
 #include "future-controller.h"
+#include <common-lib/utils/do-on-destruct.h>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
-    class future_controller<T, ThreadPool>::notify_all_on_destruct
-    {
-    public:
-        explicit notify_all_on_destruct(std::condition_variable_any *cv)
-            : m_cv(cv)
-        {}
-
-        notify_all_on_destruct(const notify_all_on_destruct &) = delete;
-        notify_all_on_destruct &operator=(const notify_all_on_destruct &) = delete;
-
-        ~notify_all_on_destruct()
-        {
-            if(m_cv) {
-                m_cv->notify_all();
-            }
-        }
-
-    private:
-        std::condition_variable_any *m_cv = nullptr;
-    };
-
-    template<typename T, typename ThreadPool>
-    class future_controller<T, ThreadPool>::set_true_on_destruct
-    {
-    public:
-        explicit set_true_on_destruct(bool &val)
-            : m_val(val)
-        {}
-
-        set_true_on_destruct(const set_true_on_destruct &) = delete;
-        set_true_on_destruct &operator=(const set_true_on_destruct &) = delete;
-
-        ~set_true_on_destruct()
-        {
-            m_val = true;
-        }
-
-    private:
-        bool &m_val;
-    };
-
     template<typename T, typename ThreadPool>
     future_controller<T, ThreadPool>::future_controller(ThreadPool *thread_pool)
         : m_thread_pool(thread_pool)
@@ -203,9 +162,9 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::call_success(bool need_notify)
     {
-        notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
+        do_on_destruct d1([this, need_notify]() { if(need_notify) m_cv.notify_all(); });
         ordered_lock guard(m_val_mtx);
-        set_true_on_destruct s(m_is_value_ready);
+        do_on_destruct d2([this, need_notify]() { m_is_value_ready = true; });
 
         //m_on_success here is defined and will not change,
         //no need m_on_success_mtx block
@@ -217,9 +176,9 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::call_fail(bool need_notify)
     {
-        notify_all_on_destruct n(need_notify ? &m_cv : nullptr);
+        do_on_destruct d1([this, need_notify]() { if(need_notify) m_cv.notify_all(); });
         ordered_lock guard(m_exception_mtx);
-        set_true_on_destruct s(m_is_exception_ready);
+        do_on_destruct d2([this, need_notify]() { m_is_exception_ready = true; });
 
         //m_exception here is defined and will not change,
         //no need m_on_fail_mtx block

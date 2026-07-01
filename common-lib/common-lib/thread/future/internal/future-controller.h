@@ -21,8 +21,6 @@ namespace vshalygin::cl::internal {
     {
         using this_type = future_controller<T, ThreadPool>;
 
-        class notify_all_on_destruct;
-        class set_true_on_destruct;
         //TODO add shared ptr creator
     public:
         explicit future_controller(ThreadPool *thread_pool);
