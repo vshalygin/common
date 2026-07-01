@@ -16,7 +16,8 @@ namespace vshalygin::cl::internal {
     promise<ThreadPool, T, ResolveArgs...>::promise(ThreadPool *thread_pool,
                                                     Function &&function)
         : m_thread_pool(thread_pool)
-        , m_function(std::make_shared<promise_function<Function>>(std::forward<Function>(function)))
+        , m_function(std::make_shared<promise_function<Function, T, ResolveArgs...>>
+                                                        (std::forward<Function>(function)))
         , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {

@@ -46,7 +46,7 @@ namespace vshalygin::cl::internal {
         ThreadPool *m_thread_pool = nullptr;
 
         //shared_ptr for thread pools, which don't accept move-only functors
-        std::shared_ptr<ipromise_function<T>> m_function;
+        std::shared_ptr<ipromise_function<T, ResolveArgs...>> m_function;
 
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
         future<T, ThreadPool> m_future;
