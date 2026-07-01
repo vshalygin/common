@@ -12,16 +12,16 @@ using namespace vshalygin::cl;
 using namespace testing;
 
 //future is move only
-static_assert(!std::is_copy_constructible_v<future<int>>);
-static_assert(!std::is_copy_assignable_v<future<int>>);
-static_assert(std::is_move_constructible_v<future<int>>);
-static_assert(std::is_move_assignable_v<future<int>>);
+static_assert(!std::is_copy_constructible_v<future<int, thread_pool>>);
+static_assert(!std::is_copy_assignable_v<future<int, thread_pool>>);
+static_assert(std::is_move_constructible_v<future<int, thread_pool>>);
+static_assert(std::is_move_assignable_v<future<int, thread_pool>>);
 
 //promise is move only
-static_assert(!std::is_copy_constructible_v<promise<int>>);
-static_assert(!std::is_copy_assignable_v<promise<int>>);
-static_assert(std::is_move_constructible_v<promise<int>>);
-static_assert(std::is_move_assignable_v<promise<int>>);
+static_assert(!std::is_copy_constructible_v<promise<int, thread_pool>>);
+static_assert(!std::is_copy_assignable_v<promise<int, thread_pool>>);
+static_assert(std::is_move_constructible_v<promise<int, thread_pool>>);
+static_assert(std::is_move_assignable_v<promise<int, thread_pool>>);
 
 namespace {
     class counter
@@ -143,14 +143,14 @@ TEST_F(Future, PromiseIsNotValidAfterMoveAssignment)
 
 TEST_F(Future, DefaultCreatedPromiseIsNotValid)
 {
-    promise<int> sut;
+    promise<int, thread_pool> sut;
 
     ASSERT_FALSE(sut.is_valid());
 }
 
 TEST_F(Future, DefaultCreatedPromiseIsValidAfterAssigningValidPromise)
 {
-    promise<int> sut;
+    promise<int, thread_pool> sut;
     sut = promise(&m_pool, []() { return 0; });
 
     ASSERT_TRUE(sut.is_valid());
@@ -158,7 +158,7 @@ TEST_F(Future, DefaultCreatedPromiseIsValidAfterAssigningValidPromise)
 
 TEST_F(Future, DefaultCreatedFutureIsNotValid)
 {
-    future<int> sut;
+    future<int, thread_pool> sut;
 
     ASSERT_FALSE(sut.is_valid());
 }
@@ -202,7 +202,7 @@ TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 
 TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
 {
-    auto p = std::make_unique<promise<int>>(&m_pool, []() { return 2; });
+    auto p = std::make_unique<promise<int, thread_pool>>(&m_pool, []() { return 2; });
     p->resolve();
     auto future = p->get_future();
     p.reset();
@@ -325,7 +325,7 @@ TEST_F(Future, CatchedMethodAppliedToLValue)
     auto f = p.get_future();
     auto res = std::is_same_v<
         decltype(f.catched(std::declval<std::function<void(std::exception_ptr)>>())),
-        future<int> &>;
+        future<int, thread_pool> &>;
 
     ASSERT_TRUE(res);
 }

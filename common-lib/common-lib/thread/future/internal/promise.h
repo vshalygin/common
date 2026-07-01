@@ -19,7 +19,7 @@ namespace vshalygin::cl::internal {
 
         explicit promise(ThreadPool *thread_pool);
 
-    public:
+    protected:
         promise() = default;
 
         template<typename Function>

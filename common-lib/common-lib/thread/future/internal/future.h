@@ -15,7 +15,7 @@ namespace vshalygin::cl::internal {
             ThreadPool *thread_pool,
             std::shared_ptr<future_controller<T, ThreadPool>> controller);
 
-    public:
+    protected:
         future() = default;
 
         future(const future &) = delete;

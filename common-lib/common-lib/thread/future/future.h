@@ -10,22 +10,20 @@
 #include <memory>
 
 namespace vshalygin::cl {
-    class thread_pool;
-
     template<typename T, typename ThreadPool>
     class promise;
 
-    template<typename T, typename ThreadPool = thread_pool>//TODO удалить дефолты
+    template<typename T, typename ThreadPool>
     using future_data = internal::future_data<T, ThreadPool>;
 
-    template<typename T, typename ThreadPool = thread_pool>
+    template<typename T, typename ThreadPool>
     class future final
         : private internal::future<T, ThreadPool>
     {
-        template<typename U, typename ThreadPool2>//TODO плохо!
+        template<typename, typename>
         friend class promise;
 
-        template<typename U, typename ThreadPool2>//TODO плохо!
+        template<typename, typename>
         friend class future;
 
         using base_type = internal::future<T, ThreadPool>;
@@ -72,7 +70,7 @@ namespace vshalygin::cl {
         }
     };
 
-    template<typename T, typename ThreadPool = thread_pool>
+    template<typename T, typename ThreadPool>
     class promise final
         : private internal::promise<T, ThreadPool>
     {
@@ -108,6 +106,6 @@ namespace vshalygin::cl {
         }
     };
 
-    template<typename F, typename ThreadPool = thread_pool>
+    template<typename F, typename ThreadPool>
     promise(ThreadPool *, F &&) -> promise<function_ret_t<F>, ThreadPool>;
 }
