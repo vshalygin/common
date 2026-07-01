@@ -1,6 +1,7 @@
 #pragma once
 #include "future-controller.h"
 #include <common-lib/utils/do-on-destruct.h>
+#include <common-lib/mpl/tuple-traits.h>
 
 namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
@@ -16,10 +17,15 @@ namespace vshalygin::cl::internal {
     {
         static_assert(std::is_same_v<void, function_ret_t<Func>>,
                       "success callback return type is not void");
-        static_assert(function_arg_count_v<Func> == 1,
-                      "success callback arg count is not 1");
-        static_assert(is_lvalue_static_castable_v<T &&, function_arg_t<0, Func>>,
-                      "value cannot be converted to success callback parameter");
+        if constexpr(!std::is_void_v<T>) {
+            static_assert(function_arg_count_v<Func> == 1,
+                          "success callback arg count is not 1");
+            static_assert(is_lvalue_static_castable_v<T &&, function_arg_t<0, Func>>,
+                          "value cannot be converted to success callback parameter");
+        } else {
+            static_assert(function_arg_count_v<Func> == 0,
+                          "success callback arg count is not 0");
+        }
 
         ordered_lock guard(m_on_success_mtx);
         if(m_on_success) {
@@ -68,8 +74,14 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::set_value(T &&value)
+    void future_controller<T, ThreadPool>::set_value(auto&&...value)
     {
+        if constexpr(std::is_void_v<T>) {
+            static_assert(sizeof...(value) == 0);
+        } else {
+            static_assert(sizeof...(value) == 1);
+        }
+
         bool need_notify = false;
 
         {
@@ -78,8 +90,12 @@ namespace vshalygin::cl::internal {
                 throw std::logic_error("value or exception already set");
             }
 
-            m_val = std::make_unique<type_wrapper<T>>(std::forward<T>(value));
-
+            if constexpr(std::is_void_v<T>) {
+                m_val = std::make_unique<type_wrapper<T>>();
+            } else {
+                m_val = std::make_unique<type_wrapper<T>>(std::forward<T>(value...)); //TODO это точно работает?
+            }
+            
             if(m_on_success) {
                 post_success(true);
             } else {
@@ -101,7 +117,7 @@ namespace vshalygin::cl::internal {
         {
             ordered_lock g(m_on_fail_mtx, m_val_mtx, m_exception_mtx);
             if(m_val || m_exception) {
-                throw std::logic_error("value or exeption already set");
+                throw std::logic_error("value or exception already set");
             }
 
             m_exception = e;
@@ -119,18 +135,45 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    future_data<const T, ThreadPool>
-        future_controller<T, ThreadPool>::get() const
+    auto future_controller<T, ThreadPool>::get() const
     {
         wait_data_ready_or_throw();
-        return future_data<T, ThreadPool>(this->shared_from_this());
+        if constexpr(!std::is_void_v<T>) {
+            return future_data<T, ThreadPool>(this->shared_from_this());
+        }
     }
 
     template<typename T, typename ThreadPool>
-    future_data<T, ThreadPool> future_controller<T, ThreadPool>::get()
+    auto future_controller<T, ThreadPool>::get()
     {
         wait_data_ready_or_throw();
-        return future_data<T, ThreadPool>(this->shared_from_this());
+        if constexpr(!std::is_void_v<T>) {
+            return future_data<T, ThreadPool>(this->shared_from_this());
+        }
+    }
+
+    template<typename T, typename ThreadPool>
+    auto future_controller<T, ThreadPool>::get_val()
+    {
+        if constexpr(!std::is_void_v<T>) {
+            using val_t = decltype(m_val->to_underlying());
+            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
+
+            assert(m_val);
+            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
+        }
+    }
+
+    template<typename T, typename ThreadPool>
+    auto future_controller<T, ThreadPool>::get_val() const
+    {
+        if constexpr(!std::is_void_v<T>) {
+            using val_t = decltype(m_val->to_underlying());
+            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
+
+            assert(m_val);
+            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
+        }
     }
 
     template<typename T, typename ThreadPool>
@@ -170,7 +213,11 @@ namespace vshalygin::cl::internal {
         //no need m_on_success_mtx block
         assert(m_val);
         assert(m_on_success);
-        m_on_success->call(std::move(m_val->to_underlying()));
+        if constexpr(!std::is_void_v<T>) {
+            m_on_success->call(std::move(m_val->to_underlying()));
+        } else {
+            m_on_success->call();
+        }
     }
 
     template<typename T, typename ThreadPool>

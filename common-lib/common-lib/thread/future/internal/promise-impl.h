@@ -35,7 +35,12 @@ namespace vshalygin::cl::internal {
         m_thread_pool->post([controller = m_controller,
                             func = std::move(m_function)]() mutable {
             try {
-                controller->set_value(func->call());
+                if constexpr(!std::is_void_v<T>) {
+                    controller->set_value(func->call());
+                } else {
+                    func->call();
+                    controller->set_value();
+                }
             } catch(...) {
                 controller->set_exception(std::current_exception());
             }

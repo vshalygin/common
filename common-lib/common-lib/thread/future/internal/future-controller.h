@@ -1,5 +1,6 @@
 #pragma once
-#include "future-callback-all.h"
+#include "future-callback.h"
+#include "future-callback-void.h"
 #include "future-data.h"
 
 #include <common-lib/mpl/type-traits.h>
@@ -19,8 +20,6 @@ namespace vshalygin::cl::internal {
     class future_controller
         : public std::enable_shared_from_this<future_controller<T, ThreadPool>>
     {
-        using this_type = future_controller<T, ThreadPool>;
-
         //TODO add shared ptr creator
     public:
         explicit future_controller(ThreadPool *thread_pool);
@@ -34,29 +33,14 @@ namespace vshalygin::cl::internal {
         void set_on_fail(std::function<void(std::exception_ptr)> &&func);
         void set_on_fail_if_not_set(std::function<void(std::exception_ptr)> &&func);
 
-        void set_value(T &&value);
+        void set_value(auto&&...value);
         void set_exception(const std::exception_ptr &e);
 
-        future_data<const T, ThreadPool> get() const;
-        future_data<T, ThreadPool> get();
+        auto get() const;
+        auto get();
 
-        auto get_val()
-        {
-            using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
-
-            assert(m_val);
-            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
-        }
-
-        auto get_val() const
-        {
-            using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
-
-            assert(m_val);
-            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
-        }
+        auto get_val();
+        auto get_val() const;
 
     private:
         void wait_data_ready_or_throw() const;

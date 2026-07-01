@@ -180,18 +180,6 @@
     <ClInclude Include="common-lib\utils\type-wrapper.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-callback-all.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-callback-void.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-controller-all.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-controller-void.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\synchronization\ordered-lock.h">
       <Filter>synchronization</Filter>
     </ClInclude>
@@ -350,6 +338,9 @@
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\ordered-mutex.h">
       <Filter>synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\thread\future\internal\future-callback-void.h">
+      <Filter>thread\future\internal</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

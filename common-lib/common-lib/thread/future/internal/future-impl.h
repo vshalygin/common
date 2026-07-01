@@ -13,7 +13,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename T, typename ThreadPool>
-    future_data<T, ThreadPool> future<T, ThreadPool>::get() const
+    auto future<T, ThreadPool>::get() const
     {
         if(!m_controller) {
             throw std::logic_error("future is invalid");
@@ -31,18 +31,29 @@ namespace vshalygin::cl::internal {
 
         promise<ret_t, ThreadPool> promise(m_thread_pool);
 
-        auto success = [controller = promise.get_controller(),
-                        task = std::forward<Func>(task)](T &&val) mutable {
-            try {
-                controller->set_value(task(std::forward<T &&>(val)));
-            } catch(...) {
-                controller->set_exception(std::current_exception());
-            }
-        };
+        if constexpr(!std::is_void_v<T>) {
+            m_controller->set_on_success([controller = promise.get_controller(),
+                                          task = std::forward<Func>(task)](T &&val) mutable {
+                try {
+                    controller->set_value(task(std::forward<T &&>(val)));
+                } catch(...) {
+                    controller->set_exception(std::current_exception());
+                }
+            });
+        } else {
+            m_controller->set_on_success([controller = promise.get_controller(),
+                                          task = std::forward<Func>(task)]() mutable {
+                try {
+                    task();
+                    controller->set_value();
+                } catch(...) {
+                    controller->set_exception(std::current_exception());
+                }
+            });
+        }
         auto fail = [controller = promise.get_controller()](std::exception_ptr e) {
             controller->set_exception(e);
         };
-        m_controller->set_on_success(std::move(success));
         m_controller->set_on_fail_if_not_set(std::move(fail));
 
         return promise.get_future();

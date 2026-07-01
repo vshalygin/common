@@ -22,7 +22,8 @@ namespace vshalygin::cl {
     class future final
         : private internal::future<T, ThreadPool>
     {
-        friend class promise<T, ThreadPool>;
+        template<typename U, typename ThreadPool2>//TODO плохо!
+        friend class promise;
 
         using base_type = internal::future<T, ThreadPool>;
 
@@ -38,7 +39,7 @@ namespace vshalygin::cl {
         future(future &&) = default;
         future &operator=(future &&) = default;
 
-        future_data<T, ThreadPool> get() const
+        auto get() const
         {
             return base_type::get();
         }

@@ -24,9 +24,6 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         void apply(Func &&func) const;
 
-        template<typename Func>
-        void apply(Func &&func);
-
     private:
         std::shared_ptr<controller_t> m_controller;
     };

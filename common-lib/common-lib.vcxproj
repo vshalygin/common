@@ -58,12 +58,9 @@
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread\future\future.h" />
-    <ClInclude Include="common-lib\thread\future\internal\future-callback-all.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-callback-void.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-callback.h" />
-    <ClInclude Include="common-lib\thread\future\internal\future-controller-all.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-controller-impl.h" />
-    <ClInclude Include="common-lib\thread\future\internal\future-controller-void.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-controller.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-data-impl.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-data.h" />

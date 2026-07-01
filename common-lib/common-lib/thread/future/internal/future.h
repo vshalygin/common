@@ -1,5 +1,5 @@
 #pragma once
-#include "future-controller-all.h"
+#include "future-controller-impl.h"
 #include "future-data-impl.h"
 
 namespace vshalygin::cl::internal {
@@ -23,7 +23,7 @@ namespace vshalygin::cl::internal {
         future(future &&) = default;
         future &operator=(future &&) = default;
 
-        future_data<T, ThreadPool> get() const;
+        auto get() const;
 
         template<typename Func>
         future<function_ret_t<Func>, ThreadPool> then(Func &&task);

@@ -863,3 +863,31 @@ TEST_F(Future, DoesNotCopyMovableObjectInInnerStorage)
     EXPECT_TRUE(counter::move_num > 0u);
     EXPECT_TRUE(counter::move_assign_num >= 0);
 }
+
+TEST_F(Future, CallbacksMayReturnVoidType)
+{
+    promise p(&m_pool, []() {});
+    p.resolve();
+    auto f = p.get_future()
+                .then([](){});
+
+    f.get();
+}
+
+//TEST_F(Future, DoChainingWithVoidReturnCallback)
+//{
+//    int i = 0;
+//    promise p(&m_pool, []() {});
+//    p.resolve();
+//    auto f = p.get_future()
+//        .then([]() {})
+//        .then([]() {})
+//        .then([]() { return 1; });
+//        //.then([](int) {})
+//        //.then([]() {return 22; })
+//        //.then([&i](int ii) { i = ii; });
+//
+//    f.get();
+//    ASSERT_EQ(i, 22);
+//}
+//
