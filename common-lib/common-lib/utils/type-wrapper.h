@@ -104,4 +104,25 @@ namespace vshalygin::cl {
     private:
         T m_val;
     };
+
+    template<>
+    class type_wrapper<void, void>
+    {
+    public:
+        type_wrapper() = default;
+
+        type_wrapper(const type_wrapper &) = default;
+        type_wrapper &operator=(const type_wrapper &) = default;
+
+        type_wrapper(type_wrapper &&) = default;
+        type_wrapper &operator=(type_wrapper &&) = default;
+
+        operator void() const
+        {
+            return to_underlying();
+        }
+
+        void to_underlying() const
+        {}
+    };
 }

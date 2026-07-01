@@ -321,3 +321,44 @@ TEST(TypeWrapperRef, MayBeCopyAssignedByValueWithAnyQualifier)
     s6 = i5;
     s6 = std::move(i5);
 }
+
+TEST(TypeWrapperVoid, BasicTest)
+{
+    type_wrapper<void> v1;
+    const type_wrapper<void> v2;
+
+    static_cast<void>(v1);
+    static_assert(std::is_same_v<decltype(v1.to_underlying()), void>);
+    static_cast<void>(v2);
+    static_assert(std::is_same_v<decltype(v2.to_underlying()), void>);
+}
+
+TEST(TypeWrapperVoid, IsCopyConstructable)
+{
+    type_wrapper<void> v;
+    type_wrapper<void> v1(v);
+    v;
+
+}
+
+TEST(TypeWrapperVoid, IsCopyAssignable)
+{
+    type_wrapper<void> v;
+    type_wrapper<void> v1;
+    v = v1;
+}
+
+TEST(TypeWrapperVoid, IsMoveConstructable)
+{
+    type_wrapper<void> v;
+    type_wrapper<void> v1(std::move(v));
+    v;
+
+}
+
+TEST(TypeWrapperVoid, IsMoveAssignable)
+{
+    type_wrapper<void> v;
+    type_wrapper<void> v1;
+    v = std::move(v1);
+}
