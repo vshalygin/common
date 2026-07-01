@@ -3,6 +3,8 @@
 #include "future-data.h"
 
 #include <common-lib/mpl/type-traits.h>
+#include <common-lib/synchronization/ordered-mutex.h>
+#include <common-lib/synchronization/ordered-lock.h>
 #include <common-lib/utils/type-wrapper.h>
 
 #include <memory>
@@ -21,7 +23,6 @@ namespace vshalygin::cl::internal {
 
         class notify_all_on_destruct;
         class set_true_on_destruct;
-        class two_mutex_lock;
         //TODO add shared ptr creator
     public:
         explicit future_controller(ThreadPool *thread_pool);
@@ -44,19 +45,19 @@ namespace vshalygin::cl::internal {
         auto get_val()
         {
             using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<std::unique_lock<std::mutex>, val_t>;
+            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
 
             assert(m_val);
-            return tuple_t{ std::unique_lock{ m_val_mtx }, m_val->to_underlying() };
+            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
         }
 
         auto get_val() const
         {
             using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<std::unique_lock<std::mutex>, val_t>;
+            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
 
             assert(m_val);
-            return tuple_t{ std::unique_lock{ m_val_mtx }, m_val->to_underlying() };
+            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
         }
 
     private:
@@ -71,19 +72,19 @@ namespace vshalygin::cl::internal {
     private:
         ThreadPool *m_thread_pool;
 
-        mutable std::mutex m_val_mtx;
+        mutable ordered_mutex<0> m_on_success_mtx;
+        std::unique_ptr<ifuture_callback<T>> m_on_success;
+
+        mutable ordered_mutex<1> m_on_fail_mtx;
+        std::function<void(std::exception_ptr)> m_on_fail;
+
+        mutable ordered_mutex<2> m_val_mtx;
         std::unique_ptr<type_wrapper<T>> m_val;
         bool m_is_value_ready = false;
 
-        mutable std::mutex m_exception_mtx;
+        mutable ordered_mutex<3> m_exception_mtx;
         std::optional<std::exception_ptr> m_exception;
         bool m_is_exception_ready = false;
-
-        mutable std::mutex m_on_success_mtx;
-        std::unique_ptr<ifuture_callback<T>> m_on_success;
-
-        mutable std::mutex m_on_fail_mtx;
-        std::function<void(std::exception_ptr)> m_on_fail;
 
         mutable std::condition_variable_any m_cv;
     };

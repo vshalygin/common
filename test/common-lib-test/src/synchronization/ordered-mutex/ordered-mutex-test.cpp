@@ -1,5 +1,5 @@
-#include <common-lib/synchronization/ordered-lock.h>
 #include <common-lib/synchronization/ordered-mutex.h>
+#include <common-lib/synchronization/ordered-lock.h>
 #include <gtest/gtest.h>
 
 using namespace vshalygin::cl;
