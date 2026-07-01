@@ -3,7 +3,7 @@
 
 namespace vshalygin::cl::internal {
     template<typename...Lockables, typename...AddLockables>
-    ordered_lock<Lockables..., AddLockables...> push_back
+    ordered_lock<Lockables..., AddLockables...> do_push_back
                                      (ordered_lock<Lockables...> &&lock,
                                       AddLockables&...add_locables)
     {

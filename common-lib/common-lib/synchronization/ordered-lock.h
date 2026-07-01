@@ -13,6 +13,6 @@ namespace vshalygin::cl {
                                     (ordered_lock<Lockables...> &&lock,
                                      AddLockables&...add_locables)
     {
-        return internal::push_back(std::move(lock), add_locables...);
+        return internal::do_push_back(std::move(lock), add_locables...);
     }
 }

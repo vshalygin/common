@@ -8,7 +8,7 @@ namespace vshalygin::cl::internal {
                                              F &&f,
                                              std::index_sequence<I...>)
     {
-        (f(std::get<tuple_size_v<Tuple> -I - 1 >(std::forward<Tuple>(tuple))), ...);
+        (f(std::get<tuple_size_v<Tuple> - I - 1 >(std::forward<Tuple>(tuple))), ...);
     }
 
     template<typename Tuple, typename F>

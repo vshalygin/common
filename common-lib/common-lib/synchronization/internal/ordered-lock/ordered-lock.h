@@ -16,13 +16,13 @@ namespace vshalygin::cl::internal {
     class ordered_lock
     {
         static_assert(is_ordered_lockable_types_valid_v<OrderedLockable...>,
-                      "ordered lockable type are invalid");
+                      "ordered lockable types are invalid");
 
         template<typename...OrderedLockable2>
         friend class ordered_lock;
 
         template<typename...Lockables, typename...AddLockables>
-        friend ordered_lock<Lockables..., AddLockables...> push_back
+        friend ordered_lock<Lockables..., AddLockables...> do_push_back
                                      (ordered_lock<Lockables...> &&lock,
                                       AddLockables&...add_locables);
 
@@ -45,8 +45,8 @@ namespace vshalygin::cl::internal {
 
         template<typename...OrderedLockable2,
                  std::enable_if_t<std::is_same_v<
-                        sort_tuple_t<std::tuple<OrderedLockable...>, order_comparator>,
-                        sort_tuple_t<std::tuple<OrderedLockable2...>, order_comparator>>, int> = 0>
+                     sort_tuple_t<std::tuple<OrderedLockable...>, order_comparator>,
+                     sort_tuple_t<std::tuple<OrderedLockable2...>, order_comparator>>, int> = 0>
         ordered_lock(ordered_lock<OrderedLockable2...> &&other)
             : ordered_lock()
         {
@@ -54,10 +54,33 @@ namespace vshalygin::cl::internal {
             m_ordered_ptr_ref_tuple = other.m_ordered_ptr_ref_tuple;
 
             other.clear();
-            other.m_is_locked = false;
         }
 
-        //ordered_lock &operator=(ordered_lock<OrderedLockable...> &&other);
+        template<typename...OrderedLockable2,
+            std::enable_if_t<std::is_same_v<
+                sort_tuple_t<std::tuple<OrderedLockable...>, order_comparator>,
+                sort_tuple_t<std::tuple<OrderedLockable2...>, order_comparator>>, int> = 0>
+        ordered_lock &operator=(ordered_lock<OrderedLockable2...> &&other)
+        {
+            if constexpr(std::is_same_v<std::tuple<OrderedLockable2...>,
+                                        std::tuple<OrderedLockable...>>)
+            {
+                if(this == &other) {
+                    return *this;
+                }
+            }
+
+            if(is_locked()) {
+                unlock();
+            }
+
+            m_is_locked = other.m_is_locked;
+            m_ordered_ptr_ref_tuple = other.m_ordered_ptr_ref_tuple;
+
+            other.clear();
+
+            return *this;
+        }
 
         void lock();
         void unlock() noexcept;
@@ -74,10 +97,10 @@ namespace vshalygin::cl::internal {
         template<typename...AddLockables>
         ordered_lock<OrderedLockable..., AddLockables...> push_back
                                                    (AddLockables&...add_locables);
-        template<typename...AddLockables, size_t...SelfIdx>
+        template<typename...AddLockables, size_t...I>
         ordered_lock<OrderedLockable..., AddLockables...> push_back_impl
                                                    (AddLockables&...add_locables,
-                                                    std::index_sequence<SelfIdx...>);
+                                                    std::index_sequence<I...>);
 
     private:
         init_ptr_tuple m_init_ptr_tuple; 

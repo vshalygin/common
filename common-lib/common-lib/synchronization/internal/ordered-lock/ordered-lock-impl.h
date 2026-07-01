@@ -43,23 +43,6 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    //template<typename...OrderedLockable>
-    //ordered_lock<OrderedLockable...> &ordered_lock<OrderedLockable...>::operator=
-    //                                         (ordered_lock<OrderedLockable...> &&other)
-    //{
-    //    if(this != &other) {
-    //        if(is_locked()) {
-    //            unlock();
-    //        }
-    //        m_ordered_ptr_tuple = other.m_ordered_ptr_tuple;
-    //
-    //        other.clear();
-    //        other.m_is_locked = false;
-    //    }
-    //
-    //    return *this;
-    //}
-
     template<typename...OrderedLockable>
     void ordered_lock<OrderedLockable...>::lock()
     {
@@ -114,6 +97,8 @@ namespace vshalygin::cl::internal {
         for_each_tuple_element(m_init_ptr_tuple, [](auto &el_ptr) {
             el_ptr = nullptr;
         });
+
+        m_is_locked = false;
     }
 
     template<typename...OrderedLockable>
@@ -121,37 +106,39 @@ namespace vshalygin::cl::internal {
     ordered_lock<OrderedLockable..., AddLockables...>
         ordered_lock<OrderedLockable...>::push_back(AddLockables&...add_locables)
     {
+        static_assert(sizeof...(AddLockables) > 0,
+                      "no add lockable presented");
         static_assert(is_ordered_lockable_types_valid_v<AddLockables...>,
                       "ordered lockable type are invalid");
         static_assert(compare_ordered_lockable_tuples_v<std::tuple<OrderedLockable...>,
                                                         std::tuple<AddLockables...>>,
                       "order value of adding lockable must be greater than any presented");
 
-        return push_back_impl(add_locables,
+        return push_back_impl<AddLockables...>(add_locables...,
                               std::make_index_sequence<tuple_size_v<init_ptr_tuple>>());
     }
 
     template<typename...OrderedLockable>
-    template<typename...AddLockables, size_t...SelfIdx>
+    template<typename...AddLockables, size_t...I>
     ordered_lock<OrderedLockable..., AddLockables...>
         ordered_lock<OrderedLockable...>::push_back_impl(AddLockables&...add_locables,
-                                                         std::index_sequence<SelfIdx...>)
+                                                         std::index_sequence<I...>)
     {
-        ordered_lock<OrderedLockable..., AddLockables...> ans;
+        using ans_t = ordered_lock<OrderedLockable..., AddLockables...>;
+        ans_t ans;
         if(is_locked()) {
-            auto add_ordered_lock = ordered_lock(add_locables...);
-            ans = ordered_lock( adopt_lock_t{},
-                                *std::get<SelfIdx>(m_init_ptr_tuple)...,
-                                add_locables... );
+            auto add_ordered_lock = ordered_lock<AddLockables...>{ add_locables... };
+            ans = ans_t( adopt_lock_t{},
+                         *std::get<I>(m_init_ptr_tuple)...,
+                         add_locables... );
             add_ordered_lock.clear();
         } else {
-            ans = ordered_lock(defer_lock_t{},
-                               *std::get<SelfIdx>(m_init_ptr_tuple)...,
-                               add_locables...);
+            ans = ans_t(defer_lock_t{},
+                        *std::get<I>(m_init_ptr_tuple)...,
+                        add_locables...);
         }
 
         clear();
-        m_is_locked = false;
 
         return ans;
     }
