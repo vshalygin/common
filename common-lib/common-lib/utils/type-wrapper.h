@@ -8,6 +8,8 @@ namespace vshalygin::cl {
     class type_wrapper final
     {
     public:
+        using type = T;
+
         explicit type_wrapper(const T &val)
             : m_val(val)
         {}
@@ -62,6 +64,8 @@ namespace vshalygin::cl {
     class type_wrapper<T, std::enable_if_t<std::is_reference_v<T>>>
     {
     public:
+        using type = T;
+
         explicit type_wrapper(T val)
             : m_val(std::forward<T>(val))
         {}
@@ -109,6 +113,8 @@ namespace vshalygin::cl {
     class type_wrapper<void, void>
     {
     public:
+        using type = void;
+
         type_wrapper() = default;
 
         type_wrapper(const type_wrapper &) = default;

@@ -91,9 +91,9 @@ namespace vshalygin::cl::internal {
             }
 
             if constexpr(std::is_void_v<T>) {
-                m_val = std::make_unique<type_wrapper<T>>();
+                m_val = std::make_unique<type_wrapper>();
             } else {
-                m_val = std::make_unique<type_wrapper<T>>(std::forward<decltype(value)>(value)...);
+                m_val = std::make_unique<type_wrapper>(std::forward<decltype(value)>(value)...);
             }
 
             if(m_on_success) {
@@ -214,7 +214,7 @@ namespace vshalygin::cl::internal {
         assert(m_val);
         assert(m_on_success);
         if constexpr(!std::is_void_v<T>) {
-            m_on_success->call(std::move(m_val->to_underlying()));
+            m_on_success->call(static_cast<typename type_wrapper::type &&>(m_val->to_underlying()));
         } else {
             m_on_success->call();
         }

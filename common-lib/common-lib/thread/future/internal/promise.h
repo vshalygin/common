@@ -11,10 +11,10 @@ namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     class promise
     {
-        template<typename U, typename TP>
+        template<typename, typename>
         friend class promise;
 
-        template<typename U, typename TP>
+        template<typename, typename>
         friend class future;
 
         explicit promise(ThreadPool *thread_pool);

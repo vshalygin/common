@@ -52,6 +52,8 @@ namespace vshalygin::cl::internal {
         void call_fail(bool need_notify);
 
     private:
+        using type_wrapper = type_wrapper<T>;
+
         ThreadPool *m_thread_pool;
 
         mutable ordered_mutex<0> m_on_success_mtx;
@@ -61,7 +63,7 @@ namespace vshalygin::cl::internal {
         std::function<void(std::exception_ptr)> m_on_fail;
 
         mutable ordered_mutex<2> m_val_mtx;
-        std::unique_ptr<type_wrapper<T>> m_val;
+        std::unique_ptr<type_wrapper> m_val;
         bool m_is_value_ready = false;
 
         mutable ordered_mutex<3> m_exception_mtx;

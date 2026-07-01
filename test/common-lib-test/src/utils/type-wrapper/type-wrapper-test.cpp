@@ -5,6 +5,20 @@
 using namespace vshalygin::cl;
 using namespace testing;
 
+static_assert(std::is_same_v<typename type_wrapper<void>::type, void>);
+static_assert(std::is_same_v<typename type_wrapper<int>::type, int>);
+static_assert(std::is_same_v<typename type_wrapper<int&>::type, int&>);
+static_assert(std::is_same_v<typename type_wrapper<int&&>::type, int&&>);
+static_assert(std::is_same_v<typename type_wrapper<const int>::type, const int>);
+static_assert(std::is_same_v<typename type_wrapper<const int &>::type, const int &>);
+static_assert(std::is_same_v<typename type_wrapper<const int &&>::type, const int &&>);
+static_assert(std::is_same_v<typename type_wrapper<volatile int>::type, volatile int>);
+static_assert(std::is_same_v<typename type_wrapper<volatile int &>::type, volatile int &>);
+static_assert(std::is_same_v<typename type_wrapper<volatile int &&>::type, volatile int &&>);
+static_assert(std::is_same_v<typename type_wrapper<const volatile int>::type, const volatile int>);
+static_assert(std::is_same_v<typename type_wrapper<const volatile int &>::type, const volatile int &>);
+static_assert(std::is_same_v<typename type_wrapper<const volatile int &&>::type, const volatile int &&>);
+
 TEST(TypeWrapperValue, MayStoreValue)
 {
     type_wrapper sut(1);
