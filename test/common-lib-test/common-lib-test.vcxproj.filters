@@ -139,7 +139,7 @@
     <ClCompile Include="src\synchronization\ordered-mutex\ordered-mutex-test.cpp">
       <Filter>synchronization\ordered-mutex</Filter>
     </ClCompile>
-    <ClCompile Include="src\thread\future\future-test.cpp">
+    <ClCompile Include="src\thread\future\future-dev-test.cpp">
       <Filter>thread\future</Filter>
     </ClCompile>
     <ClCompile Include="src\thread\thread-pool\strand-test.cpp">
