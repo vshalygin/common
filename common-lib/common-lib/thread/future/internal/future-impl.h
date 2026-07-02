@@ -1,4 +1,6 @@
 #pragma once
+#include <common-lib/mpl/type-transform.h>
+
 #include "future.h"
 
 namespace vshalygin::cl::internal {
@@ -32,12 +34,19 @@ namespace vshalygin::cl::internal {
 
         if constexpr(!std::is_void_v<T>) {
             m_controller->set_on_success([controller = promise.get_controller(),
-                                          task = std::forward<Func>(task)](T &&val) mutable {
+                                          task = std::forward<Func>(task)](add_lvalue_ref_to_value_t<T> val) mutable {
                 try {
+                    static_assert(function_arg_count_v<Func> == 1,
+                                  "callback must have 1 argument");
+                    using arg_t = function_arg_t<0, Func>;
+                    static_assert(std::is_same_v<remove_type_qualifiers_t<arg_t>,
+                                                 remove_type_qualifiers_t<T>>,
+                                  "future stored type and callback argument type don't match");
+
                     if constexpr(!std::is_void_v<ret_t>) {
-                        controller->set_value(task(std::forward<T>(val)));
+                        controller->set_value(task(static_cast<arg_t>(val)));
                     } else {
-                        task(std::forward<T &&>(val));
+                        task(static_cast<arg_t>(val));
                         controller->set_value();
                     }
                 } catch(...) {
@@ -48,6 +57,9 @@ namespace vshalygin::cl::internal {
             m_controller->set_on_success([controller = promise.get_controller(),
                                           task = std::forward<Func>(task)]() mutable {
                 try {
+                    static_assert(function_arg_count_v<Func> == 0,
+                                  "callback must have 0 argument");
+
                     if constexpr(!std::is_void_v<ret_t>) {
                         controller->set_value(task());
                     } else {

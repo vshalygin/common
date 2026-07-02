@@ -60,18 +60,6 @@ namespace {
             move_assign_num = 0;
         }
     };
-
-    class thread_pool_with_functor_copy_requirement
-    {
-    public:
-        void post(std::function<void()> &&task)
-        {
-            m_pool.post(std::move(task));
-        }
-
-    private:
-        thread_pool m_pool{ 2 };
-    };
 }
 
 class Promise

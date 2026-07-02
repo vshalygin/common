@@ -21,6 +21,9 @@ namespace vshalygin::cl::internal {
         using val_t = std::tuple_element_t<1, decltype(m_controller->get_val())>;
 
         static_assert(std::is_reference_v<val_t>);
+        static_assert(std::is_same_v<remove_type_qualifiers_t<arg_t>,
+                                     remove_type_qualifiers_t<val_t>>,
+                      "function parameter type and stored type don't match");
         static_assert(is_lvalue_static_castable_v<val_t, arg_t>,
                       "unable to convert stored type to function parameter");
 
