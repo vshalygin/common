@@ -45,7 +45,7 @@ protected:
 
         m_sut = std::make_unique<transport>(m_thread_pool,
                                             m_pipe_endpoint,
-                                            m_stop_callback.AsStdFunction(),
+                                            m_start_callback.AsStdFunction(),
                                             m_stop_callback.AsStdFunction());
     }
 
