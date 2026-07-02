@@ -8,8 +8,8 @@ namespace vshalygin::cl {
     template<typename T, typename ThreadPool>
     using future_data = internal::future_data<T, ThreadPool>;
 
-    template<typename T, typename ThreadPool>
-    using future = internal::future<T, ThreadPool>;
+    template<typename ThreadPool, typename T>
+    using future = internal::future<ThreadPool, T>;
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
     using promise = internal::promise<ThreadPool, T, ResolveArgs...>;

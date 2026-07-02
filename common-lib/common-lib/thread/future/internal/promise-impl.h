@@ -53,7 +53,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
-    future<T, ThreadPool> promise<ThreadPool, T, ResolveArgs...>::get_future()
+    auto promise<ThreadPool, T, ResolveArgs...>::get_future()
     {
         if(!m_future.is_valid()) {
             throw std::logic_error("no future");

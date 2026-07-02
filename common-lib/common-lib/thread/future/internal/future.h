@@ -6,7 +6,7 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T, typename...ResolveArgs>
     class promise;
 
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T>
     class future
     {
         template<typename, typename, typename...>
@@ -27,10 +27,10 @@ namespace vshalygin::cl::internal {
         auto get() const;
 
         template<typename Func>
-        future<function_ret_t<Func>, ThreadPool> then(Func &&task);
+        auto then(Func &&task);
 
         void catched(std::function<void(std::exception_ptr)> &&task) &;
-        future<T, ThreadPool> catched(std::function<void(std::exception_ptr)> &&task) &&;
+        future<ThreadPool, T> catched(std::function<void(std::exception_ptr)> &&task) &&;
 
         bool is_valid() const;
 

@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T>
     class future;
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
@@ -35,7 +35,7 @@ namespace vshalygin::cl::internal {
         template<typename...Args>
         void resolve(Args&&...args);
 
-        future<T, ThreadPool> get_future();
+        auto get_future();
 
         bool is_valid() const;
 
@@ -49,6 +49,6 @@ namespace vshalygin::cl::internal {
         std::shared_ptr<ipromise_function<T, ResolveArgs...>> m_function;
 
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
-        future<T, ThreadPool> m_future;
+        future<ThreadPool, T> m_future;
     };
 }

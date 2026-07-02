@@ -12,10 +12,10 @@ using namespace vshalygin::cl;
 using namespace testing;
 
 //future is move only
-static_assert(!std::is_copy_constructible_v<future<int, thread_pool>>);
-static_assert(!std::is_copy_assignable_v<future<int, thread_pool>>);
-static_assert(std::is_move_constructible_v<future<int, thread_pool>>);
-static_assert(std::is_move_assignable_v<future<int, thread_pool>>);
+static_assert(!std::is_copy_constructible_v<future<thread_pool, int>>);
+static_assert(!std::is_copy_assignable_v<future<thread_pool, int>>);
+static_assert(std::is_move_constructible_v<future<thread_pool, int>>);
+static_assert(std::is_move_assignable_v<future<thread_pool, int>>);
 
 //promise is move only
 static_assert(!std::is_copy_constructible_v<promise<thread_pool, int>>);

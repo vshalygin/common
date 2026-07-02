@@ -2,8 +2,8 @@
 #include "future.h"
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
-    future<T, ThreadPool>::future(
+    template<typename ThreadPool, typename T>
+    future<ThreadPool, T>::future(
                          ThreadPool *thread_pool,
                          std::shared_ptr<future_controller<T, ThreadPool>> controller)
         : m_thread_pool(thread_pool)
@@ -12,8 +12,8 @@ namespace vshalygin::cl::internal {
         assert(m_thread_pool);
     }
 
-    template<typename T, typename ThreadPool>
-    auto future<T, ThreadPool>::get() const
+    template<typename ThreadPool, typename T>
+    auto future<ThreadPool, T>::get() const
     {
         if(!m_controller) {
             throw std::logic_error("future is invalid");
@@ -22,9 +22,9 @@ namespace vshalygin::cl::internal {
         return m_controller->get();
     }
 
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T>
     template<typename Func>
-    future<function_ret_t<Func>, ThreadPool> future<T, ThreadPool>::then(Func &&task)
+    auto future<ThreadPool, T>::then(Func &&task)
     {
         using ret_t = function_ret_t<Func>;
 
@@ -67,23 +67,23 @@ namespace vshalygin::cl::internal {
         return promise.get_future();
     }
 
-    template<typename T, typename ThreadPool>
-    void future<T, ThreadPool>::catched(
+    template<typename ThreadPool, typename T>
+    void future<ThreadPool, T>::catched(
             std::function<void(std::exception_ptr)> &&task) &
     {
         m_controller->set_on_fail(std::move(task));
     }
 
-    template<typename T, typename ThreadPool>
-    future<T, ThreadPool> future<T, ThreadPool>::catched(
+    template<typename ThreadPool, typename T>
+    future<ThreadPool, T> future<ThreadPool, T>::catched(
                                      std::function<void(std::exception_ptr)> &&task) &&
     {
         m_controller->set_on_fail(std::move(task));
         return std::move(*this);
     }
 
-    template<typename T, typename ThreadPool>
-    bool future<T, ThreadPool>::is_valid() const
+    template<typename ThreadPool, typename T>
+    bool future<ThreadPool, T>::is_valid() const
     {
         return m_controller != nullptr;
     }
