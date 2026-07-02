@@ -151,6 +151,9 @@
     <ClCompile Include="src\thread\thread-pool\thread-pool-test.cpp">
       <Filter>thread\thread-pool</Filter>
     </ClCompile>
+    <ClCompile Include="src\thread\future\promise-test.cpp">
+      <Filter>thread\future</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

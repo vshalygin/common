@@ -32,15 +32,14 @@ namespace vshalygin::cl::internal {
         promise(promise &&) = default;
         promise &operator=(promise &&) = default;
 
-        template<typename...Args>
-        void resolve(Args&&...args);
+        void resolve(ResolveArgs...args);
 
         auto get_future();
 
         bool is_valid() const;
 
     private:
-        std::shared_ptr<future_controller<T, ThreadPool>> get_controller() const;
+        auto get_controller() const;
 
     private:
         ThreadPool *m_thread_pool = nullptr;

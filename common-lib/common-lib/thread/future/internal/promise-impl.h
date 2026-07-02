@@ -25,8 +25,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
-    template<typename...Args>
-    void promise<ThreadPool, T, ResolveArgs...>::resolve(Args&&...args)
+    void promise<ThreadPool, T, ResolveArgs...>::resolve(ResolveArgs...args)
     {
         if(!m_function) {
             throw std::logic_error("no resolve function");
@@ -34,7 +33,7 @@ namespace vshalygin::cl::internal {
 
         m_thread_pool->post([controller = m_controller,
                              func = std::move(m_function),
-                             args = std::tuple(std::forward<Args>(args)...)]() mutable {
+                             args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
             try {
                 if constexpr(!std::is_void_v<T>) {
                     controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
@@ -69,8 +68,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
-    std::shared_ptr<future_controller<T, ThreadPool>>
-        promise<ThreadPool, T, ResolveArgs...>::get_controller() const
+    auto promise<ThreadPool, T, ResolveArgs...>::get_controller() const
     {
         return m_controller;
     }
