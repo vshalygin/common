@@ -31,18 +31,6 @@
     <ClCompile Include="src\synchronization\guarded-value\guarded-value-test.cpp">
       <Filter>synchronization</Filter>
     </ClCompile>
-    <ClCompile Include="src\thread\future-test.cpp">
-      <Filter>thread</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thread\strand-test.cpp">
-      <Filter>thread</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thread\thread-pool-task-test.cpp">
-      <Filter>thread</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thread\thread-pool-test.cpp">
-      <Filter>thread</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\tuple-utils\extract-first-tuple-element-test.cpp">
       <Filter>utils\tuple-utils</Filter>
     </ClCompile>
@@ -151,6 +139,18 @@
     <ClCompile Include="src\synchronization\ordered-mutex\ordered-mutex-test.cpp">
       <Filter>synchronization\ordered-mutex</Filter>
     </ClCompile>
+    <ClCompile Include="src\thread\future\future-test.cpp">
+      <Filter>thread\future</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread\thread-pool\strand-test.cpp">
+      <Filter>thread\thread-pool</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread\thread-pool\thread-pool-task-test.cpp">
+      <Filter>thread\thread-pool</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thread\thread-pool\thread-pool-test.cpp">
+      <Filter>thread\thread-pool</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -218,6 +218,12 @@
     </Filter>
     <Filter Include="synchronization\ordered-mutex">
       <UniqueIdentifier>{11676710-fee1-42b9-9ff3-fa80ca4bb99e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread\future">
+      <UniqueIdentifier>{878d9b8f-4c00-4f3b-864c-094f95ae5c22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="thread\thread-pool">
+      <UniqueIdentifier>{a50c9ad5-2f7f-47ef-ac87-b6ae928536d8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

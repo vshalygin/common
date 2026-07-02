@@ -37,10 +37,10 @@
     <ClCompile Include="src\synchronization\ordered-lock\ordered-lock-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\compare-ordered-lockable-tuples-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-mutex\ordered-mutex-test.cpp" />
-    <ClCompile Include="src\thread\future-test.cpp" />
-    <ClCompile Include="src\thread\strand-test.cpp" />
-    <ClCompile Include="src\thread\thread-pool-task-test.cpp" />
-    <ClCompile Include="src\thread\thread-pool-test.cpp" />
+    <ClCompile Include="src\thread\future\future-test.cpp" />
+    <ClCompile Include="src\thread\thread-pool\strand-test.cpp" />
+    <ClCompile Include="src\thread\thread-pool\thread-pool-task-test.cpp" />
+    <ClCompile Include="src\thread\thread-pool\thread-pool-test.cpp" />
     <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp" />
     <ClCompile Include="src\timer\periodic-timer\periodic-timer-test.cpp" />
     <ClCompile Include="src\utils\buffer-view\buffer-view-test.cpp" />

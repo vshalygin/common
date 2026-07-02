@@ -17,7 +17,7 @@ namespace vshalygin::cl::internal {
 
         template<class Arg1, class Arg2, class... Args>
         std::tuple<Arg2, Arg1, Args...> swap_first_two_tuple_elements
-        (std::tuple<Arg1, Arg2, Args...> t)
+                                               (std::tuple<Arg1, Arg2, Args...> t)
         {
             return swap_first_two_tuple_elements2(std::move(t),
                                                   std::index_sequence_for<Args...>{});
