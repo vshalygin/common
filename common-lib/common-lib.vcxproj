@@ -65,7 +65,9 @@
     <ClInclude Include="common-lib\thread\future\internal\future-data-impl.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-data.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-impl.h" />
+    <ClInclude Include="common-lib\thread\future\internal\future-store-type.h" />
     <ClInclude Include="common-lib\thread\future\internal\future.h" />
+    <ClInclude Include="common-lib\thread\future\internal\is-future.h" />
     <ClInclude Include="common-lib\thread\future\internal\make-promise.h" />
     <ClInclude Include="common-lib\thread\future\internal\promise-function.h" />
     <ClInclude Include="common-lib\thread\future\internal\promise-impl.h" />

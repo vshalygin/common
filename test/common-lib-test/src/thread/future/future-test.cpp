@@ -1210,3 +1210,19 @@ TEST_F(Future, FutureDataFunctionParameterMayBeNonConstReferenceForConstFutureAn
 
     d.apply([](const int &i) { EXPECT_EQ(i, 4); });
 }
+
+TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture)
+{
+    auto p = make_promise(&m_pool, []() { return 1; });
+    p.resolve();
+
+    auto f = p.get_future().then([&](int i) {
+        auto p1 = make_promise(&m_pool, [](int ii) { return ii * 2; });
+        p1.resolve(i);
+        return p1.get_future();
+    });
+
+    static_assert(std::is_same_v<decltype(f), future<thread_pool, int>>);
+
+    f.get().apply([](int i) { ASSERT_EQ(i, 2); });
+}

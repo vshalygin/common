@@ -35,6 +35,9 @@ namespace vshalygin::cl::internal {
         bool is_valid() const;
 
     private:
+        auto get_controller() const;
+
+    private:
         ThreadPool *m_thread_pool = nullptr;
         std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
     };

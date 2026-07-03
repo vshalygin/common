@@ -166,8 +166,9 @@ namespace vshalygin::cl::internal {
             using val_t = decltype(m_val->to_underlying());
             using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
 
+            ordered_lock lock(m_val_mtx);
             assert(m_val);
-            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
+            return tuple_t{ std::move(lock), m_val->to_underlying()};
         }
     }
 
@@ -178,8 +179,9 @@ namespace vshalygin::cl::internal {
             using val_t = decltype(m_val->to_underlying());
             using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
 
+            ordered_lock lock(m_val_mtx);
             assert(m_val);
-            return tuple_t{ ordered_lock{ m_val_mtx }, m_val->to_underlying() };
+            return tuple_t{ std::move(lock), m_val->to_underlying() };
         }
     }
 
@@ -234,7 +236,7 @@ namespace vshalygin::cl::internal {
         ordered_lock guard(m_exception_mtx);
         do_on_destruct d2([this, need_notify]() { m_is_exception_ready = true; });
 
-        //m_exception here is defined and will not change,
+        //m_on_fail here is defined and will not change,
         //no need m_on_fail_mtx block
         assert(m_exception);
         assert(m_on_fail);
