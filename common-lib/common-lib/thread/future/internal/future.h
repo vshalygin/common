@@ -32,7 +32,7 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         auto then(Func &&task);
 
-        void catched(std::function<void(std::exception_ptr)> &&task) &;
+        future<ThreadPool, T> &catched(std::function<void(std::exception_ptr)> &&task) &;
         future<ThreadPool, T> catched(std::function<void(std::exception_ptr)> &&task) &&;
 
         bool is_valid() const;

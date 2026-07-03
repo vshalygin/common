@@ -23,7 +23,9 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("no resolve function");
         }
 
-        if constexpr(is_future_v<T> && is_value_v<T>) {
+        if constexpr(is_future_v<T>) {
+            static_assert(is_value_v<T>);
+
             using future_t = T;
             using future_store = future_store_type_or_self_t<future_t>;
 

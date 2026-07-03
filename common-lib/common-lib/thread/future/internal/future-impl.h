@@ -81,7 +81,9 @@ namespace vshalygin::cl::internal {
         };
         m_controller->set_on_fail_if_not_set(std::move(fail));
 
-        if constexpr(is_future_v<ret_t> && is_value_v<ret_t>) {
+        if constexpr(is_future_v<ret_t>) {
+            static_assert(is_value_v<ret_t>);
+
             using future_t = ret_t;
             using future_store = future_store_type_or_self_t<future_t>;
 
@@ -114,10 +116,11 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future<ThreadPool, T>::catched(
+    future<ThreadPool, T> &future<ThreadPool, T>::catched(
             std::function<void(std::exception_ptr)> &&task) &
     {
         m_controller->set_on_fail(std::move(task));
+        return *this;
     }
 
     template<typename ThreadPool, typename T>

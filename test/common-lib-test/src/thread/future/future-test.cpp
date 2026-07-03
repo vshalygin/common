@@ -314,12 +314,13 @@ TEST_F(Future, MayGetValueAfterCatchHandlerSet)
 
 TEST_F(Future, CatchedMethodAppliedToLValue)
 {
-    auto p = make_promise(&m_pool, []() { return 2; });
+    auto p = make_promise(&m_pool, []() { return 1; });
     p.resolve();
     auto f = p.get_future();
-    static_assert(std::is_same_v<
-        decltype(f.catched(std::declval<std::function<void(std::exception_ptr)>>())),
-        void>);
+    f.catched([](std::exception_ptr) {})
+        .then([](int i) { return i; });
+
+    f.get().apply([](int i) { ASSERT_EQ(i, 1); });
 }
 
 TEST_F(Future, CatchedMethodAppliedToRValue)
