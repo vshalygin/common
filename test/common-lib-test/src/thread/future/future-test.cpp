@@ -1226,3 +1226,188 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture
 
     f.get().apply([](int i) { ASSERT_EQ(i, 2); });
 }
+
+TEST_F(Future, IfSuccessCallbackReturnsFutureThenAnyTypeValueFromItPassesToFutherFuture)
+{
+    bool f0_completed = false;
+    int i = 1;
+    volatile int ii = 2;
+
+    auto p0 = make_promise(&m_pool, []() {}); p0.resolve();
+    auto f0 = p0.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() { });
+        p.resolve();
+        return p.get_future();
+    }).then([&]() { f0_completed = true; });
+
+    auto p1 = make_promise(&m_pool, []() {}); p1.resolve();
+    auto f1 = p1.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> int { return i; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p2 = make_promise(&m_pool, []() {}); p2.resolve();
+    auto f2 = p2.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> int & { return i; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p3 = make_promise(&m_pool, []() {}); p3.resolve();
+    auto f3 = p3.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> int &&{ return std::move(i); });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p4 = make_promise(&m_pool, []() {}); p4.resolve();
+    auto f4 = p4.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> const int { return i; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p5 = make_promise(&m_pool, []() {}); p5.resolve();
+    auto f5 = p5.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> const int &{ return i; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p6 = make_promise(&m_pool, []() {}); p6.resolve();
+    auto f6 = p6.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> const int &&{ return std::move(i); });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p7 = make_promise(&m_pool, []() {}); p7.resolve();
+    auto f7 = p7.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> volatile int { return ii; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p8 = make_promise(&m_pool, []() {}); p8.resolve();
+    auto f8 = p8.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> volatile int &{ return ii; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p9 = make_promise(&m_pool, []() {}); p9.resolve();
+    auto f9 = p9.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> volatile int &&{ return std::move(ii); });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p10 = make_promise(&m_pool, []() {}); p10.resolve();
+    auto f10 = p10.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> const volatile int { return ii; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p11 = make_promise(&m_pool, []() {}); p11.resolve();
+    auto f11 = p11.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> const volatile int &{ return ii; });
+        p.resolve();
+        return p.get_future();
+    });
+    auto p12 = make_promise(&m_pool, []() {}); p12.resolve();
+    auto f12 = p12.get_future().then([&]() {
+        auto p = make_promise(&m_pool, [&]() -> const volatile int &&{ return std::move(ii); });
+        p.resolve();
+        return p.get_future();
+    });
+
+    f0.get();
+    ASSERT_TRUE(f0_completed);
+
+    f1.get().apply([&](const int &v) { EXPECT_EQ(v, 1); });
+    f2.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f3.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f4.get().apply([&](const int &v) { EXPECT_EQ(v, 1); });
+    f5.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f6.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f7.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); });
+    f8.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f9.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f10.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); });
+    f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+}
+
+TEST_F(Future, SuccessCallbackReturnsFutureWithMoveOnlyType)
+{
+    auto p = make_promise(&m_pool, []() { return std::make_unique<int>(2); }); p.resolve();
+    auto f = p.get_future()
+     .then([&](std::unique_ptr<int> &&ptr) {
+        auto p = make_promise(&m_pool, [ptr = std::move(ptr)]() mutable { return std::move(ptr); });
+        p.resolve();
+        return p.get_future();
+    }).then([](std::unique_ptr<int> &&ptr) mutable {
+        EXPECT_TRUE(ptr);
+        EXPECT_EQ(*ptr, 2);
+        return std::move(ptr);
+     });
+
+    f.get().apply([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 2); });
+}
+
+TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAllChain)
+{
+    event sync_event1;
+    auto p1 = make_promise(&m_pool, []() { throw std::runtime_error("message"); }); p1.resolve();
+    auto f1 = p1.get_future()
+        .then([&]() {
+            auto p = make_promise(&m_pool, [&]() {});
+            p.resolve();
+            return p.get_future();
+        })
+        .then([]() { FAIL(); })
+        .catched([&](std::exception_ptr) { sync_event1.set(); });
+
+    sync_event1.wait();
+    try {
+        f1.get();
+        FAIL();
+    } catch (const std::runtime_error &e) {
+        EXPECT_EQ(std::string(e.what()), "message");
+    }
+
+
+    event sync_event2;
+    auto p2 = make_promise(&m_pool, []() {}); p2.resolve();
+    auto f2 = p2.get_future()
+        .then([]() { throw std::runtime_error("message"); })
+        .then([&]() {
+             auto p = make_promise(&m_pool, [&]() {});
+             p.resolve();
+             return p.get_future();
+         })
+        .then([]() { FAIL(); })
+        .catched([&](std::exception_ptr) { sync_event2.set(); });
+
+    sync_event2.wait();
+    try {
+        f2.get();
+        FAIL();
+    }
+    catch(const std::runtime_error &e) {
+        EXPECT_EQ(std::string(e.what()), "message");
+    }
+
+
+    event sync_event3;
+    auto p3 = make_promise(&m_pool, []() {}); p3.resolve();
+    auto f3 = p3.get_future()
+        .then([]() { })
+        .then([&]() {
+             auto p = make_promise(&m_pool, [&]() { throw std::runtime_error("message"); });
+             p.resolve();
+             return p.get_future();
+         })
+        .then([]() { FAIL(); })
+        .catched([&](std::exception_ptr) { sync_event3.set(); });
+
+    sync_event3.wait();
+    try {
+        f3.get();
+        FAIL();
+    } catch(const std::runtime_error &e) {
+        EXPECT_EQ(std::string(e.what()), "message");
+    }
+}
