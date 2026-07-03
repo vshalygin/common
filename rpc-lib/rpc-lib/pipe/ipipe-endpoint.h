@@ -36,6 +36,7 @@ namespace vshalygin::rpc {
         virtual void write_async(cl::buffer &&msg, write_callback_t &&handler) = 0;
         virtual void read_async(read_callback_t &&handler) = 0;
 
+        //TODO удалить синхронные операции
         virtual bool try_to_write_for(cl::buffer &&msg, const std::chrono::microseconds &timeout) = 0;
         virtual std::optional<cl::buffer> try_to_read_for(const std::chrono::microseconds &timeout) = 0;
 

@@ -1180,3 +1180,33 @@ TEST_F(Future, MoveOnlyObjectMayBePassedThroughChainAndAchievedViaGet)
     ASSERT_TRUE(v);
     ASSERT_EQ(*v, 2);
 }
+
+TEST_F(Future, DoNotExecuteTheRestOfHandlerIfExceptionHappened)
+{
+    auto p = make_promise(&m_pool, []() {});
+    p.resolve();
+    p.get_future()
+        .then([]() {})
+        .then([]() { throw std::runtime_error(""); })
+        .then([]() { FAIL(); });
+}
+
+TEST_F(Future, FutureDataFunctionParameterMayBeValue)
+{
+    auto p = make_promise(&m_pool, []() { return 1; });
+    p.resolve();
+
+    p.get_future().get().apply([](int i) { EXPECT_EQ(i, 1); });
+}
+
+TEST_F(Future, FutureDataFunctionParameterMayBeNonConstReferenceForConstFutureAndData)
+{
+    auto p = make_promise(&m_pool, []() { return 1; });
+    p.resolve();
+
+    const auto f = p.get_future();
+    const auto d = f.get();
+    d.apply([](int &i) { i = 4; });
+
+    d.apply([](const int &i) { EXPECT_EQ(i, 4); });
+}
