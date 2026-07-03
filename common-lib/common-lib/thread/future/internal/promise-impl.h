@@ -3,15 +3,6 @@
 
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T, typename...ResolveArgs>
-    promise<ThreadPool, T, ResolveArgs...>::promise(ThreadPool *thread_pool)
-        : m_thread_pool(thread_pool)
-        , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
-        , m_future(thread_pool, m_controller)
-    {
-        assert(m_thread_pool);
-    }
-
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
     template<typename Function>
     promise<ThreadPool, T, ResolveArgs...>::promise(ThreadPool *thread_pool,
                                                     Function &&function)
@@ -65,11 +56,5 @@ namespace vshalygin::cl::internal {
     bool promise<ThreadPool, T, ResolveArgs...>::is_valid() const
     {
         return m_controller != nullptr;
-    }
-
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
-    auto promise<ThreadPool, T, ResolveArgs...>::get_controller() const
-    {
-        return m_controller;
     }
 }

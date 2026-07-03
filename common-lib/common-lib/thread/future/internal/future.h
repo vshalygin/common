@@ -12,6 +12,9 @@ namespace vshalygin::cl::internal {
         template<typename, typename, typename...>
         friend class promise;
 
+        template<typename, typename>
+        friend class future;
+
         explicit future(
             ThreadPool *thread_pool,
             std::shared_ptr<future_controller<T, ThreadPool>> controller);

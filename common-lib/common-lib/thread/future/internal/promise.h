@@ -5,19 +5,11 @@
 #include <memory>
 
 namespace vshalygin::cl::internal {
-    template<typename ThreadPool, typename T>
-    class future;
-
     template<typename ThreadPool, typename T, typename...ResolveArgs>
     class promise
     {
         template<typename, typename, typename...>
         friend class promise;
-
-        template<typename, typename>
-        friend class future;
-
-        explicit promise(ThreadPool *thread_pool);
 
     public:
         promise() = default;
@@ -37,9 +29,6 @@ namespace vshalygin::cl::internal {
         auto get_future();
 
         bool is_valid() const;
-
-    private:
-        auto get_controller() const;
 
     private:
         ThreadPool *m_thread_pool = nullptr;
