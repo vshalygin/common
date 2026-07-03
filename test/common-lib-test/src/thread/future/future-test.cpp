@@ -1635,3 +1635,16 @@ TEST_F(Future, PromiseFunctionWhichReturnsFutureCopiesVarible)
 
     f.get().apply([](std::string str) { ASSERT_EQ(str, "test"); });
 }
+
+TEST_F(Future, FutureTupleAsStoredType)
+{
+    auto p = make_promise(&m_pool, []() {});
+    p.resolve();
+    p.get_future()
+        .then([]() { return future_tuple{ 7, 8 }; })
+        .then([](int i, int j) {
+            EXPECT_EQ(i, 7);
+            EXPECT_EQ(j, 8);
+         })
+        .get();
+}

@@ -18,10 +18,8 @@ namespace vshalygin::cl::internal {
     class future_callback
         : public ifuture_callback<T>
     {
-        static_assert(std::is_same_v<function_ret_t<Func>, void>,
-                      "internal: future_callback must have void return type");
-        static_assert(function_arg_count_v<Func> == 1,
-                      "internal: future_callback must have one argument");
+        static_assert(std::is_same_v<function_ret_t<Func>, void>);
+        static_assert(function_arg_count_v<Func> == 1);
 
     public:
         template<typename F>

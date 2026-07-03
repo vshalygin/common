@@ -1,6 +1,7 @@
 #pragma once
 #include "is-future.h"
 #include "future-store-type-or-self.h"
+#include "is-future-tuple.h"
 
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/type-traits.h>
@@ -57,18 +58,34 @@ namespace vshalygin::cl::internal {
                                          task = std::forward<Func>(task)]
                                          (add_lvalue_ref_to_value_t<T> val) mutable {
                 try {
-                    static_assert(function_arg_count_v<Func> == 1,
-                                  "callback must have 1 argument");
-                    using arg_t = function_arg_t<0, Func>;
-                    static_assert(std::is_same_v<remove_type_qualifiers_t<arg_t>,
-                                  remove_type_qualifiers_t<T>>,
-                                  "future stored type and callback argument type don't match");
+                    if constexpr(is_future_tuple_v<T>) {
+                        static_assert(is_value_v<T>);
 
-                    if constexpr(!std::is_void_v<ret_t>) {
-                        new_controller->set_value(task(static_cast<arg_t>(val)));
+                        if constexpr(!std::is_void_v<ret_t>) {
+                            new_controller->set_value(std::apply([&task](auto&&...args) -> decltype(auto) {
+                                return task(std::forward<decltype(args)>(args)...);
+                            }, std::move(val.to_underlying())));
+                        } else {
+                            std::apply([&task](auto&&...args) {
+                                task(std::forward<decltype(args)>(args)...);
+                            }, std::move(val.to_underlying()));
+                            new_controller->set_value();
+                        }
+
                     } else {
-                        task(static_cast<arg_t>(val));
-                        new_controller->set_value();
+                        static_assert(function_arg_count_v<Func> == 1,
+                                      "callback must have 1 argument");
+                        using arg_t = function_arg_t<0, Func>;
+                        static_assert(std::is_same_v<remove_type_qualifiers_t<arg_t>,
+                                      remove_type_qualifiers_t<T>>,
+                                      "future stored type and callback argument type don't match");
+
+                        if constexpr(!std::is_void_v<ret_t>) {
+                            new_controller->set_value(task(static_cast<arg_t>(val)));
+                        } else {
+                            task(static_cast<arg_t>(val));
+                            new_controller->set_value();
+                        }
                     }
                 } catch(...) {
                     new_controller->set_exception(std::current_exception());

@@ -3,6 +3,7 @@
 #include "internal/promise-impl.h"
 #include "internal/future-data-impl.h"
 #include "internal/make-promise.h"
+#include "internal/future-tuple.h"
 
 namespace vshalygin::cl {
     template<typename T, typename ThreadPool>
@@ -19,4 +20,7 @@ namespace vshalygin::cl {
     {
         return internal::do_make_promise(thread_pool, std::forward<Func>(func));
     }
+
+    template<typename...Args>
+    using future_tuple = internal::future_tuple<Args...>;
 }
