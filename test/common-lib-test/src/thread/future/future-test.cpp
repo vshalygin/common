@@ -1337,14 +1337,30 @@ TEST_F(Future, SuccessCallbackReturnsFutureWithMoveOnlyType)
      .then([&](std::unique_ptr<int> &&ptr) {
         auto p = make_promise(&m_pool, [ptr = std::move(ptr)]() mutable { return std::move(ptr); });
         p.resolve();
-        return p.get_future();
-    }).then([](std::unique_ptr<int> &&ptr) mutable {
+        return p.get_future(); })
+     .then([](std::unique_ptr<int> &&ptr) mutable {
         EXPECT_TRUE(ptr);
         EXPECT_EQ(*ptr, 2);
         return std::move(ptr);
      });
 
     f.get().apply([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 2); });
+}
+
+TEST_F(Future, SuccessCallbackReturnsFutureAndCopiesStoredVarible)
+{
+    auto p = make_promise(&m_pool, []() { return std::string("test"); }); p.resolve();
+    auto f = p.get_future()
+        .then([&](std::string &&str) {
+               auto p = make_promise(&m_pool, [str = std::move(str)]() mutable { return str; });
+               p.resolve();
+               return p.get_future(); })
+        .then([](std::string ptr) mutable {
+                  EXPECT_EQ(ptr, "test");
+                  return ptr;
+              });
+
+    f.get().apply([](std::string str) { ASSERT_EQ(str, "test"); });
 }
 
 TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAllChain)
@@ -1410,4 +1426,211 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAll
     } catch(const std::runtime_error &e) {
         EXPECT_EQ(std::string(e.what()), "message");
     }
+}
+
+TEST_F(Future, PromiseResolveFunctionReturnsFuture)
+{
+    bool f0_completed = false;
+    const auto master_thread_id = std::this_thread::get_id();
+    int i = 1;
+    volatile int ii = 2;
+
+    auto p0 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() {}); p.resolve();
+        return p.get_future();
+    }); p0.resolve(6);
+    auto f0 = p0.get_future()
+        .then([&]() { f0_completed = true; });
+    auto p1 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> int { return i; }); p.resolve();
+        return p.get_future();
+    }); p1.resolve(6);
+    auto f1 = p1.get_future()
+        .then([&](int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+    auto p2 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> int &{ return i; }); p.resolve();
+        return p.get_future();
+    }); p2.resolve(6);
+    auto f2 = p2.get_future()
+        .then([&](int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+    auto p3 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p.resolve();
+        return p.get_future();
+    }); p3.resolve(6);
+    auto f3 = p3.get_future()
+        .then([&](int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
+    auto p4 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> const int { return i; }); p.resolve();
+        return p.get_future();
+    }); p4.resolve(6);
+    auto f4 = p4.get_future()
+        .then([&](const int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+    auto p5 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> const int &{ return i; }); p.resolve();
+        return p.get_future();
+    }); p5.resolve(6);
+    auto f5 = p5.get_future()
+        .then([&](const int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+    auto p6 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p.resolve();
+        return p.get_future();
+    }); p6.resolve(6);
+    auto f6 = p6.get_future()
+        .then([&](const int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
+    auto p7 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> volatile int { return ii; }); p.resolve();
+        return p.get_future();
+    }); p7.resolve(6);
+    auto f7 = p7.get_future()
+        .then([&](volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+    auto p8 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> volatile int &{ return ii; }); p.resolve();
+        return p.get_future();
+    }); p8.resolve(6);
+    auto f8 = p8.get_future()
+        .then([&](volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+    auto p9 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> volatile int &&{ return std::move(ii); }); p.resolve();
+        return p.get_future();
+    }); p9.resolve(6);
+    auto f9 = p9.get_future()
+        .then([&](volatile int &&v) -> decltype(auto) { EXPECT_EQ(v, ii); return std::move(v); });
+    auto p10 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> const volatile int { return ii; }); p.resolve();
+        return p.get_future();
+    }); p10.resolve(6);
+    auto f10 = p10.get_future()
+        .then([&](const volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+    auto p11 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p.resolve();
+        return p.get_future();
+    }); p11.resolve(6);
+    auto f11 = p11.get_future()
+        .then([&](const volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+    auto p12 = make_promise(&m_pool, [&](int) {
+        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        auto p = make_promise(&m_pool, [&]() -> const volatile int &&{ return std::move(ii); }); p.resolve();
+        return p.get_future();
+    }); p12.resolve(6);
+    auto f12 = p12.get_future()
+        .then([&](const volatile int &&v) -> decltype(auto) { EXPECT_EQ(v, ii); return std::move(v); });
+
+
+    EXPECT_ANY_THROW(p0.resolve(8));
+    EXPECT_ANY_THROW(p1.resolve(8));
+    EXPECT_ANY_THROW(p2.resolve(8));
+    EXPECT_ANY_THROW(p3.resolve(8));
+    EXPECT_ANY_THROW(p4.resolve(8));
+    EXPECT_ANY_THROW(p5.resolve(8));
+    EXPECT_ANY_THROW(p6.resolve(8));
+    EXPECT_ANY_THROW(p7.resolve(8));
+    EXPECT_ANY_THROW(p8.resolve(8));
+    EXPECT_ANY_THROW(p9.resolve(8));
+    EXPECT_ANY_THROW(p10.resolve(8));
+    EXPECT_ANY_THROW(p11.resolve(8));
+    EXPECT_ANY_THROW(p12.resolve(8));
+
+    f0.get();
+    ASSERT_TRUE(f0_completed);
+    f1.get().apply([&](const int &v) { EXPECT_EQ(v, i); });
+    f2.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f3.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f4.get().apply([&](const int &v) { EXPECT_EQ(v, i); });
+    f5.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f6.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f7.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); });
+    f8.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f9.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f10.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); });
+    f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+}
+
+TEST_F(Future, PromiseResolveFunctionReturnsFutureWhichThrowsException)
+{
+    event sync_event1;
+    auto p1 = make_promise(&m_pool, [&](int) -> future<thread_pool, int> { throw std::runtime_error("test"); });
+    p1.resolve(6);
+    auto f1 = p1.get_future()
+        .then([](int) { FAIL(); })
+        .catched([&](std::exception_ptr) { sync_event1.set(); });
+
+    sync_event1.wait();
+    try {
+        f1.get();
+        FAIL();
+    } catch (const std::runtime_error &e) {
+        EXPECT_EQ(std::string(e.what()), "test");
+    }
+
+    event sync_event2;
+    auto p2 = make_promise(&m_pool, [&](int) {
+                               auto p = make_promise(&m_pool, [&]() -> int {
+                                   throw std::runtime_error("test");
+                               });
+                               p.resolve();
+                               return p.get_future();
+                           });
+    p2.resolve(6);
+    auto f2 = p2.get_future()
+        .then([](int) { FAIL(); })
+        .catched([&](std::exception_ptr) { sync_event2.set(); });
+
+    sync_event2.wait();
+    try {
+        f2.get();
+        FAIL();
+    } catch(const std::runtime_error &e) {
+        EXPECT_EQ(std::string(e.what()), "test");
+    }
+
+}
+
+TEST_F(Future, PromiseFunctionWhichReturnsFutureAcceptsMoveOnlyTypeAndPassesItFuther)
+{
+    auto p = make_promise(&m_pool, [&](std::unique_ptr<int> ptr) {
+        auto p = make_promise(&m_pool, [ptr = std::move(ptr)]() mutable { return std::move(ptr); });
+        p.resolve();
+        return p.get_future();
+    });
+    p.resolve(std::make_unique<int>(3));
+    auto f = p.get_future()
+        .then([](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
+
+    f.get().apply([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 3); });
+}
+
+TEST_F(Future, PromiseFunctionWhichReturnsFutureCopiesVarible)
+{
+    std::string s = "test";
+    auto p = make_promise(&m_pool, [&](std::string str) {
+        auto p = make_promise(&m_pool, [str]() { return str; });
+        p.resolve();
+        return p.get_future();
+    });
+    p.resolve(s);
+    auto f = p.get_future()
+        .then([&](std::string &&str) {
+              auto p = make_promise(&m_pool, [str = std::move(str)]() mutable { return str; });
+              p.resolve();
+              return p.get_future();
+         })
+        .then([](const std::string &ptr) mutable {
+             EXPECT_EQ(ptr, "test");
+             return ptr;
+         });
+
+    f.get().apply([](std::string str) { ASSERT_EQ(str, "test"); });
 }

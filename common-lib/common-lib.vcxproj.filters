@@ -348,7 +348,7 @@
     <ClInclude Include="common-lib\thread\future\internal\is-future.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-store-type.h">
+    <ClInclude Include="common-lib\thread\future\internal\future-store-type-or-self.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
   </ItemGroup>

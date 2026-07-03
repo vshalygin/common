@@ -38,7 +38,7 @@ namespace vshalygin::cl::internal {
         bool is_valid() const;
 
     private:
-        auto get_controller() const;
+        auto get_controller() const noexcept;
 
     private:
         ThreadPool *m_thread_pool = nullptr;

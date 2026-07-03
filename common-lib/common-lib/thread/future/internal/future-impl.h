@@ -1,6 +1,6 @@
 #pragma once
 #include "is-future.h"
-#include "future-store-type.h"
+#include "future-store-type-or-self.h"
 
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/type-traits.h>
@@ -83,7 +83,7 @@ namespace vshalygin::cl::internal {
 
         if constexpr(is_future_v<ret_t> && is_value_v<ret_t>) {
             using future_t = ret_t;
-            using future_store = future_store_type_t<future_t>;
+            using future_store = future_store_type_or_self_t<future_t>;
 
             auto next_controller2 = future_controller<future_store, ThreadPool>::create(m_thread_pool);
             new_controller->set_on_success([next_controller2]([[maybe_unused]] future_t &&val) {
@@ -135,7 +135,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    auto future<ThreadPool, T>::get_controller() const
+    auto future<ThreadPool, T>::get_controller() const noexcept
     {
         return m_controller;
     }

@@ -1,5 +1,6 @@
 #pragma once
 #include "promise.h"
+#include "is-future.h"
 
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T, typename...ResolveArgs>
@@ -9,7 +10,7 @@ namespace vshalygin::cl::internal {
         : m_thread_pool(thread_pool)
         , m_function(std::make_shared<promise_function<Function, T, ResolveArgs...>>
                                                         (std::forward<Function>(function)))
-        , m_controller(future_controller<T, ThreadPool>::create(thread_pool))
+        , m_controller(future_controller<future_store_type_or_self_t<T>, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
         assert(m_thread_pool);
@@ -22,24 +23,51 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("no resolve function");
         }
 
-        m_thread_pool->post([controller = m_controller,
-                             func = std::move(m_function),
-                             args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
+        if constexpr(is_future_v<T> && is_value_v<T>) {
+            using future_t = T;
+            using future_store = future_store_type_or_self_t<future_t>;
+
+            auto func = std::move(m_function);
+
             try {
-                if constexpr(!std::is_void_v<T>) {
-                    controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
-                        return func->call(std::move(arg)...);
-                    }, std::move(args)));
+                auto future = func->call(std::forward<ResolveArgs>(args)...);
+                auto controller = future.get_controller();
+                if constexpr(std::is_void_v<future_store>) {
+                    controller->set_on_success([c = m_controller]() mutable {
+                        c->set_value();
+                    });
                 } else {
-                    std::apply([&func](auto&&...arg) {
-                        func->call(std::move(arg)...);
-                    }, std::move(args));
-                    controller->set_value();
+                    controller->set_on_success([c = m_controller](future_store &&v) mutable {
+                        c->set_value(std::forward<future_store>(v));
+                    });
                 }
-            } catch(...) {
-                controller->set_exception(std::current_exception());
+
+                controller->set_on_fail([c = m_controller](std::exception_ptr e) mutable {
+                    c->set_exception(e);
+                });
+            } catch (...) {
+                m_controller->set_exception(std::current_exception());
             }
-        });
+        } else {
+            m_thread_pool->post([controller = m_controller,
+                                func = std::move(m_function),
+                                args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
+                try {
+                    if constexpr(!std::is_void_v<T>) {
+                        controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
+                            return func->call(std::move(arg)...);
+                        }, std::move(args)));
+                    } else {
+                        std::apply([&func](auto&&...arg) {
+                            func->call(std::move(arg)...);
+                        }, std::move(args));
+                        controller->set_value();
+                    }
+                } catch(...) {
+                    controller->set_exception(std::current_exception());
+                }
+            });
+        }
     }
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
