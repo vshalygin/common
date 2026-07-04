@@ -1753,3 +1753,25 @@ TEST_F(Future, FutureTupleAsStoredValueStoresNothing)
 
     f.get();
 }
+
+TEST_F(Future, PromiseFunctionReturnsFutureTuple)
+{
+    auto p = make_promise(&m_pool, []() { return future_tuple{ 1, 4 }; });
+    p.resolve();
+    auto f = p.get_future()
+        .then([&](int i, int j) { EXPECT_EQ(i, 1); EXPECT_EQ(j, 4); })
+        .then([&]() {});
+
+    f.get();
+}
+
+TEST_F(Future, MoveOnlyTypeMayBePassesThroughAllChainViaFutureTuple)
+{
+    auto p = make_promise(&m_pool, []() { return future_tuple{ std::make_unique<int>(34) }; });
+    p.resolve();
+    auto f = p.get_future()
+        .then([&](std::unique_ptr<int> &&ptr) { return future_tuple{ std::move(ptr) }; })
+        .then([&](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
+
+    f.get().apply([](const std::unique_ptr<int> &ptr) { ASSERT_TRUE(ptr && *ptr == 34); });
+}
