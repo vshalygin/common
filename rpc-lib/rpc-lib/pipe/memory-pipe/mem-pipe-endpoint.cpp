@@ -77,81 +77,34 @@ namespace vshalygin::rpc {
         return m_is_invalidated ? pipe_wait_res::invalidated : pipe_wait_res::connected;
     }
 
-    void mem_pipe_endpoint::write_async(cl::buffer &&msg,
-                                        std::function<void(pipe_op_res)> &&callback)
+    mem_pipe_endpoint::write_future mem_pipe_endpoint::write_async(cl::buffer &&msg)
     {
         std::lock_guard guard(m_mtx);
         if(!m_mem_buffers) {
-            m_thread_pool->post([c = std::move(callback)]() { c(pipe_op_res::failed); });
-            return;
+            auto promise = make_promise(m_thread_pool.get(), []() {
+                return pipe_op_res::failed;
+            });
+            promise.resolve();
+            return promise.get_future();
         }
-
-        if(m_is_server) {
-            m_mem_buffers->write_async_to_client(std::move(msg), std::move(callback));
-        } else {
-            m_mem_buffers->write_async_to_server(std::move(msg), std::move(callback));
-        }
+        
+        return m_is_server ? m_mem_buffers->write_async_to_client(std::move(msg))
+                           : m_mem_buffers->write_async_to_server(std::move(msg));
     }
 
-    void mem_pipe_endpoint::read_async(read_callback_t &&callback)
+    mem_pipe_endpoint::read_future mem_pipe_endpoint::read_async()
     {
         std::lock_guard guard(m_mtx);
         if(!m_mem_buffers) {
-            m_thread_pool->post([c = std::move(callback)]() { c(pipe_op_res::failed, {}); });
-            return;
+            auto promise = make_promise(m_thread_pool.get(), []() {
+                return ftuple(pipe_op_res::failed, cl::buffer{});
+            });
+            promise.resolve();
+            return promise.get_future();
         }
-
-        if(m_is_server) {
-            m_mem_buffers->read_async_from_client(std::move(callback));
-        } else {
-            m_mem_buffers->read_async_from_server(std::move(callback));
-        }
-    }
-
-    bool mem_pipe_endpoint::try_to_write_for(cl::buffer &&msg, const microseconds &timeout)
-    {
-        struct data
-        {
-            cl::event sync_event;
-            pipe_op_res res = pipe_op_res::failed;
-        };
-        auto d = std::make_shared<data>();
-        auto task = [d](pipe_op_res r) {
-            d->res = r;
-            d->sync_event.set();
-        };
-
-        write_async(std::move(msg), std::move(task));
-
-        if(!d->sync_event.wait_for(timeout)) {
-            return false;
-        }
-
-        return is_success(d->res);
-    }
-
-    std::optional<cl::buffer> mem_pipe_endpoint::try_to_read_for(const microseconds &timeout)
-    {
-        struct data
-        {
-            cl::event sync_event;
-            pipe_op_res res = pipe_op_res::failed;
-            cl::buffer buf;
-        };
-        auto d = std::make_shared<data>();
-        auto task = [d](pipe_op_res r, cl::buffer &&b) {
-            d->res = r;
-            d->buf = std::move(b);
-            d->sync_event.set();
-        };
-
-        read_async(std::move(task));
-
-        if(!d->sync_event.wait_for(timeout)) {
-            return std::nullopt;
-        }
-
-        return is_success(d->res) ? std::optional<cl::buffer>(std::move(d->buf)) : std::nullopt;
+        
+        return m_is_server ? m_mem_buffers->read_async_from_client()
+                           : m_mem_buffers->read_async_from_server();
     }
 
     void mem_pipe_endpoint::invalidate()

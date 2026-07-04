@@ -86,8 +86,10 @@ TEST_F(Transport, SendAsync)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    m_sut->send_async(buf.copy(), write_callback.AsStdFunction());
-    m_other_pipe_endpoint->read_async(read_callback.AsStdFunction());
+    m_sut->send_async(buf.copy())
+        .then(write_callback.AsStdFunction());
+    m_other_pipe_endpoint->read_async()
+        .then(read_callback.AsStdFunction());
 
     sync_event.wait();
 }
@@ -104,9 +106,10 @@ TEST_F(Transport, RecvAsync)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    m_other_pipe_endpoint->write_async(buf.copy(), write_callback.AsStdFunction());
-    m_sut->recv_async(read_callback.AsStdFunction());
-
+    m_other_pipe_endpoint->write_async(buf.copy())
+        .then(write_callback.AsStdFunction());
+    m_sut->recv_async()
+        .then(read_callback.AsStdFunction());
 
     sync_event.wait();
 }

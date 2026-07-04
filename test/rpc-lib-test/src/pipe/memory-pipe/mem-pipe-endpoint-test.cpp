@@ -45,12 +45,6 @@ namespace {
         ans[1] = std::byte(6);
         return ans;
     }
-
-    void dummy_write_callback(pipe_op_res)
-    {}
-
-    void dummy_read_callback(pipe_op_res, buffer &&)
-    {}
 }
 
 TEST(MemPipeEndpoint, InNotConnectedAfterCreation)
@@ -297,7 +291,8 @@ TEST(MemPipeEndpoint, ExecuteWriteCallbackWithFailedCodeIfBuffersWereNotSet)
         .WillOnce([&]() { sync_event.set(); });
 
     test_mem_pipe_endpoint sut(true, pool);
-    sut.write_async({}, callback.AsStdFunction());
+    sut.write_async({})
+        .then(callback.AsStdFunction());
 
     sync_event.wait();
 }
@@ -317,8 +312,9 @@ TEST(MemPipeEndpoint, WritesDataFromClientToServer)
     server_endpoint.set_buffers(buffers);
     client_endpoint.set_buffers(buffers);
 
-    client_endpoint.write_async(data.copy(), &dummy_write_callback);
-    server_endpoint.read_async(read_callback.AsStdFunction());
+    client_endpoint.write_async(data.copy());
+    server_endpoint.read_async()
+        .then(read_callback.AsStdFunction());
 
     sync_event.wait();
 }
@@ -338,52 +334,11 @@ TEST(MemPipeEndpoint, WritesDataFromServerToClient)
     server_endpoint.set_buffers(buffers);
     client_endpoint.set_buffers(buffers);
 
-    server_endpoint.write_async(data.copy(), &dummy_write_callback);
-    client_endpoint.read_async(read_callback.AsStdFunction());
+    server_endpoint.write_async(data.copy());
+    client_endpoint.read_async()
+        .then(read_callback.AsStdFunction());
 
     sync_event.wait();
-}
-
-TEST(MemPipeEndpoint, FailsSyncWriteIfNoBuffersSet)
-{
-    auto pool = std::make_shared<thread_pool>(2);
-    test_mem_pipe_endpoint sut(true, pool);
-
-    auto r = sut.try_to_write_for({}, std::chrono::hours(1));
-
-    ASSERT_FALSE(r);
-}
-
-TEST(MemPipeEndpoint, WritesAndReadDataSynchronously)
-{
-    event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
-    auto data = create_test_data();
-    test_mem_pipe_endpoint server_enpoint(true, pool);
-    test_mem_pipe_endpoint client_enpoint(false, pool);
-    server_enpoint.set_buffers(buffers);
-    client_enpoint.set_buffers(buffers);
-
-    pool->post([&]() {
-        auto r = server_enpoint.try_to_write_for(data.copy(), std::chrono::hours(1));
-        EXPECT_TRUE(r);
-        sync_event.set();
-    });
-    auto res = client_enpoint.try_to_read_for(std::chrono::hours(1));
-
-    sync_event.wait();
-    ASSERT_TRUE(res && *res == data);
-}
-
-TEST(MemPipeEndpoint, FailsSyncReadIfNoBuffersSet)
-{
-    auto pool = std::make_shared<thread_pool>(2);
-    test_mem_pipe_endpoint sut(true, pool);
-
-    auto r = sut.try_to_read_for(std::chrono::hours(1));
-
-    ASSERT_FALSE(r.has_value());
 }
 
 TEST(MemPipeEndpoint, ExecuteDisconnectCallbackOnDestruction)

@@ -22,9 +22,9 @@ namespace vshalygin::rpc {
     }
 
     std::shared_ptr<ipipe_endpoint> mem_pipe_env::create_new_pipe_end
-                                                            (bool is_server,
-                                                             queue_t &own_queue,
-                                                             queue_t &corresponding_queue)
+                                                             (bool is_server,
+                                                              queue_t &own_queue,
+                                                              queue_t &corresponding_queue)
     {
         std::shared_ptr<mem_pipe_endpoint> ans(new mem_pipe_endpoint(is_server, m_thread_pool));
         std::shared_ptr<mem_pipe_endpoint> corresponding_pipe;

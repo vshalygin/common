@@ -22,50 +22,52 @@ namespace vshalygin::rpc {
     {}
 
     std::unique_ptr<transport> client_connector::create_transport
-                                                   (std::function<void()> &&start_callback,
-                                                    std::function<void()> &&stop_callback) const
+                                                   (std::function<void()> &&/*start_callback*/,
+                                                    std::function<void()> &&/*stop_callback*/) const
     {
         std::unique_lock guard(m_mtx);
         assert(!m_curr_pipe_endpoint);
 
         try {
-            m_curr_pipe_endpoint = m_pipe_env->open_pipe();
-
-            guard.unlock();
-            auto wait_res = m_curr_pipe_endpoint->wait_connect_for(std::chrono::seconds(10));
-            guard.lock();
-
-            if(is_fail(wait_res)) {
-                throw std::runtime_error("failed to wait pipe connection: " + to_string(wait_res));
-            }
-
-            proto::auth_request req = m_authenticator->create_request();
-            cl::buffer buff(req.ByteSizeLong());
-            req.SerializeToArray(buff.data(), static_cast<int>(buff.size()));
-            if(!m_curr_pipe_endpoint->try_to_write_for(std::move(buff), std::chrono::seconds(10))) {
-                throw std::runtime_error("failed to send a handshake message to server");
-            }
-
-            auto raw_res = m_curr_pipe_endpoint->try_to_read_for(std::chrono::seconds(10));
-            if(!raw_res) {
-                throw std::runtime_error("failed to read handshake answer in specified time");
-            }
-
-            proto::auth_response res;
-            if(!res.ParseFromArray(raw_res->data(), static_cast<int>(raw_res->size()))) {
-                throw std::runtime_error("failed to parse handshake answer");
-            }
-
-            if(!res.is_accepted()) {
-                throw std::runtime_error("connect is not allowed by server side");
-            }
-
-            auto pipe = std::move(m_curr_pipe_endpoint);
-            m_curr_pipe_endpoint.reset();
-            return std::make_unique<transport>(m_thread_pool,
-                                               std::move(pipe),
-                                               std::move(start_callback),
-                                               std::move(stop_callback));
+            //TODO fix
+            //m_curr_pipe_endpoint = m_pipe_env->open_pipe();
+            //
+            //guard.unlock();
+            //auto wait_res = m_curr_pipe_endpoint->wait_connect_for(std::chrono::seconds(10));
+            //guard.lock();
+            //
+            //if(is_fail(wait_res)) {
+            //    throw std::runtime_error("failed to wait pipe connection: " + to_string(wait_res));
+            //}
+            //
+            //proto::auth_request req = m_authenticator->create_request();
+            //cl::buffer buff(req.ByteSizeLong());
+            //req.SerializeToArray(buff.data(), static_cast<int>(buff.size()));
+            //if(!m_curr_pipe_endpoint->try_to_write_for(std::move(buff), std::chrono::seconds(10))) {
+            //    throw std::runtime_error("failed to send a handshake message to server");
+            //}
+            //
+            //auto raw_res = m_curr_pipe_endpoint->try_to_read_for(std::chrono::seconds(10));
+            //if(!raw_res) {
+            //    throw std::runtime_error("failed to read handshake answer in specified time");
+            //}
+            //
+            //proto::auth_response res;
+            //if(!res.ParseFromArray(raw_res->data(), static_cast<int>(raw_res->size()))) {
+            //    throw std::runtime_error("failed to parse handshake answer");
+            //}
+            //
+            //if(!res.is_accepted()) {
+            //    throw std::runtime_error("connect is not allowed by server side");
+            //}
+            //
+            //auto pipe = std::move(m_curr_pipe_endpoint);
+            //m_curr_pipe_endpoint.reset();
+            //return std::make_unique<transport>(m_thread_pool,
+            //                                   std::move(pipe),
+            //                                   std::move(start_callback),
+            //                                   std::move(stop_callback));
+            return nullptr;
         } catch (...) {
             m_curr_pipe_endpoint.reset();
             throw;

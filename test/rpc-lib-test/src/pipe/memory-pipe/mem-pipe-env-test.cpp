@@ -67,13 +67,16 @@ TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
     buffer client_msg(1); client_msg[0] = (std::byte)0x1;
     buffer server_msg(1); server_msg[0] = (std::byte)0x2;
 
-    ASSERT_TRUE(client_pipe->try_to_write_for(client_msg.copy(), std::chrono::seconds(1)));
-    ASSERT_TRUE(server_pipe->try_to_write_for(server_msg.copy(), std::chrono::seconds(1)));
-    auto r1 = client_pipe->try_to_read_for(std::chrono::seconds(1));
-    auto r2 = server_pipe->try_to_read_for(std::chrono::seconds(1));
-
-    ASSERT_TRUE(r1 && *r1 == server_msg);
-    ASSERT_TRUE(r2 && *r2 == client_msg);
+    client_pipe->write_async(client_msg.copy());
+    server_pipe->write_async(server_msg.copy());
+    client_pipe->read_async().get().apply([&](pipe_op_res res, buffer &b) {
+        EXPECT_TRUE(is_success(res));
+        EXPECT_TRUE(b == server_msg);
+    });
+    server_pipe->read_async().get().apply([&](pipe_op_res res, buffer &b) {
+        EXPECT_TRUE(is_success(res));
+        EXPECT_TRUE(b == client_msg);
+    });
 }
 
 TEST(MemPipeEnv, DoNotConnectNewPipeToCounterpartIfItIsNotExistingAnymore)

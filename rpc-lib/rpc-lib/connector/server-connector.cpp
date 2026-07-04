@@ -22,57 +22,60 @@ namespace vshalygin::rpc {
     {}
 
     std::unique_ptr<transport> server_connector::create_transport
-                                                     (std::function<void()> &&start_callback,
-                                                      std::function<void()> &&stop_callback) const
+                                                     (std::function<void()> &&/*start_callback*/,
+                                                      std::function<void()> &&/*stop_callback*/) const
     {
         std::unique_lock guard(m_mtx);
         assert(!m_curr_pipe_endpoint);
 
         try {
-            m_curr_pipe_endpoint = m_pipe_env->create_pipe();
-            guard.unlock();
-            auto wait_res = m_curr_pipe_endpoint->wait_connect_for(std::chrono::seconds(10));
-            guard.lock();
+            //TODO fix
+            //m_curr_pipe_endpoint = m_pipe_env->create_pipe();
+            //guard.unlock();
+            //auto wait_res = m_curr_pipe_endpoint->wait_connect_for(std::chrono::seconds(10));
+            //guard.lock();
+            //
+            //if(is_fail(wait_res)) {
+            //    if(wait_res == pipe_wait_res::invalidated) {
+            //        throw interrupt_exception("pipe connect process was interrupted");
+            //    } else {
+            //        throw std::runtime_error("failed to wait pipe connection: " + to_string(wait_res));
+            //    }
+            //}
+            //
+            //auto con_msg = m_curr_pipe_endpoint->try_to_read_for(std::chrono::seconds(10));
+            //if(!con_msg) {
+            //    throw std::runtime_error("failed to read handshake request");;
+            //}
+            //proto::auth_request req;
+            //if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
+            //    throw std::runtime_error("failed to parse handshake request");
+            //}
+            //
+            //if(!m_authenticator->check_request(req)) {
+            //    throw std::runtime_error("handshake failed");
+            //}
+            //
+            //proto::auth_response res;
+            //res.set_is_accepted(true);
+            //
+            //cl::buffer buf(res.ByteSizeLong());
+            //if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {
+            //    throw std::runtime_error("failed to serialize handshake response");
+            //}
+            //
+            //if(!m_curr_pipe_endpoint->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
+            //    throw std::runtime_error("failed to write handshake response");
+            //}
+            //
+            //auto pipe = std::move(m_curr_pipe_endpoint);
+            //m_curr_pipe_endpoint.reset();
+            //return std::make_unique<transport>(m_thread_pool,
+            //                                   std::move(pipe),
+            //                                   std::move(start_callback),
+            //                                   std::move(stop_callback));
 
-            if(is_fail(wait_res)) {
-                if(wait_res == pipe_wait_res::invalidated) {
-                    throw interrupt_exception("pipe connect process was interrupted");
-                } else {
-                    throw std::runtime_error("failed to wait pipe connection: " + to_string(wait_res));
-                }
-            }
-
-            auto con_msg = m_curr_pipe_endpoint->try_to_read_for(std::chrono::seconds(10));
-            if(!con_msg) {
-                throw std::runtime_error("failed to read handshake request");;
-            }
-            proto::auth_request req;
-            if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
-                throw std::runtime_error("failed to parse handshake request");
-            }
-
-            if(!m_authenticator->check_request(req)) {
-                throw std::runtime_error("handshake failed");
-            }
-
-            proto::auth_response res;
-            res.set_is_accepted(true);
-
-            cl::buffer buf(res.ByteSizeLong());
-            if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {
-                throw std::runtime_error("failed to serialize handshake response");
-            }
-
-            if(!m_curr_pipe_endpoint->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
-                throw std::runtime_error("failed to write handshake response");
-            }
-
-            auto pipe = std::move(m_curr_pipe_endpoint);
-            m_curr_pipe_endpoint.reset();
-            return std::make_unique<transport>(m_thread_pool,
-                                               std::move(pipe),
-                                               std::move(start_callback),
-                                               std::move(stop_callback));
+            return nullptr;
         } catch(...) {
             m_curr_pipe_endpoint.reset();
             throw;

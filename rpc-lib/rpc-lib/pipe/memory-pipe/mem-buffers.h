@@ -1,7 +1,6 @@
 #pragma once
 #include "mem-buffer.h"
 #include <memory>
-#include <functional>
 #include <mutex>
 #include <vector>
 
@@ -9,8 +8,8 @@ namespace vshalygin::rpc {
     class mem_buffers
     {
     public:
-        using read_callback_t = std::function<void(pipe_op_res, cl::buffer &&)>;
-        using write_callback_t = std::function<void(pipe_op_res)>;
+        using read_future = mem_buffer::read_future;
+        using write_future = mem_buffer::write_future;
 
         explicit mem_buffers(std::shared_ptr<cl::thread_pool> thread_pool);
 
@@ -19,11 +18,11 @@ namespace vshalygin::rpc {
 
         ~mem_buffers();
 
-        void read_async_from_server(read_callback_t &&callback);
-        void read_async_from_client(read_callback_t &&callback);
+        read_future read_async_from_server();
+        read_future read_async_from_client();
 
-        void write_async_to_client(cl::buffer &&msg, write_callback_t &&callback);
-        void write_async_to_server(cl::buffer &&msg, write_callback_t &&callback);
+        write_future write_async_to_client(cl::buffer &&msg);
+        write_future write_async_to_server(cl::buffer &&msg);
 
         void set_invalidate_callback(cl::thread_pool_task<void()> &&callback);
 
@@ -35,8 +34,8 @@ namespace vshalygin::rpc {
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
-        mem_buffer m_client_to_server;
-        mem_buffer m_server_to_client;
+        std::shared_ptr<mem_buffer> m_client_to_server;
+        std::shared_ptr<mem_buffer> m_server_to_client;
 
         mutable std::mutex m_mtx;
         bool m_invalidated = false;

@@ -1,9 +1,13 @@
 #include "mem-buffer.h"
-#include <future>
 
 namespace vshalygin::rpc {
+    std::shared_ptr<mem_buffer> mem_buffer::create(std::shared_ptr<cl::thread_pool> thread_pool)
+    {
+        return std::shared_ptr<mem_buffer>(new mem_buffer(std::move(thread_pool)));
+    }
+
     mem_buffer::mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool)
-        : strand_(thread_pool->create_strand())
+        : m_thread_pool(std::move(thread_pool))
     {}
 
     mem_buffer::~mem_buffer()
@@ -11,114 +15,113 @@ namespace vshalygin::rpc {
         invalidate();
     }
 
-    void mem_buffer::write_async(cl::buffer &&data, std::function<void(pipe_op_res)> &&callback)
+    mem_buffer::write_future mem_buffer::write_async(cl::buffer &&data)
     {
-        assert(callback);
+        auto promise = make_promise(m_thread_pool.get(),
+                                    [](pipe_op_res res) { return res; });
+        auto future = promise.get_future();
 
-        auto task = [this,
-                     data = std::move(data),
-                     callback = std::move(callback)]() mutable {
-            if(!is_valid_) {
-                callback(pipe_op_res::failed);
-                return;
-            }
-
-            try {
-                buffer_.push(std::move(data));
-            } catch(...) {
-                callback(pipe_op_res::failed);
-                throw;
-            }
-            callback(pipe_op_res::success);
-
-            if(!read_handlers_.empty()) {
-                auto read_handler = std::move(read_handlers_.front());
-                read_handlers_.pop();
-                read_handler(pipe_op_res::success, std::move(buffer_.front()));
-                buffer_.pop();
-            }
-        };
-
-        strand_.post(std::move(task));
-    }
-
-    void mem_buffer::read_async(std::function<void(pipe_op_res, cl::buffer &&)> &&callback)
-    {
-        assert(callback);
-
-        strand_.post([this, callback = std::move(callback)]() mutable {
-            if(!is_valid_) {
-                callback(pipe_op_res::failed, {});
-                return;
-            }
-
-            if(!buffer_.empty()) {
-                auto msg = std::move(buffer_.front());
-                buffer_.pop();
-                callback(pipe_op_res::success, std::move(msg));
-            } else {
-                try {
-                    read_handlers_.push(std::move(callback));
-                } catch(...) {
-                    callback(pipe_op_res::failed, {});
-                    throw;
-                }
-            }
+        m_thread_pool->post([self = shared_from_this(),
+                            promise = std::move(promise),
+                            data = std::move(data)]() mutable
+        {
+            promise.resolve(self->write(std::move(data)));
+            self->resolve_read_promises();
         });
+        
+        return future;
+    }
+    
+    mem_buffer::read_future mem_buffer::read_async()
+    {
+        auto promise = make_promise(m_thread_pool.get(),
+                                    [](pipe_op_res res, cl::buffer b) { return ftuple(res, std::move(b)); });
+        auto future = promise.get_future();
+
+
+        m_thread_pool->post([self = shared_from_this(), promise = std::move(promise)]() mutable {
+            self->read(std::move(promise));
+        });
+
+        return future;
     }
 
     void mem_buffer::invalidate()
     {
-        std::packaged_task<void()> task([this]() {
-            if(is_valid_) {
-                is_valid_ = false;
-                buffer_ = {};
-                while(!read_handlers_.empty()) {
-                    read_handlers_.front()(pipe_op_res::canceled, {});
-                    read_handlers_.pop();
-                }
+        std::lock_guard guard(m_mtx);
+        if(m_is_valid) {
+            m_is_valid = false;
+            m_buffer = {};
+            while(!m_read_promises.empty()) {
+                auto promise = std::move(m_read_promises.front());
+                m_read_promises.pop();
+                promise.resolve(pipe_op_res::canceled, {});
             }
-        });
-        auto f = task.get_future();
-
-        strand_.dispatch(std::move(task));
-
-        f.get();
+        }
     }
 
     bool mem_buffer::is_valid() const
     {
-        std::packaged_task<bool()> task([this]() {
-            return is_valid_;
-        });
-        auto f = task.get_future();
-
-        strand_.dispatch(std::move(task));
-
-        return f.get();
+        std::lock_guard guard(m_mtx);
+        return m_is_valid;
     }
 
     size_t mem_buffer::get_pending_messages_count() const
     {
-        std::packaged_task<bool()> task([this]() {
-            return buffer_.size();
-        });
-        auto f = task.get_future();
-
-        strand_.dispatch(std::move(task));
-
-        return f.get();
+        std::lock_guard guard(m_mtx);
+        return m_buffer.size();
     }
 
     size_t mem_buffer::get_pending_read_handlers_count() const
     {
-        std::packaged_task<bool()> task([this]() {
-            return read_handlers_.size();
-        });
-        auto f = task.get_future();
+        std::lock_guard guard(m_mtx);
+        return m_read_promises.size();
+    }
 
-        strand_.dispatch(std::move(task));
+    pipe_op_res mem_buffer::write(cl::buffer &&data)
+    {
+        std::lock_guard guard(m_mtx);
 
-        return f.get();
+        if(!m_is_valid) {
+            return pipe_op_res::failed;
+        }
+
+        try {
+            m_buffer.push(std::move(data));
+        } catch (...) {
+            return pipe_op_res::failed;
+        }
+
+        return pipe_op_res::success;
+    }
+
+    void mem_buffer::resolve_read_promises()
+    {
+        std::lock_guard guard(m_mtx);
+
+        if(!m_read_promises.empty()) {
+            auto read_promise = std::move(m_read_promises.front());
+            m_read_promises.pop();
+            read_promise.resolve(pipe_op_res::success, std::move(m_buffer.front()));
+            m_buffer.pop();
+        }
+    }
+
+    void mem_buffer::read(read_promise promise)
+    {
+        std::lock_guard guard(m_mtx);
+
+        if(!m_is_valid) {
+            promise.resolve(pipe_op_res::failed, {});
+            return;
+        }
+
+        if(!m_buffer.empty()) {
+            auto msg = std::move(m_buffer.front());
+            m_buffer.pop();
+            promise.resolve(pipe_op_res::success, std::move(msg));
+        } else {
+            m_read_promises.push(std::move(promise));
+        }
     }
 }

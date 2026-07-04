@@ -1,5 +1,6 @@
 #pragma once
 #include <rpc-lib/pipe/pipe-op-res.h>
+#include <rpc-lib/types/future.h>
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
@@ -23,16 +24,17 @@ namespace vshalygin::rpc {
 
         transport(const transport &) = delete;
         transport &operator=(const transport &) = delete;
+
         transport(transport &&) = default;
         transport &operator=(transport &&) = default;
 
         ~transport();
 
-        using send_callback_t = std::function<void(pipe_op_res)>;
-        using recv_callback_t = std::function<void(pipe_op_res, cl::buffer &&)>;
+        using send_future = future<pipe_op_res>;
+        using recv_future = future<ftuple<pipe_op_res, cl::buffer>>;
 
-        void send_async(cl::buffer &&message, send_callback_t &&callback);
-        void recv_async(recv_callback_t &&callback);
+        send_future send_async(cl::buffer &&message);
+        recv_future recv_async();
 
         void stop();
         bool is_running() const;

@@ -29,12 +29,6 @@ namespace {
         ans[1] = std::byte(6);
         return ans;
     }
-
-    void dummy_write_callback(pipe_op_res)
-    {}
-
-    void dummy_read_callback(pipe_op_res, buffer &&)
-    {}
 }
 
 TEST(MemBuffers, IsValidAfterCreation)
@@ -66,8 +60,9 @@ TEST(MemBuffers, WritesFromClientToServer)
         .WillOnce([&]() { sync_event.set(); });
 
     mem_buffers sut(pool);
-    sut.write_async_to_server(data.copy(), &dummy_write_callback);
-    sut.read_async_from_client(read_callback.AsStdFunction());
+    sut.write_async_to_server(data.copy());
+    sut.read_async_from_client()
+        .then(read_callback.AsStdFunction());
 
     sync_event.wait();
 }
@@ -83,8 +78,9 @@ TEST(MemBuffers, WritesFromServerToClient)
         .WillOnce([&]() { sync_event.set(); });
 
     mem_buffers sut(pool);
-    sut.write_async_to_client(data.copy(), &dummy_write_callback);
-    sut.read_async_from_server(read_callback.AsStdFunction());
+    sut.write_async_to_client(data.copy());
+    sut.read_async_from_server()
+        .then(read_callback.AsStdFunction());
 
     sync_event.wait();
 }

@@ -21,20 +21,14 @@ namespace vshalygin::rpc {
         stop();
     }
 
-    void transport::send_async(cl::buffer &&message,
-                               send_callback_t &&callback)
+    transport::send_future transport::send_async(cl::buffer &&message)
     {
-        assert(callback);
-
-        m_pipe_endpoint->write_async(std::move(message),
-                                     std::move(callback));
+        return m_pipe_endpoint->write_async(std::move(message));
     }
 
-    void transport::recv_async(recv_callback_t &&callback)
+    transport::recv_future transport::recv_async()
     {
-        assert(callback);
-
-        m_pipe_endpoint->read_async(std::move(callback));
+        return m_pipe_endpoint->read_async();
     }
 
     void transport::stop()

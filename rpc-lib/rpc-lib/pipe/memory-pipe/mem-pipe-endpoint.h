@@ -32,11 +32,8 @@ namespace vshalygin::rpc {
         pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const override;
         pipe_wait_res wait_connect() const override;
 
-        void write_async(cl::buffer &&msg, write_callback_t &&callback) override;
-        void read_async(read_callback_t &&callback) override;
-
-        bool try_to_write_for(cl::buffer &&msg, const std::chrono::microseconds &timeout) override;
-        std::optional<cl::buffer> try_to_read_for(const std::chrono::microseconds &timeout) override;
+        write_future write_async(cl::buffer &&msg) override;
+        read_future read_async() override;
 
         void invalidate() override;
 

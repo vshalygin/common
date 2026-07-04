@@ -1,17 +1,17 @@
 #pragma once
 #include "pipe-op-res.h"
 #include "pipe-wait-res.h"
+#include <rpc-lib/types/future.h>
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #include <optional>
 #include <chrono>
-#include <functional>
 
 namespace vshalygin::rpc {
     //TODO invalidate должна завершать все pending operations, также все чтения и записи долны завершаться
-    //немедленно
+    //немедленно ???
     // is_connected и invalidate должны быть синхронизированны
     // при уничтожении вызываем все pending callbacks
     // pipe connection may disrupt spanteneously
@@ -22,8 +22,8 @@ namespace vshalygin::rpc {
     class ipipe_endpoint
     {
     public:
-        using read_callback_t = std::function<void(pipe_op_res, cl::buffer &&)>;
-        using write_callback_t = std::function<void(pipe_op_res)>;
+        using read_future = future<ftuple<pipe_op_res, cl::buffer>>;
+        using write_future = future<pipe_op_res>;
 
         virtual ~ipipe_endpoint() = default;
 
@@ -33,12 +33,8 @@ namespace vshalygin::rpc {
         virtual pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const = 0;
         virtual pipe_wait_res wait_connect() const = 0;
 
-        virtual void write_async(cl::buffer &&msg, write_callback_t &&handler) = 0;
-        virtual void read_async(read_callback_t &&handler) = 0;
-
-        //TODO удалить синхронные операции
-        virtual bool try_to_write_for(cl::buffer &&msg, const std::chrono::microseconds &timeout) = 0;
-        virtual std::optional<cl::buffer> try_to_read_for(const std::chrono::microseconds &timeout) = 0;
+        virtual write_future write_async(cl::buffer &&msg) = 0;
+        virtual read_future read_async() = 0;
 
         virtual void invalidate() = 0;
     };

@@ -8,11 +8,6 @@
 #include "common-lib/synchronization/event/event.h"
 
 namespace vshalygin::rpc {
-    namespace {
-        void dummy_send_callback(pipe_op_res)
-        {}
-    }
-
     class connection::creator
     {};
 
@@ -121,7 +116,8 @@ namespace vshalygin::rpc {
 
         auto [guard, transport] = m_transport.get();
         if(transport) {
-            transport->send_async(std::move(message), std::move(req_callback));
+            transport->send_async(std::move(message))
+                .then(std::move(req_callback));
         } else {
             m_thread_pool->post([cb = std::move(req_callback),
                                  msg_number,
@@ -138,12 +134,13 @@ namespace vshalygin::rpc {
     {
         auto [guard, transport] = m_transport.get();
         assert(transport);
-        transport->recv_async([this](pipe_op_res r, cl::buffer &&message) {
-            if(is_success(r)) {
-                dispatch_receive_event(std::move(message));
-                do_receive_async();
-            }
-        });
+        transport->recv_async()
+            .then([this](pipe_op_res r, cl::buffer &&message) {
+                      if(is_success(r)) {
+                          dispatch_receive_event(std::move(message));
+                          do_receive_async();
+                      }
+                  });
     }
 
     void connection::dispatch_receive_event(cl::buffer &&message)
@@ -165,7 +162,7 @@ namespace vshalygin::rpc {
             if(auto s = self.lock()) {
                 auto [guard, transport] = s->m_transport.get();
                 assert(transport);
-                transport->send_async(std::move(res_msg), &dummy_send_callback);
+                transport->send_async(std::move(res_msg));
             }
         };
         auto task = [service = m_service, message = std::move(message),

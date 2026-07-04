@@ -69,15 +69,6 @@
     <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp">
       <Filter>service\response-callback</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.cpp">
-      <Filter>pipe\memory-pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp">
-      <Filter>pipe\memory-pipe</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp">
-      <Filter>pipe\memory-pipe</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\transport\transport.cpp">
       <Filter>transport</Filter>
     </ClCompile>
@@ -99,7 +90,16 @@
     <ClCompile Include="rpc-lib\connection\connection.cpp">
       <Filter>connection</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffers.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.cpp">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -149,22 +149,7 @@
     <ClInclude Include="rpc-lib\channel\ichannel.h">
       <Filter>channel</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.h">
-      <Filter>pipe\memory-pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h">
-      <Filter>pipe\memory-pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h">
-      <Filter>pipe\memory-pipe</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h">
-      <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\pipe\ipipe-env.h">
       <Filter>pipe</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\transport\transport.h">
@@ -200,8 +185,26 @@
     <ClInclude Include="rpc-lib\connection\connection.h">
       <Filter>connection</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\ipipe-env.h">
+      <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffers.h">
       <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.h">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h">
+      <Filter>pipe\memory-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\types\future.h">
+      <Filter>types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,8 +3,8 @@
 namespace vshalygin::rpc {
     mem_buffers::mem_buffers(std::shared_ptr<cl::thread_pool> thread_pool)
         : m_thread_pool(thread_pool)
-        , m_client_to_server(thread_pool)
-        , m_server_to_client(thread_pool)
+        , m_client_to_server(mem_buffer::create(thread_pool))
+        , m_server_to_client(mem_buffer::create(thread_pool))
     {}
 
     mem_buffers::~mem_buffers()
@@ -12,24 +12,24 @@ namespace vshalygin::rpc {
         invalidate();
     }
 
-    void mem_buffers::read_async_from_server(read_callback_t &&callback)
+    mem_buffers::read_future mem_buffers::read_async_from_server()
     {
-        m_server_to_client.read_async(std::move(callback));
+        return m_server_to_client->read_async();
     }
 
-    void mem_buffers::read_async_from_client(read_callback_t &&callback)
+    mem_buffers::read_future mem_buffers::read_async_from_client()
     {
-        m_client_to_server.read_async(std::move(callback));
+        return m_client_to_server->read_async();
     }
 
-    void mem_buffers::write_async_to_client(cl::buffer &&msg, write_callback_t &&callback)
+    mem_buffers::write_future mem_buffers::write_async_to_client(cl::buffer &&msg)
     {
-        m_server_to_client.write_async(std::move(msg), std::move(callback));
+        return m_server_to_client->write_async(std::move(msg));
     }
 
-    void mem_buffers::write_async_to_server(cl::buffer &&msg, write_callback_t &&callback)
+    mem_buffers::write_future mem_buffers::write_async_to_server(cl::buffer &&msg)
     {
-        m_client_to_server.write_async(std::move(msg), std::move(callback));
+        return m_client_to_server->write_async(std::move(msg));
     }
 
     void mem_buffers::set_invalidate_callback(cl::thread_pool_task<void()> &&callback)
@@ -44,8 +44,8 @@ namespace vshalygin::rpc {
 
     void mem_buffers::invalidate()
     {
-        m_client_to_server.invalidate();
-        m_server_to_client.invalidate();
+        m_client_to_server->invalidate();
+        m_server_to_client->invalidate();
 
         std::lock_guard guard(m_mtx);
         m_invalidated = true;
