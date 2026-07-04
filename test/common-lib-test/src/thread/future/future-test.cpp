@@ -1641,7 +1641,7 @@ TEST_F(Future, FutureTupleAsStoredType)
     auto p = make_promise(&m_pool, []() {});
     p.resolve();
     p.get_future()
-        .then([]() { return future_tuple{ 7, 8 }; })
+        .then([]() { return ftuple{ 7, 8 }; })
         .then([](int i, int j) {
             EXPECT_EQ(i, 7);
             EXPECT_EQ(j, 8);
@@ -1656,10 +1656,10 @@ TEST_F(Future, FutureTupleStoresReference)
     auto p = make_promise(&m_pool, []() {});
     p.resolve();
     auto f = p.get_future()
-        .then([&]() { return future_tuple<int &&>{ std::move(i) }; });
+        .then([&]() { return ftuple<int &&>{ std::move(i) }; });
     f.then([&](const int &ii) { ASSERT_EQ(&i, &ii); });
 
-    static_assert(std::is_same_v<decltype(f), future<thread_pool, future_tuple<int &&>>>);
+    static_assert(std::is_same_v<decltype(f), future<thread_pool, ftuple<int &&>>>);
 
     f.get();
 }
@@ -1671,10 +1671,10 @@ TEST_F(Future, FutureTupleStoresValuesByDefault)
     auto p = make_promise(&m_pool, []() {});
     p.resolve();
     auto f = p.get_future()
-        .then([&]() { return future_tuple{ std::move(i) }; });
+        .then([&]() { return ftuple{ std::move(i) }; });
     f.then([&](const int &ii) { ASSERT_NE(&i, &ii); });
 
-    static_assert(std::is_same_v<decltype(f), future<thread_pool, future_tuple<int>>>);
+    static_assert(std::is_same_v<decltype(f), future<thread_pool, ftuple<int>>>);
 
     f.get();
 }
@@ -1684,46 +1684,46 @@ TEST_F(Future, FutureTupleAsStoredValueMayBeConvertedToTypeWithAnyQualifiers)
     auto p1 = make_promise(&m_pool, []() {});
     p1.resolve();
     auto f1 = p1.get_future()
-        .then([&]() { return future_tuple{ 1 }; })
-        .then([&](int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        //.then([&](int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        .then([&](int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; })
-        .then([&](const int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        .then([&](const int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        .then([&](const int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; })
-        .then([&](volatile int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        //.then([&](volatile int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        .then([&](volatile int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; })
-        .then([&](const volatile int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        //.then([&](const volatile int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
-        .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; });
+        .then([&]() { return ftuple{ 1 }; })
+        .then([&](int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; })
+        .then([&](const int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](const int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](const int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; })
+        .then([&](volatile int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](volatile int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](volatile int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; })
+        .then([&](const volatile int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](const volatile int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
+        .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; });
 
     auto p2 = make_promise(&m_pool, []() {});
     p2.resolve();
     auto f2 = p2.get_future()
-        .then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](int i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
-        //.then([&](int &i) { EXPECT_EQ(i, 1); })
-        //.then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
+        .then([&](int &i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](int &&i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](const int i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](const int &i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](const int &&i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](volatile int i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
-        //.then([&](volatile int &i) { EXPECT_EQ(i, 1); })
-        //.then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
+        .then([&](volatile int &i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](volatile int &&i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](const volatile int i) { EXPECT_EQ(i, 1); })
-        .then([&]() { return future_tuple{ 1 }; })
-        //.then([&](const volatile int &i) { EXPECT_EQ(i, 1); })
-        //.then([&]() { return future_tuple{ 1 }; })
+        .then([&]() { return ftuple{ 1 }; })
+        .then([&](const volatile int &i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return ftuple{ 1 }; })
         .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); });
 
     f1.get();
@@ -1736,7 +1736,7 @@ TEST_F(Future, FutureTupleAsStoredValueStoresReferenceAndPassesItFuther)
     auto p = make_promise(&m_pool, []() {});
     p.resolve();
     auto f = p.get_future()
-        .then([&]() { return future_tuple<int &>{ i0 }; })
+        .then([&]() { return ftuple<int &>{ i0 }; })
         .then([&](int &i) ->int &{ EXPECT_EQ(&i0, &i); return i; })
         .then([&](int &i) { EXPECT_EQ(&i0, &i); });
 
@@ -1748,7 +1748,7 @@ TEST_F(Future, FutureTupleAsStoredValueStoresNothing)
     auto p = make_promise(&m_pool, []() {});
     p.resolve();
     auto f = p.get_future()
-        .then([&]() { return future_tuple{}; })
+        .then([&]() { return ftuple{}; })
         .then([&]() {});
 
     f.get();
@@ -1756,7 +1756,7 @@ TEST_F(Future, FutureTupleAsStoredValueStoresNothing)
 
 TEST_F(Future, PromiseFunctionReturnsFutureTuple)
 {
-    auto p = make_promise(&m_pool, []() { return future_tuple{ 1, 4 }; });
+    auto p = make_promise(&m_pool, []() { return ftuple{ 1, 4 }; });
     p.resolve();
     auto f = p.get_future()
         .then([&](int i, int j) { EXPECT_EQ(i, 1); EXPECT_EQ(j, 4); })
@@ -1767,11 +1767,83 @@ TEST_F(Future, PromiseFunctionReturnsFutureTuple)
 
 TEST_F(Future, MoveOnlyTypeMayBePassesThroughAllChainViaFutureTuple)
 {
-    auto p = make_promise(&m_pool, []() { return future_tuple{ std::make_unique<int>(34) }; });
+    auto p = make_promise(&m_pool, []() { return ftuple{ std::make_unique<int>(34) }; });
     p.resolve();
     auto f = p.get_future()
-        .then([&](std::unique_ptr<int> &&ptr) { return future_tuple{ std::move(ptr) }; })
+        .then([&](std::unique_ptr<int> &&ptr) { return ftuple{ std::move(ptr) }; })
         .then([&](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
 
     f.get().apply([](const std::unique_ptr<int> &ptr) { ASSERT_TRUE(ptr && *ptr == 34); });
+}
+
+TEST_F(Future, FutureDataWithFutureTupleType)
+{
+    auto p1 = make_promise(&m_pool, [&]() { return ftuple<int>{ 1 }; });
+    p1.resolve();
+    auto f1 = p1.get_future();
+    f1.get().apply([](int i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](int &i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](const int i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](const int &i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](const int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](volatile int i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](volatile int &i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](volatile int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](const volatile int i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](const volatile int &i) { EXPECT_EQ(i, 1); });
+    f1.get().apply([](const volatile int &&i) { EXPECT_EQ(i, 1); });
+
+    int i2 = 1;
+    auto p2 = make_promise(&m_pool, [&]() { return ftuple<int &>{ i2 }; });
+    p2.resolve();
+    auto f2 = p2.get_future();
+    f2.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().apply([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().apply([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().apply([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+
+    ftuple t3{ 1 };
+    int &i3 = std::get<0>(t3.to_underlying());
+    auto p3 = make_promise(&m_pool, [&]() ->decltype(auto) { return t3; });
+    p3.resolve();
+    auto f3 = p3.get_future();
+    f3.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().apply([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().apply([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().apply([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+
+    ftuple t4{ 1 };
+    int &i4 = std::get<0>(t4.to_underlying());
+    auto p4 = make_promise(&m_pool, [&]() ->decltype(auto) { return std::move(t4); });
+    p4.resolve();
+    auto f4 = p4.get_future();
+    f4.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    //f4.get().apply([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    f4.get().apply([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    //f4.get().apply([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    //f4.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
 }

@@ -1,5 +1,7 @@
 #pragma once
 #include "future-controller.h"
+#include "is-future-tuple.h"
+
 #include <common-lib/mpl/type-traits.h>
 
 namespace vshalygin::cl::internal {
@@ -14,20 +16,26 @@ namespace vshalygin::cl::internal {
     {
         static_assert(std::is_same_v<function_ret_t<Func>, void>,
                       "function return type is not void");
-        static_assert(function_arg_count_v<Func> == 1,
-                      "function must have 1 parameter");
 
-        using arg_t = function_arg_t<0, Func>;
         using val_t = std::tuple_element_t<1, decltype(m_controller->get_val())>;
-
         static_assert(std::is_reference_v<val_t>);
-        static_assert(std::is_same_v<remove_type_qualifiers_t<arg_t>,
-                                     remove_type_qualifiers_t<val_t>>,
-                      "function parameter type and stored type don't match");
-        static_assert(is_lvalue_static_castable_v<val_t, arg_t>,
-                      "unable to convert stored type to function parameter");
 
-        auto [guard, val] = m_controller->get_val();
-        func(static_cast<arg_t>(val));
+        if constexpr(is_future_tuple_v<std::remove_reference_t<val_t>>) {
+            using future_tuple = std::remove_reference_t<val_t>;
+
+            auto [guard, val] = m_controller->get_val();
+            ::vshalygin::cl::internal::apply(func, std::forward<val_t>(val));
+        } else {
+            static_assert(function_arg_count_v<Func> == 1,
+                          "function must have 1 parameter");
+
+            using arg_t = function_arg_t<0, Func>;
+
+            static_assert(is_lvalue_static_castable_v<val_t, arg_t>,
+                          "unable to convert stored type to function parameter");
+
+            auto [guard, val] = m_controller->get_val();
+            func(static_cast<arg_t>(val));
+        }
     }
 }

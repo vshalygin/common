@@ -22,5 +22,5 @@ namespace vshalygin::cl {
     }
 
     template<typename...Args>
-    using future_tuple = internal::future_tuple<Args...>;
+    using ftuple = internal::future_tuple<Args...>;
 }

@@ -62,13 +62,9 @@ namespace vshalygin::cl::internal {
                         static_assert(is_value_v<T>);
 
                         if constexpr(!std::is_void_v<ret_t>) {
-                            new_controller->set_value(std::apply([&task](auto&&...args) -> decltype(auto) {
-                                return task(std::forward<decltype(args)>(args)...);
-                            }, std::move(val.to_underlying())));
+                            new_controller->set_value(apply(task, val));
                         } else {
-                            std::apply([&task](auto&&...args) {
-                                task(std::forward<decltype(args)>(args)...);
-                            }, std::move(val.to_underlying()));
+                            apply(task, val);
                             new_controller->set_value();
                         }
 
@@ -76,9 +72,6 @@ namespace vshalygin::cl::internal {
                         static_assert(function_arg_count_v<Func> == 1,
                                       "callback must have 1 argument");
                         using arg_t = function_arg_t<0, Func>;
-                        static_assert(std::is_same_v<remove_type_qualifiers_t<arg_t>,
-                                      remove_type_qualifiers_t<T>>,
-                                      "future stored type and callback argument type don't match");
 
                         if constexpr(!std::is_void_v<ret_t>) {
                             new_controller->set_value(task(static_cast<arg_t>(val)));
