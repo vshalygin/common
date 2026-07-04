@@ -6,11 +6,12 @@ namespace vshalygin::cl::internal {
     template<typename...Args>
     class future_tuple
     {
-        using tuple = std::tuple<remove_type_qualifiers_t<Args>...>;
+        using tuple = std::tuple<Args...>;
 
     public:
-        future_tuple(Args&&...args)
-            : m_tuple(std::forward<Args>(args)...)
+        template<typename...UArgs>
+        future_tuple(UArgs&&...args)
+            : m_tuple(std::forward<UArgs>(args)...)
         {}
 
         tuple &to_underlying()
@@ -24,6 +25,9 @@ namespace vshalygin::cl::internal {
         }
 
     private:
-        std::tuple<remove_type_qualifiers_t<Args>...> m_tuple;
+        std::tuple<Args...> m_tuple;
     };
+
+    template<typename...Args>
+    future_tuple(Args&&...) -> future_tuple<remove_type_qualifiers_t<Args>...>;
 }

@@ -1648,3 +1648,108 @@ TEST_F(Future, FutureTupleAsStoredType)
          })
         .get();
 }
+
+TEST_F(Future, FutureTupleStoresReference)
+{
+    int v = 0;
+    int &i = v;
+    auto p = make_promise(&m_pool, []() {});
+    p.resolve();
+    auto f = p.get_future()
+        .then([&]() { return future_tuple<int &&>{ std::move(i) }; });
+    f.then([&](const int &ii) { ASSERT_EQ(&i, &ii); });
+
+    static_assert(std::is_same_v<decltype(f), future<thread_pool, future_tuple<int &&>>>);
+
+    f.get();
+}
+
+TEST_F(Future, FutureTupleStoresValuesByDefault)
+{
+    int v = 0;
+    int &i = v;
+    auto p = make_promise(&m_pool, []() {});
+    p.resolve();
+    auto f = p.get_future()
+        .then([&]() { return future_tuple{ std::move(i) }; });
+    f.then([&](const int &ii) { ASSERT_NE(&i, &ii); });
+
+    static_assert(std::is_same_v<decltype(f), future<thread_pool, future_tuple<int>>>);
+
+    f.get();
+}
+
+TEST_F(Future, FutureTupleAsStoredValueMayBeConvertedToTypeWithAnyQualifiers)
+{
+    auto p1 = make_promise(&m_pool, []() {});
+    p1.resolve();
+    auto f1 = p1.get_future()
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        //.then([&](int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        .then([&](int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; })
+        .then([&](const int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        .then([&](const int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        .then([&](const int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; })
+        .then([&](volatile int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        //.then([&](volatile int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        .then([&](volatile int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; })
+        .then([&](const volatile int i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        //.then([&](const volatile int &i) { EXPECT_EQ(i, 1); return future_tuple{ i }; })
+        .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); return future_tuple{ std::move(i) }; });
+
+    auto p2 = make_promise(&m_pool, []() {});
+    p2.resolve();
+    auto f2 = p2.get_future()
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](int i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        //.then([&](int &i) { EXPECT_EQ(i, 1); })
+        //.then([&]() { return future_tuple{ 1 }; })
+        .then([&](int &&i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](const int i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](const int &i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](const int &&i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](volatile int i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        //.then([&](volatile int &i) { EXPECT_EQ(i, 1); })
+        //.then([&]() { return future_tuple{ 1 }; })
+        .then([&](volatile int &&i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        .then([&](const volatile int i) { EXPECT_EQ(i, 1); })
+        .then([&]() { return future_tuple{ 1 }; })
+        //.then([&](const volatile int &i) { EXPECT_EQ(i, 1); })
+        //.then([&]() { return future_tuple{ 1 }; })
+        .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); });
+
+    f1.get();
+    f2.get();
+}
+
+TEST_F(Future, FutureTupleAsStoredValueStoresReferenceAndPassesItFuther)
+{
+    int i0 = 4;
+    auto p = make_promise(&m_pool, []() {});
+    p.resolve();
+    auto f = p.get_future()
+        .then([&]() { return future_tuple<int &>{ i0 }; })
+        .then([&](int &i) ->int &{ EXPECT_EQ(&i0, &i); return i; })
+        .then([&](int &i) { EXPECT_EQ(&i0, &i); });
+
+    f.get();
+}
+
+TEST_F(Future, FutureTupleAsStoredValueStoresNothing)
+{
+    auto p = make_promise(&m_pool, []() {});
+    p.resolve();
+    auto f = p.get_future()
+        .then([&]() { return future_tuple{}; })
+        .then([&]() {});
+
+    f.get();
+}
