@@ -1,8 +1,11 @@
 #pragma once
-#include "iconnection.h"
-#include "rpc-lib/types/connection-state.h"
-#include "common-lib/synchronization/guarded-value/guarded-value.h" //TODO sync
-#include "common-lib/timer/multiple-timer/multiple-timer.h"
+#include <rpc-lib/transport/transport.h>
+#include <rpc-lib/types/request-result.h>
+#include <rpc-lib/types/future.h>
+
+#include <common-lib/utils/buffer.h>
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/timer/multiple-timer/multiple-timer.h>
 
 #include <memory>
 #include <chrono>
@@ -12,75 +15,33 @@ namespace vshalygin::cl {
 }
 
 namespace vshalygin::rpc {
-    class iconnector;
-    class transport;
     class iservice;
+    class ipipe_endpoint;
 
     class connection final
-        : public iconnection
-        , public std::enable_shared_from_this<connection>
     {
-        class creator;
-
-        struct request_data;
-
     public:
-        using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
-        using change_state_callback_t = std::function<void(connection_state)>;
-
-        static std::shared_ptr<iconnection> create(std::shared_ptr<cl::thread_pool> thread_pool,
-                                                   std::shared_ptr<change_state_callback_t> on_change_state,
-                                                   std::shared_ptr<iconnector> connector,
-                                                   std::shared_ptr<iservice> service,
-                                                   const std::chrono::milliseconds &req_timeout);
+        using future_req_result = future<ftuple<request_result, cl::buffer>>;
 
         connection(std::shared_ptr<cl::thread_pool> thread_pool,
-                   std::shared_ptr<change_state_callback_t> on_change_state,
-                   std::shared_ptr<iconnector> connector,
+                   std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                    std::shared_ptr<iservice> service,
-                   const std::chrono::milliseconds &req_timeout,
-                   creator);
+                   const std::chrono::milliseconds &req_timeout);
 
         connection(const connection &) = delete;
         connection &operator=(const connection &) = delete;
 
-        void activate() override;
-        void deactivate() override;
-        bool is_active() const override;
+        ~connection();
 
-        void request_async(cl::buffer &&message,
-                           request_callback_t &&callback) override;
+        void deactivate();
+        bool is_active() const;
 
-    private:
-        void do_receive_async();
-        void dispatch_receive_event(cl::buffer &&message);
-        void handle_received_request(cl::buffer &&message);
-        void handle_received_response(cl::buffer &&message);
+        future_req_result request_async(cl::buffer &&message);
 
-        void complete_request(uint64_t req_msg_number,
-                              request_result result,
-                              cl::buffer &&res_msg);
-
-        void add_request_handler_to_map(uint64_t msg_number,
-                                        request_callback_t &&handler);
-
-        void remove_request_handler_from_map(uint64_t msg_number) noexcept;
+        void set_stop_callback(std::function<void()> &&callback);
 
     private:
-        std::mutex m_activation_mtx;
-
-        const std::chrono::milliseconds m_req_timeout;
-
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
-        std::shared_ptr<change_state_callback_t> m_on_change_state;
-        std::shared_ptr<iconnector> m_connector;
-        std::shared_ptr<iservice> m_service;
-
-        cl::multiple_timer m_multiple_timer;
-
-        cl::guarded_value<request_map> m_request_map;
-
-        //transport must be destroyed first to complete any pending callbacks
-        cl::guarded_value<std::unique_ptr<transport>> m_transport;
+        class impl;
+        std::shared_ptr<impl> m_impl;
     };
 }

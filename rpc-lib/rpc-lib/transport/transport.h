@@ -5,11 +5,6 @@
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #include <functional>
-#include <atomic>
-
-namespace vshalygin::cl {
-    class thread_pool;
-}
 
 namespace vshalygin::rpc {
     class ipipe_endpoint;
@@ -17,10 +12,7 @@ namespace vshalygin::rpc {
     class transport final
     {
     public:
-        explicit transport(std::shared_ptr<cl::thread_pool> thread_pool,
-                           std::shared_ptr<ipipe_endpoint> pipe_endpoint,
-                           cl::thread_pool_task<void()> &&start_callback,
-                           cl::thread_pool_task<void()> &&stop_callback);
+        explicit transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint);
 
         transport(const transport &) = delete;
         transport &operator=(const transport &) = delete;
@@ -39,9 +31,9 @@ namespace vshalygin::rpc {
         void stop();
         bool is_running() const;
 
+        void set_stop_callback(cl::thread_pool_task<void()> &&stop_callback);
+
     private:
         std::shared_ptr<ipipe_endpoint> m_pipe_endpoint;
-
-        std::atomic_bool m_stopped_requested = false;
     };
 }

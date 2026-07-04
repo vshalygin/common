@@ -1,149 +1,140 @@
 #include "connection.h"
 #include "rpc-lib/transport/transport.h"
-#include "rpc-lib/connector/iconnector.h"
 #include "rpc-lib/transfer-message/transfer-message.h"
 #include "rpc-lib/service/iservice.h"
 
 #include "common-lib/thread/thread-pool/thread-pool.h"
-#include "common-lib/synchronization/event/event.h"
 
 namespace vshalygin::rpc {
-    class connection::creator
-    {};
-
-    struct connection::request_data
+    class connection::impl final
+        : public std::enable_shared_from_this<impl>
     {
-        request_data(request_callback_t &&cb,
-                     uint64_t id)
-            : callback(std::move(cb))
-            , timer_id(id)
+        struct request_data;
+
+    public:
+        using future_req_result = future<ftuple<request_result, cl::buffer>>;
+        using promise_req_result = promise<ftuple<request_result, cl::buffer>, request_result, cl::buffer>;
+
+        using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
+
+        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+             std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+             std::shared_ptr<iservice> service,
+             const std::chrono::milliseconds &req_timeout);
+
+        impl(const impl &) = delete;
+        impl &operator=(const impl &) = delete;
+
+        void deactivate();
+        bool is_active() const;
+
+        future_req_result request_async(cl::buffer &&message);
+
+        void set_stop_callback(std::function<void()> &&callback);
+
+    private:
+        void do_receive_async();
+        void dispatch_receive_event(cl::buffer &&message);
+        void handle_received_request(cl::buffer &&message);
+        void handle_received_response(cl::buffer &&message);
+
+        void complete_request(uint64_t req_msg_number,
+                              request_result result,
+                              cl::buffer &&res_msg);
+
+        void add_request_to_map(uint64_t msg_number,
+                                promise_req_result &&promise);
+
+        void remove_request_from_map(uint64_t msg_number) noexcept;
+
+    private:
+        const std::chrono::milliseconds m_req_timeout;
+
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        std::shared_ptr<iservice> m_service;
+
+        cl::guarded_value<request_map> m_request_map;
+
+        cl::multiple_timer m_multiple_timer;
+        transport m_transport;
+    };
+
+    struct connection::impl::request_data
+    {
+        request_data(promise_req_result &&p,
+                     uint64_t t_id)
+            : promise(std::move(p))
+            , timer_id(t_id)
         {}
 
-        request_callback_t callback;
+        promise_req_result promise;
         uint64_t timer_id;
     };
 
-    std::shared_ptr<iconnection> connection::create(std::shared_ptr<cl::thread_pool> thread_pool,
-                                                    std::shared_ptr<change_state_callback_t> on_change_state,
-                                                    std::shared_ptr<iconnector> connector,
-                                                    std::shared_ptr<iservice> service,
-                                                    const std::chrono::milliseconds &req_timeout)
-    {
-        return std::make_shared<connection>(std::move(thread_pool),
-                                            std::move(on_change_state),
-                                            std::move(connector),
-                                            std::move(service),
-                                            req_timeout,
-                                            creator{});
-    };
-
-    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
-                           std::shared_ptr<change_state_callback_t> on_change_state,
-                           std::shared_ptr<iconnector> connector,
+    connection::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+                           std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &req_timeout,
-                           creator)
+                           const std::chrono::milliseconds &req_timeout)
         : m_req_timeout(req_timeout)
         , m_thread_pool(std::move(thread_pool))
-        , m_on_change_state(std::move(on_change_state))
-        , m_connector(std::move(connector))
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
+        , m_transport(std::move(pipe_endpoint))
     {}
 
-    void connection::activate()
+    void connection::impl::deactivate()
     {
-        std::shared_ptr<cl::event> sync_event;
-        auto start_callback = [on_change_state = m_on_change_state, sync_event]() {
-            try {
-                (*on_change_state)(connection_state::connected);
-            } catch (...) { 
-            }
-            sync_event->set();
-        };
-        auto stop_callback = [on_change_state = m_on_change_state, sync_event]() {
-            sync_event->wait();
-            (*on_change_state)(connection_state::disconnected);
-        };
-
-        {
-            std::lock_guard activation_guad(m_activation_mtx);
-            auto transport = m_connector->create_transport(std::move(start_callback),
-                                                           std::move(stop_callback));
-            auto [guard, val] = m_transport.get();
-            val = std::move(transport);
-        }
-
-        do_receive_async();
+        m_transport.stop();
     }
 
-    void connection::deactivate()
+    bool connection::impl::is_active() const
     {
-        m_connector->interrupt();
-
-        std::lock_guard activation_guard(m_activation_mtx);
-
-        auto [guard, transport] = m_transport.get();
-        if(transport) {
-            transport->stop();
-            transport.reset();
-        }
+        return m_transport.is_running();
     }
 
-    bool connection::is_active() const
-    {
-        auto [guard, transport] = m_transport.get();
-        return transport && transport->is_running();
-    }
-
-    void connection::request_async(cl::buffer &&message,
-                                    request_callback_t &&callback)
+    connection::future_req_result connection::impl::request_async(cl::buffer &&message)
     {
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 
-        add_request_handler_to_map(msg_number, std::move(callback));
+        auto promise = make_promise(m_thread_pool.get(), [](request_result r, cl::buffer b) {
+            return ftuple(r, std::move(b));
+        });
+        auto future = promise.get_future();
 
-        auto req_callback = [self = weak_from_this(), msg_number](pipe_op_res res) {
-            if(auto s = self.lock()) {
-                if(res == pipe_op_res::canceled) {
-                    s->complete_request(msg_number, request_result::canceled, {});
-                } else if(is_fail(res)) {
-                    s->complete_request(msg_number, request_result::send_error, {});
-                }
+        add_request_to_map(msg_number, std::move(promise));
+
+        auto req_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
+            if(res == pipe_op_res::canceled) {
+                self->complete_request(msg_number, request_result::canceled, {});
+            } else if(is_fail(res)) {
+                self->complete_request(msg_number, request_result::send_error, {});
             }
         };
 
-        auto [guard, transport] = m_transport.get();
-        if(transport) {
-            transport->send_async(std::move(message))
-                .then(std::move(req_callback));
-        } else {
-            m_thread_pool->post([cb = std::move(req_callback),
-                                 msg_number,
-                                 self = weak_from_this()]()
-            {
-                if(auto s = self.lock()) {
-                    s->complete_request(msg_number, request_result::send_error, {});
-                }
-            });
-        }
+        m_transport.send_async(std::move(message))
+            .then(std::move(req_callback));
+
+        return future;
     }
 
-    void connection::do_receive_async()
+    void connection::impl::set_stop_callback(std::function<void()> &&callback)
     {
-        auto [guard, transport] = m_transport.get();
-        assert(transport);
-        transport->recv_async()
-            .then([this](pipe_op_res r, cl::buffer &&message) {
+        m_transport.set_stop_callback(std::move(callback));
+    }
+
+    void connection::impl::do_receive_async()
+    {
+        m_transport.recv_async()
+            .then([self = shared_from_this()](pipe_op_res r, cl::buffer &&message) {
                       if(is_success(r)) {
-                          dispatch_receive_event(std::move(message));
-                          do_receive_async();
+                          self->dispatch_receive_event(std::move(message));
+                          self->do_receive_async();
                       }
                   });
     }
 
-    void connection::dispatch_receive_event(cl::buffer &&message)
+    void connection::impl::dispatch_receive_event(cl::buffer &&message)
     {
         const auto message_type = get_transfer_msg_type(message);
         assert(message_type == transfer_msg_type::req ||
@@ -156,14 +147,10 @@ namespace vshalygin::rpc {
         }
     }
 
-    void connection::handle_received_request(cl::buffer &&message)
+    void connection::impl::handle_received_request(cl::buffer &&message)
     {
-        auto response_handler = [self = weak_from_this()](cl::buffer &&res_msg) {
-            if(auto s = self.lock()) {
-                auto [guard, transport] = s->m_transport.get();
-                assert(transport);
-                transport->send_async(std::move(res_msg));
-            }
+        auto response_handler = [self = shared_from_this()](cl::buffer &&res_msg) mutable {
+            self->m_transport.send_async(std::move(res_msg));
         };
         auto task = [service = m_service, message = std::move(message),
                      response_handler = std::move(response_handler)]() mutable {
@@ -176,15 +163,15 @@ namespace vshalygin::rpc {
         m_thread_pool->post(std::move(task));
     }
 
-    void connection::handle_received_response(cl::buffer &&message)
+    void connection::impl::handle_received_response(cl::buffer &&message)
     {
         const auto message_number = get_msg_number_res(message);
         complete_request(message_number, request_result::ok, std::move(message));
     }
 
-    void connection::complete_request(uint64_t req_msg_number,
-                                       request_result result,
-                                       cl::buffer && res_msg)
+    void connection::impl::complete_request(uint64_t req_msg_number,
+                                            request_result result,
+                                            cl::buffer && res_msg)
     {
         std::shared_ptr<request_data> req_data;
 
@@ -198,30 +185,26 @@ namespace vshalygin::rpc {
         }
 
         if(req_data) {
-            m_thread_pool->post([req_data, result, res_msg = std::move(res_msg)]() mutable {
-                req_data->callback(result, std::move(res_msg));
-            });
+            req_data->promise.resolve(result, std::move(res_msg));
             m_multiple_timer.cancel(req_data->timer_id);
         }
     }
 
-    void connection::add_request_handler_to_map(uint64_t msg_number,
-                                                 request_callback_t &&handler)
+    void connection::impl::add_request_to_map(uint64_t msg_number,
+                                              promise_req_result &&promise)
     {
-        auto timer_callback = [self = weak_from_this(), msg_number]() {
-            if(auto s = self.lock()) {
-                s->complete_request(msg_number, request_result::timeout, {});
-            }
+        auto timer_callback = [self = shared_from_this(), msg_number]() {
+            self->complete_request(msg_number, request_result::timeout, {});
         };
 
         auto [guard, map] = m_request_map.get();
         assert(map.count(msg_number) == 0);
         auto timer_id = m_multiple_timer.start(std::move(timer_callback),
                                                m_req_timeout);
-        map[msg_number] = std::make_shared<request_data>(std::move(handler), timer_id);
+        map[msg_number] = std::make_shared<request_data>(std::move(promise), timer_id);
     }
 
-    void connection::remove_request_handler_from_map(uint64_t msg_number) noexcept
+    void connection::impl::remove_request_from_map(uint64_t msg_number) noexcept
     {
         try {
             std::shared_ptr<request_data> req_data;
@@ -233,10 +216,47 @@ namespace vshalygin::rpc {
                     map.erase(it);
                 }
             }
+
             if(req_data) {
                 m_multiple_timer.cancel(req_data->timer_id);
             }
         } catch(...) {
         }
+    }
+
+
+    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
+                           std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+                           std::shared_ptr<iservice> service,
+                           const std::chrono::milliseconds &req_timeout)
+        : m_impl(std::make_shared<impl>(std::move(thread_pool),
+                                        std::move(pipe_endpoint),
+                                        std::move(service),
+                                        req_timeout))
+    {}
+
+    connection::~connection()
+    {
+        m_impl->deactivate();
+    }
+
+    void connection::deactivate()
+    {
+        m_impl->deactivate();
+    }
+
+    bool connection::is_active() const
+    {
+        return m_impl->is_active();
+    }
+
+    connection::future_req_result connection::request_async(cl::buffer &&message)
+    {
+        return m_impl->request_async(std::move(message));
+    }
+
+    void connection::set_stop_callback(std::function<void()> &&callback)
+    {
+        m_impl->set_stop_callback(std::move(callback));
     }
 }

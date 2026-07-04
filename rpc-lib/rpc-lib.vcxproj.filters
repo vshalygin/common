@@ -107,9 +107,6 @@
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
       <Filter>transfer-message</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\connection\iconnection.h">
-      <Filter>connection</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\types\request-result.h">
       <Filter>types</Filter>
     </ClInclude>
@@ -136,9 +133,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\client-endpoint\client-endpoint.h">
       <Filter>client-endpoint</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\types\connection-state.h">
-      <Filter>types</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\types\request-exception.h">
       <Filter>types</Filter>
