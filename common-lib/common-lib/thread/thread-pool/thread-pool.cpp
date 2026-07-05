@@ -23,12 +23,7 @@ namespace vshalygin::cl {
 
     thread_pool::~thread_pool()
     {
-        try {
-            stop();
-        } catch(...) {
-            //TODO log fatal
-            std::terminate();
-        }
+        stop();
     }
 
     void thread_pool::stop()

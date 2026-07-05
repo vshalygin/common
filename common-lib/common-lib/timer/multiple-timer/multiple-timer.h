@@ -27,17 +27,8 @@ namespace vshalygin::cl {
     private:
         boost::asio::io_context &m_io_context;
 
-        struct timer_struct
-        {
-            timer_struct(boost::asio::io_context &io_context)
-                : timer(io_context)
-            {}
-
-            cl::event wait_event;
-            boost::asio::steady_timer timer;
-        };
-        using timers_map = std::unordered_map<uint64_t, std::shared_ptr<timer_struct>>;
-        cl::guarded_value<timers_map> m_timers_map;
+        using timers_map = std::unordered_map<uint64_t, boost::asio::steady_timer>;
+        std::shared_ptr<cl::guarded_value<timers_map>> m_timers_map;
 
         std::atomic<uint64_t> m_next_id = 0;
     };
@@ -47,42 +38,30 @@ namespace vshalygin::cl {
                                    const std::chrono::microseconds &microseconds)
     {
         const auto timer_id = m_next_id.fetch_add(1);
-        auto [guard, timers_map] = m_timers_map.get();
+        auto [guard, timers_map] = m_timers_map->get();
 
-        auto timer_structure = std::make_shared<timer_struct>(m_io_context);
-        timer_structure->timer.expires_after(microseconds);
-        timer_structure->timer.async_wait([this, timer_id,
-                                          callback = std::move(callback)]
-                                          (const boost::system::error_code &ec) {
-            std::shared_ptr<timer_struct> timer_struct;
-            {
-                auto [guard, timers_map] = m_timers_map.get();
-                auto it = timers_map.find(timer_id);
-                if(it != timers_map.end()) {
-                    timer_struct = std::move(it->second);
-                    timers_map.erase(it);
-                } else {
-                    //TODO log error
+        boost::asio::steady_timer timer(m_io_context);
+        timer.expires_after(microseconds);
+        timer.async_wait([timers_map_wp = std::weak_ptr(m_timers_map), timer_id,
+                          callback = std::move(callback)]
+                          (const boost::system::error_code &ec) mutable
+        {
+            if(auto timers_map = timers_map_wp.lock()){
+                auto [guard, map] = timers_map->get();
+                auto it = map.find(timer_id);
+                if(it != map.end()) {
+                    map.erase(it);
                 }
             }
 
-            if(!ec) {
-                try {
-                    callback();
-                } catch(...) {
-                    //TODO log
-                }
-            } else if(ec != boost::asio::error::operation_aborted) {
-                //TODO log. something unexpected
-            }
-
-            if(timer_struct) {
-                timer_struct->wait_event.set();
+            if(!ec) try {
+                callback();
+            } catch(...) {
             }
         });
 
         assert(timers_map.count(timer_id) == 0);
-        timers_map.insert(std::make_pair(timer_id, std::move(timer_structure)));
+        timers_map.insert(std::make_pair(timer_id, std::move(timer)));
 
         return timer_id;
     }

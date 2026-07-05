@@ -26,6 +26,7 @@ namespace vshalygin::cl {
             m_timer.cancel();
         }
 
+        //TODO нужно ли дожидатся
         m_is_deactivated_cv.wait(lock, [this]() { return !m_is_active; });
     }
 
