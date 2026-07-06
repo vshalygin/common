@@ -46,6 +46,9 @@ namespace vshalygin::rpc {
 
         void set_stop_callback(std::function<void()> &&callback);
 
+        size_t get_pending_requests_count() const;
+        size_t get_active_timers_count() const;
+
     private:
         class impl;
         std::shared_ptr<impl> m_impl;

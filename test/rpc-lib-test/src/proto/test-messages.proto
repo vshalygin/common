@@ -4,6 +4,9 @@ package proto;
 
 option cc_generic_services = true;
 
+message null_message {
+}
+
 message some_message {
     int32 some_data = 1;
     string string_data = 2;
@@ -26,4 +29,13 @@ message response_message {
 service Service {
     rpc Method (request_message) returns (response_message);
     rpc Method2 (request_message) returns (response_message);
+}
+
+message data_message {
+    int64 val = 1;
+}
+
+service DataHolderService {
+    rpc Set (data_message) returns (null_message);
+    rpc Get (null_message) returns (data_message);
 }

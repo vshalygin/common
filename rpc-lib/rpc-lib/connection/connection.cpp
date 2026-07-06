@@ -37,6 +37,9 @@ namespace vshalygin::rpc {
 
         void set_stop_callback(std::function<void()> &&callback);
 
+        size_t get_pending_requests_count() const;
+        size_t get_active_timers_count() const;
+
     private:
         void do_receive_async();
         void dispatch_receive_event(cl::buffer &&message) noexcept;
@@ -106,6 +109,10 @@ namespace vshalygin::rpc {
 
     connection::req_result_future connection::impl::request_async(cl::buffer &&message)
     {
+        if(!is_active()) {
+            throw std::runtime_error("transport is not active");
+        }
+
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 
@@ -238,6 +245,17 @@ namespace vshalygin::rpc {
         map.clear();
     }
 
+    size_t connection::impl::get_pending_requests_count() const
+    {
+        auto [guard, map] = m_request_map.get();
+        return map.size();
+    }
+
+    size_t connection::impl::get_active_timers_count() const
+    {
+        return m_multiple_timer.get_active_timers_count();
+    }
+
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
@@ -278,5 +296,15 @@ namespace vshalygin::rpc {
     void connection::set_stop_callback(std::function<void()> &&callback)
     {
         m_impl->set_stop_callback(std::move(callback));
+    }
+
+    size_t connection::get_pending_requests_count() const
+    {
+        return m_impl->get_pending_requests_count();
+    }
+
+    size_t connection::get_active_timers_count() const
+    {
+        return m_impl->get_active_timers_count();
     }
 }
