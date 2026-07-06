@@ -1,6 +1,5 @@
 #include "listener.h"
 #include "rpc-lib/connection/connection.h"
-#include "rpc-lib/types/interrupt-exception.h"
 #include "rpc-lib/channel/channel.h"
 
 #include <cassert>

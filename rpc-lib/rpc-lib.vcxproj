@@ -37,8 +37,9 @@
     <ClInclude Include="rpc-lib\connector\client-connector.h" />
     <ClInclude Include="rpc-lib\connector\server-connector.h" />
     <ClInclude Include="rpc-lib\listener\listener.h" />
+    <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h" />
-    <ClInclude Include="rpc-lib\pipe\ipipe-env.h" />
+    <ClInclude Include="rpc-lib\pipe\iserver-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffer.h" />
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-buffers.h" />
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.h" />

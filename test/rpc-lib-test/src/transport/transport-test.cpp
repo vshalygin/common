@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <memory>
+
 using namespace vshalygin::rpc;
 using namespace vshalygin::cl;
 using namespace testing;
@@ -31,9 +33,9 @@ protected:
     void SetUp() override
     {
         m_thread_pool = std::make_shared<thread_pool>(2);
-        m_pipe_env = std::make_unique<mem_pipe_env>(m_thread_pool);
-        m_pipe_endpoint = m_pipe_env->create_pipe();
-        m_other_pipe_endpoint = m_pipe_env->open_pipe();
+        auto m_pipe_env = mem_pipe_env(m_thread_pool);
+        m_pipe_endpoint = m_pipe_env.create_pipe();
+        m_other_pipe_endpoint = m_pipe_env.open_pipe();
 
         m_sut = std::make_unique<transport>(m_pipe_endpoint, std::chrono::milliseconds(10000));
     }
@@ -43,7 +45,6 @@ protected:
 
     std::shared_ptr<thread_pool> m_thread_pool;
 
-    std::unique_ptr<ipipe_env> m_pipe_env;
     std::shared_ptr<ipipe_endpoint> m_pipe_endpoint;
     std::shared_ptr<ipipe_endpoint> m_other_pipe_endpoint;
 

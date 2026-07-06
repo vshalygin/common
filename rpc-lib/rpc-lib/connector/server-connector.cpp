@@ -1,6 +1,6 @@
 #include "server-connector.h"
 #include "rpc-lib/pipe/ipipe-endpoint.h"
-#include "rpc-lib/pipe/ipipe-env.h"
+#include "rpc-lib/pipe/iserver-pipe-env.h"
 #include "rpc-lib/authenticator/iauthenticator.h"
 #include "rpc-lib/connection/connection.h"
 
@@ -10,7 +10,7 @@
 namespace vshalygin::rpc {
     server_connector::server_connector(std::shared_ptr<cl::thread_pool> thread_pool,
                                        std::shared_ptr<iauthenticator> authenticator,
-                                       std::shared_ptr<ipipe_env> pipe_env,
+                                       std::shared_ptr<iserver_pipe_env> pipe_env,
                                        std::shared_ptr<iservice> service,
                                        std::chrono::milliseconds req_timeout,
                                        std::chrono::milliseconds res_timeout)

@@ -1,5 +1,6 @@
 #pragma once
-#include "../ipipe-env.h"
+#include "../iclient-pipe-env.h"
+#include "../iserver-pipe-env.h"
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <queue>
@@ -9,7 +10,8 @@ namespace vshalygin::rpc {
     class mem_pipe_endpoint;
 
     class mem_pipe_env final
-        : public ipipe_env
+        : public iclient_pipe_env
+        , public iserver_pipe_env
     {
         using queue_t = std::queue<std::weak_ptr<mem_pipe_endpoint>>;
 
