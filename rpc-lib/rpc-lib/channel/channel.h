@@ -1,6 +1,7 @@
 #pragma once
 #include "ichannel.h"
 #include "rpc-lib/types/request-result.h"
+#include "rpc-lib/connection/connection.h"
 #include <common-lib/synchronization/guarded-value/guarded-value.h>
 #include <common-lib/utils/buffer.h>
 #include <atomic>
@@ -26,8 +27,8 @@ namespace vshalygin::rpc {
                         Message *response,
                         Closure *done) override;
 
-        void set_connection(std::shared_ptr<iconnection> connection) override;
-        std::shared_ptr<iconnection> get_connection() const override;
+        void set_connection(std::shared_ptr<connection> connection) override;
+        std::shared_ptr<connection> get_connection() const override;
         void drop_connection() override;
 
     private:
@@ -39,7 +40,7 @@ namespace vshalygin::rpc {
 
     private:
         std::atomic_uint64_t m_next_req_id = 0;
-        cl::guarded_value<std::shared_ptr<iconnection>> m_connection;
+        cl::guarded_value<std::shared_ptr<connection>> m_connection;
     };
 }
 

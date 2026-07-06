@@ -1,7 +1,6 @@
 #include "channel.h"
 #include "rpc-lib/closure-guard/closure-guard.h"
 #include "rpc-lib/transfer-message/transfer-message.h"
-#include "rpc-lib/connection/iconnection.h"
 
 namespace vshalygin::rpc {
     void channel::CallMethod(const MethodDescriptor *method,
@@ -34,19 +33,20 @@ namespace vshalygin::rpc {
 
         auto [guard, connection] = m_connection.get();
         if(connection) {
-            connection->request_async(std::move(req_transfer_message), std::move(handler));
+            connection->request_async(std::move(req_transfer_message))
+                .then(std::move(handler));
         } else {
             throw std::runtime_error("no connection");
         }
     }
 
-    void channel::set_connection(std::shared_ptr<iconnection> connection)
+    void channel::set_connection(std::shared_ptr<connection> connection)
     {
         auto [guard, connect] = m_connection.get();
         connect = std::move(connection);
     }
 
-    std::shared_ptr<iconnection> channel::get_connection() const
+    std::shared_ptr<connection> channel::get_connection() const
     {
         auto [guard, connection] = m_connection.get();
         return connection;

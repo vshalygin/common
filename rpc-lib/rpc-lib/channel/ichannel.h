@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace vshalygin::rpc {
-    class iconnection;
+    class connection;
 
     class ichannel
         : public google::protobuf::RpcChannel
@@ -14,8 +14,8 @@ namespace vshalygin::rpc {
     public:
         virtual ~ichannel() = default;
 
-        virtual void set_connection(std::shared_ptr<iconnection> connection) = 0;
-        virtual std::shared_ptr<iconnection> get_connection() const = 0;
+        virtual void set_connection(std::shared_ptr<connection> connection) = 0;
+        virtual std::shared_ptr<connection> get_connection() const = 0;
         virtual void drop_connection() = 0;
     };
 }

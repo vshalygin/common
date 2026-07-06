@@ -12,7 +12,7 @@
 namespace vshalygin::rpc {
     class iconnector;
     class iservice;
-    class iconnection;
+    class connection;
     class ichannel;
 
     class listener
@@ -48,7 +48,7 @@ namespace vshalygin::rpc {
     private:
         const std::chrono::milliseconds m_request_timeout;
 
-        std::shared_ptr<iconnection> m_current_connection;
+        std::shared_ptr<connection> m_current_connection;
 
         uint64_t m_next_connection_id = 0;
 
