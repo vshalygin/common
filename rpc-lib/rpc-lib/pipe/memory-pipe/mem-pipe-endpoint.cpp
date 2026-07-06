@@ -79,6 +79,29 @@ namespace vshalygin::rpc {
 
     mem_pipe_endpoint::write_future mem_pipe_endpoint::write_async(cl::buffer &&msg)
     {
+        return write_async(std::move(msg), std::nullopt);
+    }
+
+    mem_pipe_endpoint::read_future mem_pipe_endpoint::read_async()
+    {
+        return read_async(std::nullopt);
+    }
+
+    mem_pipe_endpoint::write_future mem_pipe_endpoint::write_async(cl::buffer &&msg,
+                                                                   const std::chrono::milliseconds &timeout)
+    {
+        return write_async(std::move(msg), std::optional(timeout));
+    }
+
+    mem_pipe_endpoint::read_future mem_pipe_endpoint::read_async(const std::chrono::milliseconds &timeout)
+    {
+        return read_async(std::optional(timeout));
+    }
+
+    mem_pipe_endpoint::write_future
+        mem_pipe_endpoint::write_async(cl::buffer &&msg,
+                                       const std::optional<std::chrono::milliseconds> &timeout)
+    {
         std::lock_guard guard(m_mtx);
         if(!m_mem_buffers) {
             auto promise = make_promise(m_thread_pool.get(), []() {
@@ -87,12 +110,13 @@ namespace vshalygin::rpc {
             promise.resolve();
             return promise.get_future();
         }
-        
-        return m_is_server ? m_mem_buffers->write_async_to_client(std::move(msg))
-                           : m_mem_buffers->write_async_to_server(std::move(msg));
+
+        return m_is_server ? m_mem_buffers->write_async_to_client(std::move(msg), timeout)
+                           : m_mem_buffers->write_async_to_server(std::move(msg), timeout);
     }
 
-    mem_pipe_endpoint::read_future mem_pipe_endpoint::read_async()
+    mem_pipe_endpoint::read_future
+        mem_pipe_endpoint::read_async(const std::optional<std::chrono::milliseconds> &timeout)
     {
         std::lock_guard guard(m_mtx);
         if(!m_mem_buffers) {
@@ -102,9 +126,9 @@ namespace vshalygin::rpc {
             promise.resolve();
             return promise.get_future();
         }
-        
-        return m_is_server ? m_mem_buffers->read_async_from_client()
-                           : m_mem_buffers->read_async_from_server();
+
+        return m_is_server ? m_mem_buffers->read_async_from_client(timeout)
+                           : m_mem_buffers->read_async_from_server(timeout);
     }
 
     void mem_pipe_endpoint::invalidate()
