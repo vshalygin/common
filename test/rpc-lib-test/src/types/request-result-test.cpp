@@ -12,6 +12,7 @@ TEST(RequestResult, TestIsSuccess)
     EXPECT_FALSE(is_success(request_result::send_timeout_error));
     EXPECT_FALSE(is_success(request_result::send_unknown_error));
     EXPECT_FALSE(is_success(request_result::send_canceled_error));
+    EXPECT_FALSE(is_success(request_result::canceled));
     EXPECT_FALSE(is_success(request_result::request_not_processed));
     EXPECT_FALSE(is_success(request_result::response_parse_error));
     EXPECT_FALSE(is_success(request_result::unknown_error));
@@ -24,6 +25,7 @@ TEST(RequestResult, TestIsFail)
     EXPECT_TRUE(is_fail(request_result::send_timeout_error));
     EXPECT_TRUE(is_fail(request_result::send_unknown_error));
     EXPECT_TRUE(is_fail(request_result::send_canceled_error));
+    EXPECT_TRUE(is_fail(request_result::canceled));
     EXPECT_TRUE(is_fail(request_result::request_not_processed));
     EXPECT_TRUE(is_fail(request_result::response_parse_error));
     EXPECT_TRUE(is_fail(request_result::unknown_error));
@@ -41,6 +43,8 @@ TEST(RequestResult, TestStringConversation)
               request_result_from_string(to_string(request_result::send_unknown_error)));
     EXPECT_EQ(request_result::send_canceled_error,
               request_result_from_string(to_string(request_result::send_canceled_error)));
+    EXPECT_EQ(request_result::canceled,
+              request_result_from_string(to_string(request_result::canceled)));
     EXPECT_EQ(request_result::request_not_processed,
               request_result_from_string(to_string(request_result::request_not_processed)));
     EXPECT_EQ(request_result::response_parse_error,

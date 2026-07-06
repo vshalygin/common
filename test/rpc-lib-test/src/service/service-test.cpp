@@ -77,7 +77,7 @@ TEST_F(Service, CallsResponseCallbackWithRequestParseErrorCodeIfParsingFailed)
     EXPECT_CALL(*m_gservice, Method2)
         .Times(0);
 
-    m_service->process_request(std::move(invalid_request_buf))
+    m_service->process_request_async(std::move(invalid_request_buf))
         .then(response_callback.AsStdFunction())
         .get();
 }
@@ -107,7 +107,7 @@ TEST_F(Service, CallsResponseCallbackWithResponseTooBigCode)
                       response->CopyFrom(m_response_message);
                   });
 
-    m_service->process_request(std::move(request_buf))
+    m_service->process_request_async(std::move(request_buf))
         .then(response_callback.AsStdFunction())
         .get();
 }
@@ -134,7 +134,7 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
                       throw std::runtime_error("message");
                   });
 
-    m_service->process_request(std::move(request_buf))
+    m_service->process_request_async(std::move(request_buf))
         .then(response_callback.AsStdFunction())
         .get();
 }
@@ -156,7 +156,7 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNot
     EXPECT_CALL(*m_gservice, Method2)
         .Times(0);
 
-    sut.process_request(std::move(request_buf))
+    sut.process_request_async(std::move(request_buf))
         .then(response_callback.AsStdFunction())
         .get();
 }
@@ -177,7 +177,7 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqual
     EXPECT_CALL(*m_gservice, Method2)
         .Times(0);
 
-    m_service->process_request(std::move(request_buf))
+    m_service->process_request_async(std::move(request_buf))
         .then(response_callback.AsStdFunction())
         .get();
 }

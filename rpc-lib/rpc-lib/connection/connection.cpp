@@ -17,12 +17,13 @@ namespace vshalygin::rpc {
         using req_result_future = future<ftuple<request_result, cl::buffer>>;
         using req_result_promise = promise<ftuple<request_result, cl::buffer>, request_result, cl::buffer>;
 
-        using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>; //TODO delete sp
+        using request_map = std::unordered_map<uint64_t, request_data>;
 
         impl(std::shared_ptr<cl::thread_pool> thread_pool,
              std::shared_ptr<ipipe_endpoint> pipe_endpoint,
              std::shared_ptr<iservice> service,
-             const std::chrono::milliseconds &req_timeout);
+             const std::chrono::milliseconds &req_timeout,
+             const std::chrono::milliseconds &res_timeout);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -38,7 +39,7 @@ namespace vshalygin::rpc {
 
     private:
         void do_receive_async();
-        void dispatch_receive_event(cl::buffer &&message);
+        void dispatch_receive_event(cl::buffer &&message) noexcept;
         void handle_received_request(cl::buffer &&message);
         void handle_received_response(cl::buffer &&message);
 
@@ -51,10 +52,12 @@ namespace vshalygin::rpc {
 
         void remove_request_from_map(uint64_t msg_number) noexcept;
 
+        void cancel_active_requests();
+
     private:
         std::atomic_bool m_is_started = false;
 
-        const std::chrono::milliseconds m_req_timeout;
+        const std::chrono::milliseconds m_res_timeout;
 
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<iservice> m_service;
@@ -67,12 +70,6 @@ namespace vshalygin::rpc {
 
     struct connection::impl::request_data
     {
-        request_data(req_result_promise &&p,
-                     uint64_t t_id)
-            : promise(std::move(p))
-            , timer_id(t_id)
-        {}
-
         req_result_promise promise;
         uint64_t timer_id;
     };
@@ -80,12 +77,13 @@ namespace vshalygin::rpc {
     connection::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &req_timeout)
-        : m_req_timeout(req_timeout)
+                           const std::chrono::milliseconds &req_timeout,
+                           const std::chrono::milliseconds &res_timeout)
+        : m_res_timeout(res_timeout)
         , m_thread_pool(std::move(thread_pool))
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
-        , m_transport(std::move(pipe_endpoint), req_timeout / 2)
+        , m_transport(std::move(pipe_endpoint), req_timeout)
     {}
 
     void connection::impl::start()
@@ -98,6 +96,7 @@ namespace vshalygin::rpc {
     void connection::impl::deactivate()
     {
         m_transport.stop();
+        cancel_active_requests();
     }
 
     bool connection::impl::is_active() const
@@ -149,33 +148,36 @@ namespace vshalygin::rpc {
                   });
     }
 
-    void connection::impl::dispatch_receive_event(cl::buffer &&message)
+    void connection::impl::dispatch_receive_event(cl::buffer &&message) noexcept
     {
-        const auto message_type = get_transfer_msg_type(message);
-        assert(message_type == transfer_msg_type::req ||
-               message_type == transfer_msg_type::res);
+        try {
+            const auto message_type = get_transfer_msg_type(message);
 
-        if(transfer_msg_type::req == message_type) {
-            handle_received_request(std::move(message));
-        } else if(transfer_msg_type::res == message_type) {
-            handle_received_response(std::move(message));
+            if(transfer_msg_type::req == message_type) {
+                handle_received_request(std::move(message));
+            }
+            else if(transfer_msg_type::res == message_type) {
+                handle_received_response(std::move(message));
+            }
+            else {
+                assert(!"unknown type of received message");
+            }
+        } catch (...) {
         }
     }
 
     void connection::impl::handle_received_request(cl::buffer &&message)
     {
-        auto response_handler = [self = shared_from_this()](cl::buffer &&res_msg) mutable {
-            self->m_transport.send_async(std::move(res_msg));
-        };
-        auto task = [service = m_service, message = std::move(message),
-                     response_handler = std::move(response_handler)]() mutable {
-            if(service) { //TODO use future here
-                service->process_request(std::move(message),
-                                         std::move(response_handler));
-            }
-        };
+        if(!m_service) {
+            return;
+        }
 
-        m_thread_pool->post(std::move(task));
+        m_service->process_request_async(std::move(message))
+            .then([self = weak_from_this()](cl::buffer &&res_msg) {
+                      if(auto s = self.lock()) {
+                          s->m_transport.send_async(std::move(res_msg));
+                      }
+                  });
     }
 
     void connection::impl::handle_received_response(cl::buffer &&message)
@@ -188,20 +190,13 @@ namespace vshalygin::rpc {
                                             request_result result,
                                             cl::buffer && res_msg)
     {
-        std::shared_ptr<request_data> req_data;
-
-        {
-            auto [guard, map] = m_request_map.get();
-            auto it = map.find(req_msg_number);
-            if(it != map.end()) {
-                req_data = std::move(it->second);
-                map.erase(it);
-            }
-        }
-
-        if(req_data) {
-            req_data->promise.resolve(result, std::move(res_msg));
-            m_multiple_timer.cancel(req_data->timer_id);
+        auto [guard, map] = m_request_map.get();
+        auto it = map.find(req_msg_number);
+        if(it != map.end()) {
+            auto &req_data = it->second;
+            req_data.promise.resolve(result, std::move(res_msg));
+            m_multiple_timer.cancel(req_data.timer_id);
+            map.erase(it);
         }
     }
 
@@ -215,39 +210,44 @@ namespace vshalygin::rpc {
         auto [guard, map] = m_request_map.get();
         assert(map.count(msg_number) == 0);
         auto timer_id = m_multiple_timer.start(std::move(timer_callback),
-                                               m_req_timeout);
-        map[msg_number] = std::make_shared<request_data>(std::move(promise), timer_id);
+                                               m_res_timeout);
+        map[msg_number] = request_data{ std::move(promise), timer_id };
     }
 
     void connection::impl::remove_request_from_map(uint64_t msg_number) noexcept
     {
         try {
-            std::shared_ptr<request_data> req_data;
-            {
-                auto [guard, map] = m_request_map.get();
-                auto it = map.find(msg_number);
-                if(it != map.end()) {
-                    req_data = std::move(it->second);
-                    map.erase(it);
-                }
-            }
-
-            if(req_data) {
-                m_multiple_timer.cancel(req_data->timer_id);
+            auto [guard, map] = m_request_map.get();
+            auto it = map.find(msg_number);
+            if(it != map.end()) {
+                m_multiple_timer.cancel(it->second.timer_id);
+                map.erase(it);
             }
         } catch(...) {
         }
     }
 
+    void connection::impl::cancel_active_requests()
+    {
+        auto [guard, map] = m_request_map.get();
+        for(auto &el : map) {
+            auto &req_data = el.second;
+            req_data.promise.resolve(request_result::canceled, {});
+            m_multiple_timer.cancel(req_data.timer_id);
+        }
+        map.clear();
+    }
 
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &req_timeout)
+                           const std::chrono::milliseconds &req_timeout,
+                           const std::chrono::milliseconds &res_timeout)
         : m_impl(std::make_shared<impl>(std::move(thread_pool),
                                         std::move(pipe_endpoint),
                                         std::move(service),
-                                        req_timeout))
+                                        req_timeout,
+                                        res_timeout))
     {}
 
     connection::~connection()

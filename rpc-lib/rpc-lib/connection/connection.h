@@ -26,10 +26,14 @@ namespace vshalygin::rpc {
         connection(std::shared_ptr<cl::thread_pool> thread_pool,
                    std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                    std::shared_ptr<iservice> service,
-                   const std::chrono::milliseconds &req_timeout);
+                   const std::chrono::milliseconds &req_timeout,
+                   const std::chrono::milliseconds &res_timeout);
 
         connection(const connection &) = delete;
         connection &operator=(const connection &) = delete;
+
+        connection(connection &&) = default;
+        connection &operator=(connection &&) = default;
 
         ~connection();
 

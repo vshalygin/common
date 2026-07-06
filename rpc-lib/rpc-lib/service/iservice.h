@@ -10,6 +10,6 @@ namespace vshalygin::rpc {
     public:
         virtual ~iservice() = default;
 
-        virtual future<cl::buffer> process_request(cl::buffer &&request_message) = 0;
+        virtual future<cl::buffer> process_request_async(cl::buffer &&request_message) = 0;
     };
 }
