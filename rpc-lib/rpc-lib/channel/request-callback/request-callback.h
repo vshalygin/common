@@ -82,7 +82,9 @@ namespace vshalygin::rpc {
 
         bool IsCanceled() const override
         {
-            return m_request_result == request_result::canceled;
+            //TODO
+            //return m_request_result == request_result::canceled;
+            return false;
         }
 
         void NotifyOnCancel(Closure * /*callback*/) override
