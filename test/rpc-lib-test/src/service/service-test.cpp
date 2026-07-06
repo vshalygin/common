@@ -40,9 +40,10 @@ class Service
 protected:
     void SetUp() override
     {
+        m_thread_pool = std::make_shared<thread_pool>(2);
         auto gservice = std::make_unique<ProtoServiceNiceMock>();
         m_gservice = gservice.get();
-        m_service = std::make_unique<service<ProtoServiceMock>>(std::move(gservice));
+        m_service = std::make_unique<service<ProtoServiceMock>>(std::move(gservice), m_thread_pool);
 
         m_request_message.set_data(34);
         m_response_message.set_data(44);
@@ -51,6 +52,7 @@ protected:
     }
 
 protected:
+    std::shared_ptr<thread_pool> m_thread_pool;
     std::unique_ptr<iservice> m_service;
     ProtoServiceNiceMock *m_gservice;
 
@@ -75,7 +77,9 @@ TEST_F(Service, CallsResponseCallbackWithRequestParseErrorCodeIfParsingFailed)
     EXPECT_CALL(*m_gservice, Method2)
         .Times(0);
 
-    m_service->process_request(std::move(invalid_request_buf), response_callback.AsStdFunction());
+    m_service->process_request(std::move(invalid_request_buf))
+        .then(response_callback.AsStdFunction())
+        .get();
 }
 
 TEST_F(Service, CallsResponseCallbackWithResponseTooBigCode)
@@ -103,7 +107,9 @@ TEST_F(Service, CallsResponseCallbackWithResponseTooBigCode)
                       response->CopyFrom(m_response_message);
                   });
 
-    m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
+    m_service->process_request(std::move(request_buf))
+        .then(response_callback.AsStdFunction())
+        .get();
 }
 
 TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
@@ -125,18 +131,17 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
                   ::google::protobuf::Closure *done) {
                       closure_guard cg(done);
                       EXPECT_TRUE(MessageDifferencer::Equals(m_request_message, *request));
-                      throw std::runtime_error("");
+                      throw std::runtime_error("message");
                   });
 
-    try {
-        m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
-    } catch(...) {
-    }
+    m_service->process_request(std::move(request_buf))
+        .then(response_callback.AsStdFunction())
+        .get();
 }
 
 TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNotSet)
 {
-    service<ProtoServiceMock> sut(nullptr);
+    service<ProtoServiceMock> sut(nullptr, m_thread_pool);
     m_response_message.Clear();
     auto response_buf = create_transfer_msg_res(34,
                                                 response_result::not_implemented,
@@ -151,7 +156,9 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNot
     EXPECT_CALL(*m_gservice, Method2)
         .Times(0);
 
-    sut.process_request(std::move(request_buf), response_callback.AsStdFunction());
+    sut.process_request(std::move(request_buf))
+        .then(response_callback.AsStdFunction())
+        .get();
 }
 
 TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqualsToMethodsCounst)
@@ -170,5 +177,7 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqual
     EXPECT_CALL(*m_gservice, Method2)
         .Times(0);
 
-    m_service->process_request(std::move(request_buf), response_callback.AsStdFunction());
+    m_service->process_request(std::move(request_buf))
+        .then(response_callback.AsStdFunction())
+        .get();
 }

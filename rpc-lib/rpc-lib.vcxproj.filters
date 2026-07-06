@@ -66,9 +66,6 @@
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp">
       <Filter>closure-guard</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\service\response-callback\response-callback.cpp">
-      <Filter>service\response-callback</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\transport\transport.cpp">
       <Filter>transport</Filter>
     </ClCompile>

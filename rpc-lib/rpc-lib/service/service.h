@@ -20,17 +20,22 @@ namespace vshalygin::rpc {
         using MessageFactory = google::protobuf::MessageFactory;
 
     public:
-        explicit service(std::shared_ptr<Service> gservice)
+        explicit service(std::shared_ptr<Service> gservice,
+                         std::shared_ptr<cl::thread_pool> thread_pool)
             : m_gservice(std::move(gservice))
+            , m_thread_pool(std::move(thread_pool))
         {}
 
         service(service &) = delete;
         service &operator=(service &) = delete;
 
-        void process_request(cl::buffer &&request_message,
-                             std::function<void(cl::buffer &&)> &&raw_response_callback) override
+        future<cl::buffer> process_request(cl::buffer &&request_message) override
         {
             assert(get_transfer_msg_type(request_message) == transfer_msg_type::req);
+            auto promise = make_promise(m_thread_pool.get(), [](cl::buffer &&b) {
+                return std::move(b);
+            });
+            auto future = promise.get_future();
 
             const auto message_number = get_msg_number_req(request_message);
             const auto method_idx = get_msg_method_idx_req(request_message);
@@ -40,8 +45,8 @@ namespace vshalygin::rpc {
                 auto raw_response = create_transfer_msg_res(message_number,
                                                             response_result::not_implemented,
                                                             nullptr);
-                raw_response_callback(std::move(raw_response));
-                return;
+                promise.resolve(std::move(raw_response));
+                return future;
             }
 
             auto req = create_request_message(method_idx);
@@ -51,28 +56,32 @@ namespace vshalygin::rpc {
                 auto raw_response = create_transfer_msg_res(message_number,
                                                             response_result::request_parse_error,
                                                             res.get());
-                raw_response_callback(std::move(raw_response));
-                return;
+                promise.resolve(std::move(raw_response));
+                return future;
             }
 
-            auto callback = [raw_response_callback = std::move(raw_response_callback),
+            auto callback = [promise = std::move(promise),
                              req, res, message_number]
-                            (response_result rc) {
+                            (response_result rc) mutable {
                 if(is_transfer_msg_too_big(res.get())) {
                     res->Clear();
                     rc = response_result::response_too_big;
                 }
 
-                raw_response_callback(create_transfer_msg_res(message_number, rc, res.get()));
+                promise.resolve(create_transfer_msg_res(message_number, rc, res.get()));
             };
 
-            auto response_callback = response_callback::create_on_heap(std::move(callback));
+            auto res_callback = response_callback<decltype(callback)>::create_on_heap(std::move(callback));
 
-            m_gservice->CallMethod(m_gservice->descriptor()->method(method_idx),
-                                   nullptr,
-                                   req.get(),
-                                   res.get(),
-                                   response_callback);
+            m_thread_pool->post([gservice = m_gservice, req, res, res_callback, method_idx]() mutable {
+                gservice->CallMethod(gservice->descriptor()->method(method_idx),
+                                     nullptr,
+                                     req.get(),
+                                     res.get(),
+                                     res_callback);
+            });
+
+            return future;
         }
 
     private:
@@ -104,5 +113,6 @@ namespace vshalygin::rpc {
 
     private:
         std::shared_ptr<Service> m_gservice;
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
     };
 }

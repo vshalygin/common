@@ -1,4 +1,5 @@
 #pragma once
+#include <rpc-lib/types/future.h>
 #include <common-lib/utils/buffer.h>
 #include <memory>
 #include <functional>
@@ -9,7 +10,6 @@ namespace vshalygin::rpc {
     public:
         virtual ~iservice() = default;
 
-        virtual void process_request(cl::buffer &&request_message,
-                                     std::function<void(cl::buffer &&)> &&raw_response_callback) = 0;
+        virtual future<cl::buffer> process_request(cl::buffer &&request_message) = 0;
     };
 }
