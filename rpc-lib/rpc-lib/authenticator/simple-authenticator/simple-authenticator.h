@@ -6,7 +6,8 @@ namespace vshalygin::rpc {
         : public iauthenticator
     {
     public:
-        proto::auth_request create_request() const override;
-        bool check_request(const proto::auth_request &req) const override;
+        cl::buffer create_request() const override;
+        cl::buffer create_response(cl::cbuffer_view req) const override;
+        bool check_response(cl::cbuffer_view res) const override;
     };
 }

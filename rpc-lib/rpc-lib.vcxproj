@@ -11,12 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rpc-lib\authenticator\proto\auth.pb.cc">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</TreatWarningAsError>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</TreatWarningAsError>
-    </ClCompile>
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp" />
     <ClCompile Include="rpc-lib\channel\channel.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
@@ -33,7 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h" />
-    <ClInclude Include="rpc-lib\authenticator\proto\auth.pb.h" />
     <ClInclude Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.h" />
     <ClInclude Include="rpc-lib\channel\channel.h" />
     <ClInclude Include="rpc-lib\channel\ichannel.h" />
@@ -42,7 +35,6 @@
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connector\client-connector.h" />
-    <ClInclude Include="rpc-lib\connector\iconnector.h" />
     <ClInclude Include="rpc-lib\connector\server-connector.h" />
     <ClInclude Include="rpc-lib\listener\listener.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h" />
@@ -61,7 +53,6 @@
     <ClInclude Include="rpc-lib\transport\transport.h" />
     <ClInclude Include="rpc-lib\types\connection-state.h" />
     <ClInclude Include="rpc-lib\types\future.h" />
-    <ClInclude Include="rpc-lib\types\interrupt-exception.h" />
     <ClInclude Include="rpc-lib\types\request-exception.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
@@ -70,15 +61,6 @@
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="rpc-lib\authenticator\proto\auth.proto">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(PROTOBUF_PATH)\protoc.exe --cpp_out=%(RootDir)%(Directory) --proto_path=%(RootDir)%(Directory) %(FullPath)</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename).pb.cc;%(RootDir)%(Directory)%(Filename).pb.h</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename).pb.cc;%(RootDir)%(Directory)%(Filename).pb.h</Outputs>
-    </CustomBuild>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

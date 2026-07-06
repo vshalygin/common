@@ -1,13 +1,8 @@
 #include "server-connector.h"
-#include "rpc-lib/transport/transport.h"
 #include "rpc-lib/pipe/ipipe-endpoint.h"
 #include "rpc-lib/pipe/ipipe-env.h"
 #include "rpc-lib/authenticator/iauthenticator.h"
-#include "rpc-lib/types/interrupt-exception.h"
-
-#pragma warning(push, 0)
-#include "rpc-lib/authenticator/proto/auth.pb.h"
-#pragma warning(pop)
+#include "rpc-lib/connection/connection.h"
 
 #include <chrono>
 #include <stdexcept>
@@ -15,78 +10,72 @@
 namespace vshalygin::rpc {
     server_connector::server_connector(std::shared_ptr<cl::thread_pool> thread_pool,
                                        std::shared_ptr<iauthenticator> authenticator,
-                                       std::shared_ptr<ipipe_env> pipe_env)
+                                       std::shared_ptr<ipipe_env> pipe_env,
+                                       std::shared_ptr<iservice> service,
+                                       std::chrono::milliseconds req_timeout,
+                                       std::chrono::milliseconds res_timeout)
         : m_thread_pool(std::move(thread_pool))
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
+        , m_service(std::move(service))
+        , m_req_timeout(req_timeout)
+        , m_res_timeout(res_timeout)
     {}
 
-    std::unique_ptr<transport> server_connector::create_transport
-                                                     (std::function<void()> &&/*start_callback*/,
-                                                      std::function<void()> &&/*stop_callback*/) const
+    future<connection> server_connector::create_connection_async()
     {
-        std::unique_lock guard(m_mtx);
-        assert(!m_curr_pipe_endpoint);
+        auto authenticator = m_authenticator;
+        auto pipe_env = m_pipe_env;
+        auto thread_pool = m_thread_pool;
+        auto service = m_service;
+        auto req_timeout = m_req_timeout;
+        auto res_timeout = m_res_timeout;
 
-        try {
-            //TODO fix
-            //m_curr_pipe_endpoint = m_pipe_env->create_pipe();
-            //guard.unlock();
-            //auto wait_res = m_curr_pipe_endpoint->wait_connect_for(std::chrono::seconds(10));
-            //guard.lock();
-            //
-            //if(is_fail(wait_res)) {
-            //    if(wait_res == pipe_wait_res::invalidated) {
-            //        throw interrupt_exception("pipe connect process was interrupted");
-            //    } else {
-            //        throw std::runtime_error("failed to wait pipe connection: " + to_string(wait_res));
-            //    }
-            //}
-            //
-            //auto con_msg = m_curr_pipe_endpoint->try_to_read_for(std::chrono::seconds(10));
-            //if(!con_msg) {
-            //    throw std::runtime_error("failed to read handshake request");;
-            //}
-            //proto::auth_request req;
-            //if(!req.ParseFromArray(con_msg->data(), static_cast<int>(con_msg->size()))) {
-            //    throw std::runtime_error("failed to parse handshake request");
-            //}
-            //
-            //if(!m_authenticator->check_request(req)) {
-            //    throw std::runtime_error("handshake failed");
-            //}
-            //
-            //proto::auth_response res;
-            //res.set_is_accepted(true);
-            //
-            //cl::buffer buf(res.ByteSizeLong());
-            //if(!res.SerializeToArray(buf.data(), static_cast<int>(buf.size()))) {
-            //    throw std::runtime_error("failed to serialize handshake response");
-            //}
-            //
-            //if(!m_curr_pipe_endpoint->try_to_write_for(std::move(buf), std::chrono::seconds(10))) {
-            //    throw std::runtime_error("failed to write handshake response");
-            //}
-            //
-            //auto pipe = std::move(m_curr_pipe_endpoint);
-            //m_curr_pipe_endpoint.reset();
-            //return std::make_unique<transport>(m_thread_pool,
-            //                                   std::move(pipe),
-            //                                   std::move(start_callback),
-            //                                   std::move(stop_callback));
+        auto promise = make_promise(thread_pool.get(),
+            [pipe_env]() mutable {
+                auto pipe_endpoint = pipe_env->create_pipe();
+                auto res = pipe_endpoint->wait_connect();
+                if(is_fail(res)) {
+                    throw std::runtime_error("failed to wait pipe connection: " + to_string(res));
+                }
 
-            return nullptr;
-        } catch(...) {
-            m_curr_pipe_endpoint.reset();
-            throw;
-        }
-    }
+                return pipe_endpoint;
+            });
+        promise.resolve();
+        auto future = promise.get_future()
+            .then([](std::shared_ptr<ipipe_endpoint> pipe_endpoint)
+                  {
+                      return  pipe_endpoint->read_async()
+                          .then([pipe_endpoint] (pipe_op_res r, cl::buffer &&b)
+                                {
+                                    if(is_fail(r)) {
+                                        throw std::runtime_error("read operation failed: " + to_string(r));
+                                    }
+                                    return ftuple{ pipe_endpoint, std::move(b) };
+                                });
+                  })
+            .then([authenticator] (std::shared_ptr<ipipe_endpoint> pipe_endpoint, cl::buffer &&b) {
+                      return pipe_endpoint->write_async(authenticator->create_response(b),
+                                                        std::chrono::seconds(1))
+                          .then([pipe_endpoint](pipe_op_res r)
+                                {
+                                    if(is_fail(r)) {
+                                        throw std::runtime_error("write operation failed: " + to_string(r));
+                                    }
 
-    void server_connector::interrupt()
-    {
-        std::lock_guard guard(m_mtx);
-        if(m_curr_pipe_endpoint) {
-            m_curr_pipe_endpoint->invalidate();
-        }
+                                    return pipe_endpoint;
+                                });
+                  })
+            .then([thread_pool, service, req_timeout, res_timeout]
+                  (std::shared_ptr<ipipe_endpoint> pipe_endpoint)
+                  {
+                      return connection(thread_pool,
+                                        std::move(pipe_endpoint),
+                                        service,
+                                        req_timeout,
+                                        res_timeout);
+                  });
+
+        return future;
     }
 }

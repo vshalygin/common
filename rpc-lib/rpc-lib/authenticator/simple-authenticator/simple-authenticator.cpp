@@ -1,15 +1,17 @@
 #include "simple-authenticator.h"
-#include "../proto/auth.pb.h"
 
 namespace vshalygin::rpc {
-    proto::auth_request simple_authenticator::create_request() const
+    cl::buffer simple_authenticator::create_request() const
     {
-        proto::auth_request req;
-        req.set_auth_data("");
-        return req;
+        return {};
     }
 
-    bool simple_authenticator::check_request(const proto::auth_request & /*req*/) const
+    cl::buffer simple_authenticator::create_response(cl::cbuffer_view) const
+    {
+        return {};
+    }
+
+    bool simple_authenticator::check_response(cl::cbuffer_view) const
     {
         return true;
     }

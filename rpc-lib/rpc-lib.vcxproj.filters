@@ -49,9 +49,6 @@
     <Filter Include="authenticator\simple-authenticator">
       <UniqueIdentifier>{27c54d39-cc06-46d8-94e0-935103b104c9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="authenticator\proto">
-      <UniqueIdentifier>{600ba9e1-dc40-446c-bc33-ff441ae6e4cf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="connector">
       <UniqueIdentifier>{fc0d5010-e5a3-4a20-9f0c-42650444de6d}</UniqueIdentifier>
     </Filter>
@@ -74,9 +71,6 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp">
       <Filter>authenticator\simple-authenticator</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\authenticator\proto\auth.pb.cc">
-      <Filter>authenticator\proto</Filter>
     </ClCompile>
     <ClCompile Include="rpc-lib\connector\client-connector.cpp">
       <Filter>connector</Filter>
@@ -155,19 +149,10 @@
     <ClInclude Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.h">
       <Filter>authenticator\simple-authenticator</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\authenticator\proto\auth.pb.h">
-      <Filter>authenticator\proto</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h">
       <Filter>pipe</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\types\interrupt-exception.h">
-      <Filter>types</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\connector\client-connector.h">
-      <Filter>connector</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connector\iconnector.h">
       <Filter>connector</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\connector\server-connector.h">
@@ -200,10 +185,5 @@
     <ClInclude Include="rpc-lib\types\connection-state.h">
       <Filter>types</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="rpc-lib\authenticator\proto\auth.proto">
-      <Filter>authenticator\proto</Filter>
-    </CustomBuild>
   </ItemGroup>
 </Project>

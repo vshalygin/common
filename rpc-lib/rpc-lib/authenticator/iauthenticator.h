@@ -1,15 +1,14 @@
 #pragma once
-#pragma warning(push, 0)
-#include "proto/auth.pb.h"
-#pragma warning(pop)
-
+#include <common-lib/utils/buffer.h>
+#include <common-lib/utils/cbuffer-view.h>
 namespace vshalygin::rpc {
     class iauthenticator
     {
     public:
         virtual ~iauthenticator() = default;
 
-        virtual proto::auth_request create_request() const = 0;
-        virtual bool check_request(const proto::auth_request &req) const = 0;
+        virtual cl::buffer create_request() const = 0;
+        virtual cl::buffer create_response(cl::cbuffer_view req) const = 0;
+        virtual bool check_response(cl::cbuffer_view res) const = 0;
     };
 }
