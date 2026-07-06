@@ -5,6 +5,8 @@
 
 #include "common-lib/thread/thread-pool/thread-pool.h"
 
+#include <atomic>
+
 namespace vshalygin::rpc {
     class connection::impl final
         : public std::enable_shared_from_this<impl>
@@ -24,6 +26,8 @@ namespace vshalygin::rpc {
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
+
+        void start();
 
         void deactivate();
         bool is_active() const;
@@ -48,6 +52,8 @@ namespace vshalygin::rpc {
         void remove_request_from_map(uint64_t msg_number) noexcept;
 
     private:
+        std::atomic_bool m_is_started = false;
+
         const std::chrono::milliseconds m_req_timeout;
 
         std::shared_ptr<cl::thread_pool> m_thread_pool;
@@ -82,6 +88,13 @@ namespace vshalygin::rpc {
         , m_transport(std::move(pipe_endpoint))
     {}
 
+    void connection::impl::start()
+    {
+        if(!m_is_started.exchange(true, std::memory_order_acq_rel)) {
+            do_receive_async();
+        }
+    }
+
     void connection::impl::deactivate()
     {
         m_transport.stop();
@@ -89,7 +102,7 @@ namespace vshalygin::rpc {
 
     bool connection::impl::is_active() const
     {
-        return m_transport.is_running();
+        return m_is_started.load(std::memory_order_acquire) && m_transport.is_running();
     }
 
     connection::req_result_future connection::impl::request_async(cl::buffer &&message)
@@ -238,6 +251,11 @@ namespace vshalygin::rpc {
     connection::~connection()
     {
         deactivate();
+    }
+
+    void connection::start()
+    {
+        m_impl->start();
     }
 
     void connection::deactivate()

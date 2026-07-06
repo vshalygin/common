@@ -33,6 +33,8 @@ namespace vshalygin::rpc {
 
         ~connection();
 
+        void start();
+
         void deactivate();
         bool is_active() const;
 
