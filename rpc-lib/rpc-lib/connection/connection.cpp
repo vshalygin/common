@@ -12,10 +12,10 @@ namespace vshalygin::rpc {
         struct request_data;
 
     public:
-        using future_req_result = future<ftuple<request_result, cl::buffer>>;
-        using promise_req_result = promise<ftuple<request_result, cl::buffer>, request_result, cl::buffer>;
+        using req_result_future = future<ftuple<request_result, cl::buffer>>;
+        using req_result_promise = promise<ftuple<request_result, cl::buffer>, request_result, cl::buffer>;
 
-        using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>;
+        using request_map = std::unordered_map<uint64_t, std::shared_ptr<request_data>>; //TODO delete sp
 
         impl(std::shared_ptr<cl::thread_pool> thread_pool,
              std::shared_ptr<ipipe_endpoint> pipe_endpoint,
@@ -28,7 +28,7 @@ namespace vshalygin::rpc {
         void deactivate();
         bool is_active() const;
 
-        future_req_result request_async(cl::buffer &&message);
+        req_result_future request_async(cl::buffer &&message);
 
         void set_stop_callback(std::function<void()> &&callback);
 
@@ -43,7 +43,7 @@ namespace vshalygin::rpc {
                               cl::buffer &&res_msg);
 
         void add_request_to_map(uint64_t msg_number,
-                                promise_req_result &&promise);
+                                req_result_promise &&promise);
 
         void remove_request_from_map(uint64_t msg_number) noexcept;
 
@@ -61,13 +61,13 @@ namespace vshalygin::rpc {
 
     struct connection::impl::request_data
     {
-        request_data(promise_req_result &&p,
+        request_data(req_result_promise &&p,
                      uint64_t t_id)
             : promise(std::move(p))
             , timer_id(t_id)
         {}
 
-        promise_req_result promise;
+        req_result_promise promise;
         uint64_t timer_id;
     };
 
@@ -92,7 +92,7 @@ namespace vshalygin::rpc {
         return m_transport.is_running();
     }
 
-    connection::future_req_result connection::impl::request_async(cl::buffer &&message)
+    connection::req_result_future connection::impl::request_async(cl::buffer &&message)
     {
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
@@ -191,7 +191,7 @@ namespace vshalygin::rpc {
     }
 
     void connection::impl::add_request_to_map(uint64_t msg_number,
-                                              promise_req_result &&promise)
+                                              req_result_promise &&promise)
     {
         auto timer_callback = [self = shared_from_this(), msg_number]() {
             self->complete_request(msg_number, request_result::timeout, {});
@@ -250,7 +250,7 @@ namespace vshalygin::rpc {
         return m_impl->is_active();
     }
 
-    connection::future_req_result connection::request_async(cl::buffer &&message)
+    connection::req_result_future connection::request_async(cl::buffer &&message)
     {
         return m_impl->request_async(std::move(message));
     }

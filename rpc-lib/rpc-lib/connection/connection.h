@@ -21,7 +21,7 @@ namespace vshalygin::rpc {
     class connection final
     {
     public:
-        using future_req_result = future<ftuple<request_result, cl::buffer>>;
+        using req_result_future = future<ftuple<request_result, cl::buffer>>;
 
         connection(std::shared_ptr<cl::thread_pool> thread_pool,
                    std::shared_ptr<ipipe_endpoint> pipe_endpoint,
@@ -36,7 +36,7 @@ namespace vshalygin::rpc {
         void deactivate();
         bool is_active() const;
 
-        future_req_result request_async(cl::buffer &&message);
+        req_result_future request_async(cl::buffer &&message);
 
         void set_stop_callback(std::function<void()> &&callback);
 
