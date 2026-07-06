@@ -8,6 +8,8 @@ namespace vshalygin::rpc {
 
     mem_buffer::mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool)
         : m_thread_pool(std::move(thread_pool))
+        , m_read_promises(std::make_shared<cl::guarded_value<read_promise_container>>())
+        , m_timer(m_thread_pool->get_io_context())
     {}
 
     mem_buffer::~mem_buffer()
@@ -15,32 +17,36 @@ namespace vshalygin::rpc {
         invalidate();
     }
 
-    mem_buffer::write_future mem_buffer::write_async(cl::buffer &&data)
+    mem_buffer::write_future mem_buffer::write_async(cl::buffer &&data,
+                                                     const std::optional<std::chrono::milliseconds> &timeout)
     {
         auto promise = make_promise(m_thread_pool.get(),
                                     [](pipe_op_res res) { return res; });
         auto future = promise.get_future();
 
+        auto timeout_point = timeout ? std::chrono::steady_clock::now() + *timeout
+                                     : std::chrono::steady_clock::time_point::max();
         m_thread_pool->post([self = shared_from_this(),
                             promise = std::move(promise),
-                            data = std::move(data)]() mutable
+                            data = std::move(data),
+                            timeout_point]() mutable
         {
-            promise.resolve(self->write(std::move(data)));
+            promise.resolve(self->write_impl(std::move(data), timeout_point));
             self->resolve_read_promises();
         });
         
         return future;
     }
     
-    mem_buffer::read_future mem_buffer::read_async()
+    mem_buffer::read_future mem_buffer::read_async(const std::optional<std::chrono::milliseconds> &timeout)
     {
         auto promise = make_promise(m_thread_pool.get(),
                                     [](pipe_op_res res, cl::buffer b) { return ftuple(res, std::move(b)); });
         auto future = promise.get_future();
 
 
-        m_thread_pool->post([self = shared_from_this(), promise = std::move(promise)]() mutable {
-            self->read(std::move(promise));
+        m_thread_pool->post([self = shared_from_this(), promise = std::move(promise), timeout]() mutable {
+            self->read_impl(std::move(promise), timeout);
         });
 
         return future;
@@ -52,11 +58,15 @@ namespace vshalygin::rpc {
         if(m_is_valid) {
             m_is_valid = false;
             m_buffer = {};
-            while(!m_read_promises.empty()) {
-                auto promise = std::move(m_read_promises.front());
-                m_read_promises.pop();
-                promise.resolve(pipe_op_res::canceled, {});
+            auto [g, read_promises] = m_read_promises->get();
+            auto &q = read_promises.get<0>();
+            for(auto it = q.begin(); it != q.end(); ++it) {
+                q.modify(it, [](read_promise_data &el) {
+                    el.promise.resolve(pipe_op_res::canceled, {});
+                });
             }
+            q.clear();
+            m_timer.cancel_all();
         }
     }
 
@@ -74,16 +84,20 @@ namespace vshalygin::rpc {
 
     size_t mem_buffer::get_pending_read_handlers_count() const
     {
-        std::lock_guard guard(m_mtx);
-        return m_read_promises.size();
+        auto [g, read_promises] = m_read_promises->get();
+        return read_promises.get<0>().size();
     }
 
-    pipe_op_res mem_buffer::write(cl::buffer &&data)
+    pipe_op_res mem_buffer::write_impl(cl::buffer &&data, const auto &timeout_point)
     {
         std::lock_guard guard(m_mtx);
 
         if(!m_is_valid) {
             return pipe_op_res::failed;
+        }
+
+        if(std::chrono::steady_clock::now() > timeout_point) {
+            return pipe_op_res::timeout;
         }
 
         try {
@@ -98,30 +112,58 @@ namespace vshalygin::rpc {
     void mem_buffer::resolve_read_promises()
     {
         std::lock_guard guard(m_mtx);
-
-        if(!m_read_promises.empty()) {
-            auto read_promise = std::move(m_read_promises.front());
-            m_read_promises.pop();
-            read_promise.resolve(pipe_op_res::success, std::move(m_buffer.front()));
+        auto [g, read_promises] = m_read_promises->get();
+        auto &q = read_promises.get<0>();
+        if(!q.empty() && !m_buffer.empty()) {
+            auto buffer = std::move(m_buffer.front());
             m_buffer.pop();
+
+            if(q.begin()->timer_id) {
+                m_timer.cancel(*q.begin()->timer_id);
+            }
+            
+            q.modify(q.begin(), [&buffer](read_promise_data &el) mutable {
+                el.promise.resolve(pipe_op_res::success, std::move(buffer));
+            });
+            q.pop_front();
         }
     }
 
-    void mem_buffer::read(read_promise promise)
+    void mem_buffer::read_impl(read_promise promise,
+                               const std::optional<std::chrono::milliseconds> &timeout)
     {
         std::lock_guard guard(m_mtx);
 
         if(!m_is_valid) {
             promise.resolve(pipe_op_res::failed, {});
-            return;
         }
-
-        if(!m_buffer.empty()) {
+        else if(!m_buffer.empty()) {
             auto msg = std::move(m_buffer.front());
             m_buffer.pop();
             promise.resolve(pipe_op_res::success, std::move(msg));
-        } else {
-            m_read_promises.push(std::move(promise));
+        }
+        else {
+            const auto id = m_next_read_promise_id++;
+            auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
+                if(auto read_promises = read_promises_wp.lock()) {
+                    auto [g, promises] = read_promises->get();
+                    auto &m = promises.get<1>();
+                    auto it = m.find(id);
+                    if(it != m.end()) {
+                        m.modify(it, [](read_promise_data &el) {
+                            el.promise.resolve(pipe_op_res::timeout, {});
+                        });
+                        m.erase(it);
+                    }
+                }
+            };
+
+            auto [g, read_promises] = m_read_promises->get();
+            std::optional<uint64_t> timer_id;
+            if(timeout) {
+                timer_id = m_timer.start(std::move(timeout_callback), *timeout);
+            }
+            read_promises.push_back({ id, timer_id, std::move(promise) });
         }
     }
 }

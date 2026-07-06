@@ -1,7 +1,5 @@
 #include "transport.h"
 #include "rpc-lib/pipe/ipipe-endpoint.h"
-#include "common-lib/thread/thread-pool/thread-pool.h"
-#include <cassert>
 
 namespace vshalygin::rpc {
     transport::transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint)

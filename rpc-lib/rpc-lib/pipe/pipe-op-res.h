@@ -4,7 +4,8 @@ namespace vshalygin::rpc {
     {
         success,
         canceled,
-        failed
+        failed,
+        timeout
     };
 
     inline bool is_success(pipe_op_res res)

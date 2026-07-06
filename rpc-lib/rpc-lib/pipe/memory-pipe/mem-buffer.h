@@ -5,10 +5,19 @@
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/thread/thread-pool/strand.h>
 #include <common-lib/utils/buffer.h>
+#include <common-lib/timer/multiple-timer/multiple-timer.h>
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
+
+#include <chrono>
 #include <memory>
 #include <queue>
 #include <string>
+#include <optional>
 
 namespace vshalygin::rpc {
     class mem_buffer final
@@ -28,8 +37,10 @@ namespace vshalygin::rpc {
 
         ~mem_buffer();
 
-        future<pipe_op_res> write_async(cl::buffer &&data);
-        future<ftuple<pipe_op_res, cl::buffer>> read_async();
+        future<pipe_op_res> write_async(cl::buffer &&data,
+                                        const std::optional<std::chrono::milliseconds> &timeout);
+        future<ftuple<pipe_op_res, cl::buffer>>
+            read_async(const std::optional<std::chrono::milliseconds> &timeout);
 
         void invalidate();
         bool is_valid() const;
@@ -38,8 +49,9 @@ namespace vshalygin::rpc {
         size_t get_pending_read_handlers_count() const;
 
     private:
-        pipe_op_res write(cl::buffer &&data);
-        void read(read_promise promise);
+        pipe_op_res write_impl(cl::buffer &&data, const auto &timeout_point);
+        void read_impl(read_promise promise,
+                       const std::optional<std::chrono::milliseconds> &timeout);
 
         void resolve_read_promises();
 
@@ -50,7 +62,24 @@ namespace vshalygin::rpc {
         bool m_is_valid = true;
 
         std::queue<cl::buffer> m_buffer;
-        std::queue<read_promise> m_read_promises;
-    };
 
+        struct read_promise_data
+        {
+            uint64_t id;
+            std::optional<uint64_t> timer_id;
+            read_promise promise;
+        };
+
+        using read_promise_container = boost::multi_index::multi_index_container<
+            read_promise_data,
+            boost::multi_index::indexed_by<
+                boost::multi_index::sequenced<>,
+                boost::multi_index::ordered_unique<
+                    boost::multi_index::member<read_promise_data, uint64_t, &read_promise_data::id>>>>;
+
+        std::shared_ptr<cl::guarded_value<read_promise_container>> m_read_promises;
+        uint64_t m_next_read_promise_id = 0;
+
+        cl::multiple_timer m_timer;
+    };
 }
