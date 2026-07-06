@@ -30,27 +30,15 @@ class Transport
 protected:
     void SetUp() override
     {
-        Sequence s;
-        EXPECT_CALL(m_start_callback, Call)
-            .Times(1)
-            .WillOnce([]() {});
-        EXPECT_CALL(m_stop_callback, Call)
-            .Times(1)
-            .WillOnce([]() {});
-
         m_thread_pool = std::make_shared<thread_pool>(2);
         m_pipe_env = std::make_unique<mem_pipe_env>(m_thread_pool);
         m_pipe_endpoint = m_pipe_env->create_pipe();
         m_other_pipe_endpoint = m_pipe_env->open_pipe();
 
-        m_sut = std::make_unique<transport>(m_thread_pool,
-                                            m_pipe_endpoint,
-                                            m_start_callback.AsStdFunction(),
-                                            m_stop_callback.AsStdFunction());
+        m_sut = std::make_unique<transport>(m_pipe_endpoint);
     }
 
 protected:
-    MockFunction<void()> m_start_callback;
     MockFunction<void()> m_stop_callback;
 
     std::shared_ptr<thread_pool> m_thread_pool;
@@ -112,4 +100,18 @@ TEST_F(Transport, RecvAsync)
         .then(read_callback.AsStdFunction());
 
     sync_event.wait();
+}
+
+TEST_F(Transport, SetsStopCallback)
+{
+    event sync_event;
+    EXPECT_CALL(m_stop_callback, Call)
+        .Times(1)
+        .WillOnce([&sync_event]() { sync_event.set(); });
+
+    m_sut->set_stop_callback(m_stop_callback.AsStdFunction());
+    m_sut->stop();
+
+    sync_event.wait();
+    Mock::VerifyAndClearExpectations(&m_stop_callback);
 }
