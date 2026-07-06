@@ -60,6 +60,7 @@
     <ClInclude Include="rpc-lib\service\service.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\transport\transport.h" />
+    <ClInclude Include="rpc-lib\types\connection-state.h" />
     <ClInclude Include="rpc-lib\types\future.h" />
     <ClInclude Include="rpc-lib\types\interrupt-exception.h" />
     <ClInclude Include="rpc-lib\types\request-exception.h" />

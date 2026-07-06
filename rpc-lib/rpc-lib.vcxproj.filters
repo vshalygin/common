@@ -200,6 +200,9 @@
     <ClInclude Include="rpc-lib\types\future.h">
       <Filter>types</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\types\connection-state.h">
+      <Filter>types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="rpc-lib\authenticator\proto\auth.proto">

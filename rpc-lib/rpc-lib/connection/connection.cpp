@@ -104,7 +104,7 @@ namespace vshalygin::rpc {
 
         add_request_to_map(msg_number, std::move(promise));
 
-        auto req_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
+        auto send_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
             if(res == pipe_op_res::canceled) {
                 self->complete_request(msg_number, request_result::canceled, {});
             } else if(is_fail(res)) {
@@ -113,7 +113,7 @@ namespace vshalygin::rpc {
         };
 
         m_transport.send_async(std::move(message))
-            .then(std::move(req_callback));
+            .then(std::move(send_callback));
 
         return future;
     }
@@ -154,7 +154,7 @@ namespace vshalygin::rpc {
         };
         auto task = [service = m_service, message = std::move(message),
                      response_handler = std::move(response_handler)]() mutable {
-            if(service) {
+            if(service) { //TODO use future here
                 service->process_request(std::move(message),
                                          std::move(response_handler));
             }
@@ -237,7 +237,7 @@ namespace vshalygin::rpc {
 
     connection::~connection()
     {
-        m_impl->deactivate();
+        deactivate();
     }
 
     void connection::deactivate()
