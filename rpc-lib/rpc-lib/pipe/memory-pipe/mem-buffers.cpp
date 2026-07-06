@@ -12,24 +12,30 @@ namespace vshalygin::rpc {
         invalidate();
     }
 
-    mem_buffers::read_future mem_buffers::read_async_from_server()
+    mem_buffers::read_future
+        mem_buffers::read_async_from_server(const std::optional<std::chrono::milliseconds> &timeout)
     {
-        return m_server_to_client->read_async();
+        return m_server_to_client->read_async(timeout);
     }
 
-    mem_buffers::read_future mem_buffers::read_async_from_client()
+    mem_buffers::read_future
+        mem_buffers::read_async_from_client(const std::optional<std::chrono::milliseconds> &timeout)
     {
-        return m_client_to_server->read_async();
+        return m_client_to_server->read_async(timeout);
     }
 
-    mem_buffers::write_future mem_buffers::write_async_to_client(cl::buffer &&msg)
+    mem_buffers::write_future
+        mem_buffers::write_async_to_client(cl::buffer &&msg,
+                                           const std::optional<std::chrono::milliseconds> &timeout)
     {
-        return m_server_to_client->write_async(std::move(msg));
+        return m_server_to_client->write_async(std::move(msg), timeout);
     }
 
-    mem_buffers::write_future mem_buffers::write_async_to_server(cl::buffer &&msg)
+    mem_buffers::write_future
+        mem_buffers::write_async_to_server(cl::buffer &&msg,
+                                           const std::optional<std::chrono::milliseconds> &timeout)
     {
-        return m_client_to_server->write_async(std::move(msg));
+        return m_client_to_server->write_async(std::move(msg), timeout);
     }
 
     void mem_buffers::set_invalidate_callback(cl::thread_pool_task<void()> &&callback)

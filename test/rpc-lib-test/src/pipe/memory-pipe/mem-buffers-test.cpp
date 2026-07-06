@@ -60,8 +60,8 @@ TEST(MemBuffers, WritesFromClientToServer)
         .WillOnce([&]() { sync_event.set(); });
 
     mem_buffers sut(pool);
-    sut.write_async_to_server(data.copy());
-    sut.read_async_from_client()
+    sut.write_async_to_server(data.copy(), std::nullopt);
+    sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
 
     sync_event.wait();
@@ -78,8 +78,8 @@ TEST(MemBuffers, WritesFromServerToClient)
         .WillOnce([&]() { sync_event.set(); });
 
     mem_buffers sut(pool);
-    sut.write_async_to_client(data.copy());
-    sut.read_async_from_server()
+    sut.write_async_to_client(data.copy(), std::nullopt);
+    sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
 
     sync_event.wait();
@@ -139,4 +139,78 @@ TEST(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
 
     sut.reset();
     sync_event.wait();
+}
+
+TEST(MemBuffers, WritesFromClientToServerTimeout)
+{
+    event sync_event;
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([&]() { sync_event.wait(); });
+    auto data = create_test_data();
+    MockFunction<void(pipe_op_res)> write_callback;
+    EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
+        .Times(1);
+
+    mem_buffers sut(pool);
+    auto f = sut.write_async_to_server(data.copy(), std::chrono::milliseconds(0))
+        .then(write_callback.AsStdFunction());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    sync_event.set();
+    f.get();
+}
+
+TEST(MemBuffers, WritesFromServerToClientTimeout)
+{
+    event sync_event;
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([&]() { sync_event.wait(); });
+    auto data = create_test_data();
+    MockFunction<void(pipe_op_res)> write_callback;
+    EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
+        .Times(1);
+
+    mem_buffers sut(pool);
+    auto f = sut.write_async_to_client(data.copy(), std::chrono::milliseconds(0))
+        .then(write_callback.AsStdFunction());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    sync_event.set();
+    f.get();
+}
+
+TEST(MemBuffers, ReadsFromClientTimeout)
+{
+    event sync_event;
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([&]() { sync_event.wait(); });
+    MockFunction<void(pipe_op_res, buffer &&)> read_callback;
+    EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
+        .Times(1);
+
+    mem_buffers sut(pool);
+    auto f = sut.read_async_from_client(std::chrono::milliseconds(0))
+        .then(read_callback.AsStdFunction());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    sync_event.set();
+    f.get();
+}
+
+TEST(MemBuffers, ReadsFromServerTimeout)
+{
+    event sync_event;
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([&]() { sync_event.wait(); });
+    MockFunction<void(pipe_op_res, buffer &&)> read_callback;
+    EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
+        .Times(1);
+
+    mem_buffers sut(pool);
+    auto f = sut.read_async_from_server(std::chrono::milliseconds(0))
+        .then(read_callback.AsStdFunction());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    sync_event.set();
+    f.get();
 }

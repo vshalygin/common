@@ -18,11 +18,13 @@ namespace vshalygin::rpc {
 
         ~mem_buffers();
 
-        read_future read_async_from_server();
-        read_future read_async_from_client();
+        read_future read_async_from_server(const std::optional<std::chrono::milliseconds> &timeout);
+        read_future read_async_from_client(const std::optional<std::chrono::milliseconds> &timeout);
 
-        write_future write_async_to_client(cl::buffer &&msg);
-        write_future write_async_to_server(cl::buffer &&msg);
+        write_future write_async_to_client(cl::buffer &&msg,
+                                           const std::optional<std::chrono::milliseconds> &timeout);
+        write_future write_async_to_server(cl::buffer &&msg,
+                                           const std::optional<std::chrono::milliseconds> &timeout);
 
         void set_invalidate_callback(cl::thread_pool_task<void()> &&callback);
 
