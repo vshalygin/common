@@ -85,7 +85,7 @@ namespace vshalygin::rpc {
         , m_thread_pool(std::move(thread_pool))
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
-        , m_transport(std::move(pipe_endpoint))
+        , m_transport(std::move(pipe_endpoint), req_timeout / 2)
     {}
 
     void connection::impl::start()
@@ -119,9 +119,11 @@ namespace vshalygin::rpc {
 
         auto send_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
             if(res == pipe_op_res::canceled) {
-                self->complete_request(msg_number, request_result::canceled, {});
+                self->complete_request(msg_number, request_result::send_canceled_error, {});
+            } else if(res == pipe_op_res::timeout) {
+                self->complete_request(msg_number, request_result::send_timeout_error, {});
             } else if(is_fail(res)) {
-                self->complete_request(msg_number, request_result::send_error, {});
+                self->complete_request(msg_number, request_result::send_unknown_error, {});
             }
         };
 
