@@ -2,8 +2,10 @@
 #include "rpc-lib/pipe/ipipe-endpoint.h"
 
 namespace vshalygin::rpc {
-    transport::transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint)
-        : m_pipe_endpoint(std::move(pipe_endpoint))
+    transport::transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+                         const std::chrono::milliseconds &send_timeout)
+        : m_send_timeout(send_timeout)
+        , m_pipe_endpoint(std::move(pipe_endpoint))
     {}
 
     transport::~transport()
@@ -13,7 +15,7 @@ namespace vshalygin::rpc {
 
     transport::send_future transport::send_async(cl::buffer &&message)
     {
-        return m_pipe_endpoint->write_async(std::move(message));
+        return m_pipe_endpoint->write_async(std::move(message), m_send_timeout);
     }
 
     transport::recv_future transport::recv_async()

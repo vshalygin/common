@@ -4,15 +4,14 @@
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
-#include <functional>
-
 namespace vshalygin::rpc {
     class ipipe_endpoint;
 
     class transport final
     {
     public:
-        explicit transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint);
+        explicit transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint,
+                           const std::chrono::milliseconds &send_timeout);
 
         transport(const transport &) = delete;
         transport &operator=(const transport &) = delete;
@@ -34,6 +33,7 @@ namespace vshalygin::rpc {
         void set_stop_callback(cl::thread_pool_task<void()> &&stop_callback);
 
     private:
+        const std::chrono::milliseconds m_send_timeout;
         std::shared_ptr<ipipe_endpoint> m_pipe_endpoint;
     };
 }

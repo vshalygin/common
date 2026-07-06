@@ -35,7 +35,7 @@ protected:
         m_pipe_endpoint = m_pipe_env->create_pipe();
         m_other_pipe_endpoint = m_pipe_env->open_pipe();
 
-        m_sut = std::make_unique<transport>(m_pipe_endpoint);
+        m_sut = std::make_unique<transport>(m_pipe_endpoint, std::chrono::milliseconds(10000));
     }
 
 protected:
@@ -114,4 +114,32 @@ TEST_F(Transport, SetsStopCallback)
 
     sync_event.wait();
     Mock::VerifyAndClearExpectations(&m_stop_callback);
+}
+
+TEST_F(Transport, InvalidatesPipeEndOnDestruction)
+{
+    EXPECT_TRUE(m_pipe_endpoint->is_connected());
+
+    m_sut.reset();
+
+    EXPECT_FALSE(m_pipe_endpoint->is_connected());
+}
+
+TEST_F(Transport, SendTimeout)
+{
+    event sync_event;
+    for(unsigned i = 0; i < m_thread_pool->get_num(); ++i) {
+        m_thread_pool->post([&]() { sync_event.wait(); });
+    }
+    MockFunction<void(pipe_op_res)> write_callback;
+    EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
+        .Times(1);
+
+    transport sut(m_pipe_endpoint, std::chrono::milliseconds(0));
+    auto f = sut.send_async({})
+        .then(write_callback.AsStdFunction());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    sync_event.set();
+    f.get();
 }
