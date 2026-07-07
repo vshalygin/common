@@ -3,6 +3,10 @@
 #include "rpc-lib/transfer-message/transfer-message.h"
 
 namespace vshalygin::rpc {
+    channel::channel(connection &&connection)
+        : m_connection(std::move(connection))
+    {}
+
     void channel::CallMethod(const MethodDescriptor *method,
                              RpcController *controller,
                              const Message *request,
@@ -15,47 +19,22 @@ namespace vshalygin::rpc {
         assert(response);
         assert(done);
 
-        closure_guard cg(done);
-        auto cg_sp = std::make_shared<closure_guard>(std::move(cg));
+        auto cg = std::make_shared<closure_guard>(done);
 
         const auto req_id = m_next_req_id.fetch_add(1);
         const auto method_idx = static_cast<uint32_t>(method->index());
         auto req_transfer_message = create_transfer_msg_req(req_id, method_idx, request);
-        auto handler = [cg = std::move(cg_sp), controller, response, req_id]
+        auto handler = [cg = std::move(cg), controller, response, req_id]
                        (request_result rc, cl::buffer &&buffer) {
             try {
                 handler_response_event_unsafe(req_id, controller, response, rc, std::move(buffer));
             } catch (...) {
-                //TODO log
                 controller->SetFailed(to_string(request_result::unknown_error));
             }
         };
 
-        auto [guard, connection] = m_connection.get();
-        if(connection) {
-            connection->request_async(std::move(req_transfer_message))
-                .then(std::move(handler));
-        } else {
-            throw std::runtime_error("no connection");
-        }
-    }
-
-    void channel::set_connection(std::shared_ptr<connection> connection)
-    {
-        auto [guard, connect] = m_connection.get();
-        connect = std::move(connection);
-    }
-
-    std::shared_ptr<connection> channel::get_connection() const
-    {
-        auto [guard, connection] = m_connection.get();
-        return connection;
-    }
-
-    void channel::drop_connection()
-    {
-        auto [guard, connect] = m_connection.get();
-        connect.reset();
+        m_connection.request_async(std::move(req_transfer_message))
+            .then(std::move(handler));
     }
 
     void channel::handler_response_event_unsafe([[maybe_unused]] uint64_t req_id,
@@ -75,9 +54,9 @@ namespace vshalygin::rpc {
             }
 
             const auto serialized_response = get_serialized_proto_message(buffer);
-            const auto parse_result = response->ParseFromArray
-                (static_cast<const void *>(serialized_response.data()),
-                 static_cast<int>(serialized_response.size()));
+            const auto parse_result =
+                response->ParseFromArray(static_cast<const void *>(serialized_response.data()),
+                                         static_cast<int>(serialized_response.size()));
 
             if(!parse_result) {
                 controller->SetFailed(to_string(request_result::response_parse_error));

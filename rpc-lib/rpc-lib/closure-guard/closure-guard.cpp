@@ -34,14 +34,9 @@ namespace vshalygin::rpc {
 
     void closure_guard::reset() noexcept
     {
-        try {
-            if(m_closure) {
-                m_closure->Run();
-                m_closure = nullptr;
-            }
-        } catch(...) {
-            //TODO log fatal
-            std::terminate();
+        if(m_closure) {
+            m_closure->Run();
+            m_closure = nullptr;
         }
     }
 }

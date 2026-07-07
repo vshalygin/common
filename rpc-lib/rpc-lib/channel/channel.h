@@ -1,14 +1,17 @@
 #pragma once
-#include "ichannel.h"
 #include "rpc-lib/types/request-result.h"
 #include "rpc-lib/connection/connection.h"
-#include <common-lib/synchronization/guarded-value/guarded-value.h>
 #include <common-lib/utils/buffer.h>
+
+#pragma warning(push, 0)
+#include <google/protobuf/service.h>
+#pragma warning(pop)
+
 #include <atomic>
 
 namespace vshalygin::rpc {
     class channel final
-        : public ichannel
+        : public google::protobuf::RpcChannel
     {
         using MethodDescriptor = google::protobuf::MethodDescriptor;
         using RpcController = google::protobuf::RpcController;
@@ -16,7 +19,7 @@ namespace vshalygin::rpc {
         using Closure = google::protobuf::Closure;
 
     public:
-        channel() = default;
+        explicit channel(connection &&connection);
 
         channel(channel &) = delete;
         channel &operator=(channel &) = delete;
@@ -27,10 +30,6 @@ namespace vshalygin::rpc {
                         Message *response,
                         Closure *done) override;
 
-        void set_connection(std::shared_ptr<connection> connection) override;
-        std::shared_ptr<connection> get_connection() const override;
-        void drop_connection() override;
-
     private:
         static void handler_response_event_unsafe([[maybe_unused]] uint64_t req_id,
                                                   RpcController *controller,
@@ -40,7 +39,7 @@ namespace vshalygin::rpc {
 
     private:
         std::atomic_uint64_t m_next_req_id = 0;
-        cl::guarded_value<std::shared_ptr<connection>> m_connection;
+        connection m_connection;
     };
 }
 

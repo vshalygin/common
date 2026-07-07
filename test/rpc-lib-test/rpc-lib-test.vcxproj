@@ -130,11 +130,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\channel\channel-test.cpp" />
-    <ClCompile Include="src\channel\request-callback\request-callback-test.cpp" />
     <ClCompile Include="src\client-endpoint\client-endpoint-test.cpp" />
     <ClCompile Include="src\closure-guard\closure-guard-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
     <ClCompile Include="src\connector\connector-test.cpp" />
+    <ClCompile Include="src\controller\request-controller-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-env-test.cpp" />

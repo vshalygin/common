@@ -13,9 +13,6 @@
     <Filter Include="channel">
       <UniqueIdentifier>{8f097237-e0ba-4a25-b530-4827d577e1c3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="channel\request-callback">
-      <UniqueIdentifier>{53278c45-60d6-40d8-85ea-2892885164bc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="closure-guard">
       <UniqueIdentifier>{88cf588e-f103-4431-9808-42f8cd6f2fc0}</UniqueIdentifier>
     </Filter>
@@ -51,6 +48,9 @@
     </Filter>
     <Filter Include="connector">
       <UniqueIdentifier>{fc0d5010-e5a3-4a20-9f0c-42650444de6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="controller">
+      <UniqueIdentifier>{7e3bc64e-e6b3-43e5-8ef5-77f070e2fe24}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -90,6 +90,9 @@
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\controller\controller-cast.cpp">
+      <Filter>controller</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
@@ -103,9 +106,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\channel\channel.h">
       <Filter>channel</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h">
-      <Filter>channel\request-callback</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h">
       <Filter>closure-guard</Filter>
@@ -127,9 +127,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\channel\ichannel.h">
-      <Filter>channel</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h">
       <Filter>pipe</Filter>
@@ -181,6 +178,18 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h">
       <Filter>pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\controller\null-rpc-controller.h">
+      <Filter>controller</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\controller\request-controller.h">
+      <Filter>controller</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\controller\irequest-controller.h">
+      <Filter>controller</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\controller\request-controller-base.h">
+      <Filter>controller</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

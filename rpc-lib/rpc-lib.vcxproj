@@ -16,6 +16,7 @@
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\connection\connection.cpp" />
     <ClCompile Include="rpc-lib\connector\connector.cpp" />
+    <ClCompile Include="rpc-lib\controller\controller-cast.cpp" />
     <ClCompile Include="rpc-lib\listener\listener.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffers.cpp" />
@@ -28,12 +29,14 @@
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h" />
     <ClInclude Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.h" />
     <ClInclude Include="rpc-lib\channel\channel.h" />
-    <ClInclude Include="rpc-lib\channel\ichannel.h" />
-    <ClInclude Include="rpc-lib\channel\request-callback\request-callback.h" />
     <ClInclude Include="rpc-lib\client-endpoint\client-endpoint.h" />
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\connection\connection.h" />
     <ClInclude Include="rpc-lib\connector\connector.h" />
+    <ClInclude Include="rpc-lib\controller\irequest-controller.h" />
+    <ClInclude Include="rpc-lib\controller\null-rpc-controller.h" />
+    <ClInclude Include="rpc-lib\controller\request-controller-base.h" />
+    <ClInclude Include="rpc-lib\controller\request-controller.h" />
     <ClInclude Include="rpc-lib\listener\listener.h" />
     <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h" />
