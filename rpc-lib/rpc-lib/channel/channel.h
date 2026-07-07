@@ -1,6 +1,6 @@
 #pragma once
 #include "rpc-lib/types/request-result.h"
-#include "rpc-lib/connection/connection.h"
+#include "rpc-lib/connection/iconnection.h"
 #include <common-lib/utils/buffer.h>
 
 #pragma warning(push, 0)
@@ -19,7 +19,7 @@ namespace vshalygin::rpc {
         using Closure = google::protobuf::Closure;
 
     public:
-        explicit channel(connection &&connection);
+        explicit channel(std::unique_ptr<iconnection> &&connection);
 
         channel(channel &) = delete;
         channel &operator=(channel &) = delete;
@@ -31,15 +31,8 @@ namespace vshalygin::rpc {
                         Closure *done) override;
 
     private:
-        static void handler_response_event_unsafe([[maybe_unused]] uint64_t req_id,
-                                                  RpcController *controller,
-                                                  Message *response,
-                                                  request_result rc,
-                                                  cl::buffer &&buffer);
-
-    private:
         std::atomic_uint64_t m_next_req_id = 0;
-        connection m_connection;
+        std::unique_ptr<iconnection> m_connection;
     };
 }
 
