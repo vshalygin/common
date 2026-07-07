@@ -12,84 +12,73 @@ namespace vshalygin::rpc {
                                        std::shared_ptr<iauthenticator> authenticator,
                                        std::shared_ptr<iclient_pipe_env> pipe_env,
                                        std::shared_ptr<iservice> service,
-                                       std::chrono::milliseconds req_timeout,
-                                       std::chrono::milliseconds res_timeout)
+                                       std::chrono::milliseconds send_timeout,
+                                       std::chrono::milliseconds recv_timeout)
         : m_thread_pool(std::move(thread_pool))
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
         , m_service(std::move(service))
-        , m_req_timeout(req_timeout)
-        , m_res_timeout(res_timeout)
+        , m_send_timeout(send_timeout)
+        , m_recv_timeout(recv_timeout)
     {}
 
-    future<connection> client_connector::create_connection_async(std::chrono::milliseconds timeout)
+    future<connection> client_connector::create_connection_async(std::chrono::milliseconds handshake_timeout)
     {
         auto authenticator = m_authenticator;
         auto pipe_env = m_pipe_env;
-        auto deadline = std::chrono::steady_clock::now() + timeout;
         auto thread_pool = m_thread_pool;
         auto service = m_service;
-        auto req_timeout = m_req_timeout;
-        auto res_timeout = m_res_timeout;
-
+        auto send_timeout = m_send_timeout;
+        auto recv_timeout = m_recv_timeout;
+        
         auto promise = make_promise(thread_pool.get(),
-            [timeout, pipe_env]() mutable {
-                auto pipe_endpoint = pipe_env->open_pipe();
-                auto res = pipe_endpoint->wait_connect_for(timeout);
-                if(is_fail(res)) {
-                    throw std::runtime_error("failed to wait pipe connection: " + to_string(res));
-                }
-
-                return pipe_endpoint;
+            [pipe_env]() mutable {
+                return pipe_env->open_pipe();
             });
         promise.resolve();
         auto future = promise.get_future()
-            .then([authenticator, deadline](std::shared_ptr<ipipe_endpoint> pipe_endpoint)
-                  {
-                      auto now = std::chrono::steady_clock::now();
-                      if(now > deadline) {
-                          throw std::runtime_error("timeout");
+            .then([authenticator, handshake_timeout]
+                  (pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
+                      if(is_fail(r)) {
+                          throw std::runtime_error("pipe waiting failed");
                       }
                       auto req = authenticator->create_request();
-                      auto timeout = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
-                      return  pipe_endpoint->write_async(std::move(req), timeout)
-                          .then([pipe_endpoint] (pipe_op_res r)
-                                {
+                      return  pipe_endpoint->write_async(std::move(req), handshake_timeout)
+                          .then([pipe_endpoint] (pipe_op_res r) {
                                     if(is_fail(r)) {
                                         throw std::runtime_error("write operation failed: " + to_string(r));
                                     }
                                     return pipe_endpoint;
                                 });
                   })
-            .then([deadline, authenticator] (std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
-                      auto now = std::chrono::steady_clock::now();
-                      if(now > deadline) {
-                          throw std::runtime_error("timeout");
-                      }
-                      auto timeout = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
-                      return pipe_endpoint->read_async(timeout)
-                          .then([pipe_endpoint, authenticator](pipe_op_res r, cl::buffer &&b)
-                                {
+            .then([handshake_timeout, authenticator] (std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
+                      return pipe_endpoint->read_async(handshake_timeout)
+                          .then([pipe_endpoint, authenticator](pipe_op_res r, cl::buffer &&b) {
                                     if(is_fail(r)) {
                                         throw std::runtime_error("read operation failed: " + to_string(r));
                                     }
                                     if(!authenticator->check_response(b)) {
                                         throw std::runtime_error("server forbid connection");
                                     }
-
+        
                                     return pipe_endpoint;
                                 });
                   })
-            .then([thread_pool, service, req_timeout, res_timeout]
+            .then([thread_pool, service, send_timeout, recv_timeout]
                   (std::shared_ptr<ipipe_endpoint> pipe_endpoint)
                   {
                       return connection(thread_pool,
                                         std::move(pipe_endpoint),
                                         service,
-                                        req_timeout,
-                                        res_timeout);
+                                        send_timeout,
+                                        recv_timeout);
                   });
-
+        
         return future;
+    }
+
+    void client_connector::cancel_connect_waiting()
+    {
+        m_pipe_env->cancel_pending_client_endpoints();
     }
 }
