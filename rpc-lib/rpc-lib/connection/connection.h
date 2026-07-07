@@ -1,7 +1,7 @@
 #pragma once
+#include "iconnection.h"
+
 #include <rpc-lib/transport/transport.h>
-#include <rpc-lib/types/request-result.h>
-#include <rpc-lib/types/future.h>
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/synchronization/guarded-value/guarded-value.h>
@@ -19,10 +19,9 @@ namespace vshalygin::rpc {
     class ipipe_endpoint;
 
     class connection final
+        : public iconnection
     {
     public:
-        using req_result_future = future<ftuple<request_result, cl::buffer>>;
-
         connection(std::shared_ptr<cl::thread_pool> thread_pool,
                    std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                    std::shared_ptr<iservice> service,
@@ -32,19 +31,16 @@ namespace vshalygin::rpc {
         connection(const connection &) = delete;
         connection &operator=(const connection &) = delete;
 
-        connection(connection &&) = default;
-        connection &operator=(connection &&) = default;
-
         ~connection();
 
-        void start();
+        void start() override;
 
-        void deactivate();
-        bool is_active() const;
+        void deactivate() override;
+        bool is_active() const override;
 
-        req_result_future request_async(cl::buffer &&message);
+        req_result_future request_async(cl::buffer &&message) override;
 
-        void set_stop_callback(std::function<void()> &&callback);
+        void set_stop_callback(std::function<void()> &&callback) override;
 
         size_t get_pending_requests_count() const;
         size_t get_active_timers_count() const;

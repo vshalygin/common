@@ -191,5 +191,8 @@
     <ClInclude Include="rpc-lib\controller\request-controller-base.h">
       <Filter>controller</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\connection\iconnection.h">
+      <Filter>connection</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

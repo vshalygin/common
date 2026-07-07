@@ -10,7 +10,7 @@ namespace vshalygin::rpc {
     class iauthenticator;
     class iclient_pipe_env;
     class iservice;
-    class connection;
+    class iconnection;
 
     class connector
     {
@@ -27,7 +27,9 @@ namespace vshalygin::rpc {
 
         ~connector();
 
-        future<connection> create_connection_async(std::chrono::milliseconds handshake_timeout);
+        future<std::unique_ptr<iconnection>>
+            create_connection_async(std::chrono::milliseconds handshake_timeout);
+
         void cancel_connect_waiting();
 
     private:

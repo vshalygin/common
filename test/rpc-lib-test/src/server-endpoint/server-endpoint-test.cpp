@@ -1,29 +1,29 @@
-#include <rpc-lib/server-endpoint/server-endpoint.h>
-#include <rpc-lib/client-endpoint/client-endpoint.h>
-#include <rpc-lib/channel/channel.h>
-#include <rpc-lib/connection/connection.h>
-#include <rpc-lib/service/service.h>
-#include <rpc-lib/transfer-message/transfer-message.h>
-#include <rpc-lib/closure-guard/closure-guard.h>
-#include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
-#include <rpc-lib/authenticator/simple-authenticator/simple-authenticator.h>
-
-#include <common-lib/synchronization/event/event.h>
-
-#pragma warning(push, 0)
-#include "proto/test-messages.pb.h"
-#include <google/protobuf/util/message_differencer.h>
-#pragma warning(pop)
-
-#include <common-lib/thread/thread-pool/thread-pool.h>
-
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-
-using namespace vshalygin::rpc;
-using namespace vshalygin::cl;
-using namespace testing;
-using namespace google::protobuf::util;
+//#include <rpc-lib/server-endpoint/server-endpoint.h>
+//#include <rpc-lib/client-endpoint/client-endpoint.h>
+//#include <rpc-lib/channel/channel.h>
+//#include <rpc-lib/connection/connection.h>
+//#include <rpc-lib/service/service.h>
+//#include <rpc-lib/transfer-message/transfer-message.h>
+//#include <rpc-lib/closure-guard/closure-guard.h>
+//#include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
+//#include <rpc-lib/authenticator/simple-authenticator/simple-authenticator.h>
+//
+//#include <common-lib/synchronization/event/event.h>
+//
+//#pragma warning(push, 0)
+//#include "proto/test-messages.pb.h"
+//#include <google/protobuf/util/message_differencer.h>
+//#pragma warning(pop)
+//
+//#include <common-lib/thread/thread-pool/thread-pool.h>
+//
+//#include <gtest/gtest.h>
+//#include <gmock/gmock.h>
+//
+//using namespace vshalygin::rpc;
+//using namespace vshalygin::cl;
+//using namespace testing;
+//using namespace google::protobuf::util;
 
 //TODO!!! fix tests
 //namespace {

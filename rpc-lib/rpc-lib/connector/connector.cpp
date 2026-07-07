@@ -27,7 +27,8 @@ namespace vshalygin::rpc {
         cancel_connect_waiting();
     }
 
-    future<connection> connector::create_connection_async(std::chrono::milliseconds handshake_timeout)
+    future<std::unique_ptr<iconnection>>
+        connector::create_connection_async(std::chrono::milliseconds handshake_timeout)
     {
         auto authenticator = m_authenticator;
         auto pipe_env = m_pipe_env;
@@ -67,13 +68,13 @@ namespace vshalygin::rpc {
                                 });
                   })
             .then([thread_pool, service, send_timeout, recv_timeout]
-                  (std::shared_ptr<ipipe_endpoint> pipe_endpoint)
+                  (std::shared_ptr<ipipe_endpoint> pipe_endpoint) -> std::unique_ptr<iconnection>
                   {
-                      return connection(thread_pool,
-                                        std::move(pipe_endpoint),
-                                        service,
-                                        send_timeout,
-                                        recv_timeout);
+                      return std::make_unique<connection>(thread_pool,
+                                                          std::move(pipe_endpoint),
+                                                          service,
+                                                          send_timeout,
+                                                          recv_timeout);
                   });
         
         return future;

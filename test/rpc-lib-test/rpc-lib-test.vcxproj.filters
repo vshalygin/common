@@ -130,9 +130,6 @@
     <ClInclude Include="src\mocks\closure-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
-    <ClInclude Include="src\mocks\rpc-controller-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
     <ClInclude Include="src\mocks\service-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
