@@ -150,14 +150,22 @@ namespace vshalygin::rpc {
             if(timeout) {
                 auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
                     if(auto read_promises = read_promises_wp.lock()) {
-                        auto [g, promises] = read_promises->get();
-                        auto &m = promises.get<1>();
-                        auto it = m.find(id);
-                        if(it != m.end()) {
-                            m.modify(it, [](read_promise_data &el) {
-                                el.promise.resolve(pipe_op_res::timeout, {});
-                            });
-                            m.erase(it);
+                        //avoid deadlock in case future callback
+                        //stores mem_buffer itself
+                        read_promise promise;
+                        {
+                            auto [g, promises] = read_promises->get();
+                            auto &m = promises.get<1>();
+                            auto it = m.find(id);
+                            if(it != m.end()) {
+                                m.modify(it, [&promise](read_promise_data &el) {
+                                    promise = std::move(el.promise);
+                                });
+                                m.erase(it);
+                            }
+                        }
+                        if(promise.is_valid()) {
+                            promise.resolve(pipe_op_res::timeout, {});
                         }
                     }
                 };

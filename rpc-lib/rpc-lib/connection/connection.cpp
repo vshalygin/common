@@ -195,15 +195,23 @@ namespace vshalygin::rpc {
 
     void connection::impl::complete_request(uint64_t req_msg_number,
                                             request_result result,
-                                            cl::buffer && res_msg)
+                                            cl::buffer &&res_msg)
     {
-        auto [guard, map] = m_request_map.get();
-        auto it = map.find(req_msg_number);
-        if(it != map.end()) {
-            auto &req_data = it->second;
-            req_data.promise.resolve(result, std::move(res_msg));
-            m_multiple_timer.cancel(req_data.timer_id);
-            map.erase(it);
+        req_result_promise promise;
+
+        {
+            auto [guard, map] = m_request_map.get();
+            auto it = map.find(req_msg_number);
+            if(it != map.end()) {
+                auto &req_data = it->second;
+                promise = std::move(req_data.promise);
+                m_multiple_timer.cancel(req_data.timer_id);
+                map.erase(it);
+            }
+        }
+
+        if(promise.is_valid()) {
+            promise.resolve(result, std::move(res_msg));
         }
     }
 
