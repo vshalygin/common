@@ -270,7 +270,9 @@ namespace vshalygin::rpc {
 
     connection::~connection()
     {
-        deactivate();
+        if(m_impl) {
+            m_impl->deactivate();
+        }
     }
 
     void connection::start()

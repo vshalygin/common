@@ -25,6 +25,8 @@ namespace vshalygin::rpc {
         connector(connector &) = delete;
         connector &operator=(connector &) = delete;
 
+        ~connector();
+
         future<connection> create_connection_async(std::chrono::milliseconds handshake_timeout);
         void cancel_connect_waiting();
 

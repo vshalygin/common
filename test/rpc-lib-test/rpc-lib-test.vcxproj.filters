@@ -139,16 +139,7 @@
     <ClInclude Include="src\mocks\channel-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
-    <ClInclude Include="src\mocks\transport-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
     <ClInclude Include="src\mocks\listener-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\mocks\pipe-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\mocks\pipe-env-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\authenticator-mock.h">

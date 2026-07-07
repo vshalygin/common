@@ -22,6 +22,11 @@ namespace vshalygin::rpc {
         , m_recv_timeout(recv_timeout)
     {}
 
+    connector::~connector()
+    {
+        cancel_connect_waiting();
+    }
+
     future<connection> connector::create_connection_async(std::chrono::milliseconds handshake_timeout)
     {
         auto authenticator = m_authenticator;
@@ -31,10 +36,7 @@ namespace vshalygin::rpc {
         auto send_timeout = m_send_timeout;
         auto recv_timeout = m_recv_timeout;
         
-        auto promise = make_promise(thread_pool.get(),
-            [pipe_env]() mutable {
-                return pipe_env->open_pipe();
-            });
+        auto promise = make_promise(thread_pool.get(), [pipe_env]() { return pipe_env->open_pipe(); });
         promise.resolve();
         auto future = promise.get_future()
             .then([authenticator, handshake_timeout]

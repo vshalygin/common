@@ -165,11 +165,8 @@
     <ClInclude Include="src\mocks\channel-mock.h" />
     <ClInclude Include="src\mocks\closure-mock.h" />
     <ClInclude Include="src\mocks\listener-mock.h" />
-    <ClInclude Include="src\mocks\pipe-env-mock.h" />
-    <ClInclude Include="src\mocks\pipe-mock.h" />
     <ClInclude Include="src\mocks\rpc-controller-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />
-    <ClInclude Include="src\mocks\transport-mock.h" />
     <ClInclude Include="src\proto\test-messages.pb.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
