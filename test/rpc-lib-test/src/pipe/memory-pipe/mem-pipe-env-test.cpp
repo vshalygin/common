@@ -17,6 +17,7 @@ TEST(MemPipeEnv, CreatesNewPipeUnconnectedIfNoCounterpart)
 
     ASSERT_FALSE(pipe_enpoint->is_connected());
     ASSERT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 1);
+    pool->stop();
 }
 
 TEST(MemPipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
@@ -28,6 +29,7 @@ TEST(MemPipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
 
     ASSERT_FALSE(pipe_enpoint->is_connected());
     ASSERT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 1);
+    pool->stop();
 }
 
 TEST(MemPipeEnv, CreateNewPipeConnectedIfCounterpartExists)
@@ -42,6 +44,7 @@ TEST(MemPipeEnv, CreateNewPipeConnectedIfCounterpartExists)
     EXPECT_TRUE(server_pipe_enpoint->is_connected());
     EXPECT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 0);
     EXPECT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 0);
+    pool->stop();
 }
 
 TEST(MemPipeEnv, OpenNewPipeConnectedIfCounterpartExists)
@@ -56,6 +59,7 @@ TEST(MemPipeEnv, OpenNewPipeConnectedIfCounterpartExists)
     EXPECT_TRUE(server_pipe->is_connected());
     EXPECT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 0);
     EXPECT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 0);
+    pool->stop();
 }
 
 TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
@@ -77,6 +81,7 @@ TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
         EXPECT_TRUE(is_success(res));
         EXPECT_TRUE(b == client_msg);
     });
+    pool->stop();
 }
 
 TEST(MemPipeEnv, DoNotConnectNewPipeToCounterpartIfItIsNotExistingAnymore)
@@ -91,4 +96,5 @@ TEST(MemPipeEnv, DoNotConnectNewPipeToCounterpartIfItIsNotExistingAnymore)
     EXPECT_FALSE(server_pipe->is_connected());
     EXPECT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 0);
     EXPECT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 1);
+    pool->stop();
 }

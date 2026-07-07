@@ -144,23 +144,24 @@ namespace vshalygin::rpc {
         }
         else {
             const auto id = m_next_read_promise_id++;
-            auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
-                if(auto read_promises = read_promises_wp.lock()) {
-                    auto [g, promises] = read_promises->get();
-                    auto &m = promises.get<1>();
-                    auto it = m.find(id);
-                    if(it != m.end()) {
-                        m.modify(it, [](read_promise_data &el) {
-                            el.promise.resolve(pipe_op_res::timeout, {});
-                        });
-                        m.erase(it);
-                    }
-                }
-            };
 
             auto [g, read_promises] = m_read_promises->get();
             std::optional<uint64_t> timer_id;
             if(timeout) {
+                auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
+                    if(auto read_promises = read_promises_wp.lock()) {
+                        auto [g, promises] = read_promises->get();
+                        auto &m = promises.get<1>();
+                        auto it = m.find(id);
+                        if(it != m.end()) {
+                            m.modify(it, [](read_promise_data &el) {
+                                el.promise.resolve(pipe_op_res::timeout, {});
+                            });
+                            m.erase(it);
+                        }
+                    }
+                };
+
                 timer_id = m_timer.start(std::move(timeout_callback), *timeout);
             }
             read_promises.push_back({ id, timer_id, std::move(promise) });

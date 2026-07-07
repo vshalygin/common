@@ -91,6 +91,10 @@ protected:
 
     void TearDown() override
     {
+        m_service.reset();
+        m_other_pipe_enpoint.reset();
+        m_pipe_endpoint.reset();
+        m_data_holder_service.reset();
         m_thread_pool->stop();
     }
 

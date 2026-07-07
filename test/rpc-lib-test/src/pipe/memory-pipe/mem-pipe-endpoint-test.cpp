@@ -47,48 +47,57 @@ namespace {
     }
 }
 
-TEST(MemPipeEndpoint, InNotConnectedAfterCreation)
+class MemPipeEndpoint
+    : public Test
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    test_mem_pipe_endpoint sut(true, pool);
+protected:
+    void SetUp() override
+    {
+        m_thread_pool = std::make_shared<thread_pool>(2);
+    }
+
+protected:
+    std::shared_ptr<thread_pool> m_thread_pool;
+};
+
+TEST_F(MemPipeEndpoint, InNotConnectedAfterCreation)
+{
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
 
     ASSERT_FALSE(sut.is_connected());
 }
 
-TEST(MemPipeEndpoint, InConnectedAfterSettingBuffers)
+TEST_F(MemPipeEndpoint, InConnectedAfterSettingBuffers)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_buffers(buffers);
 
     ASSERT_TRUE(sut.is_connected());
 }
 
-TEST(MemPipeEndpoint, InNotConnectedAfterUnderlyingBuffersInvalidated)
+TEST_F(MemPipeEndpoint, InNotConnectedAfterUnderlyingBuffersInvalidated)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_buffers(buffers);
     buffers->invalidate();
 
     ASSERT_FALSE(sut.is_connected());
 }
 
-TEST(MemPipeEndpoint, SetsInvalidateCallbackAfterConnect)
+TEST_F(MemPipeEndpoint, SetsInvalidateCallbackAfterConnect)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_buffers(buffers);
     sut.set_disconnect_callback(callback.AsStdFunction());
     sut.invalidate();
@@ -97,17 +106,16 @@ TEST(MemPipeEndpoint, SetsInvalidateCallbackAfterConnect)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, SetsInvalidateCallbackBeforeConnect)
+TEST_F(MemPipeEndpoint, SetsInvalidateCallbackBeforeConnect)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_disconnect_callback(callback.AsStdFunction());
     sut.set_buffers(buffers);
     sut.invalidate();
@@ -116,40 +124,37 @@ TEST(MemPipeEndpoint, SetsInvalidateCallbackBeforeConnect)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, InvalidatesSettingBuffersIfWasInvalidatedBefore)
+TEST_F(MemPipeEndpoint, InvalidatesSettingBuffersIfWasInvalidatedBefore)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.invalidate();
     sut.set_buffers(buffers);
 
     ASSERT_FALSE(buffers->is_valid());
 }
 
-TEST(MemPipeEndpoint, InvalidatesUnderlyingBuffers)
+TEST_F(MemPipeEndpoint, InvalidatesUnderlyingBuffers)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_buffers(buffers);
     sut.invalidate();
 
     ASSERT_FALSE(buffers->is_valid());
 }
 
-TEST(MemPipeEndpoint, ExecuteDisconnectCallbackOnlyOnceIfBuffersWereNotSet)
+TEST_F(MemPipeEndpoint, ExecuteDisconnectCallbackOnlyOnceIfBuffersWereNotSet)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_disconnect_callback(callback.AsStdFunction());
     sut.invalidate();
     sut.invalidate();
@@ -157,14 +162,13 @@ TEST(MemPipeEndpoint, ExecuteDisconnectCallbackOnlyOnceIfBuffersWereNotSet)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, WaitsConnect)
+TEST_F(MemPipeEndpoint, WaitsConnect)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
-    pool->post([&]() {
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
+    m_thread_pool->post([&]() {
         auto res = sut.wait_connect();
         EXPECT_EQ(res, pipe_wait_res::connected);
         sync_event.set();
@@ -175,24 +179,22 @@ TEST(MemPipeEndpoint, WaitsConnect)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, StopWaitingConnectIfItIsAlreadyConnected)
+TEST_F(MemPipeEndpoint, StopWaitingConnectIfItIsAlreadyConnected)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_buffers(buffers);
 
     EXPECT_EQ(sut.wait_connect(), pipe_wait_res::connected);
 }
 
-TEST(MemPipeEndpoint, StopsWaitingConnectIfInvalidated)
+TEST_F(MemPipeEndpoint, StopsWaitingConnectIfInvalidated)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
 
-    test_mem_pipe_endpoint sut(true, pool);
-    pool->post([&]() {
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
+    m_thread_pool->post([&]() {
         auto res = sut.wait_connect();
         EXPECT_EQ(res, pipe_wait_res::invalidated);
         sync_event.set();
@@ -203,25 +205,23 @@ TEST(MemPipeEndpoint, StopsWaitingConnectIfInvalidated)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, StopsWaitingConnectIfItIsInvalidated)
+TEST_F(MemPipeEndpoint, StopsWaitingConnectIfItIsInvalidated)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.invalidate();
 
     EXPECT_EQ(sut.wait_connect(), pipe_wait_res::invalidated);
 }
 
-TEST(MemPipeEndpoint, WaitsConnectSuccessfullyBeforeTimeout)
+TEST_F(MemPipeEndpoint, WaitsConnectSuccessfullyBeforeTimeout)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
-    pool->post([&]() {
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
+    m_thread_pool->post([&]() {
         auto res = sut.wait_connect_for(std::chrono::seconds(100));
         EXPECT_EQ(res, pipe_wait_res::connected);
         sync_event.set();
@@ -232,34 +232,30 @@ TEST(MemPipeEndpoint, WaitsConnectSuccessfullyBeforeTimeout)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, CancelsWaitingOnTimeout)
+TEST_F(MemPipeEndpoint, CancelsWaitingOnTimeout)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
 
     auto res = sut.wait_connect_for(std::chrono::microseconds(1));
     EXPECT_EQ(res, pipe_wait_res::timeout);
 }
 
-TEST(MemPipeEndpoint, StopWaitingConnectUntilTimeoutIfItIsAlreadyConnected)
+TEST_F(MemPipeEndpoint, StopWaitingConnectUntilTimeoutIfItIsAlreadyConnected)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.set_buffers(buffers);
 
     EXPECT_EQ(sut.wait_connect_for(std::chrono::seconds(100)), pipe_wait_res::connected);
 }
 
-TEST(MemPipeEndpoint, StopsWaitingConnectUntilTimeoutIfInvalidated)
+TEST_F(MemPipeEndpoint, StopsWaitingConnectUntilTimeoutIfInvalidated)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
 
-    test_mem_pipe_endpoint sut(true, pool);
-    pool->post([&]() {
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
+    m_thread_pool->post([&]() {
         auto res = sut.wait_connect_for(std::chrono::seconds(100));
         EXPECT_EQ(res, pipe_wait_res::invalidated);
         sync_event.set();
@@ -269,46 +265,43 @@ TEST(MemPipeEndpoint, StopsWaitingConnectUntilTimeoutIfInvalidated)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, StopsWaitingConnectUntilTimeoutIfItIsInvalidated)
+TEST_F(MemPipeEndpoint, StopsWaitingConnectUntilTimeoutIfItIsInvalidated)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.invalidate();
 
     EXPECT_EQ(sut.wait_connect_for(std::chrono::seconds(100)), pipe_wait_res::invalidated);
 }
 
-TEST(MemPipeEndpoint, ExecuteWriteCallbackWithFailedCodeIfBuffersWereNotSet)
+TEST_F(MemPipeEndpoint, ExecuteWriteCallbackWithFailedCodeIfBuffersWereNotSet)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
 
     MockFunction<void(pipe_op_res)> callback;
     EXPECT_CALL(callback, Call(pipe_op_res::failed))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    test_mem_pipe_endpoint sut(true, pool);
+    test_mem_pipe_endpoint sut(true, m_thread_pool);
     sut.write_async({})
         .then(callback.AsStdFunction());
 
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, WritesDataFromClientToServer)
+TEST_F(MemPipeEndpoint, WritesDataFromClientToServer)
 {
     event sync_event;
     auto data = create_test_data();
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::success, BufferEq(data.data(), data.size())))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
-    test_mem_pipe_endpoint server_endpoint(true, pool);
-    test_mem_pipe_endpoint client_endpoint(false, pool);
+    test_mem_pipe_endpoint server_endpoint(true, m_thread_pool);
+    test_mem_pipe_endpoint client_endpoint(false, m_thread_pool);
     server_endpoint.set_buffers(buffers);
     client_endpoint.set_buffers(buffers);
 
@@ -319,18 +312,17 @@ TEST(MemPipeEndpoint, WritesDataFromClientToServer)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, WritesDataFromServerToClient)
+TEST_F(MemPipeEndpoint, WritesDataFromServerToClient)
 {
     event sync_event;
     auto data = create_test_data();
-    auto pool = std::make_shared<thread_pool>(2);
-    auto buffers = std::make_shared<mem_buffers>(pool);
+    auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::success, BufferEq(data.data(), data.size())))
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
-    test_mem_pipe_endpoint server_endpoint(true, pool);
-    test_mem_pipe_endpoint client_endpoint(false, pool);
+    test_mem_pipe_endpoint server_endpoint(true, m_thread_pool);
+    test_mem_pipe_endpoint client_endpoint(false, m_thread_pool);
     server_endpoint.set_buffers(buffers);
     client_endpoint.set_buffers(buffers);
 
@@ -341,11 +333,10 @@ TEST(MemPipeEndpoint, WritesDataFromServerToClient)
     sync_event.wait();
 }
 
-TEST(MemPipeEndpoint, ExecuteDisconnectCallbackOnDestruction)
+TEST_F(MemPipeEndpoint, ExecuteDisconnectCallbackOnDestruction)
 {
     event sync_event;
-    auto pool = std::make_shared<thread_pool>(2);
-    auto sut = std::make_unique<test_mem_pipe_endpoint>(true, pool);
+    auto sut = std::make_unique<test_mem_pipe_endpoint>(true, m_thread_pool);
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(1)
@@ -358,7 +349,7 @@ TEST(MemPipeEndpoint, ExecuteDisconnectCallbackOnDestruction)
     Mock::VerifyAndClearExpectations(&callback);
 }
 
-TEST(MemPipeEndpoint, WritesDataFromClientToServerTimeout)
+TEST_F(MemPipeEndpoint, WritesDataFromClientToServerTimeout)
 {
     event sync_event;
     auto data = create_test_data();
@@ -377,9 +368,10 @@ TEST(MemPipeEndpoint, WritesDataFromClientToServerTimeout)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }
 
-TEST(MemPipeEndpoint, WritesDataFromServerToClientTimeout)
+TEST_F(MemPipeEndpoint, WritesDataFromServerToClientTimeout)
 {
     event sync_event;
     auto data = create_test_data();
@@ -398,9 +390,10 @@ TEST(MemPipeEndpoint, WritesDataFromServerToClientTimeout)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }
 
-TEST(MemPipeEndpoint, ReadDataFromClient)
+TEST_F(MemPipeEndpoint, ReadDataFromClient)
 {
     event sync_event;
     auto pool = std::make_shared<thread_pool>(1);
@@ -418,9 +411,10 @@ TEST(MemPipeEndpoint, ReadDataFromClient)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }
 
-TEST(MemPipeEndpoint, WritesDataFromServer)
+TEST_F(MemPipeEndpoint, WritesDataFromServer)
 {
     event sync_event;
     auto pool = std::make_shared<thread_pool>(1);
@@ -438,4 +432,5 @@ TEST(MemPipeEndpoint, WritesDataFromServer)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }

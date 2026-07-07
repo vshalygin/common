@@ -31,27 +31,41 @@ namespace {
     }
 }
 
-TEST(MemBuffers, IsValidAfterCreation)
+class MemBuffers
+    : public Test
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_buffers sut(pool);
+protected:
+    void SetUp() override
+    {
+        m_thread_pool = std::make_shared<thread_pool>(2);
+    }
+
+    void TearDown() override
+    {
+        m_thread_pool->stop();
+    }
+
+protected:
+    std::shared_ptr<thread_pool> m_thread_pool;
+};
+
+TEST_F(MemBuffers, IsValidAfterCreation)
+{
+    mem_buffers sut(m_thread_pool);
 
     ASSERT_TRUE(sut.is_valid());
 }
 
-TEST(MemBuffers, IsNotValidAfterInvalidation)
+TEST_F(MemBuffers, IsNotValidAfterInvalidation)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-
-    mem_buffers sut(pool);
+    mem_buffers sut(m_thread_pool);
     sut.invalidate();
 
     ASSERT_FALSE(sut.is_valid());
 }
 
-TEST(MemBuffers, WritesFromClientToServer)
+TEST_F(MemBuffers, WritesFromClientToServer)
 {
-    auto pool = std::make_shared<thread_pool>(2);
     auto data = create_test_data();
     event sync_event;
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
@@ -59,7 +73,7 @@ TEST(MemBuffers, WritesFromClientToServer)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    mem_buffers sut(pool);
+    mem_buffers sut(m_thread_pool);
     sut.write_async_to_server(data.copy(), std::nullopt);
     sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
@@ -67,9 +81,8 @@ TEST(MemBuffers, WritesFromClientToServer)
     sync_event.wait();
 }
 
-TEST(MemBuffers, WritesFromServerToClient)
+TEST_F(MemBuffers, WritesFromServerToClient)
 {
-    auto pool = std::make_shared<thread_pool>(2);
     auto data = create_test_data();
     event sync_event;
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
@@ -77,7 +90,7 @@ TEST(MemBuffers, WritesFromServerToClient)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    mem_buffers sut(pool);
+    mem_buffers sut(m_thread_pool);
     sut.write_async_to_client(data.copy(), std::nullopt);
     sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
@@ -85,16 +98,15 @@ TEST(MemBuffers, WritesFromServerToClient)
     sync_event.wait();
 }
 
-TEST(MemBuffers, SetFewInvalidateCallbacks)
+TEST_F(MemBuffers, SetFewInvalidateCallbacks)
 {
-    auto pool = std::make_shared<thread_pool>(2);
     event sync_event;
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
-    mem_buffers sut(pool);
+    mem_buffers sut(m_thread_pool);
     sut.set_invalidate_callback(callback.AsStdFunction());
     sut.set_invalidate_callback(callback.AsStdFunction());
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 2);
@@ -105,16 +117,15 @@ TEST(MemBuffers, SetFewInvalidateCallbacks)
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 0);
 }
 
-TEST(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
+TEST_F(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
 {
-    auto pool = std::make_shared<thread_pool>(2);
     event sync_event;
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
-    mem_buffers sut(pool);
+    mem_buffers sut(m_thread_pool);
     sut.invalidate();
 
     sut.set_invalidate_callback(callback.AsStdFunction());
@@ -124,16 +135,15 @@ TEST(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 0);
 }
 
-TEST(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
+TEST_F(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
 {
-    auto pool = std::make_shared<thread_pool>(2);
     event sync_event;
     MockFunction<void()> callback;
     EXPECT_CALL(callback, Call)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
-    auto sut = std::make_unique<mem_buffers>(pool);
+    auto sut = std::make_unique<mem_buffers>(m_thread_pool);
     sut->set_invalidate_callback(callback.AsStdFunction());
     sut->set_invalidate_callback(callback.AsStdFunction());
 
@@ -141,7 +151,7 @@ TEST(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
     sync_event.wait();
 }
 
-TEST(MemBuffers, WritesFromClientToServerTimeout)
+TEST_F(MemBuffers, WritesFromClientToServerTimeout)
 {
     event sync_event;
     auto pool = std::make_shared<thread_pool>(1);
@@ -158,9 +168,10 @@ TEST(MemBuffers, WritesFromClientToServerTimeout)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }
 
-TEST(MemBuffers, WritesFromServerToClientTimeout)
+TEST_F(MemBuffers, WritesFromServerToClientTimeout)
 {
     event sync_event;
     auto pool = std::make_shared<thread_pool>(1);
@@ -177,9 +188,10 @@ TEST(MemBuffers, WritesFromServerToClientTimeout)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }
 
-TEST(MemBuffers, ReadsFromClientTimeout)
+TEST_F(MemBuffers, ReadsFromClientTimeout)
 {
     event sync_event;
     auto pool = std::make_shared<thread_pool>(1);
@@ -195,9 +207,10 @@ TEST(MemBuffers, ReadsFromClientTimeout)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }
 
-TEST(MemBuffers, ReadsFromServerTimeout)
+TEST_F(MemBuffers, ReadsFromServerTimeout)
 {
     event sync_event;
     auto pool = std::make_shared<thread_pool>(1);
@@ -213,4 +226,5 @@ TEST(MemBuffers, ReadsFromServerTimeout)
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event.set();
     f.get();
+    pool->stop();
 }

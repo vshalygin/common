@@ -40,6 +40,14 @@ protected:
         m_sut = std::make_unique<transport>(m_pipe_endpoint, std::chrono::milliseconds(10000));
     }
 
+    void TearDown() override
+    {
+        m_sut.reset();
+        m_other_pipe_endpoint.reset();
+        m_pipe_endpoint.reset();
+        m_thread_pool->stop();
+    }
+
 protected:
     MockFunction<void()> m_stop_callback;
 
@@ -65,42 +73,38 @@ TEST_F(Transport, IsNotRunningAfterStop)
 
 TEST_F(Transport, SendAsync)
 {
-    event sync_event;
     buffer buf(1); buf[0] = std::byte(34);
     MockFunction<void(pipe_op_res)> write_callback;
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::success))
         .Times(1);
     EXPECT_CALL(read_callback, Call)
-        .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .Times(1);
 
     m_sut->send_async(buf.copy())
-        .then(write_callback.AsStdFunction());
+        .then(write_callback.AsStdFunction())
+        .get();
     m_other_pipe_endpoint->read_async()
-        .then(read_callback.AsStdFunction());
-
-    sync_event.wait();
+        .then(read_callback.AsStdFunction())
+        .get();
 }
 
 TEST_F(Transport, RecvAsync)
 {
-    event sync_event;
     buffer buf(1); buf[0] = std::byte(34);
     MockFunction<void(pipe_op_res)> write_callback;
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::success))
         .Times(1);
     EXPECT_CALL(read_callback, Call(pipe_op_res::success, BufferEq(buf.data(), buf.size())))
-        .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .Times(1);
 
     m_other_pipe_endpoint->write_async(buf.copy())
-        .then(write_callback.AsStdFunction());
+        .then(write_callback.AsStdFunction())
+        .get();
     m_sut->recv_async()
-        .then(read_callback.AsStdFunction());
-
-    sync_event.wait();
+        .then(read_callback.AsStdFunction())
+        .get();
 }
 
 TEST_F(Transport, SetsStopCallback)
