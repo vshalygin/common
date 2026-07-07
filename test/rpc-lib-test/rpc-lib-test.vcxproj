@@ -164,6 +164,7 @@
     <ClInclude Include="src\mocks\authenticator-mock.h" />
     <ClInclude Include="src\mocks\channel-mock.h" />
     <ClInclude Include="src\mocks\closure-mock.h" />
+    <ClInclude Include="src\mocks\connection-mock.h" />
     <ClInclude Include="src\mocks\listener-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />
     <ClInclude Include="src\proto\test-messages.pb.h" />

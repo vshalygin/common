@@ -142,5 +142,8 @@
     <ClInclude Include="src\mocks\authenticator-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
+    <ClInclude Include="src\mocks\connection-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

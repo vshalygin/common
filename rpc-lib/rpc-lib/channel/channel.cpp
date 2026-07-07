@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
         assert(response);
         assert(done);
 
-        auto cg = std::make_unique<closure_guard>(done);
+        closure_guard cg(done);
 
         auto request_controller = to_request_controller(controller);
         const auto req_id = m_next_req_id.fetch_add(1);
@@ -28,8 +28,10 @@ namespace vshalygin::rpc {
         m_connection->request_async(create_transfer_msg_req(req_id, method_idx, request))
             .then(
         [cg = std::move(cg), request_controller, response, req_id] (request_result rc,
-                                                                    cl::buffer &&buffer)
+                                                                    cl::buffer &&buffer) mutable
         {
+            auto guard = std::move(cg);
+
             try {
                 if(is_success(rc)) {
                     assert(get_transfer_msg_type(buffer) == transfer_msg_type::res);
