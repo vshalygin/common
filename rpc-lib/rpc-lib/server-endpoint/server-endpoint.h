@@ -48,7 +48,7 @@ namespace vshalygin::rpc {
         template<typename GService>
         server_endpoint(std::unique_ptr<GService> gservice,
                         std::shared_ptr<cl::thread_pool> thread_pool,
-                        std::shared_ptr<iconnector> connector,
+                        std::shared_ptr<connector> connector,
                         connection_change_callback_t &&connect_change_callback,
                         const std::chrono::milliseconds &request_timeout);
 
@@ -111,7 +111,7 @@ namespace vshalygin::rpc {
     server_endpoint<GServiceStub>::server_endpoint
                                     (std::unique_ptr<GService> gservice,
                                      std::shared_ptr<cl::thread_pool> thread_pool,
-                                     std::shared_ptr<iconnector> connector,
+                                     std::shared_ptr<connector> connector,
                                      connection_change_callback_t &&connect_change_callback,
                                      const std::chrono::milliseconds &request_timeout)
         : m_request_timeout(request_timeout)

@@ -139,9 +139,6 @@
     <ClInclude Include="src\mocks\channel-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
-    <ClInclude Include="src\mocks\connector-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
     <ClInclude Include="src\mocks\transport-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>

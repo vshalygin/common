@@ -72,10 +72,7 @@
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp">
       <Filter>authenticator\simple-authenticator</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\connector\client-connector.cpp">
-      <Filter>connector</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\connector\server-connector.cpp">
+    <ClCompile Include="rpc-lib\connector\connector.cpp">
       <Filter>connector</Filter>
     </ClCompile>
     <ClCompile Include="rpc-lib\connection\connection.cpp">
@@ -152,10 +149,7 @@
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h">
       <Filter>pipe</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\connector\client-connector.h">
-      <Filter>connector</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connector\server-connector.h">
+    <ClInclude Include="rpc-lib\connector\connector.h">
       <Filter>connector</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\connection\connection.h">

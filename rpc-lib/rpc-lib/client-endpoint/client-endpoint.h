@@ -2,7 +2,7 @@
 #include "rpc-lib/channel/channel.h"
 #include "rpc-lib/service/service.h"
 #include "rpc-lib/connection/connection.h"
-#include "rpc-lib/connector/client-connector.h"
+#include "rpc-lib/connector/connector.h"
 #include "rpc-lib/channel/request-callback/request-callback.h"
 #include "rpc-lib/types/request-exception.h"
 #include "rpc-lib/types/connection-state.h"
@@ -62,7 +62,7 @@ namespace vshalygin::rpc {
     private:
         std::shared_ptr<iservice> m_service;
         std::unique_ptr<ichannel> m_channel;
-        std::shared_ptr<iconnector> m_connector;
+        std::shared_ptr<connector> m_connector;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<state_change_callback_t> m_change_callback;
         const std::chrono::milliseconds m_request_timeout;
@@ -80,7 +80,7 @@ namespace vshalygin::rpc {
                                                    const std::chrono::milliseconds &req_timeout)
         : m_service(std::make_shared<service>(std::move(gservice)))
         , m_channel(std::make_unique<channel>())
-        , m_connector(std::make_shared<client_connector>(thread_pool, authenticator, pipe_env))
+        , m_connector(std::make_shared<connector>(thread_pool, authenticator, pipe_env))
         , m_thread_pool(thread_pool)
         , m_change_callback(std::make_shared<state_change_callback_t>)
         , m_request_timeout(req_timeout)

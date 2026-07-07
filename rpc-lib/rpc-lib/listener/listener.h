@@ -10,7 +10,7 @@
 #include <chrono>
 
 namespace vshalygin::rpc {
-    class iconnector;
+    class connector;
     class iservice;
     class connection;
     class ichannel;
@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
         using connection_change_callback_t = std::function<void(uint64_t, connection_state)>;
 
     public:
-        explicit listener(std::shared_ptr<iconnector> connector,
+        explicit listener(std::shared_ptr<connector> connector,
                           std::shared_ptr<iservice> service,
                           std::shared_ptr<cl::thread_pool> thread_pool,
                           connection_change_callback_t &&connect_change_callback,
@@ -52,7 +52,7 @@ namespace vshalygin::rpc {
 
         uint64_t m_next_connection_id = 0;
 
-        std::shared_ptr<iconnector> m_connector;
+        std::shared_ptr<connector> m_connector;
         std::shared_ptr<iservice> m_service;
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<connection_change_callback_t> m_on_connection_change;

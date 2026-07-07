@@ -164,7 +164,6 @@
     <ClInclude Include="src\mocks\authenticator-mock.h" />
     <ClInclude Include="src\mocks\channel-mock.h" />
     <ClInclude Include="src\mocks\closure-mock.h" />
-    <ClInclude Include="src\mocks\connector-mock.h" />
     <ClInclude Include="src\mocks\listener-mock.h" />
     <ClInclude Include="src\mocks\pipe-env-mock.h" />
     <ClInclude Include="src\mocks\pipe-mock.h" />
