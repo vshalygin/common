@@ -5,14 +5,13 @@
 namespace vshalygin::rpc {
     enum class pipe_wait_res
     {
-        connected,
-        invalidated,
-        timeout
+        success,
+        canceled
     };
 
     inline bool is_success(pipe_wait_res r)
     {
-        return r == pipe_wait_res::connected;
+        return r == pipe_wait_res::success;
     }
 
     inline bool is_fail(pipe_wait_res r)
@@ -23,12 +22,10 @@ namespace vshalygin::rpc {
     inline std::string to_string(pipe_wait_res r)
     {
         switch(r) {
-            case pipe_wait_res::connected:
-                return "connected";
-            case pipe_wait_res::invalidated:
-                return "invalidated";
-            case pipe_wait_res::timeout:
-                return "timeout";
+            case pipe_wait_res::success:
+                return "success";
+            case pipe_wait_res::canceled:
+                return "canceled";
             default:
                 assert(!"unknown pipe_wait_res");
                 return "unknown";

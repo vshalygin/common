@@ -17,8 +17,7 @@ namespace vshalygin::rpc {
 
     protected:
         explicit mem_pipe_endpoint(bool is_server,
-                                   std::shared_ptr<cl::thread_pool> thread_pool);
-        void set_buffers(std::shared_ptr<mem_buffers> mem_buffers);
+                                   std::shared_ptr<mem_buffers> mem_buffers);
 
     public:
         mem_pipe_endpoint(mem_pipe_endpoint &) = delete;
@@ -28,9 +27,6 @@ namespace vshalygin::rpc {
 
         bool is_connected() const override;
         void set_disconnect_callback(cl::thread_pool_task<void()> &&callback) override;
-
-        pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const override;
-        pipe_wait_res wait_connect() const override;
 
         write_future write_async(cl::buffer &&msg) override;
         read_future read_async() override;
@@ -45,17 +41,7 @@ namespace vshalygin::rpc {
         read_future read_async(const std::optional<std::chrono::milliseconds> &timeout);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
-
-        mutable std::mutex m_mtx;
-        mutable std::condition_variable m_cv;
-
-        bool m_is_invalidated = false;
-
         std::shared_ptr<mem_buffers> m_mem_buffers;
-
-        cl::thread_pool_task<void()> m_on_disconnect;
-
         const bool m_is_server;
     };
 }

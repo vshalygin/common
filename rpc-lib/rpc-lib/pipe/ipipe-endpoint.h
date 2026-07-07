@@ -30,9 +30,6 @@ namespace vshalygin::rpc {
         virtual bool is_connected() const = 0;
         virtual void set_disconnect_callback(cl::thread_pool_task<void()> &&callback) = 0;
 
-        virtual pipe_wait_res wait_connect_for(const std::chrono::microseconds &mcs) const = 0;
-        virtual pipe_wait_res wait_connect() const = 0;
-
         virtual write_future write_async(cl::buffer &&msg) = 0;
         virtual read_future read_async() = 0;
         virtual write_future write_async(cl::buffer &&msg, const std::chrono::milliseconds &timeout) = 0;

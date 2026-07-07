@@ -8,93 +8,119 @@ using namespace vshalygin::rpc;
 using namespace vshalygin::cl;
 using namespace testing;
 
-TEST(MemPipeEnv, CreatesNewPipeUnconnectedIfNoCounterpart)
+class MemPipeEnv
+    : public Test
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_pipe_env sut(pool);
+protected:
+    void SetUp() override
+    {
+        m_thread_pool = std::make_shared<thread_pool>(2);
+        m_sut = std::make_unique<mem_pipe_env>(m_thread_pool);
+    }
 
-    auto pipe_enpoint = sut.create_pipe();
+    void TearDown() override
+    {
+        m_sut.reset();
+        m_thread_pool->stop();
+    }
 
-    ASSERT_FALSE(pipe_enpoint->is_connected());
-    ASSERT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 1);
-    pool->stop();
+protected:
+    std::shared_ptr<thread_pool> m_thread_pool;
+    std::unique_ptr<mem_pipe_env> m_sut;
+};
+
+TEST_F(MemPipeEnv, CreatePipeFuture)
+{
+    auto f = m_sut->create_pipe(); f;
+
+    EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
+    EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 1u);
 }
 
-TEST(MemPipeEnv, OpenNewPipeUnconnectedIfNoCounterpart)
+TEST_F(MemPipeEnv, OpenPipeFuture)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_pipe_env sut(pool);
+    auto f = m_sut->open_pipe(); f;
 
-    auto pipe_enpoint = sut.open_pipe();
-
-    ASSERT_FALSE(pipe_enpoint->is_connected());
-    ASSERT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 1);
-    pool->stop();
+    EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 1u);
+    EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);
 }
 
-TEST(MemPipeEnv, CreateNewPipeConnectedIfCounterpartExists)
+TEST_F(MemPipeEnv, StopPendingServerEndpoint)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_pipe_env sut(pool);
-    auto client_pipe_enpoint = sut.open_pipe();
+    auto f = m_sut->create_pipe();
 
-    auto server_pipe_enpoint = sut.create_pipe();
-
-    EXPECT_TRUE(client_pipe_enpoint->is_connected());
-    EXPECT_TRUE(server_pipe_enpoint->is_connected());
-    EXPECT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 0);
-    EXPECT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 0);
-    pool->stop();
-}
-
-TEST(MemPipeEnv, OpenNewPipeConnectedIfCounterpartExists)
-{
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe();
-
-    auto server_pipe = sut.create_pipe();
-
-    EXPECT_TRUE(client_pipe->is_connected());
-    EXPECT_TRUE(server_pipe->is_connected());
-    EXPECT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 0);
-    EXPECT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 0);
-    pool->stop();
-}
-
-TEST(MemPipeEnv, CreatedAndOpenedPipesAreConnected)
-{
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe();
-    auto server_pipe = sut.create_pipe();
-    buffer client_msg(1); client_msg[0] = (std::byte)0x1;
-    buffer server_msg(1); server_msg[0] = (std::byte)0x2;
-
-    client_pipe->write_async(client_msg.copy());
-    server_pipe->write_async(server_msg.copy());
-    client_pipe->read_async().get().apply([&](pipe_op_res res, buffer &b) {
-        EXPECT_TRUE(is_success(res));
-        EXPECT_TRUE(b == server_msg);
+    m_sut->cancel_pending_server_endpoints();
+    
+    f.get().apply([](pipe_op_res r, std::shared_ptr<ipipe_endpoint>) {
+        EXPECT_EQ(r, pipe_op_res::canceled);
     });
-    server_pipe->read_async().get().apply([&](pipe_op_res res, buffer &b) {
-        EXPECT_TRUE(is_success(res));
-        EXPECT_TRUE(b == client_msg);
-    });
-    pool->stop();
+    EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
+    EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);
 }
 
-TEST(MemPipeEnv, DoNotConnectNewPipeToCounterpartIfItIsNotExistingAnymore)
+TEST_F(MemPipeEnv, StopPendingClientEndpoint)
 {
-    auto pool = std::make_shared<thread_pool>(2);
-    mem_pipe_env sut(pool);
-    auto client_pipe = sut.open_pipe();
-    client_pipe.reset();
+    auto f = m_sut->open_pipe();
 
-    auto server_pipe = sut.create_pipe();
+    m_sut->cancel_pending_client_endpoints();
 
-    EXPECT_FALSE(server_pipe->is_connected());
-    EXPECT_TRUE(sut.get_client_pipe_endpoint_queue_size() == 0);
-    EXPECT_TRUE(sut.get_server_pipe_endpoint_queue_size() == 1);
-    pool->stop();
+    f.get().apply([](pipe_op_res r, std::shared_ptr<ipipe_endpoint>) {
+        EXPECT_EQ(r, pipe_op_res::canceled);
+    });
+    EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
+    EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);
+}
+
+TEST_F(MemPipeEnv, StopPendingServerEndpointOnDestruction)
+{
+    auto f = m_sut->create_pipe();
+
+    m_sut.reset();
+
+    f.get().apply([](pipe_op_res r, std::shared_ptr<ipipe_endpoint>) {
+        EXPECT_EQ(r, pipe_op_res::canceled);
+    });
+}
+
+TEST_F(MemPipeEnv, StopPendingClientEndpointOnDestruction)
+{
+    auto f = m_sut->open_pipe();
+
+    m_sut.reset();
+
+    f.get().apply([](pipe_op_res r, std::shared_ptr<ipipe_endpoint>) {
+        EXPECT_EQ(r, pipe_op_res::canceled);
+    });
+}
+
+TEST_F(MemPipeEnv, CreateConnectedEndpoints)
+{
+    auto f1 = m_sut->open_pipe();
+    auto f2 = m_sut->create_pipe();
+
+    std::shared_ptr<ipipe_endpoint> server_endpoint;
+    std::shared_ptr<ipipe_endpoint> client_endpoint;
+    f1.get().apply([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
+        ASSERT_EQ(r, pipe_wait_res::success);
+        ASSERT_TRUE(p);
+        
+        client_endpoint = std::move(p);
+    });
+    f2.get().apply([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
+        ASSERT_EQ(r, pipe_wait_res::success);
+        ASSERT_TRUE(p);
+
+        server_endpoint = std::move(p);
+    });
+
+    buffer buf(2); buf[0] = std::byte(1);
+    server_endpoint->write_async(buf.copy()).get();
+    client_endpoint->read_async()
+        .get()
+        .apply([&](pipe_op_res r, buffer &&b) {
+            EXPECT_EQ(r, pipe_op_res::success);
+            EXPECT_TRUE(b == buf);
+        });
+    EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
+    EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);
 }

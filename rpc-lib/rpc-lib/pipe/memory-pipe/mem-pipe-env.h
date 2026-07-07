@@ -13,7 +13,10 @@ namespace vshalygin::rpc {
         : public iclient_pipe_env
         , public iserver_pipe_env
     {
-        using queue_t = std::queue<std::weak_ptr<mem_pipe_endpoint>>;
+        using pipe_endpoint_future = iclient_pipe_env::pipe_endpoint_future;
+        using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>,
+                                              pipe_wait_res, std::shared_ptr<ipipe_endpoint>>;
+        using promises_queue_t = std::queue<pipe_endpoint_promise>;
 
     public:
         explicit mem_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool);
@@ -21,22 +24,27 @@ namespace vshalygin::rpc {
         mem_pipe_env(mem_pipe_env &) = delete;
         mem_pipe_env &operator=(mem_pipe_env &) = delete;
 
-        std::shared_ptr<ipipe_endpoint> create_pipe() override;
-        std::shared_ptr<ipipe_endpoint> open_pipe() override;
+        ~mem_pipe_env();
 
-        size_t get_client_pipe_endpoint_queue_size() const;
-        size_t get_server_pipe_endpoint_queue_size() const;
+        pipe_endpoint_future create_pipe() override;
+        pipe_endpoint_future open_pipe() override;
+
+        void cancel_pending_client_endpoints() override;
+        void cancel_pending_server_endpoints() override;
+
+        size_t get_pending_client_endpoints_count() const;
+        size_t get_pending_server_endpoints_count() const;
 
     private:
-        std::shared_ptr<ipipe_endpoint> create_new_pipe_end(bool is_server,
-                                                            queue_t &own_queue,
-                                                            queue_t &corresponding_queue);
+        pipe_endpoint_future
+            create_new_pipe_end(
+                bool is_server, promises_queue_t &queue, promises_queue_t &other_queue);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         mutable std::mutex m_mtx;
-        queue_t m_client_side_pipe_endpoints;
-        queue_t m_server_side_pipe_endpoints;
+        promises_queue_t m_client_side_pipe_promises;
+        promises_queue_t m_server_side_pipe_promises;
     };
 }
