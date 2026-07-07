@@ -22,8 +22,8 @@ namespace vshalygin::rpc {
         impl(std::shared_ptr<cl::thread_pool> thread_pool,
              std::shared_ptr<ipipe_endpoint> pipe_endpoint,
              std::shared_ptr<iservice> service,
-             const std::chrono::milliseconds &req_timeout,
-             const std::chrono::milliseconds &res_timeout);
+             const std::chrono::milliseconds &send_timeout,
+             const std::chrono::milliseconds &recv_timeout);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -60,7 +60,7 @@ namespace vshalygin::rpc {
     private:
         std::atomic_bool m_is_started = false;
 
-        const std::chrono::milliseconds m_res_timeout;
+        const std::chrono::milliseconds m_recv_timeout;
 
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<iservice> m_service;
@@ -80,13 +80,13 @@ namespace vshalygin::rpc {
     connection::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &req_timeout,
-                           const std::chrono::milliseconds &res_timeout)
-        : m_res_timeout(res_timeout)
+                           const std::chrono::milliseconds &send_timeout,
+                           const std::chrono::milliseconds &recv_timeout)
+        : m_recv_timeout(recv_timeout)
         , m_thread_pool(std::move(thread_pool))
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
-        , m_transport(std::move(pipe_endpoint), req_timeout)
+        , m_transport(std::move(pipe_endpoint), send_timeout)
     {}
 
     void connection::impl::start()
@@ -217,7 +217,7 @@ namespace vshalygin::rpc {
         auto [guard, map] = m_request_map.get();
         assert(map.count(msg_number) == 0);
         auto timer_id = m_multiple_timer.start(std::move(timer_callback),
-                                               m_res_timeout);
+                                               m_recv_timeout);
         map[msg_number] = request_data{ std::move(promise), timer_id };
     }
 
@@ -259,13 +259,13 @@ namespace vshalygin::rpc {
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &req_timeout,
-                           const std::chrono::milliseconds &res_timeout)
+                           const std::chrono::milliseconds &send_timeout,
+                           const std::chrono::milliseconds &recv_timeout)
         : m_impl(std::make_shared<impl>(std::move(thread_pool),
                                         std::move(pipe_endpoint),
                                         std::move(service),
-                                        req_timeout,
-                                        res_timeout))
+                                        send_timeout,
+                                        recv_timeout))
     {}
 
     connection::~connection()
