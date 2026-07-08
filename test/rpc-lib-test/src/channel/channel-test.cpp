@@ -41,7 +41,7 @@ protected:
     }
 
 protected:
-    MockFunction<void(request_result, std::unique_ptr<proto::response_message>)> m_request_callback;
+    MockFunction<void(request_result, std::unique_ptr<proto::response_message> &&)> m_request_callback;
 
     std::shared_ptr<thread_pool> m_thread_pool;
 };
@@ -68,9 +68,15 @@ protected:
 
     void call_method()
     {
+        auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
+            return rpc::ftuple(r, std::move(m));
+        });
+        promise.get_future()
+            .then(m_request_callback.AsStdFunction());
+
         auto req_controller =
-            request_controller<proto::response_message, decltype(m_request_callback.AsStdFunction())>
-            ::create_on_heap(m_request_callback.AsStdFunction(), std::move(m_response_message));
+            request_controller<proto::response_message>::create_on_heap(
+                std::move(promise), std::move(m_response_message));
 
         m_closure = req_controller;
         m_rpc_controller = req_controller;
@@ -88,9 +94,15 @@ protected:
         auto response_message2 = std::make_unique<proto::response_message>();
         m_response_message_ptr2 = response_message2.get();
         m_response_message_ptr2->set_data2(35);
+        auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
+            return rpc::ftuple(r, std::move(m));
+        });
+        promise.get_future()
+            .then(m_request_callback.AsStdFunction());
+
         auto req_controller2 =
-            request_controller<proto::response_message, decltype(m_request_callback.AsStdFunction())>
-            ::create_on_heap(m_request_callback.AsStdFunction(), std::move(response_message2));
+            request_controller<proto::response_message>::create_on_heap(
+                std::move(promise), std::move(response_message2));
 
         m_closure2 = req_controller2;
         m_rpc_controller2 = req_controller2;

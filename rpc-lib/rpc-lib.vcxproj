@@ -58,7 +58,6 @@
     <ClInclude Include="rpc-lib\transport\transport.h" />
     <ClInclude Include="rpc-lib\types\connection-state.h" />
     <ClInclude Include="rpc-lib\types\future.h" />
-    <ClInclude Include="rpc-lib\types\request-exception.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
   </ItemGroup>

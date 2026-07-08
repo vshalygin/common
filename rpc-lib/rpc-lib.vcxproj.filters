@@ -113,9 +113,6 @@
     <ClInclude Include="rpc-lib\client-endpoint\client-endpoint.h">
       <Filter>client-endpoint</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\types\request-exception.h">
-      <Filter>types</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
     </ClInclude>
