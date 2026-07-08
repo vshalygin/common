@@ -1,4 +1,4 @@
-#include <rpc-lib/connector/connector.h>
+#include <rpc-lib/connector/client-connector.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
 #include <rpc-lib/pipe/ipipe-endpoint.h>
 #include <rpc-lib/connection/iconnection.h>
@@ -25,7 +25,7 @@ namespace {
     }
 }
 
-class Connector
+class ClientConnector
     : public Test
 {
 protected:
@@ -48,8 +48,8 @@ protected:
 
     auto create_sut(std::chrono::milliseconds send_timeout, std::chrono::milliseconds recv_timeout)
     {
-        return std::make_unique<connector>(m_thread_pool, m_authenticator,
-                                           m_pipe_env, nullptr, send_timeout, recv_timeout);
+        return std::make_unique<client_connector>(m_thread_pool, m_authenticator,
+                                                  m_pipe_env, nullptr, send_timeout, recv_timeout);
     }
 
     auto create_sut()
@@ -73,7 +73,7 @@ protected:
     std::shared_ptr<ipipe_endpoint> m_server_endpoint;
 };
 
-TEST_F(Connector, CreatesConnection)
+TEST_F(ClientConnector, CreatesConnection)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(10s);
@@ -95,7 +95,7 @@ TEST_F(Connector, CreatesConnection)
         .apply([](pipe_op_res, buffer &b) { EXPECT_TRUE(b == create_req_message()); });
 }
 
-TEST_F(Connector, CancelWaitingConnection)
+TEST_F(ClientConnector, CancelWaitingConnection)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(10s);
@@ -105,7 +105,7 @@ TEST_F(Connector, CancelWaitingConnection)
     ASSERT_ANY_THROW(f.get());
 }
 
-TEST_F(Connector, FailsIfCannotWriteHandshakeRequest)
+TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequest)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(10s);
@@ -116,7 +116,7 @@ TEST_F(Connector, FailsIfCannotWriteHandshakeRequest)
     ASSERT_ANY_THROW(f.get());
 }
 
-TEST_F(Connector, FailsIfCannotWriteHandshakeRequestByTimout)
+TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequestByTimout)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(0ms);
@@ -125,7 +125,7 @@ TEST_F(Connector, FailsIfCannotWriteHandshakeRequestByTimout)
     ASSERT_ANY_THROW(f.get());
 }
 
-TEST_F(Connector, FailsIfCannotReadHandshakeResponse)
+TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponse)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(10s);
@@ -141,7 +141,7 @@ TEST_F(Connector, FailsIfCannotReadHandshakeResponse)
     ASSERT_ANY_THROW(f.get());
 }
 
-TEST_F(Connector, FailsIfCannotReadHandshakeResponseByTimout)
+TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponseByTimout)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(10ms);
@@ -152,7 +152,7 @@ TEST_F(Connector, FailsIfCannotReadHandshakeResponseByTimout)
     ASSERT_ANY_THROW(f.get());
 }
 
-TEST_F(Connector, FailsIfConnectionRefusedByServer)
+TEST_F(ClientConnector, FailsIfConnectionRefusedByServer)
 {
     EXPECT_CALL(*m_authenticator, check_response)
         .Times(1)
@@ -170,7 +170,7 @@ TEST_F(Connector, FailsIfConnectionRefusedByServer)
     ASSERT_ANY_THROW(f.get());
 }
 
-TEST_F(Connector, UseAuthentificatorForFormingHandshakeRequest)
+TEST_F(ClientConnector, UseAuthentificatorForFormingHandshakeRequest)
 {
     buffer req(1); req[0] = std::byte(34);
     EXPECT_CALL(*m_authenticator, create_request)
@@ -188,7 +188,7 @@ TEST_F(Connector, UseAuthentificatorForFormingHandshakeRequest)
         .get();
 }
 
-TEST_F(Connector, UseAuthentificatorForCheckingHandshakeResponse)
+TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
 {
     buffer res(1); res[0] = std::byte(34);
     EXPECT_CALL(*m_authenticator, check_response)
@@ -208,7 +208,7 @@ TEST_F(Connector, UseAuthentificatorForCheckingHandshakeResponse)
     f.get();
 }
 
-TEST_F(Connector, WaitingCancelsOnDestruction)
+TEST_F(ClientConnector, WaitingCancelsOnDestruction)
 {
     auto sut = create_sut();
     auto f = sut->create_connection_async(10s);

@@ -11,6 +11,11 @@ namespace vshalygin::rpc {
         return {};
     }
 
+    bool simple_authenticator::check_request(cl::cbuffer_view) const
+    {
+        return true;
+    }
+
     bool simple_authenticator::check_response(cl::cbuffer_view) const
     {
         return true;

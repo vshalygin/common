@@ -34,9 +34,6 @@
     <Filter Include="transport">
       <UniqueIdentifier>{94e19454-f139-4921-b24e-24bb2cc625b1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="listener">
-      <UniqueIdentifier>{e73dba34-7353-4ad2-8c2a-25e63910f6be}</UniqueIdentifier>
-    </Filter>
     <Filter Include="authenticator">
       <UniqueIdentifier>{cd6ba141-8f45-4d0c-a986-f971892cf8ae}</UniqueIdentifier>
     </Filter>
@@ -63,13 +60,10 @@
     <ClCompile Include="rpc-lib\transport\transport.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\listener\listener.cpp">
-      <Filter>listener</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp">
       <Filter>authenticator\simple-authenticator</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\connector\connector.cpp">
+    <ClCompile Include="rpc-lib\connector\client-connector.cpp">
       <Filter>connector</Filter>
     </ClCompile>
     <ClCompile Include="rpc-lib\connection\connection.cpp">
@@ -89,6 +83,9 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\controller\controller-cast.cpp">
       <Filter>controller</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\connector\server-connector.cpp">
+      <Filter>connector</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,9 +125,6 @@
     <ClInclude Include="rpc-lib\transport\transport.h">
       <Filter>transport</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\listener\listener.h">
-      <Filter>listener</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h">
       <Filter>authenticator</Filter>
     </ClInclude>
@@ -140,7 +134,7 @@
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h">
       <Filter>pipe</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\connector\connector.h">
+    <ClInclude Include="rpc-lib\connector\client-connector.h">
       <Filter>connector</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\connection\connection.h">
@@ -196,6 +190,9 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\controller\response-controller-base.h">
       <Filter>controller</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\connector\server-connector.h">
+      <Filter>connector</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

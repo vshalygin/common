@@ -9,6 +9,7 @@ namespace vshalygin::rpc {
 
         virtual cl::buffer create_request() const = 0;
         virtual cl::buffer create_response(cl::cbuffer_view req) const = 0;
+        virtual bool check_request(cl::cbuffer_view req) const = 0;
         virtual bool check_response(cl::cbuffer_view res) const = 0;
     };
 }
