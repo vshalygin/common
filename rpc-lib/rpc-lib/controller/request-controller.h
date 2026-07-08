@@ -3,8 +3,6 @@
 #include "rpc-lib/types/request-result.h"
 #include "common-lib/mpl/type-transform.h"
 
-#include <functional>
-
 namespace vshalygin::rpc {
     template<typename Response, typename Callback>
     class request_controller final
