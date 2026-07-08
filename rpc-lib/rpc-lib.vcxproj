@@ -35,7 +35,6 @@
     <ClInclude Include="rpc-lib\connection\iconnection.h" />
     <ClInclude Include="rpc-lib\connector\connector.h" />
     <ClInclude Include="rpc-lib\controller\irequest-controller.h" />
-    <ClInclude Include="rpc-lib\controller\iresponse-controller-ex.h" />
     <ClInclude Include="rpc-lib\controller\iresponse-controller.h" />
     <ClInclude Include="rpc-lib\controller\null-rpc-controller.h" />
     <ClInclude Include="rpc-lib\controller\request-controller-base.h" />
@@ -54,7 +53,6 @@
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h" />
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h" />
     <ClInclude Include="rpc-lib\service\iservice.h" />
-    <ClInclude Include="rpc-lib\service\response-callback\response-callback.h" />
     <ClInclude Include="rpc-lib\service\service.h" />
     <ClInclude Include="rpc-lib\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\transport\transport.h" />

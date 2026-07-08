@@ -1,5 +1,6 @@
 #include <rpc-lib/service/service.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
+#include <rpc-lib/controller/iresponse-controller.h>
 
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"
@@ -43,7 +44,7 @@ protected:
         m_thread_pool = std::make_shared<thread_pool>(2);
         auto gservice = std::make_unique<ProtoServiceNiceMock>();
         m_gservice = gservice.get();
-        m_service = std::make_unique<service<ProtoServiceMock>>(std::move(gservice), m_thread_pool);
+        m_service = std::make_unique<service<ProtoServiceMock>>(std::move(gservice), m_thread_pool, m_connection_id);
 
         m_request_message.set_data(34);
         m_response_message.set_data(44);
@@ -52,6 +53,8 @@ protected:
     }
 
 protected:
+    const uint64_t m_connection_id = 64;
+
     std::shared_ptr<thread_pool> m_thread_pool;
     std::unique_ptr<iservice> m_service;
     ProtoServiceNiceMock *m_gservice;
@@ -141,7 +144,7 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
 
 TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNotSet)
 {
-    service<ProtoServiceMock> sut(nullptr, m_thread_pool);
+    service<ProtoServiceMock> sut(nullptr, m_thread_pool, 0);
     m_response_message.Clear();
     auto response_buf = create_transfer_msg_res(34,
                                                 response_result::not_implemented,
@@ -161,7 +164,7 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNot
         .get();
 }
 
-TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqualsToMethodsCounst)
+TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqualsToMethodsCount)
 {
     m_response_message.Clear();
     auto response_buf = create_transfer_msg_res(34,
@@ -179,5 +182,26 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqual
 
     m_service->process_request_async(std::move(request_buf))
         .then(response_callback.AsStdFunction())
+        .get();
+}
+
+TEST_F(Service, CreatesResponseControllerWhithConncectionId)
+{
+    auto request_buf = create_transfer_msg_req(34,
+                                               1,
+                                               &m_request_message);
+    EXPECT_CALL(*m_gservice, Method2)
+        .Times(1)
+        .WillOnce([&](::google::protobuf::RpcController *controller,
+                  const ::proto::request_message * /*request*/,
+                  ::proto::response_message * /*response*/,
+                  ::google::protobuf::Closure *done) {
+                      closure_guard cg(done);
+                      
+                      auto c = to_response_controller(controller);
+                      EXPECT_EQ(c->get_connection_id(), m_connection_id);
+                  });
+
+    m_service->process_request_async(std::move(request_buf))
         .get();
 }

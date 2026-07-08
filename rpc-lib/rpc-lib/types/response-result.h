@@ -7,7 +7,6 @@ namespace vshalygin::rpc {
     {
         ok = 0,
         canceled,
-        insufficient_rights,
         request_parse_error,
         response_too_big,
         not_implemented,
@@ -31,8 +30,6 @@ namespace vshalygin::rpc {
                 return "ok";
             case response_result::canceled:
                 return "canceled";
-            case response_result::insufficient_rights:
-                return "insufficient_rights";
             case response_result::request_parse_error:
                 return "request_parse_error";
             case response_result::response_too_big:
@@ -54,8 +51,6 @@ namespace vshalygin::rpc {
             ans = response_result::ok;
         } else if(rc == "canceled") {
             ans = response_result::canceled;
-        } else if(rc == "insufficient_rights") {
-            ans = response_result::insufficient_rights;
         } else if(rc == "request_parse_error") {
             ans = response_result::request_parse_error;
         } else if(rc == "response_too_big") {

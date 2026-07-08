@@ -20,10 +20,9 @@ namespace vshalygin::rpc {
         void Run() override;
 
         uint64_t get_connection_id() const override;
-        void set_response_result(response_result) override;
 
     private:
-        response_result m_response_result = response_result::unknown_error;
+        response_result m_response_result = response_result::ok;
         cl::remove_type_qualifiers_t<Callback> m_callback;
 
         const uint64_t m_connection_id;
@@ -62,11 +61,5 @@ namespace vshalygin::rpc {
     uint64_t response_controller<Callback>::get_connection_id() const
     {
         return m_connection_id;
-    }
-
-    template<typename Callback>
-    void response_controller<Callback>::set_response_result(response_result r)
-    {
-        m_response_result = r;
     }
 }

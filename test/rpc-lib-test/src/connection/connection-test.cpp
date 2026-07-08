@@ -94,7 +94,8 @@ protected:
 
         f1.get(); f2.get();
         m_service = std::make_shared<service<DataHolderService>>(m_data_holder_service,
-                                                                 m_thread_pool);
+                                                                 m_thread_pool,
+                                                                 0);
     }
 
     void TearDown() override
