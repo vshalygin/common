@@ -9,7 +9,7 @@ class authenticator_mock
 public:
     MOCK_METHOD(vshalygin::cl::buffer, create_request, (), (const, override));
     MOCK_METHOD(vshalygin::cl::buffer, create_response, (vshalygin::cl::cbuffer_view req), (const, override));
-    MOCK_METHOD(bool, check_request, (vshalygin::cl::cbuffer_view res), (const, override));
+    MOCK_METHOD(bool, check_request, (vshalygin::cl::cbuffer_view req), (const, override));
     MOCK_METHOD(bool, check_response, (vshalygin::cl::cbuffer_view res), (const, override));
 };
 

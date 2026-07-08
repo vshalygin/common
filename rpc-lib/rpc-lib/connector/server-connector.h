@@ -41,6 +41,8 @@ namespace vshalygin::rpc {
         void stop();
         bool is_active() const;
 
+        size_t get_pending_connections_count() const;
+
     private:
         class impl;
         std::shared_ptr<impl> m_impl;

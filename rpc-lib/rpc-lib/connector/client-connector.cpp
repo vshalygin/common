@@ -37,6 +37,7 @@ namespace vshalygin::rpc {
         auto send_timeout = m_send_timeout;
         auto recv_timeout = m_recv_timeout;
         
+        //TODO make pretty
         auto promise = make_promise(thread_pool.get(), [pipe_env]() { return pipe_env->open_pipe(); });
         promise.resolve();
         auto future = promise.get_future()

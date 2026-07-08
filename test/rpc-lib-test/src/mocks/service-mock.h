@@ -6,10 +6,9 @@ class service_mock
     : public vshalygin::rpc::iservice
 {
 public:
-    MOCK_METHOD(void,
-                process_request,
-                (vshalygin::cl::buffer &&request_message,
-                 std::function<void(vshalygin::cl::buffer &&)> &&raw_response_callback),
+    MOCK_METHOD(vshalygin::rpc::future<vshalygin::cl::buffer>,
+                process_request_async,
+                (vshalygin::cl::buffer &&request_message),
                 (override));
 };
 

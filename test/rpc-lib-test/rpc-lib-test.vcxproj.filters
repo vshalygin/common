@@ -52,7 +52,7 @@
     <ClCompile Include="src\transport\transport-test.cpp">
       <Filter>transport</Filter>
     </ClCompile>
-    <ClCompile Include="src\connector\connector-test.cpp">
+    <ClCompile Include="src\connector\client-connector-test.cpp">
       <Filter>connector</Filter>
     </ClCompile>
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp">
@@ -63,6 +63,9 @@
     </ClCompile>
     <ClCompile Include="src\controller\response-controller-test.cpp">
       <Filter>controller</Filter>
+    </ClCompile>
+    <ClCompile Include="src\connector\service-connector-test.cpp">
+      <Filter>connector</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -131,9 +134,6 @@
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\channel-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\mocks\listener-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\authenticator-mock.h">

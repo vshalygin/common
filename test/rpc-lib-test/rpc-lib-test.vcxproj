@@ -133,7 +133,8 @@
     <ClCompile Include="src\client-endpoint\client-endpoint-test.cpp" />
     <ClCompile Include="src\closure-guard\closure-guard-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
-    <ClCompile Include="src\connector\connector-test.cpp" />
+    <ClCompile Include="src\connector\client-connector-test.cpp" />
+    <ClCompile Include="src\connector\service-connector-test.cpp" />
     <ClCompile Include="src\controller\request-controller-test.cpp" />
     <ClCompile Include="src\controller\response-controller-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp" />
@@ -165,7 +166,6 @@
     <ClInclude Include="src\mocks\channel-mock.h" />
     <ClInclude Include="src\mocks\closure-mock.h" />
     <ClInclude Include="src\mocks\connection-mock.h" />
-    <ClInclude Include="src\mocks\listener-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />
     <ClInclude Include="src\proto\test-messages.pb.h" />
   </ItemGroup>

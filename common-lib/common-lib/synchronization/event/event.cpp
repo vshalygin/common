@@ -53,7 +53,7 @@ namespace vshalygin::cl {
         bool wait_for(const std::chrono::microseconds &mcs)
         {
             spinlock_guard guard(m_spinlock);
-            const auto deadline = std::chrono::steady_clock::now() + mcs;
+            const auto deadline = std::chrono::steady_clock::now() + mcs; //TODO возможно переполнение
             auto signaled = m_cv.wait_until(guard, deadline, [this]() { return m_is_set; });
             if(signaled && !m_manual_reset) {
                 m_is_set = false;

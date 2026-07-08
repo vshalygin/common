@@ -51,7 +51,7 @@ namespace vshalygin::cl {
         boost::asio::io_context &get_io_context() noexcept;
         const boost::asio::io_context &get_io_context() const noexcept;
 
-        strand create_strand();
+        strand create_strand(); //TODO удалить этот метод
 
     private:
         using io_context = boost::asio::io_context;
