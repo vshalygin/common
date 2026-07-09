@@ -34,9 +34,6 @@
     <ClCompile Include="src\service\service-test.cpp">
       <Filter>service</Filter>
     </ClCompile>
-    <ClCompile Include="src\client-endpoint\client-endpoint-test.cpp">
-      <Filter>client-endpoint</Filter>
-    </ClCompile>
     <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp">
       <Filter>server-endpoint</Filter>
     </ClCompile>
@@ -95,9 +92,6 @@
     </Filter>
     <Filter Include="service">
       <UniqueIdentifier>{4135792f-699a-4ff1-b198-81a3a3eac2b3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="client-endpoint">
-      <UniqueIdentifier>{5378f013-d467-4c2f-b646-5f7cc71d1fbd}</UniqueIdentifier>
     </Filter>
     <Filter Include="server-endpoint">
       <UniqueIdentifier>{04329da9-a1ec-4d97-9f37-e8b4e98ddc4d}</UniqueIdentifier>

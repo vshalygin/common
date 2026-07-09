@@ -6,7 +6,9 @@
 namespace vshalygin::rpc {
     channel::channel(std::unique_ptr<iconnection> &&connection)
         : m_connection(std::move(connection))
-    {}
+    {
+        assert(m_connection);
+    }
 
     void channel::CallMethod(const MethodDescriptor *method,
                              RpcController *controller,
@@ -25,8 +27,7 @@ namespace vshalygin::rpc {
         auto request_controller = to_request_controller(controller);
         const auto req_id = m_next_req_id.fetch_add(1);
         const auto method_idx = static_cast<uint32_t>(method->index());
-        m_connection->request_async(create_transfer_msg_req(req_id, method_idx, request))
-            .then(
+        m_connection->request_async(create_transfer_msg_req(req_id, method_idx, request)).then(
         [cg = std::move(cg), request_controller, response, req_id] (request_result rc,
                                                                     cl::buffer &&buffer) mutable
         {
@@ -60,5 +61,25 @@ namespace vshalygin::rpc {
                  request_controller->set_result(request_result::unknown_error);
              }
         });
+    }
+
+    void channel::start()
+    {
+        m_connection->start();
+    }
+
+    void channel::disconnect()
+    {
+        m_connection->deactivate();
+    }
+
+    bool channel::is_connected() const
+    {
+        return m_connection->is_active();
+    }
+
+    void channel::set_disconnect_callback(std::function<void()> &&callback)
+    {
+        m_connection->set_stop_callback(std::move(callback));
     }
 }

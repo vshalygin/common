@@ -19,9 +19,6 @@
     <Filter Include="service">
       <UniqueIdentifier>{64713131-9a37-42fe-8d9e-3863a8ef4989}</UniqueIdentifier>
     </Filter>
-    <Filter Include="client-endpoint">
-      <UniqueIdentifier>{487281f9-4992-4e26-a2a9-b5bea3580856}</UniqueIdentifier>
-    </Filter>
     <Filter Include="server-endpoint">
       <UniqueIdentifier>{cdb19d86-cbcf-48f7-b5aa-3463fbd41bd2}</UniqueIdentifier>
     </Filter>
@@ -45,6 +42,9 @@
     </Filter>
     <Filter Include="controller">
       <UniqueIdentifier>{7e3bc64e-e6b3-43e5-8ef5-77f070e2fe24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="endpoint">
+      <UniqueIdentifier>{487281f9-4992-4e26-a2a9-b5bea3580856}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -109,9 +109,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\service\service.h">
       <Filter>service</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\client-endpoint\client-endpoint.h">
-      <Filter>client-endpoint</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
       <Filter>server-endpoint</Filter>
@@ -190,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\connector\server-connector.h">
       <Filter>connector</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\endpoint\endpoint.h">
+      <Filter>endpoint</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

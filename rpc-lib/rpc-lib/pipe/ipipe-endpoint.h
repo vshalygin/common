@@ -18,6 +18,7 @@ namespace vshalygin::rpc {
     // subscribe to disconnect -> вызываем сразу асинхронно, если disconnect
     // set_disconnect_callback вызывается только один раз
     // callback не должен вызываться в потоке set_disconnect_callback
+    // set_disconnect_callback колбек вызывается, если на момент установки уже установлен
 
     class ipipe_endpoint
     {

@@ -8,6 +8,7 @@
 #pragma warning(pop)
 
 #include <atomic>
+#include <functional>
 
 namespace vshalygin::rpc {
     class channel final
@@ -29,6 +30,12 @@ namespace vshalygin::rpc {
                         const Message *request,
                         Message *response,
                         Closure *done) override;
+
+        void start();
+
+        void disconnect();
+        bool is_connected() const;
+        void set_disconnect_callback(std::function<void()> &&callback);
 
     private:
         std::atomic_uint64_t m_next_req_id = 0;
