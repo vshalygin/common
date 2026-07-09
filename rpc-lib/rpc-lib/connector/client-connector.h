@@ -33,12 +33,7 @@ namespace vshalygin::rpc {
         void cancel_connect_waiting();
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
-        std::shared_ptr<iauthenticator> m_authenticator;
-        std::shared_ptr<iclient_pipe_env> m_pipe_env;
-        std::shared_ptr<iservice> m_service;
-        const std::chrono::milliseconds m_handshake_timeout;
-        const std::chrono::milliseconds m_send_timeout;
-        const std::chrono::milliseconds m_recv_timeout;
+        class impl;
+        std::shared_ptr<impl> m_impl;
     };
 }

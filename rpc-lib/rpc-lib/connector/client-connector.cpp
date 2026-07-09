@@ -8,13 +8,42 @@
 #include <stdexcept>
 
 namespace vshalygin::rpc {
-    client_connector::client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
-                                       std::shared_ptr<iauthenticator> authenticator,
-                                       std::shared_ptr<iclient_pipe_env> pipe_env,
-                                       std::shared_ptr<iservice> service,
-                                       std::chrono::milliseconds handshake_timeout,
-                                       std::chrono::milliseconds send_timeout,
-                                       std::chrono::milliseconds recv_timeout)
+    class client_connector::impl
+        : public std::enable_shared_from_this<impl>
+    {
+    public:
+        explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
+                      std::shared_ptr<iauthenticator> authenticator,
+                      std::shared_ptr<iclient_pipe_env> pipe_env,
+                      std::shared_ptr<iservice> service,
+                      std::chrono::milliseconds handshake_timeout,
+                      std::chrono::milliseconds send_timeout,
+                      std::chrono::milliseconds recv_timeout);
+
+        impl(const impl &) = delete;
+        impl &operator=(const impl &) = delete;
+
+        future<std::unique_ptr<iconnection>> create_connection_async();
+
+        void cancel_connect_waiting();
+
+    private:
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        std::shared_ptr<iauthenticator> m_authenticator;
+        std::shared_ptr<iclient_pipe_env> m_pipe_env;
+        std::shared_ptr<iservice> m_service;
+        const std::chrono::milliseconds m_handshake_timeout;
+        const std::chrono::milliseconds m_send_timeout;
+        const std::chrono::milliseconds m_recv_timeout;
+    };
+
+    client_connector::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+                                 std::shared_ptr<iauthenticator> authenticator,
+                                 std::shared_ptr<iclient_pipe_env> pipe_env,
+                                 std::shared_ptr<iservice> service,
+                                 std::chrono::milliseconds handshake_timeout,
+                                 std::chrono::milliseconds send_timeout,
+                                 std::chrono::milliseconds recv_timeout)
         : m_thread_pool(std::move(thread_pool))
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
@@ -22,6 +51,69 @@ namespace vshalygin::rpc {
         , m_handshake_timeout(handshake_timeout)
         , m_send_timeout(send_timeout)
         , m_recv_timeout(recv_timeout)
+    {}
+    
+    future<std::unique_ptr<iconnection>> client_connector::impl::create_connection_async()
+    {
+        auto promise = make_promise(m_thread_pool.get(), [self = shared_from_this()]() {
+            return self->m_pipe_env->open_pipe();
+        });
+        auto future = promise.get_future()
+            .then([self = weak_from_this()]
+                  (pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
+                      if(is_fail(r)) {
+                          throw std::runtime_error("pipe waiting failed");
+                      }
+                      std::shared_ptr s(self);
+                      auto req = s->m_authenticator->create_request();
+                      return  pipe_endpoint->write_async(std::move(req), s->m_handshake_timeout)
+                          .then([pipe_endpoint, self] (pipe_op_res r) {
+                                    if(is_fail(r)) {
+                                        throw std::runtime_error("write operation failed: " + to_string(r));
+                                    }
+                                    std::shared_ptr s(self);
+                                    return pipe_endpoint->read_async(s->m_handshake_timeout);
+                                })
+                          .then([pipe_endpoint, self](pipe_op_res r, cl::buffer &&b)
+                                                                   -> std::unique_ptr<iconnection> {
+                                    if(is_fail(r)) {
+                                        throw std::runtime_error("read operation failed: " + to_string(r));
+                                    }
+
+                                    std::shared_ptr s(self);
+                                    if(!s->m_authenticator->check_response(b)) {
+                                        throw std::runtime_error("server forbid connection");
+                                    }
+
+                                    return std::make_unique<connection>(s->m_thread_pool,
+                                                                        pipe_endpoint,
+                                                                        s->m_service,
+                                                                        s->m_send_timeout,
+                                                                        s->m_recv_timeout);
+                                });
+                  });
+            
+        
+        promise.resolve();
+        return future;
+    }
+
+    void client_connector::impl::cancel_connect_waiting()
+    {
+        m_pipe_env->cancel_pending_client_endpoints();
+    }
+
+
+    client_connector::client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+                                       std::shared_ptr<iauthenticator> authenticator,
+                                       std::shared_ptr<iclient_pipe_env> pipe_env,
+                                       std::shared_ptr<iservice> service,
+                                       std::chrono::milliseconds handshake_timeout,
+                                       std::chrono::milliseconds send_timeout,
+                                       std::chrono::milliseconds recv_timeout)
+        : m_impl(std::make_shared<impl>(std::move(thread_pool), std::move(authenticator),
+                                        std::move(pipe_env), std::move(service),
+                                        handshake_timeout, send_timeout, recv_timeout))
     {}
 
     client_connector::~client_connector()
@@ -31,60 +123,11 @@ namespace vshalygin::rpc {
 
     future<std::unique_ptr<iconnection>> client_connector::create_connection_async()
     {
-        auto authenticator = m_authenticator;
-        auto pipe_env = m_pipe_env;
-        auto thread_pool = m_thread_pool;
-        auto service = m_service;
-        auto handshake_timeout = m_handshake_timeout;
-        auto send_timeout = m_send_timeout;
-        auto recv_timeout = m_recv_timeout;
-        
-        //TODO make pretty
-        auto promise = make_promise(thread_pool.get(), [pipe_env]() { return pipe_env->open_pipe(); });
-        promise.resolve();
-        auto future = promise.get_future()
-            .then([authenticator, handshake_timeout]
-                  (pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
-                      if(is_fail(r)) {
-                          throw std::runtime_error("pipe waiting failed");
-                      }
-                      auto req = authenticator->create_request();
-                      return  pipe_endpoint->write_async(std::move(req), handshake_timeout)
-                          .then([pipe_endpoint] (pipe_op_res r) {
-                                    if(is_fail(r)) {
-                                        throw std::runtime_error("write operation failed: " + to_string(r));
-                                    }
-                                    return pipe_endpoint;
-                                });
-                  })
-            .then([handshake_timeout, authenticator] (std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
-                      return pipe_endpoint->read_async(handshake_timeout)
-                          .then([pipe_endpoint, authenticator](pipe_op_res r, cl::buffer &&b) {
-                                    if(is_fail(r)) {
-                                        throw std::runtime_error("read operation failed: " + to_string(r));
-                                    }
-                                    if(!authenticator->check_response(b)) {
-                                        throw std::runtime_error("server forbid connection");
-                                    }
-        
-                                    return pipe_endpoint;
-                                });
-                  })
-            .then([thread_pool, service, send_timeout, recv_timeout]
-                  (std::shared_ptr<ipipe_endpoint> pipe_endpoint) -> std::unique_ptr<iconnection>
-                  {
-                      return std::make_unique<connection>(thread_pool,
-                                                          std::move(pipe_endpoint),
-                                                          service,
-                                                          send_timeout,
-                                                          recv_timeout);
-                  });
-        
-        return future;
+        return m_impl->create_connection_async();
     }
 
     void client_connector::cancel_connect_waiting()
     {
-        m_pipe_env->cancel_pending_client_endpoints();
+        m_impl->cancel_connect_waiting();
     }
 }

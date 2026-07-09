@@ -46,12 +46,12 @@ protected:
         m_thread_pool->stop();
     }
 
-    auto create_sut(std::chrono::milliseconds timeout_timeout,
+    auto create_sut(std::chrono::milliseconds handshake_timeout,
                     std::chrono::milliseconds send_timeout,
                     std::chrono::milliseconds recv_timeout)
     {
         return std::make_unique<client_connector>(m_thread_pool, m_authenticator,
-                                                  m_pipe_env, nullptr, timeout_timeout,
+                                                  m_pipe_env, nullptr, handshake_timeout,
                                                   send_timeout, recv_timeout);
     }
 
