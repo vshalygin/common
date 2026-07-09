@@ -37,7 +37,7 @@ TEST_F(MultipleTimer, ExecuteCallbackOnTimeout)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    m_multiple_timer->start(callback.AsStdFunction(), std::chrono::microseconds(3));
+    m_multiple_timer->start(callback.AsStdFunction(), std::chrono::milliseconds(1));
 
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
@@ -96,7 +96,7 @@ TEST_F(MultipleTimer, AnswersZeroCurrentTimerAfterTimerExpired)
     EXPECT_CALL(callback, Call)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
-    m_multiple_timer->start(callback.AsStdFunction(), std::chrono::microseconds(1));
+    m_multiple_timer->start(callback.AsStdFunction(), std::chrono::milliseconds(1));
 
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(1)));
     ASSERT_EQ(m_multiple_timer->get_active_timers_count(), 0);
@@ -109,7 +109,7 @@ TEST_F(MultipleTimer, CallsCancelInCallbackWithoutDeadlock)
     EXPECT_CALL(callback, Call)
         .Times(1)
         .WillOnce([&]() { m_multiple_timer->cancel_all(), sync_event.set(); });
-    m_multiple_timer->start(callback.AsStdFunction(), std::chrono::microseconds(1));
+    m_multiple_timer->start(callback.AsStdFunction(), std::chrono::milliseconds(1));
 
     EXPECT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }

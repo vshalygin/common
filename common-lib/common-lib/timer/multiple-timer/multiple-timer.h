@@ -17,7 +17,7 @@ namespace vshalygin::cl {
         ~multiple_timer();
 
         template<typename Callback>
-        uint64_t start(Callback &&callback, const std::chrono::microseconds &microseconds);
+        uint64_t start(Callback &&callback, std::chrono::milliseconds timeout);
 
         void cancel(uint64_t id);
         void cancel_all();
@@ -35,13 +35,13 @@ namespace vshalygin::cl {
 
     template<typename Callback>
     uint64_t multiple_timer::start(Callback &&callback,
-                                   const std::chrono::microseconds &microseconds)
+                                   std::chrono::milliseconds timeout)
     {
         const auto timer_id = m_next_id.fetch_add(1);
         auto [guard, timers_map] = m_timers_map->get();
 
         boost::asio::steady_timer timer(m_io_context);
-        timer.expires_after(microseconds);
+        timer.expires_after(timeout);
         timer.async_wait([timers_map_wp = std::weak_ptr(m_timers_map), timer_id,
                           callback = std::move(callback)]
                           (const boost::system::error_code &ec) mutable
