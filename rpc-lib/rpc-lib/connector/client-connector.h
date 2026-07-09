@@ -28,9 +28,8 @@ namespace vshalygin::rpc {
 
         ~client_connector();
 
-        future<std::unique_ptr<iconnection>> create_connection_async();
-
-        void cancel_connect_waiting();
+        future<std::unique_ptr<iconnection>>
+            create_connection_async(std::chrono::milliseconds pipe_waiting_timeout);
 
     private:
         class impl;

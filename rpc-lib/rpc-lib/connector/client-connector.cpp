@@ -23,7 +23,7 @@ namespace vshalygin::rpc {
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
 
-        future<std::unique_ptr<iconnection>> create_connection_async();
+        future<std::unique_ptr<iconnection>> create_connection_async(std::chrono::milliseconds pipe_waiting_timeout);
 
         void cancel_connect_waiting();
 
@@ -53,10 +53,11 @@ namespace vshalygin::rpc {
         , m_recv_timeout(recv_timeout)
     {}
     
-    future<std::unique_ptr<iconnection>> client_connector::impl::create_connection_async()
+    future<std::unique_ptr<iconnection>>
+        client_connector::impl::create_connection_async(std::chrono::milliseconds pipe_waiting_timeout)
     {
-        auto promise = make_promise(m_thread_pool.get(), [self = shared_from_this()]() {
-            return self->m_pipe_env->open_pipe();
+        auto promise = make_promise(m_thread_pool.get(), [self = shared_from_this(), pipe_waiting_timeout]() {
+            return self->m_pipe_env->open_pipe(pipe_waiting_timeout);
         });
         auto future = promise.get_future()
             .then([self = weak_from_this()]
@@ -118,16 +119,12 @@ namespace vshalygin::rpc {
 
     client_connector::~client_connector()
     {
-        cancel_connect_waiting();
-    }
-
-    future<std::unique_ptr<iconnection>> client_connector::create_connection_async()
-    {
-        return m_impl->create_connection_async();
-    }
-
-    void client_connector::cancel_connect_waiting()
-    {
         m_impl->cancel_connect_waiting();
+    }
+
+    future<std::unique_ptr<iconnection>>
+        client_connector::create_connection_async(std::chrono::milliseconds pipe_waiting_timeout)
+    {
+        return m_impl->create_connection_async(pipe_waiting_timeout);
     }
 }

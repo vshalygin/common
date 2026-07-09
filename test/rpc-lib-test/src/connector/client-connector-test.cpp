@@ -79,7 +79,7 @@ protected:
 TEST_F(ClientConnector, CreatesConnection)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -98,20 +98,10 @@ TEST_F(ClientConnector, CreatesConnection)
         .apply([](pipe_op_res, buffer &b) { EXPECT_TRUE(b == create_req_message()); });
 }
 
-TEST_F(ClientConnector, CancelWaitingConnection)
-{
-    auto sut = create_sut();
-    auto f = sut->create_connection_async();
-
-    sut->cancel_connect_waiting();
-
-    ASSERT_ANY_THROW(f.get());
-}
-
 TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequest)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->invalidate();
@@ -122,7 +112,7 @@ TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequest)
 TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequestByTimout)
 {
     auto sut = create_sut(0ms, 10s, 10s);
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     ASSERT_ANY_THROW(f.get());
@@ -131,7 +121,7 @@ TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequestByTimout)
 TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponse)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -147,7 +137,7 @@ TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponse)
 TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponseByTimout)
 {
     auto sut = create_sut(10ms, 10s, 10s);
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->read_async();
@@ -162,7 +152,7 @@ TEST_F(ClientConnector, FailsIfConnectionRefusedByServer)
         .WillOnce(Return(false));
 
     auto sut = create_sut(10ms, 10s, 10s);
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -181,7 +171,7 @@ TEST_F(ClientConnector, UseAuthentificatorForFormingHandshakeRequest)
         .WillOnce([&]() { return req.copy(); });
 
     auto sut = create_sut(10ms, 10s, 10s);
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -199,7 +189,7 @@ TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
         .WillOnce([&](auto buf) { EXPECT_TRUE(buf == res); return true; });
 
     auto sut = create_sut(10ms, 10s, 10s);
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -214,9 +204,17 @@ TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
 TEST_F(ClientConnector, WaitingCancelsOnDestruction)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async();
+    auto f = sut->create_connection_async(10s);
 
     sut.reset();
+
+    ASSERT_ANY_THROW(f.get());
+}
+
+TEST_F(ClientConnector, WaitingPipeCancelsOnTimeout)
+{
+    auto sut = create_sut();
+    auto f = sut->create_connection_async(1ms);
 
     ASSERT_ANY_THROW(f.get());
 }
