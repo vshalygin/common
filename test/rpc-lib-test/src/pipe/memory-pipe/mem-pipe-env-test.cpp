@@ -124,3 +124,15 @@ TEST_F(MemPipeEnv, CreateConnectedEndpoints)
     EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
     EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);
 }
+
+TEST_F(MemPipeEnv, CancelWaitingByTimer)
+{
+    auto f = m_sut->create_pipe(std::chrono::milliseconds(1));
+
+    f.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
+        EXPECT_EQ(r, pipe_wait_res::timeout);
+    });
+
+    EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
+    EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);
+}

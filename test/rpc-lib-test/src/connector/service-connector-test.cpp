@@ -230,11 +230,12 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfWriteFailed)
 {
     m_handshake_timeout = std::chrono::milliseconds(10);
 
+    event sync_event;
     EXPECT_CALL(m_on_new_connection, Call)
         .Times(0);
     EXPECT_CALL(*m_authenticator, check_request)
         .Times(1)
-        .WillOnce(Return(false));
+        .WillOnce([&]() { sync_event.set(); return false; });
 
     auto sut = create_sut();
     sut->start();
@@ -245,6 +246,7 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfWriteFailed)
     });
 
     m_mem_pipe_env->open_pipe().get();
+    sync_event.wait();
 }
 
 TEST_F(ServiceConnector, ExecuteStopCallbackOnDestruction)

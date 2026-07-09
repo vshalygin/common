@@ -2,6 +2,7 @@
 #include "pipe-wait-res.h"
 #include <rpc-lib/types/future.h>
 #include <memory>
+#include <chrono>
 
 namespace vshalygin::rpc {
     class ipipe_endpoint;
@@ -14,6 +15,7 @@ namespace vshalygin::rpc {
         virtual ~iserver_pipe_env() = default;
 
         virtual pipe_endpoint_future create_pipe() = 0;
+        virtual pipe_endpoint_future create_pipe(std::chrono::milliseconds timeout) = 0;
         virtual void cancel_pending_server_endpoints() = 0;
     };
 }

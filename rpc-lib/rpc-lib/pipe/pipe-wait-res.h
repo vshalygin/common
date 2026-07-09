@@ -6,7 +6,8 @@ namespace vshalygin::rpc {
     enum class pipe_wait_res
     {
         success,
-        canceled
+        canceled,
+        timeout
     };
 
     inline bool is_success(pipe_wait_res r)
@@ -26,6 +27,8 @@ namespace vshalygin::rpc {
                 return "success";
             case pipe_wait_res::canceled:
                 return "canceled";
+            case pipe_wait_res::timeout:
+                return "timeout";
             default:
                 assert(!"unknown pipe_wait_res");
                 return "unknown";
