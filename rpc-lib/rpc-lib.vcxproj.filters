@@ -191,5 +191,8 @@
     <ClInclude Include="rpc-lib\endpoint\endpoint.h">
       <Filter>endpoint</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\endpoint\client-endpoint.h">
+      <Filter>endpoint</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

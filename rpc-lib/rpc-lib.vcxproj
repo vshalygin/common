@@ -41,6 +41,7 @@
     <ClInclude Include="rpc-lib\controller\request-controller.h" />
     <ClInclude Include="rpc-lib\controller\response-controller-base.h" />
     <ClInclude Include="rpc-lib\controller\response-controller.h" />
+    <ClInclude Include="rpc-lib\endpoint\client-endpoint.h" />
     <ClInclude Include="rpc-lib\endpoint\endpoint.h" />
     <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h" />
