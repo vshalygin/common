@@ -12,12 +12,14 @@ namespace vshalygin::rpc {
                                        std::shared_ptr<iauthenticator> authenticator,
                                        std::shared_ptr<iclient_pipe_env> pipe_env,
                                        std::shared_ptr<iservice> service,
+                                       std::chrono::milliseconds handshake_timeout,
                                        std::chrono::milliseconds send_timeout,
                                        std::chrono::milliseconds recv_timeout)
         : m_thread_pool(std::move(thread_pool))
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
         , m_service(std::move(service))
+        , m_handshake_timeout(handshake_timeout)
         , m_send_timeout(send_timeout)
         , m_recv_timeout(recv_timeout)
     {}
@@ -27,13 +29,13 @@ namespace vshalygin::rpc {
         cancel_connect_waiting();
     }
 
-    future<std::unique_ptr<iconnection>>
-        client_connector::create_connection_async(std::chrono::milliseconds handshake_timeout)
+    future<std::unique_ptr<iconnection>> client_connector::create_connection_async()
     {
         auto authenticator = m_authenticator;
         auto pipe_env = m_pipe_env;
         auto thread_pool = m_thread_pool;
         auto service = m_service;
+        auto handshake_timeout = m_handshake_timeout;
         auto send_timeout = m_send_timeout;
         auto recv_timeout = m_recv_timeout;
         

@@ -46,15 +46,18 @@ protected:
         m_thread_pool->stop();
     }
 
-    auto create_sut(std::chrono::milliseconds send_timeout, std::chrono::milliseconds recv_timeout)
+    auto create_sut(std::chrono::milliseconds timeout_timeout,
+                    std::chrono::milliseconds send_timeout,
+                    std::chrono::milliseconds recv_timeout)
     {
         return std::make_unique<client_connector>(m_thread_pool, m_authenticator,
-                                                  m_pipe_env, nullptr, send_timeout, recv_timeout);
+                                                  m_pipe_env, nullptr, timeout_timeout,
+                                                  send_timeout, recv_timeout);
     }
 
     auto create_sut()
     {
-        return create_sut(10s, 10s);
+        return create_sut(10s, 10s, 10s);
     }
 
     void create_server_pipe_end()
@@ -76,7 +79,7 @@ protected:
 TEST_F(ClientConnector, CreatesConnection)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async(10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -98,7 +101,7 @@ TEST_F(ClientConnector, CreatesConnection)
 TEST_F(ClientConnector, CancelWaitingConnection)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async(10s);
+    auto f = sut->create_connection_async();
 
     sut->cancel_connect_waiting();
 
@@ -108,7 +111,7 @@ TEST_F(ClientConnector, CancelWaitingConnection)
 TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequest)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async(10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->invalidate();
@@ -118,8 +121,8 @@ TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequest)
 
 TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequestByTimout)
 {
-    auto sut = create_sut();
-    auto f = sut->create_connection_async(0ms);
+    auto sut = create_sut(0ms, 10s, 10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     ASSERT_ANY_THROW(f.get());
@@ -128,7 +131,7 @@ TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequestByTimout)
 TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponse)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async(10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -143,8 +146,8 @@ TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponse)
 
 TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponseByTimout)
 {
-    auto sut = create_sut();
-    auto f = sut->create_connection_async(10ms);
+    auto sut = create_sut(10ms, 10s, 10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->read_async();
@@ -158,8 +161,8 @@ TEST_F(ClientConnector, FailsIfConnectionRefusedByServer)
         .Times(1)
         .WillOnce(Return(false));
 
-    auto sut = create_sut();
-    auto f = sut->create_connection_async(10ms);
+    auto sut = create_sut(10ms, 10s, 10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -177,8 +180,8 @@ TEST_F(ClientConnector, UseAuthentificatorForFormingHandshakeRequest)
         .Times(1)
         .WillOnce([&]() { return req.copy(); });
 
-    auto sut = create_sut();
-    auto f = sut->create_connection_async(10ms);
+    auto sut = create_sut(10ms, 10s, 10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -195,8 +198,8 @@ TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
         .Times(1)
         .WillOnce([&](auto buf) { EXPECT_TRUE(buf == res); return true; });
 
-    auto sut = create_sut();
-    auto f = sut->create_connection_async(10ms);
+    auto sut = create_sut(10ms, 10s, 10s);
+    auto f = sut->create_connection_async();
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
@@ -211,7 +214,7 @@ TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
 TEST_F(ClientConnector, WaitingCancelsOnDestruction)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async(10s);
+    auto f = sut->create_connection_async();
 
     sut.reset();
 
