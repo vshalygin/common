@@ -26,8 +26,8 @@ namespace vshalygin::cl {
             : base_type(std::forward<Func>(func))
         {}
 
-        thread_pool_task(const thread_pool_task &other) = default;
-        thread_pool_task &operator=(const thread_pool_task &other) = default;
+        thread_pool_task(const thread_pool_task &other) = delete;
+        thread_pool_task &operator=(const thread_pool_task &other) = delete;
         thread_pool_task(thread_pool_task &&other) = default;
         thread_pool_task &operator=(thread_pool_task &&) = default;
 

@@ -71,7 +71,7 @@ TEST(ThreadPoolTask, LambaWithCapturedReference)
     int i = 0;
     thread_pool_task sut([&]() { i = 1; sync_event.set(); });
 
-    pool.post(sut);
+    pool.post(std::move(sut));
 
     sync_event.wait();
     ASSERT_TRUE(i == 1);
@@ -84,7 +84,7 @@ TEST(ThreadPoolTask, LambaWithParameter)
     int i = 0;
     thread_pool_task sut([&](int v) { i = v; sync_event.set(); });
 
-    pool.post(sut, 2);
+    pool.post(std::move(sut), 2);
 
     sync_event.wait();
     ASSERT_TRUE(i == 2);
@@ -98,7 +98,7 @@ TEST(ThreadPoolTask, LambaWithMoveOnlyParameter)
     thread_pool_task sut(
         [&](std::unique_ptr<int> v) { i = *v; sync_event.set(); });
 
-    pool.post(sut, std::make_unique<int>(2));
+    pool.post(std::move(sut), std::make_unique<int>(2));
 
     sync_event.wait();
     ASSERT_TRUE(i == 2);
@@ -113,7 +113,7 @@ TEST(ThreadPoolTask, LambaWithRValueReferenceMoveOnlyParameter)
         [&](std::unique_ptr<int> &&v) { i = *v; sync_event.set(); });
 
     auto arg = std::make_unique<int>(2);
-    pool.post(sut, std::move(arg));
+    pool.post(std::move(sut), std::move(arg));
 
     sync_event.wait();
     ASSERT_TRUE(i == 2);
@@ -163,7 +163,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterMoreThanNeededIfItIsLValueRef)
     thread_pool_task sut(
         [&](const counter &c) { auto t = c; t; sync_event.set(); });
 
-    pool.post(sut, std::move(cc));
+    pool.post(std::move(sut), std::move(cc));
 
     sync_event.wait();
     EXPECT_EQ(counter::copy_num, 1u);
@@ -181,7 +181,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterMoreThanNeededIfItIsNotRef)
     thread_pool_task sut(
         [&](counter c) { auto t = c; t; sync_event.set(); });
 
-    pool.post(sut, std::move(cc));
+    pool.post(std::move(sut), std::move(cc));
 
     sync_event.wait();
     EXPECT_EQ(counter::copy_num, 1u);
@@ -199,7 +199,7 @@ TEST(ThreadPoolTask, CopyFunctorIfHaveTo)
     auto lambda = [cc, &sync_event]() { sync_event.set(); };
     thread_pool_task sut(lambda);
 
-    pool.post(sut);
+    pool.post(std::move(sut));
 
     sync_event.wait();
     EXPECT_TRUE(counter::copy_num > 0);
@@ -218,23 +218,11 @@ TEST(ThreadPoolTask, ExecutesAfterInitialFunctorDestroyes)
     thread_pool_task sut(lambda);
 
     lambda = {};
-    pool.post(sut);
+    pool.post(std::move(sut));
 
     sync_event.wait();
 }
 
-TEST(ThreadPoolTask, IsCopyable)
-{
-    counter::clear();
-    counter cc;
-    thread_pool_task sut([cc]() {});
-    thread_pool_task copy(sut);
-
-    ASSERT_EQ(counter::copy_num, 2u);
-    ASSERT_EQ(counter::copy_assign_num, 0u);
-    ASSERT_EQ(counter::move_num, 1u);
-    ASSERT_EQ(counter::move_assign_num, 0u);
-}
 
 TEST(ThreadPoolTask, IsMovable)
 {
@@ -245,22 +233,6 @@ TEST(ThreadPoolTask, IsMovable)
 
 
     ASSERT_EQ(counter::copy_num, 1u);
-    ASSERT_EQ(counter::copy_assign_num, 0u);
-    ASSERT_EQ(counter::move_num, 1u);
-    ASSERT_EQ(counter::move_assign_num, 0u);
-}
-
-TEST(ThreadPoolTask, IsCopyAssignable)
-{
-    counter::clear();
-    counter cc;
-    thread_pool_task sut([cc]() {});
-    thread_pool_task other([](){});
-
-    sut = sut;
-    other = sut;
-
-    ASSERT_EQ(counter::copy_num, 2u);
     ASSERT_EQ(counter::copy_assign_num, 0u);
     ASSERT_EQ(counter::move_num, 1u);
     ASSERT_EQ(counter::move_assign_num, 0u);
@@ -285,21 +257,9 @@ TEST(ThreadPoolTask, IsMoveAssignable)
 TEST(ThreadPoolTask, CorrectCopyEmptyTask)
 {
     thread_pool_task sut([]() {});
-    thread_pool_task sut2(std::move(sut)); //Сделать вывод типа для перемещения
+    thread_pool_task sut2(std::move(sut));
 
     thread_pool_task sut3(std::move(sut));
-
-    EXPECT_FALSE(sut);
-    EXPECT_FALSE(sut3);
-}
-
-TEST(ThreadPoolTask, CorrectCopyAssignEmptyTask)
-{
-    thread_pool_task sut([]() {});
-    thread_pool_task sut2(std::move(sut));
-    thread_pool_task sut3([]() {});
-
-    sut3 = sut;
 
     EXPECT_FALSE(sut);
     EXPECT_FALSE(sut3);
@@ -341,31 +301,15 @@ TEST(ThreadPoolTask, AnyCallableObjectMayBeCalledForCall)
     thread_pool_task sut6(std::function<void()>([&i]() {}));
     thread_pool_task sut7(std::function<void()>(simple_functor{}));
     thread_pool_task sut8(std::function<void()>{&simple_function});
-    const thread_pool_task sut9([]() {});
-    const thread_pool_task sut10([&i]() {});
-    const thread_pool_task sut11(simple_functor{});
-    const thread_pool_task sut12(&simple_function);
-    const thread_pool_task sut13(std::function<void()>([]() {}));
-    const thread_pool_task sut14(std::function<void()>([&i]() {}));
-    const thread_pool_task sut15(std::function<void()>(simple_functor{}));
-    const thread_pool_task sut16(std::function<void()>{&simple_function});
 
-    pool.post(sut1);
-    pool.post(sut2);
-    pool.post(sut3);
-    pool.post(sut4);
-    pool.post(sut5);
-    pool.post(sut6);
-    pool.post(sut7);
-    pool.post(sut8);
-    pool.post(sut9);
-    pool.post(sut10);
-    pool.post(sut11);
-    pool.post(sut12);
-    pool.post(sut13);
-    pool.post(sut14);
-    pool.post(sut15);
-    pool.post(sut16);
+    pool.post(std::move(sut1));
+    pool.post(std::move(sut2));
+    pool.post(std::move(sut3));
+    pool.post(std::move(sut4));
+    pool.post(std::move(sut5));
+    pool.post(std::move(sut6));
+    pool.post(std::move(sut7));
+    pool.post(std::move(sut8));
 
     pool.stop();
 }

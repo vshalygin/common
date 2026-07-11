@@ -14,8 +14,6 @@ namespace vshalygin::cl::internal {
         virtual void call(Args...args) = 0;
         virtual void call(Args...args) const = 0;
 
-        virtual ithread_pool_func<Args...> *copy() const = 0;
-
         virtual bool is_valid() const = 0;
     };
 
@@ -23,6 +21,8 @@ namespace vshalygin::cl::internal {
     class thread_pool_func
         : public ithread_pool_func<Args...>
     {
+        static_assert(std::is_same_v<Func, remove_type_qualifiers_t<Func>>);
+
     public:
         explicit thread_pool_func(Func &&func)
             : m_func(std::move(func))
@@ -42,22 +42,19 @@ namespace vshalygin::cl::internal {
             m_func(std::forward<Args>(args)...);
         }
 
-        ithread_pool_func<Args...> *copy() const override
-        {
-            return new thread_pool_func<Func, Args...>(m_func);
-        }
-
         bool is_valid() const override
         {
             if constexpr(std::is_pointer_v<Func> ||
                          std::is_convertible_v<Func, void(*)(Args...)>)
             {
                 return m_func != nullptr;
-            } else if constexpr(std::is_convertible_v<bool, Func>) {
-                return static_cast<bool>(m_func);
-            } else {
-                return true;
             }
+
+            if constexpr(std::is_convertible_v<bool, Func>) {
+                return static_cast<bool>(m_func);
+            }
+
+            return true;
         }
 
     private:
@@ -105,43 +102,20 @@ namespace vshalygin::cl::internal {
     class thread_pool_task<void(Args...)>
         : private thread_pool_task_base
     {
-        using this_type = thread_pool_task<void(Args...)>;
-        using ithread_pool_task = ithread_pool_func<Args...>;
-
     public:
         thread_pool_task() = default;
 
         template<typename Func,
                  std::enable_if_t<!std::is_same_v<
-                               std::remove_cv_t<std::remove_reference_t<Func>>,
-                               thread_pool_task<void(Args...)>>, int> = 0>
+                                      remove_type_qualifiers_t<Func>,
+                                      thread_pool_task<void(Args...)>>, int> = 0>
         explicit thread_pool_task(Func &&func)
-            : m_func(std::make_unique<thread_pool_func<std::decay_t<Func>, Args...>>
+            : m_func(std::make_unique<thread_pool_func<remove_type_qualifiers_t<Func>, Args...>>
                       (std::forward<Func>(func)))
         {}
 
-        //TODO remove copying! This functor is designed to execute only in thread_pool and once
-        thread_pool_task(const thread_pool_task &other)
-        {
-            if(other.m_func) {
-                m_func = std::unique_ptr<ithread_pool_task>(other.m_func->copy());
-            }
-        }
-
-        thread_pool_task &operator=(const thread_pool_task &other)
-        {
-            if(&other == this) {
-                return *this;
-            }
-            if(!other.m_func) {
-                m_func.reset();
-                return *this;
-            }
-
-            m_func.reset(other.m_func->copy());
-
-            return *this;
-        }
+        thread_pool_task(const thread_pool_task &) = delete;
+        thread_pool_task &operator=(const thread_pool_task &) = delete;
 
         thread_pool_task(thread_pool_task &&other) = default;
         thread_pool_task &operator=(thread_pool_task &&) = default;

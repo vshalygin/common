@@ -24,16 +24,6 @@ namespace vshalygin::cl {
         }
 
         template<typename Signature, typename...Args>
-        void post(const thread_pool_task<Signature> &task, Args&&...args)
-        {
-            boost::asio::post(
-                m_io_context,
-                [task, t = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                    std::apply(task.create_proxy(), std::move(t));
-                });
-        }
-
-        template<typename Signature, typename...Args>
         void post(thread_pool_task<Signature> &&task, Args&&...args)
         {
             boost::asio::post(
