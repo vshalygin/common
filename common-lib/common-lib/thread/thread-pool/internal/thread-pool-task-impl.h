@@ -120,6 +120,7 @@ namespace vshalygin::cl::internal {
                       (std::forward<Func>(func)))
         {}
 
+        //TODO remove copying! This functor is designed to execute only in thread_pool and once
         thread_pool_task(const thread_pool_task &other)
         {
             if(other.m_func) {

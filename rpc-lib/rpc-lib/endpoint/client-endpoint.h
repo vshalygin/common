@@ -1,12 +1,16 @@
 #pragma once
 #include "endpoint.h"
 #include <rpc-lib/connector/client-connector.h>
-#include <rpc-lib/types/connection-state.h>
+#include <rpc-lib/service/service.h>
+#include <rpc-lib/types/future.h>
+
+#include <common-lib/utils/do-on-destruct.h>
 
 #include <chrono>
 #include <memory>
 #include <mutex>
 #include <functional>
+#include <stdexcept>
 
 namespace vshalygin::cl {
     class thread_pool;
@@ -16,73 +20,194 @@ namespace vshalygin::rpc {
     class iauthenticator;
     class iclient_pipe_env;
 
-    template<typename GServiceStub>
+    template<typename GServerServiceStub, typename GClientService>
     class client_endpoint
     {
     public:
-        using on_state_change_t = std::function<void(uint64_t, connection_state)>;
+        using disconnect_future = future<void>;
+        using connect_future = future<ftuple<disconnect_future>>;
 
-        template<typename GService>
-        explicit client_endpoint(on_state_change_t &&on_state_change,
-                                 std::shared_ptr<cl::thread_pool> thread_pool,
+        template<typename Response>
+        using request_future = future<request_result, std::unique_ptr<Response>>;
+
+        explicit client_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iclient_pipe_env> pipe_env,
-                                 std::shared_ptr<GService> gservice,
-                                 std::chrono::milliseconds handshake_timeout,
-                                 std::chrono::milliseconds send_timeout,
-                                 std::chrono::milliseconds recv_timeout);
+                                 std::shared_ptr<GClientService> gservice,
+                                 std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
+                                 std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
+                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
 
         client_endpoint(const client_endpoint &) = delete;
         client_endpoint &operator=(const client_endpoint &) = delete;
 
-        void connect(std::chrono::milliseconds timeout);
-        void is_connected();
+        connect_future connect(std::chrono::milliseconds timeout);
+        void is_connected() const;
         void disconnect();
 
+        template<typename Request, typename Response>
+        request_future<Response> make_request(auto stub_method,
+                                              const Request &req);
 
     private:
-        std::shared_ptr<on_state_change_t> m_on_state_change;
+        class impl;
+        std::shared_ptr<impl> m_impl;
+    };
+
+    template<typename GServerServiceStub, typename GClientService>
+    class client_endpoint<GServerServiceStub, GClientService>::impl
+        : public std::enable_shared_from_this<impl>
+    {
+    public:
+        explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
+                                 std::shared_ptr<iauthenticator> authenticator,
+                                 std::shared_ptr<iclient_pipe_env> pipe_env,
+                                 std::shared_ptr<GClientService> gservice,
+                                 std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
+                                 std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
+                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
+
+        impl(const impl &) = delete;
+        impl &operator=(const impl &) = delete;
+
+        connect_future connect(std::chrono::milliseconds timeout);
+        void is_connected() const;
+        void disconnect();
+
+        template<typename Request, typename Response>
+        request_future<Response> make_request(auto stub_method,
+                                              const Request &req);
+
+    private:
+        disconnect_future establish_endpoint(std::unique_ptr<iconnection> &&connection);
+
+    private:
+        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        std::shared_ptr<GClientService> m_gservice;
 
         client_connector m_client_connector;
 
         std::mutex m_mtx;
-        uint64_t m_next_connection_id = 0;
-        std::unique_ptr<endpoint<GServiceStub>> m_endpoint;
+        std::unique_ptr<endpoint<GServerServiceStub>> m_endpoint;
     };
 
-    template<typename GServiceStub>
-    template<typename GService>
-    client_endpoint<GServiceStub>::client_endpoint(on_state_change_t &&on_state_change,
-                                                   std::shared_ptr<cl::thread_pool> thread_pool,
-                                                   std::shared_ptr<iauthenticator> authenticator,
-                                                   std::shared_ptr<iclient_pipe_env> pipe_env,
-                                                   std::shared_ptr<GService> gservice,
-                                                   std::chrono::milliseconds handshake_timeout,
-                                                   std::chrono::milliseconds send_timeout,
-                                                   std::chrono::milliseconds recv_timeout)
-        : m_on_state_change(std::make_shared<on_state_change_t>(std::move(on_state_change)))
+    template<typename GServieServiceStub, typename GClientService>
+    client_endpoint<GServieServiceStub, GClientService>::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+                                                                    std::shared_ptr<iauthenticator> authenticator,
+                                                                    std::shared_ptr<iclient_pipe_env> pipe_env,
+                                                                    std::shared_ptr<GClientService> gservice,
+                                                                    std::chrono::milliseconds handshake_timeout,
+                                                                    std::chrono::milliseconds send_timeout,
+                                                                    std::chrono::milliseconds recv_timeout)
+        : m_thread_pool(std::move(thread_pool))
+        , m_gservice(std::move(gservice))
         , m_client_connector(thread_pool, authenticator, pipe_env,
-                             )
+                             handshake_timeout, send_timeout, recv_timeout)
     {}
 
-    template<typename GServiceStub>
-    void client_endpoint<GServiceStub>::connect(std::chrono::milliseconds timeout)
+    template<typename GServieServiceStub, typename GClientService>
+    template<typename Request, typename Response>
+    client_endpoint<GServieServiceStub, GClientService>::request_future<Response>
+        client_endpoint<GServieServiceStub, GClientService>::impl::make_request(auto stub_method, const Request &req)
     {
-        auto f = m_client_connector.create_connection_async(timeout);
+        std::lock_guard guard(m_mtx);
+        if(!m_endpoint || !m_endpoint->is_connected()) {
+            auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<Response> m) {
+                return ftuple{ r, std::move(m) };
+            });
+            promise.resolve(request_result::no_connection, {});
+            return promise.get_future();
+        }
 
-        std::unique_ptr<iconnection> connection;
-        f.get().apply([&connection](std::unique_ptr<iconnection> &&c) { connection = std::move(c); });
+        return m_endpoint->template make_request<Request, Response>(stub_method, req);
     }
 
-    template<typename GServiceStub>
-    void client_endpoint<GServiceStub>::is_connected()
+    template<typename GServerServiceStub, typename GClientService>
+    client_endpoint<GServerServiceStub, GClientService>::connect_future
+        client_endpoint<GServerServiceStub, GClientService>::impl::connect(std::chrono::milliseconds timeout)
     {
+        auto f = m_client_connector.create_connection_async(
+                                 std::make_shared<service<GClientService>>(m_gservice, m_thread_pool, 0),
+                                 timeout);
 
+        return f.then([self = this->weak_from_this()](std::unique_ptr<iconnection> &&connection) {
+            std::shared_ptr s(self);
+            return ftuple(s->establish_endpoint(std::move(connection)));
+        });
     }
 
-    template<typename GServiceStub>
-    void client_endpoint<GServiceStub>::disconnect()
+    template<typename GServerServiceStub, typename GClientService>
+    void client_endpoint<GServerServiceStub, GClientService>::impl::is_connected() const
     {
+        std::lock_guard guard(m_mtx);
+        return m_endpoint && m_endpoint->is_connected();
+    }
 
+    template<typename GServerServiceStub, typename GClientService>
+    void client_endpoint<GServerServiceStub, GClientService>::impl::disconnect()
+    {
+        std::lock_guard guard(m_mtx);
+        if(m_endpoint) {
+            m_endpoint->disconnect();
+            m_endpoint.reset();
+        }
+    }
+
+    template<typename GServerServiceStub, typename GClientService>
+    client_endpoint<GServerServiceStub, GClientService>::disconnect_future
+        client_endpoint<GServerServiceStub, GClientService>::impl::establish_endpoint(std::unique_ptr<iconnection> &&c)
+    {
+        auto disconnect_promise = make_promise(m_thread_pool.get(), []() {});
+        auto disconnect_future = disconnect_promise.get_future();
+
+        std::lock_guard guard(m_mtx);
+        m_endpoint = std::make_unique<endpoint<GServerServiceStub>>(std::move(c), m_thread_pool);
+        m_endpoint->set_disconnect_callback( //TODO use move_only_function or something
+            [disconnect_promise = std::make_shared<decltype(disconnect_promise)>(std::move(disconnect_promise))]() mutable {
+                disconnect_promise.resolve();
+            });
+
+        m_endpoint->start();
+
+        return disconnect_future;
+    }
+
+    template<typename GServerServiceStub, typename GClientService>
+    client_endpoint<GServerServiceStub, GClientService>::client_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
+                                                                         std::shared_ptr<iauthenticator> authenticator,
+                                                                         std::shared_ptr<iclient_pipe_env> pipe_env,
+                                                                         std::shared_ptr<GClientService> gservice,
+                                                                         std::chrono::milliseconds handshake_timeout,
+                                                                         std::chrono::milliseconds send_timeout,
+                                                                         std::chrono::milliseconds recv_timeout)
+        : m_impl(std::make_shared<impl>(thread_pool, authenticator, pipe_env,
+                                        gservice, handshake_timeout, send_timeout, recv_timeout))
+    {}
+
+    template<typename GServerServiceStub, typename GClientService>
+    client_endpoint<GServerServiceStub, GClientService>::connect_future
+        client_endpoint<GServerServiceStub, GClientService>::connect(std::chrono::milliseconds timeout)
+    {
+        return m_impl->connect(timeout);
+    }
+
+    template<typename GServerServiceStub, typename GClientService>
+    void client_endpoint<GServerServiceStub, GClientService>::is_connected() const
+    {
+        return m_impl->is_connected();
+    }
+
+    template<typename GServerServiceStub, typename GClientService>
+    void client_endpoint<GServerServiceStub, GClientService>::disconnect()
+    {
+        m_impl->disconnect();
+    }
+
+    template<typename GServerServiceStub, typename GClientService>
+    template<typename Request, typename Response>
+    client_endpoint<GServerServiceStub, GClientService>::request_future<Response>
+        client_endpoint<GServerServiceStub, GClientService>::make_request(auto stub_method, const Request &req)
+    {
+        return m_impl->template make_request<Request, Response>(stub_method, req);
     }
 }
