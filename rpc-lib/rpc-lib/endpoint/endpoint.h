@@ -16,7 +16,7 @@ namespace vshalygin::rpc {
     {
     public:
         template<typename Response>
-        using request_future = future<request_result, std::unique_ptr<Response>>;
+        using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
 
         explicit endpoint(std::unique_ptr<iconnection> connection,
                           std::shared_ptr<cl::thread_pool> thread_pool);
@@ -57,39 +57,43 @@ namespace vshalygin::rpc {
         auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<Response> m) {
             return ftuple{ r, std::move(m) };
         });
+        auto future = promise.get_future();
+
         auto response = std::make_unique<Response>();
         auto response_ptr = response.get();
 
         auto controller = request_controller<Response>::create_on_heap(std::move(promise),
                                                                        std::move(response));
 
-        m_service_stub.(*stub_method)(controller,
+        (m_service_stub.*stub_method)(controller,
                                       &req,
                                       response_ptr,
                                       controller);
+
+        return future;
     }
 
     template<typename GServiceStub>
     void endpoint<GServiceStub>::start()
     {
-        m_channel->start();
+        m_channel.start();
     }
 
     template<typename GServiceStub>
     void endpoint<GServiceStub>::disconnect()
     {
-        m_channel->disconnect();
+        m_channel.disconnect();
     }
 
     template<typename GServiceStub>
     bool endpoint<GServiceStub>::is_connected() const
     {
-        return m_channel->is_connected();
+        return m_channel.is_connected();
     }
 
     template<typename GServiceStub>
     void endpoint<GServiceStub>::set_disconnect_callback(std::function<void()> &&callback)
     {
-        m_channel->set_disconnect_callback(std::move(callback));
+        m_channel.set_disconnect_callback(std::move(callback));
     }
 }

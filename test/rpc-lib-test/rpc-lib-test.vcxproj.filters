@@ -64,6 +64,9 @@
     <ClCompile Include="src\connector\service-connector-test.cpp">
       <Filter>connector</Filter>
     </ClCompile>
+    <ClCompile Include="src\endpoint\endpoint-test.cpp">
+      <Filter>endpoint</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -110,6 +113,9 @@
     </Filter>
     <Filter Include="controller">
       <UniqueIdentifier>{d8d969b2-c219-40f3-9a21-6bb1a923cba8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="endpoint">
+      <UniqueIdentifier>{d80d3f8c-4946-4174-bf2b-5f97e1db2369}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
