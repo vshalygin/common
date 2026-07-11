@@ -28,7 +28,7 @@ namespace vshalygin::rpc {
         using connect_future = future<ftuple<disconnect_future>>;
 
         template<typename Response>
-        using request_future = future<request_result, std::unique_ptr<Response>>;
+        using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
 
         explicit client_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
@@ -42,11 +42,11 @@ namespace vshalygin::rpc {
         client_endpoint &operator=(const client_endpoint &) = delete;
 
         connect_future connect(std::chrono::milliseconds timeout);
-        void is_connected() const;
+        bool is_connected() const;
         void disconnect();
 
-        template<typename Request, typename Response>
-        request_future<Response> make_request(auto stub_method,
+        template<typename Request, typename Response, typename StubMethod>
+        request_future<Response> make_request(StubMethod stub_method,
                                               const Request &req);
 
     private:
@@ -60,22 +60,22 @@ namespace vshalygin::rpc {
     {
     public:
         explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
-                                 std::shared_ptr<iauthenticator> authenticator,
-                                 std::shared_ptr<iclient_pipe_env> pipe_env,
-                                 std::shared_ptr<GClientService> gservice,
-                                 std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
-                                 std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
-                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
+                      std::shared_ptr<iauthenticator> authenticator,
+                      std::shared_ptr<iclient_pipe_env> pipe_env,
+                      std::shared_ptr<GClientService> gservice,
+                      std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
+                      std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
+                      std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
 
         connect_future connect(std::chrono::milliseconds timeout);
-        void is_connected() const;
+        bool is_connected() const;
         void disconnect();
 
-        template<typename Request, typename Response>
-        request_future<Response> make_request(auto stub_method,
+        template<typename Request, typename Response, typename StubMethod>
+        request_future<Response> make_request(StubMethod stub_method,
                                               const Request &req);
 
     private:
@@ -87,7 +87,7 @@ namespace vshalygin::rpc {
 
         client_connector m_client_connector;
 
-        std::mutex m_mtx;
+        mutable std::mutex m_mtx;
         std::unique_ptr<endpoint<GServerServiceStub>> m_endpoint;
     };
 
@@ -101,14 +101,15 @@ namespace vshalygin::rpc {
                                                                     std::chrono::milliseconds recv_timeout)
         : m_thread_pool(std::move(thread_pool))
         , m_gservice(std::move(gservice))
-        , m_client_connector(thread_pool, authenticator, pipe_env,
+        , m_client_connector(m_thread_pool, authenticator, pipe_env,
                              handshake_timeout, send_timeout, recv_timeout)
     {}
 
     template<typename GServieServiceStub, typename GClientService>
-    template<typename Request, typename Response>
+    template<typename Request, typename Response, typename StubMethod>
     client_endpoint<GServieServiceStub, GClientService>::request_future<Response>
-        client_endpoint<GServieServiceStub, GClientService>::impl::make_request(auto stub_method, const Request &req)
+        client_endpoint<GServieServiceStub, GClientService>::impl::make_request(StubMethod stub_method,
+                                                                                const Request &req)
     {
         std::lock_guard guard(m_mtx);
         if(!m_endpoint || !m_endpoint->is_connected()) {
@@ -119,7 +120,7 @@ namespace vshalygin::rpc {
             return promise.get_future();
         }
 
-        return m_endpoint->template make_request<Request, Response>(stub_method, req);
+        return m_endpoint->template make_request<Request, Response, StubMethod>(stub_method, req);
     }
 
     template<typename GServerServiceStub, typename GClientService>
@@ -137,7 +138,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServerServiceStub, typename GClientService>
-    void client_endpoint<GServerServiceStub, GClientService>::impl::is_connected() const
+    bool client_endpoint<GServerServiceStub, GClientService>::impl::is_connected() const
     {
         std::lock_guard guard(m_mtx);
         return m_endpoint && m_endpoint->is_connected();
@@ -164,7 +165,7 @@ namespace vshalygin::rpc {
         m_endpoint = std::make_unique<endpoint<GServerServiceStub>>(std::move(c), m_thread_pool);
         m_endpoint->set_disconnect_callback( //TODO use move_only_function or something
             [disconnect_promise = std::make_shared<decltype(disconnect_promise)>(std::move(disconnect_promise))]() mutable {
-                disconnect_promise.resolve();
+                disconnect_promise->resolve();
             });
 
         m_endpoint->start();
@@ -192,7 +193,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServerServiceStub, typename GClientService>
-    void client_endpoint<GServerServiceStub, GClientService>::is_connected() const
+    bool client_endpoint<GServerServiceStub, GClientService>::is_connected() const
     {
         return m_impl->is_connected();
     }
@@ -204,10 +205,11 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServerServiceStub, typename GClientService>
-    template<typename Request, typename Response>
+    template<typename Request, typename Response, typename StubMethod>
     client_endpoint<GServerServiceStub, GClientService>::request_future<Response>
-        client_endpoint<GServerServiceStub, GClientService>::make_request(auto stub_method, const Request &req)
+        client_endpoint<GServerServiceStub, GClientService>::make_request(StubMethod stub_method,
+                                                                          const Request &req)
     {
-        return m_impl->template make_request<Request, Response>(stub_method, req);
+        return m_impl->template make_request<Request, Response, StubMethod>(stub_method, req);
     }
 }

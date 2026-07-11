@@ -52,9 +52,11 @@ namespace vshalygin::rpc {
 
                     if(!parse_result) {
                         request_controller->set_result(request_result::response_parse_error);
+                        return;
                     }
-                }
-                else {
+
+                    request_controller->set_result(request_result::ok);
+                } else {
                     request_controller->set_result(rc);
                 }
              } catch (...) {
