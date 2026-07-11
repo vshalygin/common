@@ -67,6 +67,9 @@
     <ClCompile Include="src\endpoint\client-endpoint-test.cpp">
       <Filter>endpoint</Filter>
     </ClCompile>
+    <ClCompile Include="src\endpoint\server-endpoint-test.cpp">
+      <Filter>endpoint</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
