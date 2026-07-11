@@ -52,7 +52,6 @@
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-functions.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-impl.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h" />
-    <ClInclude Include="common-lib\synchronization\latch\latch.h" />
     <ClInclude Include="common-lib\synchronization\ordered-lock.h" />
     <ClInclude Include="common-lib\synchronization\ordered-mutex.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
@@ -101,7 +100,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\synchronization\event\event.cpp" />
-    <ClCompile Include="common-lib\synchronization\latch\latch.cpp" />
     <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp" />
     <ClCompile Include="common-lib\thread\thread-pool\strand.cpp" />
     <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp" />

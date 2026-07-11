@@ -1,10 +1,11 @@
 #include <common-lib/timer/periodic-timer/periodic-timer.h>
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/synchronization/event/event.h>
-#include <common-lib/synchronization/latch/latch.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <latch>
 
 using namespace vshalygin::cl;
 using namespace testing;
@@ -180,7 +181,7 @@ TEST(PeriodicTimer, AllowsToCancelInTwoThreadSimultaneously)
     periodic_timer sut(pool.get_io_context());
     event sync_event1;
     event sync_event2;
-    latch sync_latch(2);
+    std::latch sync_latch(2);
     MockFunction<callack_ret()> callback;
     EXPECT_CALL(callback, Call)
         .Times(1)
