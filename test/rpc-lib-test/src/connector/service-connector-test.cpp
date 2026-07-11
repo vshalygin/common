@@ -48,10 +48,10 @@ protected:
         return std::make_unique<server_connector>(m_thread_pool,
                                                   m_authenticator,
                                                   m_mem_pipe_env,
-                                                  [this](uint64_t n) {
-                                                      if(n == 0) {
+                                                  [this](uint64_t) {
+                                                      if(m_service) {
                                                           return std::move(m_service);
-                                                      } else if(n == 1) {
+                                                      } else if (m_service2) {
                                                           return std::move(m_service2);
                                                       } else {
                                                           assert(false);
@@ -157,13 +157,13 @@ TEST_F(ServiceConnector, CreatesTwoConnections)
     m_mem_pipe_env->open_pipe()
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
                   pe->write_async({});
-                  pe->read_async({});
+                  pe->read_async();
                   pe1 = pe;
               });
     m_mem_pipe_env->open_pipe()
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
                   pe->write_async({});
-                  pe->read_async({});
+                  pe->read_async();
                   pe2 = pe;
               });
 
@@ -263,5 +263,41 @@ TEST_F(ServiceConnector, ExecuteStopCallbackOnDestruction)
 
     sut.reset();
 
+    sync_event.wait();
+}
+
+TEST_F(ServiceConnector, MayStartAfterStop)
+{
+    auto sut = create_sut();
+    sut->start();
+    event sync_event;
+    EXPECT_CALL(m_on_new_connection, Call)
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+    std::shared_ptr<ipipe_endpoint> pe1;
+    m_mem_pipe_env->open_pipe()
+        .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+                  pe->write_async({});
+                  pe->read_async();
+                  pe1 = pe;
+              });
+    sync_event.wait();
+    sut->stop();
+    while(sut->is_active()) {}
+
+    Mock::VerifyAndClearExpectations(&m_on_new_connection);
+    sync_event.reset();
+    EXPECT_CALL(m_on_new_connection, Call)
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+
+    sut->start();
+    std::shared_ptr<ipipe_endpoint> pe2;
+    m_mem_pipe_env->open_pipe()
+        .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+                  pe->write_async({});
+                  pe->read_async();
+                  pe2 = pe;
+              });
     sync_event.wait();
 }
