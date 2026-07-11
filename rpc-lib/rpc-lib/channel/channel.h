@@ -2,13 +2,13 @@
 #include "rpc-lib/types/request-result.h"
 #include "rpc-lib/connection/iconnection.h"
 #include <common-lib/utils/buffer.h>
+#include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #pragma warning(push, 0)
 #include <google/protobuf/service.h>
 #pragma warning(pop)
 
 #include <atomic>
-#include <functional>
 
 namespace vshalygin::rpc {
     class channel final
@@ -35,7 +35,7 @@ namespace vshalygin::rpc {
 
         void disconnect();
         bool is_connected() const;
-        void set_disconnect_callback(std::function<void()> &&callback);
+        void set_disconnect_callback(cl::thread_pool_task<void()> &&callback);
 
     private:
         std::atomic_uint64_t m_next_req_id = 0;

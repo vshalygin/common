@@ -80,7 +80,7 @@ namespace vshalygin::rpc {
         return m_connection->is_active();
     }
 
-    void channel::set_disconnect_callback(std::function<void()> &&callback)
+    void channel::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
     {
         m_connection->set_stop_callback(std::move(callback));
     }

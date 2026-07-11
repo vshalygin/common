@@ -14,7 +14,7 @@ public:
 
     MOCK_METHOD(req_result_future, request_async, (vshalygin::cl::buffer &&message), (override));
 
-    MOCK_METHOD(void, set_stop_callback, (std::function<void()> &&callback), (override));
+    MOCK_METHOD(void, set_stop_callback, (vshalygin::cl::thread_pool_task<void()> &&callback), (override));
 };
 
 using connection_nice_mock = ::testing::NiceMock<connection_mock>;

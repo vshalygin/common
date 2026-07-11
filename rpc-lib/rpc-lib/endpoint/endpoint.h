@@ -6,6 +6,7 @@
 #include <rpc-lib/types/future.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #include <memory>
 #include <functional>
@@ -32,7 +33,7 @@ namespace vshalygin::rpc {
 
         void disconnect();
         bool is_connected() const;
-        void set_disconnect_callback(std::function<void()> &&callback);
+        void set_disconnect_callback(cl::thread_pool_task<void()> &&callback);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
@@ -92,7 +93,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServiceStub>
-    void endpoint<GServiceStub>::set_disconnect_callback(std::function<void()> &&callback)
+    void endpoint<GServiceStub>::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
     {
         m_channel.set_disconnect_callback(std::move(callback));
     }

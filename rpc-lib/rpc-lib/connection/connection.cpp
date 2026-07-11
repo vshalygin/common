@@ -35,7 +35,7 @@ namespace vshalygin::rpc {
 
         req_result_future request_async(cl::buffer &&message);
 
-        void set_stop_callback(std::function<void()> &&callback);
+        void set_stop_callback(cl::thread_pool_task<void()> &&callback);
 
         size_t get_pending_requests_count() const;
         size_t get_active_timers_count() const;
@@ -139,7 +139,7 @@ namespace vshalygin::rpc {
         return future;
     }
 
-    void connection::impl::set_stop_callback(std::function<void()> &&callback)
+    void connection::impl::set_stop_callback(cl::thread_pool_task<void()> &&callback)
     {
         m_transport.set_stop_callback(std::move(callback));
     }
@@ -301,7 +301,7 @@ namespace vshalygin::rpc {
         return m_impl->request_async(std::move(message));
     }
 
-    void connection::set_stop_callback(std::function<void()> &&callback)
+    void connection::set_stop_callback(cl::thread_pool_task<void()> &&callback)
     {
         m_impl->set_stop_callback(std::move(callback));
     }

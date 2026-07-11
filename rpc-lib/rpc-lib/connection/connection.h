@@ -40,7 +40,7 @@ namespace vshalygin::rpc {
 
         req_result_future request_async(cl::buffer &&message) override;
 
-        void set_stop_callback(std::function<void()> &&callback) override;
+        void set_stop_callback(cl::thread_pool_task<void()> &&callback) override;
 
         size_t get_pending_requests_count() const;
         size_t get_active_timers_count() const;

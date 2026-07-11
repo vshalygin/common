@@ -2,6 +2,7 @@
 #include <rpc-lib/types/future.h>
 #include <rpc-lib/types/request-result.h>
 #include <common-lib/utils/buffer.h>
+#include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #include <functional>
 
@@ -20,6 +21,6 @@ namespace vshalygin::rpc {
 
         virtual req_result_future request_async(cl::buffer &&message) = 0;
 
-        virtual void set_stop_callback(std::function<void()> &&callback) = 0;
+        virtual void set_stop_callback(cl::thread_pool_task<void()> &&callback) = 0;
     };
 }

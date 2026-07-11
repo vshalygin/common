@@ -163,9 +163,9 @@ namespace vshalygin::rpc {
 
         std::lock_guard guard(m_mtx);
         m_endpoint = std::make_unique<endpoint<GServerServiceStub>>(std::move(c), m_thread_pool);
-        m_endpoint->set_disconnect_callback( //TODO use move_only_function or something
-            [disconnect_promise = std::make_shared<decltype(disconnect_promise)>(std::move(disconnect_promise))]() mutable {
-                disconnect_promise->resolve();
+        m_endpoint->set_disconnect_callback(
+            [disconnect_promise = std::move(disconnect_promise)]() mutable {
+                disconnect_promise.resolve();
             });
 
         m_endpoint->start();
