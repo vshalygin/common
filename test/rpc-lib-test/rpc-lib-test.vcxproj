@@ -146,7 +146,6 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
-    <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp" />
     <ClCompile Include="src\service\service-test.cpp" />
     <ClCompile Include="src\transfer-message\transfer-message-test.cpp" />
     <ClCompile Include="src\transport\transport-test.cpp" />
@@ -164,7 +163,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\mocks\authenticator-mock.h" />
-    <ClInclude Include="src\mocks\channel-mock.h" />
     <ClInclude Include="src\mocks\closure-mock.h" />
     <ClInclude Include="src\mocks\connection-mock.h" />
     <ClInclude Include="src\mocks\service-mock.h" />

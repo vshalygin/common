@@ -19,9 +19,6 @@
     <Filter Include="service">
       <UniqueIdentifier>{64713131-9a37-42fe-8d9e-3863a8ef4989}</UniqueIdentifier>
     </Filter>
-    <Filter Include="server-endpoint">
-      <UniqueIdentifier>{cdb19d86-cbcf-48f7-b5aa-3463fbd41bd2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="pipe">
       <UniqueIdentifier>{c74cb791-5359-4823-bcf9-e50a27bb48fb}</UniqueIdentifier>
     </Filter>
@@ -109,9 +106,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\service\service.h">
       <Filter>service</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\server-endpoint\server-endpoint.h">
-      <Filter>server-endpoint</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h">
       <Filter>pipe</Filter>

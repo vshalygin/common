@@ -34,9 +34,6 @@
     <ClCompile Include="src\service\service-test.cpp">
       <Filter>service</Filter>
     </ClCompile>
-    <ClCompile Include="src\server-endpoint\server-endpoint-test.cpp">
-      <Filter>server-endpoint</Filter>
-    </ClCompile>
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
@@ -99,9 +96,6 @@
     <Filter Include="service">
       <UniqueIdentifier>{4135792f-699a-4ff1-b198-81a3a3eac2b3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="server-endpoint">
-      <UniqueIdentifier>{04329da9-a1ec-4d97-9f37-e8b4e98ddc4d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="transport">
       <UniqueIdentifier>{cbf0eaba-361b-41de-a0c8-98f5a90b27d7}</UniqueIdentifier>
     </Filter>
@@ -130,19 +124,16 @@
     <ClInclude Include="src\proto\test-messages.pb.h">
       <Filter>proto</Filter>
     </ClInclude>
-    <ClInclude Include="src\mocks\closure-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
     <ClInclude Include="src\mocks\service-mock.h">
-      <Filter>mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="src\mocks\channel-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\authenticator-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
     <ClInclude Include="src\mocks\connection-mock.h">
+      <Filter>mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mocks\closure-mock.h">
       <Filter>mocks</Filter>
     </ClInclude>
   </ItemGroup>

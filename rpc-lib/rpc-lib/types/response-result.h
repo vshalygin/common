@@ -43,25 +43,4 @@ namespace vshalygin::rpc {
                 return "unknown_error";
         }
     }
-
-    inline response_result response_result_from_string(const std::string &rc)
-    {
-        auto ans = response_result::unknown_error;
-        if(rc == "ok") {
-            ans = response_result::ok;
-        } else if(rc == "canceled") {
-            ans = response_result::canceled;
-        } else if(rc == "request_parse_error") {
-            ans = response_result::request_parse_error;
-        } else if(rc == "response_too_big") {
-            ans = response_result::response_too_big;
-        } else if(rc == "not_implemented") {
-            ans = response_result::not_implemented;
-        } else if(rc == "unknown_error") {
-            ans = response_result::unknown_error;
-        } else {
-            assert(!"unexpected response result string");
-        }
-        return ans;
-    }
 }
