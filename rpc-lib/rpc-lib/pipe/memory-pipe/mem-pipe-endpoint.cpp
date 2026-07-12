@@ -1,8 +1,6 @@
 #include "mem-pipe-endpoint.h"
 #include "mem-buffers.h"
 
-using microseconds = std::chrono::microseconds;
-
 namespace vshalygin::rpc {
     mem_pipe_endpoint::mem_pipe_endpoint(bool is_server,
                                          std::shared_ptr<mem_buffers> mem_buffers)

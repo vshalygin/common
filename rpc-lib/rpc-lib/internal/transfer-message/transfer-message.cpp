@@ -1,4 +1,9 @@
 #include "transfer-message.h"
+
+#pragma warning(push, 0)
+#include <google/protobuf/message.h>
+#pragma warning(pop)
+
 #include <cassert>
 #include <array>
 

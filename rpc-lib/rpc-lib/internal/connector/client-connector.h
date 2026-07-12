@@ -1,6 +1,8 @@
 #pragma once
 #include <rpc-lib/types/future.h>
+
 #include <chrono>
+#include <memory>
 
 namespace vshalygin::cl {
     class thread_pool;

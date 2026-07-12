@@ -1,9 +1,8 @@
 #pragma once
 #include "../pipe-op-res.h"
+
 #include <rpc-lib/types/future.h>
 
-#include <common-lib/thread/thread-pool/thread-pool.h>
-#include <common-lib/thread/thread-pool/strand.h>
 #include <common-lib/utils/buffer.h>
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
 #include <common-lib/synchronization/guarded-value/guarded-value.h>
@@ -16,8 +15,11 @@
 #include <chrono>
 #include <memory>
 #include <queue>
-#include <string>
 #include <optional>
+
+namespace vshalygin::cl {
+    class thread_pool;
+}
 
 namespace vshalygin::rpc {
     class mem_buffer final

@@ -1,10 +1,11 @@
 #pragma once
 #include "iservice.h"
-#include "rpc-lib/internal/controller/response-controller.h"
-#include "rpc-lib/internal/transfer-message/transfer-message.h"
+
+#include <rpc-lib/internal/controller/response-controller.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
 
 #pragma warning(push, 0)
-#include <google/protobuf/service.h>
+#include <google/protobuf/message.h>
 #pragma warning(pop)
 
 #include <cassert>

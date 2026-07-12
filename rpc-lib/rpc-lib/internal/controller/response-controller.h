@@ -1,7 +1,9 @@
 #pragma once
 #include "response-controller-base.h"
-#include "rpc-lib/types/response-result.h"
-#include "common-lib/mpl/type-transform.h"
+
+#include <rpc-lib/types/response-result.h>
+
+#include <common-lib/mpl/type-transform.h>
 
 namespace vshalygin::rpc {
     template<typename Callback>

@@ -1,7 +1,10 @@
 #pragma once
 #include "../iclient-pipe-env.h"
 #include "../iserver-pipe-env.h"
-#include <common-lib/thread/thread-pool/thread-pool.h>
+
+namespace vshalygin::cl {
+    class thread_pool;
+}
 
 namespace vshalygin::rpc {
     class mem_pipe_endpoint;

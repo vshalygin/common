@@ -1,5 +1,7 @@
 #include "mem-buffer.h"
 
+#include <common-lib/thread/thread-pool/thread-pool.h>
+
 namespace vshalygin::rpc {
     std::shared_ptr<mem_buffer> mem_buffer::create(std::shared_ptr<cl::thread_pool> thread_pool)
     {

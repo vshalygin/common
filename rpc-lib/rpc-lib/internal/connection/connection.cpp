@@ -1,9 +1,12 @@
 #include "connection.h"
-#include "rpc-lib/internal/transport/transport.h"
-#include "rpc-lib/internal/transfer-message/transfer-message.h"
-#include "rpc-lib/internal/service/iservice.h"
+#include <rpc-lib/internal/transport/transport.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/service/iservice.h>
+#include <rpc-lib/internal/transport/transport.h>
 
-#include "common-lib/thread/thread-pool/thread-pool.h"
+#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/timer/multiple-timer/multiple-timer.h>
+#include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <atomic>
 

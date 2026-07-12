@@ -1,10 +1,9 @@
 #pragma once
 #include <rpc-lib/types/future.h>
 #include <rpc-lib/types/request-result.h>
+
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
-
-#include <functional>
 
 namespace vshalygin::rpc {
     class iconnection

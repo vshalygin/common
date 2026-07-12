@@ -1,8 +1,10 @@
 #pragma once
 #include "request-controller-base.h"
-#include "rpc-lib/types/request-result.h"
-#include "rpc-lib/types/future.h"
-#include "common-lib/mpl/type-transform.h"
+
+#include <rpc-lib/types/request-result.h>
+#include <rpc-lib/types/future.h>
+
+#include <common-lib/mpl/type-transform.h>
 
 namespace vshalygin::rpc {
     template<typename Response>

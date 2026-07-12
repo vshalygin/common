@@ -1,9 +1,9 @@
 #pragma once
 #include <rpc-lib/types/request-result.h>
 
-#pragma warning(push, 0)
-#include <google/protobuf/service.h>
-#pragma warning(pop)
+namespace google::protobuf {
+    class RpcController;
+}
 
 namespace vshalygin::rpc {
     class irequest_controller

@@ -1,14 +1,13 @@
 #pragma once
+#include <rpc-lib/types/future.h>
 #include <rpc-lib/internal/connection/iconnection.h>
 #include <rpc-lib/internal/channel/channel.h>
 #include <rpc-lib/internal/controller/request-controller.h>
-#include <rpc-lib/types/future.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #include <memory>
-#include <functional>
 
 namespace vshalygin::rpc {
     template<typename GServiceStub>

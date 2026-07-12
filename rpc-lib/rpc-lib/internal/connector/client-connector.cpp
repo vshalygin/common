@@ -4,7 +4,6 @@
 #include "rpc-lib/authenticator/iauthenticator.h"
 #include "rpc-lib/internal/connection/connection.h"
 
-#include <chrono>
 #include <stdexcept>
 
 namespace vshalygin::rpc {

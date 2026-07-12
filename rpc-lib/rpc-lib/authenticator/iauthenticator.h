@@ -1,6 +1,7 @@
 #pragma once
 #include <common-lib/utils/buffer.h>
 #include <common-lib/utils/cbuffer-view.h>
+
 namespace vshalygin::rpc {
     class iauthenticator
     {

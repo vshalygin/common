@@ -1,7 +1,12 @@
 #include "channel.h"
-#include "rpc-lib/closure-guard/closure-guard.h"
-#include "rpc-lib/internal/transfer-message/transfer-message.h"
-#include "rpc-lib/internal/controller/irequest-controller.h"
+#include <rpc-lib/closure-guard/closure-guard.h>
+#include <rpc-lib/internal/connection/iconnection.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/controller/irequest-controller.h>
+
+#pragma warning(push, 0)
+#include <google/protobuf/message.h>
+#pragma warning(pop)
 
 namespace vshalygin::rpc {
     channel::channel(std::unique_ptr<iconnection> &&connection)

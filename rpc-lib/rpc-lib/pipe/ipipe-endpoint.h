@@ -1,12 +1,11 @@
 #pragma once
 #include "pipe-op-res.h"
-#include "pipe-wait-res.h"
+
 #include <rpc-lib/types/future.h>
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
-#include <optional>
 #include <chrono>
 
 namespace vshalygin::rpc {

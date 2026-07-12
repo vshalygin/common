@@ -1,4 +1,9 @@
 #include "closure-guard.h"
+
+#pragma warning(push, 0)
+#include <google/protobuf/service.h>
+#pragma warning(pop)
+
 #include <utility>
 
 namespace vshalygin::rpc {

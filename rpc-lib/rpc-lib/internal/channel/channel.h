@@ -1,7 +1,4 @@
 #pragma once
-#include "rpc-lib/types/request-result.h"
-#include "rpc-lib/internal/connection/iconnection.h"
-#include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
 #pragma warning(push, 0)
@@ -9,8 +6,11 @@
 #pragma warning(pop)
 
 #include <atomic>
+#include <memory>
 
 namespace vshalygin::rpc {
+    class iconnection;
+
     class channel final
         : public google::protobuf::RpcChannel
     {

@@ -5,10 +5,6 @@
 #include <common-lib/utils/cbuffer-view.h>
 #include <common-lib/utils/buffer.h>
 
-#pragma warning(push, 0)
-#include <google/protobuf/message.h>
-#pragma warning(pop)
-
 #include <string>
 
 /*
@@ -27,6 +23,10 @@
     req: 8 bytes message number + 4 bytes method idx
     res: 8 bytes message number + 1 byte response result code
 */
+
+namespace google::protobuf {
+    class Message;
+}
 
 namespace vshalygin::rpc {
     enum class transfer_msg_type : unsigned char
