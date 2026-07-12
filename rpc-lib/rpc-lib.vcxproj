@@ -37,7 +37,6 @@
     <ClInclude Include="rpc-lib\internal\connector\client-connector.h" />
     <ClInclude Include="rpc-lib\internal\connector\server-connector.h" />
     <ClInclude Include="rpc-lib\internal\controller\irequest-controller.h" />
-    <ClInclude Include="rpc-lib\internal\controller\iresponse-controller.h" />
     <ClInclude Include="rpc-lib\internal\controller\null-rpc-controller.h" />
     <ClInclude Include="rpc-lib\internal\controller\request-controller-base.h" />
     <ClInclude Include="rpc-lib\internal\controller\request-controller.h" />
@@ -48,6 +47,7 @@
     <ClInclude Include="rpc-lib\internal\service\service.h" />
     <ClInclude Include="rpc-lib\internal\transfer-message\transfer-message.h" />
     <ClInclude Include="rpc-lib\internal\transport\transport.h" />
+    <ClInclude Include="rpc-lib\iresponse-controller.h" />
     <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h" />
     <ClInclude Include="rpc-lib\pipe\iserver-pipe-env.h" />

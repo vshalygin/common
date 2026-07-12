@@ -1,6 +1,6 @@
 #pragma once
 #include "null-rpc-controller.h"
-#include "iresponse-controller.h"
+#include <rpc-lib/iresponse-controller.h>
 
 namespace vshalygin::rpc {
     class response_controller_base

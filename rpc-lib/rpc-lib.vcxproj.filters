@@ -158,9 +158,6 @@
     <ClInclude Include="rpc-lib\internal\controller\irequest-controller.h">
       <Filter>internal\controller</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\internal\controller\iresponse-controller.h">
-      <Filter>internal\controller</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\internal\controller\null-rpc-controller.h">
       <Filter>internal\controller</Filter>
     </ClInclude>
@@ -189,5 +186,6 @@
     <ClInclude Include="rpc-lib\service-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\closure-guard.h" />
+    <ClInclude Include="rpc-lib\iresponse-controller.h" />
   </ItemGroup>
 </Project>
