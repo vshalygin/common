@@ -9,15 +9,19 @@
 #include <chrono>
 
 namespace vshalygin::rpc {
-    //TODO invalidate должна завершать все pending operations, также все чтения и записи долны завершаться
-    //немедленно ???
-    // is_connected и invalidate должны быть синхронизированны
-    // при уничтожении вызываем все pending callbacks
-    // pipe connection may disrupt spanteneously
-    // subscribe to disconnect -> вызываем сразу асинхронно, если disconnect
-    // set_disconnect_callback вызывается только один раз
-    // callback не должен вызываться в потоке set_disconnect_callback
-    // set_disconnect_callback колбек вызывается, если на момент установки уже установлен
+    // Requirements for the ipipe_endpoint interface implementation:
+    // 1) The 'invalidate' method must complete all pending operations with the pipe_op_res::canceled result code.
+    // 2) Object destruction must be equivalent to calling the 'invalidate' method with regard to operation completion.
+    // 3) The 'is_connected' and 'invalidate' methods must be synchronized.
+    // 4) The connection may be lost unexpectedly. In this case, all pending operations must complete with
+    //    pipe_op_res::failed result code and the disconnect_callback must be invoked.
+    // 5) If the connection is unavailable, all new operations must be completed immediately
+    //    with the pipe_op_res::failed result code.
+    // 6) Completion of pending operations due to a timeout must be supported. In this case,
+    //    the pipe_op_res::timeout result code must be returned.
+    // 7) If the connection has already been lost at the moment the disconnect_callback is set, the disconnect_callback
+    //    must be invoked immediately.
+    // 8) The object is created with an active connection. Reconnection is not supported.
 
     class ipipe_endpoint
     {

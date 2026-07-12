@@ -138,7 +138,7 @@ namespace vshalygin::rpc {
         }
 
         auto ep = std::make_unique<endpoint<GClientServiceStub>>(std::move(c), m_thread_pool);
-        ep->set_disconnect_callback( //TODO use move_only_function or something
+        ep->set_disconnect_callback(
             [disconnect_promise = std::move(disconnect_promise)]() mutable {
                 disconnect_promise.resolve();
             });

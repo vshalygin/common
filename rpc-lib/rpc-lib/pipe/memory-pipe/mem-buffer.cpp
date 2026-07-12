@@ -152,8 +152,7 @@ namespace vshalygin::rpc {
             if(timeout) {
                 auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
                     if(auto read_promises = read_promises_wp.lock()) {
-                        //avoid deadlock in case future callback
-                        //stores mem_buffer itself
+                        //avoid deadlock in case future callback stores mem_buffer itself
                         read_promise promise;
                         {
                             auto [g, promises] = read_promises->get();
