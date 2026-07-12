@@ -130,15 +130,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\channel\channel-test.cpp" />
+    <ClCompile Include="src\client-endpoint-test.cpp" />
     <ClCompile Include="src\closure-guard\closure-guard-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
     <ClCompile Include="src\connector\client-connector-test.cpp" />
     <ClCompile Include="src\connector\service-connector-test.cpp" />
     <ClCompile Include="src\controller\request-controller-test.cpp" />
     <ClCompile Include="src\controller\response-controller-test.cpp" />
-    <ClCompile Include="src\endpoint\client-endpoint-test.cpp" />
     <ClCompile Include="src\endpoint\endpoint-test.cpp" />
-    <ClCompile Include="src\endpoint\server-endpoint-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-env-test.cpp" />
@@ -147,6 +146,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
     </ClCompile>
+    <ClCompile Include="src\server-endpoint-test.cpp" />
     <ClCompile Include="src\service\service-test.cpp" />
     <ClCompile Include="src\transfer-message\transfer-message-test.cpp" />
     <ClCompile Include="src\transport\transport-test.cpp" />
