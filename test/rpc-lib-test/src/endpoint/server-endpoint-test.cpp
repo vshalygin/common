@@ -1,4 +1,4 @@
-#include <rpc-lib/service-endpoint.h>
+#include <rpc-lib/server-endpoint.h>
 #include <rpc-lib/authenticator/simple-authenticator/simple-authenticator.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-endpoint.h>
@@ -88,7 +88,7 @@ protected:
         m_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool);
         m_gservice = std::make_shared<Service>();
 
-        m_sut = std::make_unique<service_endpoint<proto::Service_Stub, proto::Service>>(
+        m_sut = std::make_unique<server_endpoint<proto::Service_Stub, proto::Service>>(
             m_on_connection_change.AsStdFunction(),
             m_on_state_change.AsStdFunction(),
             m_thread_pool,
@@ -123,7 +123,7 @@ protected:
     std::shared_ptr<Service> m_gservice;
     std::shared_ptr<thread_pool> m_thread_pool;
 
-    std::unique_ptr<service_endpoint<proto::Service_Stub, proto::Service>> m_sut;
+    std::unique_ptr<server_endpoint<proto::Service_Stub, proto::Service>> m_sut;
 
     std::shared_ptr<ipipe_endpoint> m_other;
 };

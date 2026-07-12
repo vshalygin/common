@@ -183,7 +183,7 @@
       <Filter>internal\endpoint</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\client-endpoint.h" />
-    <ClInclude Include="rpc-lib\service-endpoint.h" />
+    <ClInclude Include="rpc-lib\server-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\closure-guard.h" />
     <ClInclude Include="rpc-lib\iresponse-controller.h" />

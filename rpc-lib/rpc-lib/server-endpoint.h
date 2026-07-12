@@ -26,7 +26,7 @@ namespace vshalygin::rpc {
     };
 
     template<typename GClientServiceStub, typename GServerService>
-    class service_endpoint
+    class server_endpoint
     {
     public:
         template<typename Response>
@@ -34,20 +34,20 @@ namespace vshalygin::rpc {
 
         using on_connection_change_t = std::function<void(uint64_t, connection_state)>;
 
-        explicit service_endpoint(on_connection_change_t  &&on_connection_change,
-                                  std::function<void(server_endpoint_state)> &&on_change_state,
-                                  std::shared_ptr<cl::thread_pool> thread_pool,
-                                  std::shared_ptr<iauthenticator> authenticator,
-                                  std::shared_ptr<iserver_pipe_env> pipe_env,
-                                  std::shared_ptr<GServerService> gservice,
-                                  std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
-                                  std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
-                                  std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
+        explicit server_endpoint(on_connection_change_t  &&on_connection_change,
+                                 std::function<void(server_endpoint_state)> &&on_change_state,
+                                 std::shared_ptr<cl::thread_pool> thread_pool,
+                                 std::shared_ptr<iauthenticator> authenticator,
+                                 std::shared_ptr<iserver_pipe_env> pipe_env,
+                                 std::shared_ptr<GServerService> gservice,
+                                 std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
+                                 std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
+                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
 
-        service_endpoint(const service_endpoint &) = delete;
-        service_endpoint &operator=(const service_endpoint &) = delete;
+        server_endpoint(const server_endpoint &) = delete;
+        server_endpoint &operator=(const server_endpoint &) = delete;
 
-        ~service_endpoint();
+        ~server_endpoint();
 
         void start_listening();
         void stop_listening();
@@ -67,7 +67,7 @@ namespace vshalygin::rpc {
     };
 
     template<typename GClientServiceStub, typename GServerService>
-    class service_endpoint<GClientServiceStub, GServerService>::impl
+    class server_endpoint<GClientServiceStub, GServerService>::impl
         : public std::enable_shared_from_this<impl>
     {
     public:
@@ -111,7 +111,7 @@ namespace vshalygin::rpc {
     };
 
     template<typename GClientServiceStub, typename GServerService>
-    service_endpoint<GClientServiceStub, GServerService>::impl::impl(
+    server_endpoint<GClientServiceStub, GServerService>::impl::impl(
         std::shared_ptr<cl::thread_pool> thread_pool,
         on_connection_change_t &&on_connection_change)
         : m_thread_pool(thread_pool)
@@ -119,14 +119,14 @@ namespace vshalygin::rpc {
     {}
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::impl::set_connector(
+    void server_endpoint<GClientServiceStub, GServerService>::impl::set_connector(
         std::unique_ptr<internal::server_connector> connector)
     {
         m_connector = std::move(connector);
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
+    void server_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
         uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
         auto disconnect_promise = make_promise(m_thread_pool.get(), []() {});
@@ -164,7 +164,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::impl::finalize()
+    void server_endpoint<GClientServiceStub, GServerService>::impl::finalize()
     {
         std::lock_guard guard(m_mtx);
         m_is_finalizing = true;
@@ -174,14 +174,14 @@ namespace vshalygin::rpc {
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    size_t service_endpoint<GClientServiceStub, GServerService>::impl::get_active_connections_count() const
+    size_t server_endpoint<GClientServiceStub, GServerService>::impl::get_active_connections_count() const
     {
         std::lock_guard guard(m_mtx);
         return m_endpoints_map.size();
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::impl::remove_endpoint_from_map(uint64_t id)
+    void server_endpoint<GClientServiceStub, GServerService>::impl::remove_endpoint_from_map(uint64_t id)
     {
         std::unique_ptr<internal::endpoint<GClientServiceStub>> endpoint_to_remove;
 
@@ -194,26 +194,26 @@ namespace vshalygin::rpc {
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::impl::start_listening()
+    void server_endpoint<GClientServiceStub, GServerService>::impl::start_listening()
     {
         m_connector->start();
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::impl::stop_listening()
+    void server_endpoint<GClientServiceStub, GServerService>::impl::stop_listening()
     {
         m_connector->stop();
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    bool service_endpoint<GClientServiceStub, GServerService>::impl::is_listening() const
+    bool server_endpoint<GClientServiceStub, GServerService>::impl::is_listening() const
     {
         return m_connector->is_active();
     }
 
     template<typename GClientServiceStub, typename GServerService>
     template<typename Request, typename Response, typename StubMethod>
-    auto service_endpoint<GClientServiceStub, GServerService>::impl::make_request(
+    auto server_endpoint<GClientServiceStub, GServerService>::impl::make_request(
           uint64_t connection_id, StubMethod stub_method, const Request &req)
     {
         std::lock_guard guard(m_mtx);
@@ -231,7 +231,7 @@ namespace vshalygin::rpc {
 
     template<typename GClientServiceStub, typename GServerService>
     template<typename Request, typename Response, typename StubMethod>
-    auto service_endpoint<GClientServiceStub, GServerService>::impl::make_request_all(
+    auto server_endpoint<GClientServiceStub, GServerService>::impl::make_request_all(
             StubMethod stub_method, const Request &req)
     {
         std::vector<std::pair<uint64_t, request_future<Response>>> ans;
@@ -246,7 +246,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    service_endpoint<GClientServiceStub, GServerService>::service_endpoint(
+    server_endpoint<GClientServiceStub, GServerService>::server_endpoint(
         on_connection_change_t &&on_connection_change,
         std::function<void(server_endpoint_state)> &&on_change_state,
         std::shared_ptr<cl::thread_pool> thread_pool,
@@ -287,32 +287,32 @@ namespace vshalygin::rpc {
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    service_endpoint<GClientServiceStub, GServerService>::~service_endpoint()
+    server_endpoint<GClientServiceStub, GServerService>::~server_endpoint()
     {
         m_impl->finalize();
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::start_listening()
+    void server_endpoint<GClientServiceStub, GServerService>::start_listening()
     {
         m_impl->start_listening();
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    void service_endpoint<GClientServiceStub, GServerService>::stop_listening()
+    void server_endpoint<GClientServiceStub, GServerService>::stop_listening()
     {
         m_impl->stop_listening();
     }
 
     template<typename GClientServiceStub, typename GServerService>
-    bool service_endpoint<GClientServiceStub, GServerService>::is_listening() const
+    bool server_endpoint<GClientServiceStub, GServerService>::is_listening() const
     {
         return m_impl->is_listening();
     }
 
     template<typename GClientServiceStub, typename GServerService>
     template<typename Request, typename Response, typename StubMethod>
-    auto service_endpoint<GClientServiceStub, GServerService>::make_request(
+    auto server_endpoint<GClientServiceStub, GServerService>::make_request(
         uint64_t connection_id, StubMethod stub_method, const Request &req)
     {
         return m_impl->template make_request<Request, Response, StubMethod>(connection_id,
@@ -322,7 +322,7 @@ namespace vshalygin::rpc {
 
     template<typename GClientServiceStub, typename GServerService>
     template<typename Request, typename Response, typename StubMethod>
-    auto service_endpoint<GClientServiceStub, GServerService>::make_request_all(
+    auto server_endpoint<GClientServiceStub, GServerService>::make_request_all(
         StubMethod stub_method, const Request &req)
     {
         return m_impl->template make_request_all<Request, Response, StubMethod>(stub_method,
@@ -331,7 +331,7 @@ namespace vshalygin::rpc {
 
 
     template<typename GClientServiceStub, typename GServerService>
-    size_t service_endpoint<GClientServiceStub, GServerService>::get_active_connections_count() const
+    size_t server_endpoint<GClientServiceStub, GServerService>::get_active_connections_count() const
     {
         return m_impl->get_active_connections_count();
     }

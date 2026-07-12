@@ -57,7 +57,7 @@
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h" />
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h" />
-    <ClInclude Include="rpc-lib\service-endpoint.h" />
+    <ClInclude Include="rpc-lib\server-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\types\future.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
