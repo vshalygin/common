@@ -6,7 +6,7 @@
 
 #include <stdexcept>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class client_connector::impl
         : public std::enable_shared_from_this<impl>
     {

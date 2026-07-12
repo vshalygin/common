@@ -10,7 +10,7 @@
 
 #include <atomic>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class connection::impl final
         : public std::enable_shared_from_this<impl>
     {

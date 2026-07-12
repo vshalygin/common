@@ -5,7 +5,7 @@
 
 #include <common-lib/mpl/type-transform.h>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     template<typename Callback>
     class response_controller final
         : public response_controller_base

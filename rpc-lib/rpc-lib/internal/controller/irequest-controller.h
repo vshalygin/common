@@ -5,7 +5,7 @@ namespace google::protobuf {
     class RpcController;
 }
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class irequest_controller
     {
     public:

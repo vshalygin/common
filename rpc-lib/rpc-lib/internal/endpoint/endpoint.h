@@ -9,7 +9,7 @@
 
 #include <memory>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     template<typename GServiceStub>
     class endpoint final
     {

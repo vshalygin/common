@@ -74,16 +74,16 @@ namespace vshalygin::rpc {
                                               const Request &req);
 
     private:
-        disconnect_future establish_endpoint(std::unique_ptr<iconnection> &&connection);
+        auto establish_endpoint(std::unique_ptr<internal::iconnection> &&connection);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<GClientService> m_gservice;
 
-        client_connector m_client_connector;
+        internal::client_connector m_client_connector;
 
         mutable std::mutex m_mtx;
-        std::unique_ptr<endpoint<GServerServiceStub>> m_endpoint;
+        std::unique_ptr<internal::endpoint<GServerServiceStub>> m_endpoint;
     };
 
     template<typename GServieServiceStub, typename GClientService>
@@ -123,10 +123,10 @@ namespace vshalygin::rpc {
         client_endpoint<GServerServiceStub, GClientService>::impl::connect(std::chrono::milliseconds timeout)
     {
         auto f = m_client_connector.create_connection_async(
-                                 std::make_shared<service<GClientService>>(m_gservice, m_thread_pool, 0),
+                                 std::make_shared<internal::service<GClientService>>(m_gservice, m_thread_pool, 0),
                                  timeout);
 
-        return f.then([self = this->weak_from_this()](std::unique_ptr<iconnection> &&connection) {
+        return f.then([self = this->weak_from_this()](std::unique_ptr<internal::iconnection> &&connection) {
             std::shared_ptr s(self);
             return ftuple(s->establish_endpoint(std::move(connection)));
         });
@@ -150,14 +150,14 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServerServiceStub, typename GClientService>
-    client_endpoint<GServerServiceStub, GClientService>::disconnect_future
-        client_endpoint<GServerServiceStub, GClientService>::impl::establish_endpoint(std::unique_ptr<iconnection> &&c)
+    auto client_endpoint<GServerServiceStub, GClientService>::impl::establish_endpoint(
+        std::unique_ptr<internal::iconnection> &&c)
     {
         auto disconnect_promise = make_promise(m_thread_pool.get(), []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);
-        m_endpoint = std::make_unique<endpoint<GServerServiceStub>>(std::move(c), m_thread_pool);
+        m_endpoint = std::make_unique<internal::endpoint<GServerServiceStub>>(std::move(c), m_thread_pool);
         m_endpoint->set_disconnect_callback(
             [disconnect_promise = std::move(disconnect_promise)]() mutable {
                 disconnect_promise.resolve();

@@ -2,7 +2,7 @@
 
 #include <rpc-lib/pipe/ipipe-endpoint.h>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     transport::transport(std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                          const std::chrono::milliseconds &send_timeout)
         : m_send_timeout(send_timeout)

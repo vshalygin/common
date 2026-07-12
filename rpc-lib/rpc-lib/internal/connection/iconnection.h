@@ -5,7 +5,7 @@
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class iconnection
     {
     public:

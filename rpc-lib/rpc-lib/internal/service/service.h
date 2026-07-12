@@ -10,9 +10,7 @@
 
 #include <cassert>
 
-namespace vshalygin::rpc {
-    class connection;
-
+namespace vshalygin::rpc::internal {
     template<typename Service>
     class service final
         : public iservice

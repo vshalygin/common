@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 
 class connection_mock
-    : public vshalygin::rpc::iconnection
+    : public vshalygin::rpc::internal::iconnection
 {
 public:
     MOCK_METHOD(void, start, (), (override));

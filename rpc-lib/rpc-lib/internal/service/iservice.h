@@ -3,7 +3,7 @@
 
 #include <common-lib/utils/buffer.h>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class iservice
     {
     public:

@@ -10,6 +10,9 @@ namespace vshalygin::cl {
 namespace vshalygin::rpc {
     class iauthenticator;
     class iserver_pipe_env;
+}
+
+namespace vshalygin::rpc::internal {
     class iservice;
     class iconnection;
 

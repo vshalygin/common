@@ -1,4 +1,4 @@
-#include "rpc-lib/transport/transport.h"
+#include "rpc-lib/internal/transport/transport.h"
 #include "rpc-lib/pipe/memory-pipe/mem-pipe-env.h"
 #include "rpc-lib/pipe/ipipe-endpoint.h"
 #include "common-lib/synchronization/event/event.h"
@@ -8,6 +8,7 @@
 #include <memory>
 
 using namespace vshalygin::rpc;
+using namespace vshalygin::rpc::internal;
 using namespace vshalygin::cl;
 using namespace testing;
 

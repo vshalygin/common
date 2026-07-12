@@ -14,6 +14,7 @@
 
 using namespace vshalygin;
 using namespace vshalygin::rpc;
+using namespace vshalygin::rpc::internal;
 using namespace vshalygin::cl;
 using namespace testing;
 

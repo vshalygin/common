@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 using namespace vshalygin::rpc;
+using namespace vshalygin::rpc::internal;
 using namespace vshalygin::cl;
 using namespace testing;
 using namespace std::chrono_literals;

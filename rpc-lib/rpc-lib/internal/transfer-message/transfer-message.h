@@ -28,7 +28,7 @@ namespace google::protobuf {
     class Message;
 }
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     enum class transfer_msg_type : unsigned char
     {
         req = 0,

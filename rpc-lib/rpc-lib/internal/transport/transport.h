@@ -7,7 +7,9 @@
 
 namespace vshalygin::rpc {
     class ipipe_endpoint;
+}
 
+namespace vshalygin::rpc::internal {
     class transport final
     {
     public:

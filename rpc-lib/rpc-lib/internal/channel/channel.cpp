@@ -8,7 +8,7 @@
 #include <google/protobuf/message.h>
 #pragma warning(pop)
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     channel::channel(std::unique_ptr<iconnection> &&connection)
         : m_connection(std::move(connection))
     {

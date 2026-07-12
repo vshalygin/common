@@ -4,13 +4,16 @@
 #include <chrono>
 #include <memory>
 
+namespace vshalygin::rpc {
+    class iauthenticator;
+    class iclient_pipe_env;
+}
+
 namespace vshalygin::cl {
     class thread_pool;
 }
 
-namespace vshalygin::rpc {
-    class iauthenticator;
-    class iclient_pipe_env;
+namespace vshalygin::rpc::internal {
     class iservice;
     class iconnection;
 

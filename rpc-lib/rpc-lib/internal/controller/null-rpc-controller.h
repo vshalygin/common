@@ -5,7 +5,7 @@
 
 #include <cassert>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class null_rpc_controller
         : public google::protobuf::RpcController
     {

@@ -12,7 +12,7 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class server_connector::impl
         : public std::enable_shared_from_this<impl>
     {

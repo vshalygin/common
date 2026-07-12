@@ -1,6 +1,6 @@
-#include <rpc-lib/channel/channel.h>
-#include <rpc-lib/transfer-message/transfer-message.h>
-#include <rpc-lib/controller/request-controller.h>
+#include <rpc-lib/internal/channel/channel.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/controller/request-controller.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
 
 #include "mocks/connection-mock.h"
@@ -16,6 +16,7 @@
 
 using namespace vshalygin;
 using namespace vshalygin::rpc;
+using namespace vshalygin::rpc::internal;
 using namespace vshalygin::cl;
 using namespace testing;
 using namespace google::protobuf::util;

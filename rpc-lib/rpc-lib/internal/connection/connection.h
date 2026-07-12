@@ -6,13 +6,16 @@
 #include <memory>
 #include <chrono>
 
+namespace vshalygin::rpc {
+    class ipipe_endpoint;
+}
+
 namespace vshalygin::cl {
     class thread_pool;
 }
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class iservice;
-    class ipipe_endpoint;
 
     class connection final
         : public iconnection

@@ -3,7 +3,7 @@
 #include <gmock/gmock.h>
 
 class service_mock
-    : public vshalygin::rpc::iservice
+    : public vshalygin::rpc::internal::iservice
 {
 public:
     MOCK_METHOD(vshalygin::rpc::future<vshalygin::cl::buffer>,

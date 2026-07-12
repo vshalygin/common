@@ -8,7 +8,7 @@
 #include <atomic>
 #include <memory>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     class iconnection;
 
     class channel final

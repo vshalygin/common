@@ -87,9 +87,9 @@ namespace vshalygin::rpc {
         template<typename Request, typename Response, typename StubMethod>
         auto make_request_all(StubMethod stub_method, const Request &req);
 
-        void set_connector(std::unique_ptr<server_connector> connector);
+        void set_connector(std::unique_ptr<internal::server_connector> connector);
 
-        void process_new_connection(uint64_t id, std::unique_ptr<iconnection> connection);
+        void process_new_connection(uint64_t id, std::unique_ptr<internal::iconnection> connection);
 
         void finalize();
 
@@ -103,10 +103,10 @@ namespace vshalygin::rpc {
 
         std::shared_ptr<on_connection_change_t> m_on_connection_change;
 
-        std::unique_ptr<server_connector> m_connector;
+        std::unique_ptr<internal::server_connector> m_connector;
 
         mutable std::mutex m_mtx;
-        std::unordered_map<uint64_t, std::unique_ptr<endpoint<GClientServiceStub>>> m_endpoints_map;
+        std::unordered_map<uint64_t, std::unique_ptr<internal::endpoint<GClientServiceStub>>> m_endpoints_map;
         bool m_is_finalizing = false;
     };
 
@@ -120,14 +120,14 @@ namespace vshalygin::rpc {
 
     template<typename GClientServiceStub, typename GServerService>
     void service_endpoint<GClientServiceStub, GServerService>::impl::set_connector(
-        std::unique_ptr<server_connector> connector)
+        std::unique_ptr<internal::server_connector> connector)
     {
         m_connector = std::move(connector);
     }
 
     template<typename GClientServiceStub, typename GServerService>
     void service_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
-        uint64_t id, std::unique_ptr<iconnection> c)
+        uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
         auto disconnect_promise = make_promise(m_thread_pool.get(), []() {});
         auto disconnect_future = disconnect_promise.get_future();
@@ -137,7 +137,7 @@ namespace vshalygin::rpc {
             return;
         }
 
-        auto ep = std::make_unique<endpoint<GClientServiceStub>>(std::move(c), m_thread_pool);
+        auto ep = std::make_unique<internal::endpoint<GClientServiceStub>>(std::move(c), m_thread_pool);
         ep->set_disconnect_callback(
             [disconnect_promise = std::move(disconnect_promise)]() mutable {
                 disconnect_promise.resolve();
@@ -183,7 +183,7 @@ namespace vshalygin::rpc {
     template<typename GClientServiceStub, typename GServerService>
     void service_endpoint<GClientServiceStub, GServerService>::impl::remove_endpoint_from_map(uint64_t id)
     {
-        std::unique_ptr<endpoint<GClientServiceStub>> endpoint_to_remove;
+        std::unique_ptr<internal::endpoint<GClientServiceStub>> endpoint_to_remove;
 
         std::lock_guard guard(m_mtx);
         auto it = m_endpoints_map.find(id);
@@ -258,22 +258,22 @@ namespace vshalygin::rpc {
         std::chrono::milliseconds recv_timeout)
         : m_impl(std::make_shared<impl>(thread_pool, std::move(on_connection_change)))
     {
-        auto connector = std::make_unique<server_connector>(
+        auto connector = std::make_unique<internal::server_connector>(
             thread_pool,
             authenticator,
             pipe_env,
             [gservice, thread_pool](uint64_t id) {
-                return std::make_unique<service<GServerService>>(gservice, thread_pool, id);
+                return std::make_unique<internal::service<GServerService>>(gservice, thread_pool, id);
             },
-            [impl = std::weak_ptr(m_impl)](uint64_t id, std::unique_ptr<iconnection> c) {
+            [impl = std::weak_ptr(m_impl)](uint64_t id, std::unique_ptr<internal::iconnection> c) {
                 if(auto self = impl.lock()) {
                     self->process_new_connection(id, std::move(c));
                 }
             },
-            [on_change_state = std::move(on_change_state)](server_connector_state s) {
-                if(s == server_connector_state::started){
+            [on_change_state = std::move(on_change_state)](internal::server_connector_state s) {
+                if(s == internal::server_connector_state::started){
                     on_change_state(server_endpoint_state::start_listening);
-                } else if (s == server_connector_state::stopped) {
+                } else if (s == internal::server_connector_state::stopped) {
                     on_change_state(server_endpoint_state::stop_listening);
                 } else {
                     assert(!"unknown server_connector_state");

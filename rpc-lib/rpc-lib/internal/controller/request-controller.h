@@ -6,7 +6,7 @@
 
 #include <common-lib/mpl/type-transform.h>
 
-namespace vshalygin::rpc {
+namespace vshalygin::rpc::internal {
     template<typename Response>
     class request_controller final
         : public request_controller_base
