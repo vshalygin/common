@@ -1,8 +1,8 @@
-#include <rpc-lib/connector/client-connector.h>
+#include <rpc-lib/internal/connector/client-connector.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
 #include <rpc-lib/pipe/ipipe-endpoint.h>
-#include <rpc-lib/connection/iconnection.h>
-#include <rpc-lib/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/connection/iconnection.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
 
 #include <mocks/authenticator-mock.h>
 

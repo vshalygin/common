@@ -1,4 +1,4 @@
-#include <rpc-lib/controller/request-controller.h>
+#include <rpc-lib/internal/controller/request-controller.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>

@@ -1,16 +1,11 @@
 #pragma once
-#include "endpoint.h"
-#include <rpc-lib/connector/client-connector.h>
-#include <rpc-lib/service/service.h>
-#include <rpc-lib/types/future.h>
+#include <rpc-lib/types.h>
+#include <rpc-lib/internal/endpoint/endpoint.h>
+#include <rpc-lib/internal/connector/client-connector.h>
+#include <rpc-lib/internal/service/service.h>
 
-#include <common-lib/utils/do-on-destruct.h>
-
-#include <chrono>
 #include <memory>
 #include <mutex>
-#include <functional>
-#include <stdexcept>
 
 namespace vshalygin::cl {
     class thread_pool;

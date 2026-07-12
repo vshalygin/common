@@ -1,20 +1,24 @@
 #pragma once
-#include "endpoint.h"
-#include <rpc-lib/types/connection-state.h>
-#include <rpc-lib/types/future.h>
-#include <rpc-lib/connector/server-connector.h>
+#include <rpc-lib/types.h>
 #include <rpc-lib/pipe/iserver-pipe-env.h>
-#include <rpc-lib/service/service.h>
+#include <rpc-lib/internal/service/service.h>
+#include <rpc-lib/internal/endpoint/endpoint.h>
+#include <rpc-lib/internal/connector/server-connector.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
-#include <functional>
 #include <memory>
 #include <vector>
 #include <utility>
 #include <unordered_map>
 
 namespace vshalygin::rpc {
+    enum class connection_state
+    {
+        connected,
+        disconnected
+    };
+
     enum class server_endpoint_state
     {
         start_listening,

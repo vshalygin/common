@@ -1,5 +1,5 @@
-#include <rpc-lib/endpoint/endpoint.h>
-#include <rpc-lib/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/endpoint/endpoint.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/synchronization/event/event.h>

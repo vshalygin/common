@@ -1,7 +1,7 @@
 #pragma once
 #include "iconnection.h"
 
-#include <rpc-lib/transport/transport.h>
+#include <rpc-lib/internal/transport/transport.h>
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/synchronization/guarded-value/guarded-value.h>

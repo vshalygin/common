@@ -94,7 +94,8 @@ namespace vshalygin::cl {
                 {
                     set_inactive_and_notify();
                 }
-                else {
+                else
+                {
                     start_period<Callback>(std::move(callback), period);
                 }
             } else if(ec == boost::asio::error::operation_aborted) {

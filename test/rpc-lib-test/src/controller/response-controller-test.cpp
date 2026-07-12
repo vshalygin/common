@@ -1,4 +1,4 @@
-#include <rpc-lib/controller/response-controller.h>
+#include <rpc-lib/internal/controller/response-controller.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
 
 #include <gtest/gtest.h>

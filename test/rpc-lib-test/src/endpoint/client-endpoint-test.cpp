@@ -1,8 +1,8 @@
-#include <rpc-lib/endpoint/client-endpoint.h>
+#include <rpc-lib/client-endpoint.h>
 #include <rpc-lib/authenticator/simple-authenticator/simple-authenticator.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
 #include <rpc-lib/pipe/ipipe-endpoint.h>
-#include <rpc-lib/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
 
 #include <common-lib/synchronization/event/event.h>

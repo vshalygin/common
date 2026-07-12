@@ -48,13 +48,11 @@ namespace vshalygin::cl::internal {
                          std::is_convertible_v<Func, void(*)(Args...)>)
             {
                 return m_func != nullptr;
-            }
-
-            if constexpr(std::is_convertible_v<bool, Func>) {
+            } else if constexpr(std::is_convertible_v<bool, Func>) {
                 return static_cast<bool>(m_func);
+            } else {
+                return true;
             }
-
-            return true;
         }
 
     private:

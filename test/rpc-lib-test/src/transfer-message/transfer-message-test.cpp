@@ -1,4 +1,4 @@
-#include <rpc-lib/transfer-message/transfer-message.h>
+#include <rpc-lib/internal/transfer-message/transfer-message.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

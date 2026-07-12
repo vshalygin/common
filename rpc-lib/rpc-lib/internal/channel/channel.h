@@ -1,6 +1,6 @@
 #pragma once
 #include "rpc-lib/types/request-result.h"
-#include "rpc-lib/connection/iconnection.h"
+#include "rpc-lib/internal/connection/iconnection.h"
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
 
@@ -42,4 +42,3 @@ namespace vshalygin::rpc {
         std::unique_ptr<iconnection> m_connection;
     };
 }
-

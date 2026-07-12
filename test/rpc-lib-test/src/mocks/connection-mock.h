@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/connection/iconnection.h>
+#include <rpc-lib/internal/connection/iconnection.h>
 
 #include <gmock/gmock.h>
 

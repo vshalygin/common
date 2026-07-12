@@ -1,6 +1,6 @@
-#include <rpc-lib/service/service.h>
+#include <rpc-lib/internal/service/service.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
-#include <rpc-lib/controller/iresponse-controller.h>
+#include <rpc-lib/internal/controller/iresponse-controller.h>
 
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"

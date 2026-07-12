@@ -1,8 +1,7 @@
 #pragma once
-#include <rpc-lib/connection/iconnection.h>
-#include <rpc-lib/channel/channel.h>
-#include <rpc-lib/controller/request-controller.h>
-#include <rpc-lib/types/connection-state.h>
+#include <rpc-lib/internal/connection/iconnection.h>
+#include <rpc-lib/internal/channel/channel.h>
+#include <rpc-lib/internal/controller/request-controller.h>
 #include <rpc-lib/types/future.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>

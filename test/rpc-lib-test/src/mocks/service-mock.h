@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/service/iservice.h>
+#include <rpc-lib/internal/service/iservice.h>
 #include <gmock/gmock.h>
 
 class service_mock

@@ -3,8 +3,6 @@
 #include <google/protobuf/service.h>
 #pragma warning(pop)
 
-#include <memory>
-
 namespace vshalygin::rpc {
     class closure_guard final
     {

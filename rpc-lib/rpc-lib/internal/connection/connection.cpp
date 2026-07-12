@@ -1,7 +1,7 @@
 #include "connection.h"
-#include "rpc-lib/transport/transport.h"
-#include "rpc-lib/transfer-message/transfer-message.h"
-#include "rpc-lib/service/iservice.h"
+#include "rpc-lib/internal/transport/transport.h"
+#include "rpc-lib/internal/transfer-message/transfer-message.h"
+#include "rpc-lib/internal/service/iservice.h"
 
 #include "common-lib/thread/thread-pool/thread-pool.h"
 

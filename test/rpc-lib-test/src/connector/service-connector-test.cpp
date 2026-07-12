@@ -1,6 +1,6 @@
-#include <rpc-lib/connector/server-connector.h>
+#include <rpc-lib/internal/connector/server-connector.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
-#include <rpc-lib/connection/iconnection.h>
+#include <rpc-lib/internal/connection/iconnection.h>
 #include <rpc-lib/pipe/ipipe-endpoint.h>
 
 #include <mocks/authenticator-mock.h>

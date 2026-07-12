@@ -2,7 +2,7 @@
 #include "rpc-lib/pipe/ipipe-endpoint.h"
 #include "rpc-lib/pipe/iclient-pipe-env.h"
 #include "rpc-lib/authenticator/iauthenticator.h"
-#include "rpc-lib/connection/connection.h"
+#include "rpc-lib/internal/connection/connection.h"
 
 #include <chrono>
 #include <stdexcept>

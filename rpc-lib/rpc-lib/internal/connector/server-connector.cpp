@@ -1,8 +1,8 @@
 #include "server-connector.h"
-#include <rpc-lib/connection/connection.h>
+#include <rpc-lib/internal/connection/connection.h>
 #include <rpc-lib/pipe/iserver-pipe-env.h>
 #include <rpc-lib/pipe/ipipe-endpoint.h>
-#include <rpc-lib/service/iservice.h>
+#include <rpc-lib/internal/service/iservice.h>
 #include <rpc-lib/types/future.h>
 #include <rpc-lib/authenticator/iauthenticator.h>
 #include <common-lib/synchronization/guarded-value/guarded-value.h>

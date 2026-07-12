@@ -4,20 +4,8 @@
     <Filter Include="types">
       <UniqueIdentifier>{ff53786e-d7b9-47f9-a014-17c8a20e20e1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="transfer-message">
-      <UniqueIdentifier>{deae0289-982c-49d2-b63f-16cca15c77c5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="connection">
-      <UniqueIdentifier>{9cd2a514-0f4e-4c4d-93eb-2f57e08ac2b1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="channel">
-      <UniqueIdentifier>{8f097237-e0ba-4a25-b530-4827d577e1c3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="closure-guard">
       <UniqueIdentifier>{88cf588e-f103-4431-9808-42f8cd6f2fc0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="service">
-      <UniqueIdentifier>{64713131-9a37-42fe-8d9e-3863a8ef4989}</UniqueIdentifier>
     </Filter>
     <Filter Include="pipe">
       <UniqueIdentifier>{c74cb791-5359-4823-bcf9-e50a27bb48fb}</UniqueIdentifier>
@@ -25,46 +13,46 @@
     <Filter Include="pipe\memory-pipe">
       <UniqueIdentifier>{666aea95-4aa6-4921-8fea-0086194a619e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="transport">
-      <UniqueIdentifier>{94e19454-f139-4921-b24e-24bb2cc625b1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="authenticator">
       <UniqueIdentifier>{cd6ba141-8f45-4d0c-a986-f971892cf8ae}</UniqueIdentifier>
     </Filter>
     <Filter Include="authenticator\simple-authenticator">
       <UniqueIdentifier>{27c54d39-cc06-46d8-94e0-935103b104c9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="connector">
+    <Filter Include="internal">
+      <UniqueIdentifier>{1d5582e2-8b97-4f05-a729-09d4471f67aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="internal\channel">
+      <UniqueIdentifier>{6bacbcac-db8a-4877-9d65-5aeea71ebf39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="internal\connection">
+      <UniqueIdentifier>{9cd2a514-0f4e-4c4d-93eb-2f57e08ac2b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="internal\connector">
       <UniqueIdentifier>{fc0d5010-e5a3-4a20-9f0c-42650444de6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="controller">
+    <Filter Include="internal\service">
+      <UniqueIdentifier>{64713131-9a37-42fe-8d9e-3863a8ef4989}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="internal\controller">
       <UniqueIdentifier>{7e3bc64e-e6b3-43e5-8ef5-77f070e2fe24}</UniqueIdentifier>
     </Filter>
-    <Filter Include="endpoint">
+    <Filter Include="internal\transfer-message">
+      <UniqueIdentifier>{deae0289-982c-49d2-b63f-16cca15c77c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="internal\transport">
+      <UniqueIdentifier>{94e19454-f139-4921-b24e-24bb2cc625b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="internal\endpoint">
       <UniqueIdentifier>{487281f9-4992-4e26-a2a9-b5bea3580856}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="rpc-lib\transfer-message\transfer-message.cpp">
-      <Filter>transfer-message</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\channel\channel.cpp">
-      <Filter>channel</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp">
       <Filter>closure-guard</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\transport\transport.cpp">
-      <Filter>transport</Filter>
-    </ClCompile>
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp">
       <Filter>authenticator\simple-authenticator</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\connector\client-connector.cpp">
-      <Filter>connector</Filter>
-    </ClCompile>
-    <ClCompile Include="rpc-lib\connection\connection.cpp">
-      <Filter>connection</Filter>
     </ClCompile>
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffer.cpp">
       <Filter>pipe\memory-pipe</Filter>
@@ -78,40 +66,40 @@
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\controller\controller-cast.cpp">
-      <Filter>controller</Filter>
+    <ClCompile Include="rpc-lib\internal\channel\channel.cpp">
+      <Filter>internal\channel</Filter>
     </ClCompile>
-    <ClCompile Include="rpc-lib\connector\server-connector.cpp">
-      <Filter>connector</Filter>
+    <ClCompile Include="rpc-lib\internal\connection\connection.cpp">
+      <Filter>internal\connection</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\internal\connector\client-connector.cpp">
+      <Filter>internal\connector</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\internal\connector\server-connector.cpp">
+      <Filter>internal\connector</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\internal\controller\controller-cast.cpp">
+      <Filter>internal\controller</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\internal\transfer-message\transfer-message.cpp">
+      <Filter>internal\transfer-message</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\internal\transport\transport.cpp">
+      <Filter>internal\transport</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="rpc-lib\transfer-message\transfer-message.h">
-      <Filter>transfer-message</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\types\request-result.h">
       <Filter>types</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\types\response-result.h">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\channel\channel.h">
-      <Filter>channel</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h">
       <Filter>closure-guard</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\service\iservice.h">
-      <Filter>service</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\service\service.h">
-      <Filter>service</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h">
       <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\transport\transport.h">
-      <Filter>transport</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h">
       <Filter>authenticator</Filter>
@@ -121,12 +109,6 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h">
       <Filter>pipe</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connector\client-connector.h">
-      <Filter>connector</Filter>
-    </ClInclude>
-    <ClInclude Include="rpc-lib\connection\connection.h">
-      <Filter>connection</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\ipipe-endpoint.h">
       <Filter>pipe</Filter>
@@ -149,47 +131,63 @@
     <ClInclude Include="rpc-lib\types\future.h">
       <Filter>types</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\types\connection-state.h">
-      <Filter>types</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h">
       <Filter>pipe</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\null-rpc-controller.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\channel\channel.h">
+      <Filter>internal\channel</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\request-controller.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\connection\connection.h">
+      <Filter>internal\connection</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\irequest-controller.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\connection\iconnection.h">
+      <Filter>internal\connection</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\request-controller-base.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\connector\client-connector.h">
+      <Filter>internal\connector</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\connection\iconnection.h">
-      <Filter>connection</Filter>
+    <ClInclude Include="rpc-lib\internal\connector\server-connector.h">
+      <Filter>internal\connector</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\iresponse-controller.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\service\iservice.h">
+      <Filter>internal\service</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\response-controller.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\service\service.h">
+      <Filter>internal\service</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\controller\response-controller-base.h">
-      <Filter>controller</Filter>
+    <ClInclude Include="rpc-lib\internal\controller\irequest-controller.h">
+      <Filter>internal\controller</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\connector\server-connector.h">
-      <Filter>connector</Filter>
+    <ClInclude Include="rpc-lib\internal\controller\iresponse-controller.h">
+      <Filter>internal\controller</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\endpoint\endpoint.h">
-      <Filter>endpoint</Filter>
+    <ClInclude Include="rpc-lib\internal\controller\null-rpc-controller.h">
+      <Filter>internal\controller</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\endpoint\client-endpoint.h">
-      <Filter>endpoint</Filter>
+    <ClInclude Include="rpc-lib\internal\controller\request-controller.h">
+      <Filter>internal\controller</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\endpoint\service-endpoint.h">
-      <Filter>endpoint</Filter>
+    <ClInclude Include="rpc-lib\internal\controller\request-controller-base.h">
+      <Filter>internal\controller</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\internal\controller\response-controller.h">
+      <Filter>internal\controller</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\internal\controller\response-controller-base.h">
+      <Filter>internal\controller</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\internal\transfer-message\transfer-message.h">
+      <Filter>internal\transfer-message</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\internal\transport\transport.h">
+      <Filter>internal\transport</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\internal\endpoint\endpoint.h">
+      <Filter>internal\endpoint</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\client-endpoint.h" />
+    <ClInclude Include="rpc-lib\service-endpoint.h" />
+    <ClInclude Include="rpc-lib\types.h" />
+    <ClInclude Include="rpc-lib\closure-guard.h" />
   </ItemGroup>
 </Project>
