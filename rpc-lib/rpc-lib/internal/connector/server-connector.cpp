@@ -46,16 +46,19 @@ namespace vshalygin::rpc::internal {
     private:
         void notify_on_start();
         void notify_on_stop();
+        void notify_on_new_connection(uint64_t id, std::unique_ptr<iconnection> c, std::shared_ptr<bool> is_running_sp);
 
-        void start_pipe_connect(bool first_time);
+        void start_pipe_connect(bool first_time, std::shared_ptr<bool> is_running_sp);
+        void stop_impl(std::shared_ptr<bool> is_running_sp);
 
         void erase_connection_future_from_map(uint64_t connection_id);
+        void clear_connection_future_map();
 
     private:
         uint64_t m_next_connection_id = 0;
 
         mutable std::mutex m_mtx;
-        bool m_is_running = false;
+        std::shared_ptr<bool> m_is_running_sp;
 
         connect_pipe_future m_connect_pipe_future;
 
@@ -99,21 +102,18 @@ namespace vshalygin::rpc::internal {
 
     void server_connector::impl::start()
     {
-        start_pipe_connect(true);
+        start_pipe_connect(true, std::make_shared<bool>(true));
     }
 
     void server_connector::impl::stop()
     {
-        std::lock_guard g(m_mtx);
-        m_is_running = false;
-        m_pipe_env->cancel_pending_server_endpoints();
-        m_connect_pipe_future = {};
+        stop_impl(m_is_running_sp);
     }
 
     bool server_connector::impl::is_active() const
     {
         std::lock_guard g(m_mtx);
-        return m_is_running;
+        return m_is_running_sp && *m_is_running_sp;
     }
 
     size_t server_connector::impl::get_pending_connections_count() const
@@ -136,14 +136,28 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    void server_connector::impl::start_pipe_connect(bool first_time)
+    void server_connector::impl::notify_on_new_connection(
+        uint64_t id, std::unique_ptr<iconnection> c, std::shared_ptr<bool> is_running_sp)
     {
-        std::unique_lock g(m_mtx);
+        std::lock_guard g(m_mtx);
+        if(is_running_sp && *is_running_sp) {
+            m_notify_strand.post([s = shared_from_this(), id, c = std::move(c)]() mutable {
+                s->m_on_new_connection(id, std::move(c));
+            });
+        }
+    }
+
+    void server_connector::impl::start_pipe_connect(bool first_time, std::shared_ptr<bool> is_running_sp)
+    {
+        std::lock_guard g(m_mtx);
         if(first_time) {
+            if(m_is_running_sp && *m_is_running_sp) {
+                throw std::logic_error("server connector already running");
+            }
+
             notify_on_start();
-            m_is_running = true;
-        } else if(!m_is_running) {
-            notify_on_stop();
+            m_is_running_sp = is_running_sp;
+        } else if(!is_running_sp || !*is_running_sp) {
             return;
         }
 
@@ -157,7 +171,7 @@ namespace vshalygin::rpc::internal {
 
         auto connection_id = m_next_connection_id++;
         auto promise = make_promise(m_thread_pool.get(),
-                                    [self = weak_from_this(), connection_id]
+                                    [self = weak_from_this(), connection_id, is_running_sp]
                                     (std::shared_ptr<ipipe_endpoint> pe) {
             std::shared_ptr s(self);
             return pe->read_async(s->m_handshake_timeout)
@@ -172,7 +186,7 @@ namespace vshalygin::rpc::internal {
                           return pe->write_async(s->m_authenticator->create_response(b),
                                                  s->m_handshake_timeout);
                        })
-                .then([pe, self, connection_id](pipe_op_res r) mutable {
+                .then([pe, self, connection_id, is_running_sp](pipe_op_res r) mutable {
                           if(is_fail(r)){
                               throw std::runtime_error("write operation failed: " + to_string(r));
                           }
@@ -184,7 +198,7 @@ namespace vshalygin::rpc::internal {
                                                                 s->m_send_timeout,
                                                                 s->m_recv_timeout);
 
-                          s->m_on_new_connection(connection_id, std::move(c));
+                          s->notify_on_new_connection(connection_id, std::move(c), is_running_sp);
                           s->erase_connection_future_from_map(connection_id);
                       })
                 .catched([self, connection_id](std::exception_ptr) {
@@ -201,27 +215,51 @@ namespace vshalygin::rpc::internal {
         }
         
         m_connect_pipe_future
-            .then([promise = std::move(promise), self = shared_from_this()]
+            .then([promise = std::move(promise), self = shared_from_this(), is_running_sp]
                   (std::shared_ptr<ipipe_endpoint> ep) mutable {
                       promise.resolve(std::move(ep));
-                      self->start_pipe_connect(false);
+                      self->start_pipe_connect(false, is_running_sp);
                   })
-            .catched([self = shared_from_this()](std::exception_ptr) {
-                         self->stop();
-                         self->start_pipe_connect(false); //TODO use 'finally' here
+            .catched([self = shared_from_this(), is_running_sp](std::exception_ptr) {
+                         self->stop_impl(is_running_sp);
                      });
+    }
+
+    void server_connector::impl::stop_impl(std::shared_ptr<bool> is_running_sp)
+    {
+        std::lock_guard g(m_mtx);
+        if(!is_running_sp || !*is_running_sp) {
+            return;
+        }
+        *is_running_sp = false;
+        m_is_running_sp.reset();
+
+        m_pipe_env->cancel_pending_server_endpoints();
+        clear_connection_future_map();
+        m_connect_pipe_future = {};
+
+        notify_on_stop();
     }
 
     void server_connector::impl::erase_connection_future_from_map(uint64_t connection_id)
     {
-        //destroy future not under mutex to avoid any possible deadlocks
-        connection_future f;
+        connection_future to_delete;
 
         auto [guard, map] = m_connection_future_map.get();
         auto it = map.find(connection_id);
         if(it != map.end()) {
-            f = std::move(it->second);
+            to_delete = std::move(it->second);
             map.erase(it);
+        }
+    }
+
+    void server_connector::impl::clear_connection_future_map()
+    {
+        std::vector<connection_future> to_delete;
+
+        auto [guard, map] = m_connection_future_map.get();
+        for(auto &el : map) {
+            to_delete.push_back(std::move(el.second));
         }
     }
 

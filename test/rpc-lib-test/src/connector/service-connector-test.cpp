@@ -302,3 +302,11 @@ TEST_F(ServiceConnector, MayStartAfterStop)
               });
     sync_event.wait();
 }
+
+TEST_F(ServiceConnector, ThrowsExceptionOnAttemptToStartTwice)
+{
+    auto sut = create_sut();
+    sut->start();
+
+    ASSERT_ANY_THROW(sut->start());
+}
