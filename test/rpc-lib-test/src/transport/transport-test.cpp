@@ -117,15 +117,15 @@ TEST_F(Transport, RecvAsync)
 
 TEST_F(Transport, SetsStopCallback)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_stop_callback, Call)
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     m_sut->set_stop_callback(m_stop_callback.AsStdFunction());
     m_sut->stop();
 
-    sync_event.wait();
+    sync_event->wait();
     Mock::VerifyAndClearExpectations(&m_stop_callback);
 }
 
@@ -140,9 +140,9 @@ TEST_F(Transport, InvalidatesPipeEndOnDestruction)
 
 TEST_F(Transport, SendTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     for(unsigned i = 0; i < m_thread_pool->get_num(); ++i) {
-        m_thread_pool->post([&]() { sync_event.wait(); });
+        m_thread_pool->post([sync_event]() { sync_event->wait(); });
     }
     MockFunction<void(pipe_op_res)> write_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
@@ -153,6 +153,6 @@ TEST_F(Transport, SendTimeout)
         .then(write_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
 }

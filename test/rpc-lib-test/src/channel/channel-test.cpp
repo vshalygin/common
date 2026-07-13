@@ -135,10 +135,10 @@ protected:
 
 TEST_F(Channel, MakesRequestWithCorrectRequestMessage)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_request_callback, Call)
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
         return rpc::ftuple(r, std::move(b));
@@ -156,7 +156,7 @@ TEST_F(Channel, MakesRequestWithCorrectRequestMessage)
 
     call_method();
 
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(Channel, IncrementsMessageNumberOnEveryRequest)
@@ -179,10 +179,10 @@ TEST_F(Channel, IncrementsMessageNumberOnEveryRequest)
 
 TEST_F(Channel, SetsControllerFailedIfCallbackCalledWithErrorCode)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_request_callback, Call(request_result::timeout, _))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
         return rpc::ftuple(r, std::move(b));
@@ -196,15 +196,15 @@ TEST_F(Channel, SetsControllerFailedIfCallbackCalledWithErrorCode)
 
     call_method();
 
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(Channel, SetsControllerFailedIfParsingResponseFailed)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_request_callback, Call(request_result::response_parse_error, _))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
         return rpc::ftuple(r, std::move(b));
@@ -217,15 +217,15 @@ TEST_F(Channel, SetsControllerFailedIfParsingResponseFailed)
     promise.resolve(request_result::ok, create_transfer_msg_res(0, response_result::ok, &m_some_message));
     call_method();
 
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(Channel, SetsControllerFailedWithRequestNotProcessedCodeIfResponseHasFailedCode)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_request_callback, Call(request_result::request_not_processed, _))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
         return rpc::ftuple(r, std::move(b));
@@ -243,7 +243,7 @@ TEST_F(Channel, SetsControllerFailedWithRequestNotProcessedCodeIfResponseHasFail
 
     call_method();
 
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(Channel, ParsesResponse)
@@ -251,10 +251,10 @@ TEST_F(Channel, ParsesResponse)
     proto::response_message response_message_copy;
     response_message_copy.CopyFrom(*m_response_message_ptr);
     proto::response_message output_response;
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_request_callback, Call)
         .Times(1)
-        .WillOnce([&](request_result, auto ans) { output_response = *ans;  sync_event.set(); });
+        .WillOnce([&output_response, sync_event](request_result, auto ans) { output_response = *ans;  sync_event->set(); });
 
     auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
         return rpc::ftuple(r, std::move(b));
@@ -268,6 +268,6 @@ TEST_F(Channel, ParsesResponse)
 
     call_method();
 
-    sync_event.wait();
+    sync_event->wait();
     ASSERT_TRUE(MessageDifferencer::Equals(response_message_copy, output_response));
 }

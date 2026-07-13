@@ -183,11 +183,11 @@ TEST_F(ClientEndpoint, MakeRequest)
 
 TEST_F(ClientEndpoint, SetsDisconnectCallback)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     MockFunction<void()> disconnect_callback;
     EXPECT_CALL(disconnect_callback, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto f = m_sut->connect(std::chrono::seconds(10));
     create_and_init_other_pipe_endpoint();
@@ -195,7 +195,7 @@ TEST_F(ClientEndpoint, SetsDisconnectCallback)
     f.then([&](rpc::future<void> &f) { f.then(disconnect_callback.AsStdFunction()); }).get();
 
     m_other->invalidate();
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ClientEndpoint, ServiceProcessesReqeust)

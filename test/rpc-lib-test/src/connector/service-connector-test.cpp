@@ -110,44 +110,44 @@ TEST_F(ServiceConnector, NotActiveAfterStop)
 
 TEST_F(ServiceConnector, ExecutesStartCallbacksOnStart)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::started))
         .Times(1);
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::stopped))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
 
     sut.reset();
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ServiceConnector, ExecutesStopCallbacksOnStop)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::started))
         .Times(1);
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::stopped))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
     sut->stop();
 
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ServiceConnector, CreatesTwoConnections)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_new_connection, Call)
         .Times(2)
         .WillOnce(DoDefault())
-        .WillOnce([&]() {
-                      sync_event.set();
+        .WillOnce([sync_event]() {
+                      sync_event->set();
                   });
 
     auto sut = create_sut();
@@ -168,18 +168,18 @@ TEST_F(ServiceConnector, CreatesTwoConnections)
                   pe2 = pe;
               });
 
-    sync_event.wait();
+    sync_event->wait();
     while(sut->get_pending_connections_count(), 0);
 }
 
 TEST_F(ServiceConnector, StopsIfPipeConnectionFailed)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::started))
         .Times(1);
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::stopped))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
@@ -187,7 +187,7 @@ TEST_F(ServiceConnector, StopsIfPipeConnectionFailed)
     while(m_mem_pipe_env->get_pending_server_endpoints_count() == 0) {}
     m_mem_pipe_env->cancel_pending_server_endpoints();
 
-    sync_event.wait();
+    sync_event->wait();
     ASSERT_FALSE(sut->is_active());
 }
 
@@ -208,12 +208,12 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfHandshakeReadFailed)
 
 TEST_F(ServiceConnector, DoesNotCreateConnectionIfAuthenticationFailed)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_new_connection, Call)
         .Times(0);
     EXPECT_CALL(*m_authenticator, check_request)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); return false; });
+        .WillOnce([sync_event]() { sync_event->set(); return false; });
 
     auto sut = create_sut();
     sut->start();
@@ -224,19 +224,19 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfAuthenticationFailed)
     });
 
     m_mem_pipe_env->open_pipe().get();
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ServiceConnector, DoesNotCreateConnectionIfWriteFailed)
 {
     m_handshake_timeout = std::chrono::milliseconds(10);
 
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_new_connection, Call)
         .Times(0);
     EXPECT_CALL(*m_authenticator, check_request)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); return false; });
+        .WillOnce([sync_event]() { sync_event->set(); return false; });
 
     auto sut = create_sut();
     sut->start();
@@ -247,34 +247,34 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfWriteFailed)
     });
 
     m_mem_pipe_env->open_pipe().get();
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ServiceConnector, ExecuteStopCallbackOnDestruction)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::started))
         .Times(1);
     EXPECT_CALL(m_on_state_change, Call(server_connector_state::stopped))
         .Times(1)
-        .WillOnce([&sync_event]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
 
     sut.reset();
 
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ServiceConnector, MayStartAfterStop)
 {
     auto sut = create_sut();
     sut->start();
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     EXPECT_CALL(m_on_new_connection, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
     std::shared_ptr<ipipe_endpoint> pe1;
     m_mem_pipe_env->open_pipe()
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
@@ -282,15 +282,15 @@ TEST_F(ServiceConnector, MayStartAfterStop)
                   pe->read_async();
                   pe1 = pe;
               });
-    sync_event.wait();
+    sync_event->wait();
     sut->stop();
     while(sut->is_active()) {}
 
     Mock::VerifyAndClearExpectations(&m_on_new_connection);
-    sync_event.reset();
+    sync_event->reset();
     EXPECT_CALL(m_on_new_connection, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     sut->start();
     std::shared_ptr<ipipe_endpoint> pe2;
@@ -300,7 +300,7 @@ TEST_F(ServiceConnector, MayStartAfterStop)
                   pe->read_async();
                   pe2 = pe;
               });
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(ServiceConnector, ThrowsExceptionOnAttemptToStartTwice)

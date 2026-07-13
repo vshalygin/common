@@ -225,9 +225,9 @@ TEST_F(MemBuffer, CannotReadMoreBuffersThanWritten)
 
 TEST_F(MemBuffer, WritePromiseResolvesTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto data = create_test_data();
     MockFunction<void(pipe_op_res)> write_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
@@ -238,7 +238,7 @@ TEST_F(MemBuffer, WritePromiseResolvesTimeout)
         .then(write_callback.AsStdFunction());
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
-    sync_event.set();
+    sync_event->set();
     f.get();
     ASSERT_TRUE(sut->get_pending_messages_count() == 0);
     pool->stop();

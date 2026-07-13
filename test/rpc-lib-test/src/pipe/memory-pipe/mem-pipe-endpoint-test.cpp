@@ -159,10 +159,10 @@ TEST_F(MemPipeEndpoint, ExecuteDisconnectCallbackOnDestruction)
 
 TEST_F(MemPipeEndpoint, WritesDataFromClientToServerTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto data = create_test_data();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto buffers = std::make_shared<mem_buffers>(pool);
     MockFunction<void(pipe_op_res)> write_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
@@ -173,17 +173,17 @@ TEST_F(MemPipeEndpoint, WritesDataFromClientToServerTimeout)
         .then(write_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }
 
 TEST_F(MemPipeEndpoint, WritesDataFromServerToClientTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto data = create_test_data();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto buffers = std::make_shared<mem_buffers>(pool);
     MockFunction<void(pipe_op_res)> write_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
@@ -194,16 +194,16 @@ TEST_F(MemPipeEndpoint, WritesDataFromServerToClientTimeout)
         .then(write_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }
 
 TEST_F(MemPipeEndpoint, ReadDataFromClient)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto buffers = std::make_shared<mem_buffers>(pool);
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
@@ -214,16 +214,16 @@ TEST_F(MemPipeEndpoint, ReadDataFromClient)
         .then(read_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }
 
 TEST_F(MemPipeEndpoint, WritesDataFromServer)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto buffers = std::make_shared<mem_buffers>(pool);
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
@@ -234,7 +234,7 @@ TEST_F(MemPipeEndpoint, WritesDataFromServer)
         .then(read_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }

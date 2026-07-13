@@ -153,9 +153,9 @@ TEST_F(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
 
 TEST_F(MemBuffers, WritesFromClientToServerTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto data = create_test_data();
     MockFunction<void(pipe_op_res)> write_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
@@ -166,16 +166,16 @@ TEST_F(MemBuffers, WritesFromClientToServerTimeout)
         .then(write_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }
 
 TEST_F(MemBuffers, WritesFromServerToClientTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     auto data = create_test_data();
     MockFunction<void(pipe_op_res)> write_callback;
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
@@ -186,16 +186,16 @@ TEST_F(MemBuffers, WritesFromServerToClientTimeout)
         .then(write_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }
 
 TEST_F(MemBuffers, ReadsFromClientTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
         .Times(1);
@@ -205,16 +205,16 @@ TEST_F(MemBuffers, ReadsFromClientTimeout)
         .then(read_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }
 
 TEST_F(MemBuffers, ReadsFromServerTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     auto pool = std::make_shared<thread_pool>(1);
-    pool->post([&]() { sync_event.wait(); });
+    pool->post([sync_event]() { sync_event->wait(); });
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
         .Times(1);
@@ -224,7 +224,7 @@ TEST_F(MemBuffers, ReadsFromServerTimeout)
         .then(read_callback.AsStdFunction());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get();
     pool->stop();
 }

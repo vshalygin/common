@@ -70,18 +70,18 @@ TEST_F(Endpoint, TestStart)
 
 TEST_F(Endpoint, TestSetDisconnectHandler)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     MockFunction<void()> disconnect_callback;
     EXPECT_CALL(disconnect_callback, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     EXPECT_CALL(*m_connection_mock, set_stop_callback)
         .Times(1)
         .WillOnce([&](auto &&f) { m_thread_pool->post(std::move(f)); });
 
     m_sut->set_disconnect_callback(disconnect_callback.AsStdFunction());
-    sync_event.wait();
+    sync_event->wait();
 }
 
 TEST_F(Endpoint, TestMakeRequest)

@@ -160,52 +160,52 @@ TEST_F(Connection, IsNotActiveAfterPipeInvalidation)
 
 TEST_F(Connection, SetStopCallback)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     MockFunction<void()> stop_callback;
     EXPECT_CALL(stop_callback, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
     sut->set_stop_callback(stop_callback.AsStdFunction());
     sut->deactivate();
 
-    sync_event.wait();
+    sync_event->wait();
     Mock::VerifyAndClearExpectations(&stop_callback);
 }
 
 TEST_F(Connection, SetStopCallback2)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     MockFunction<void()> stop_callback;
     EXPECT_CALL(stop_callback, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
     sut->set_stop_callback(stop_callback.AsStdFunction());
     m_other_pipe_enpoint->invalidate();
 
-    sync_event.wait();
+    sync_event->wait();
     Mock::VerifyAndClearExpectations(&stop_callback);
 }
 
 TEST_F(Connection, SetStopCallback3)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     MockFunction<void()> stop_callback;
     EXPECT_CALL(stop_callback, Call)
         .Times(1)
-        .WillOnce([&]() { sync_event.set(); });
+        .WillOnce([sync_event]() { sync_event->set(); });
 
     auto sut = create_sut();
     sut->start();
     sut->set_stop_callback(stop_callback.AsStdFunction());
     sut.reset();
 
-    sync_event.wait();
+    sync_event->wait();
     Mock::VerifyAndClearExpectations(&stop_callback);
 }
 
@@ -309,9 +309,9 @@ TEST_F(Connection, IgnoresResponseWithWrongNumber)
 
 TEST_F(Connection, WriteOperationFails)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     for(unsigned i = 0; i < m_thread_pool->get_num(); ++i) {
-        m_thread_pool->post([&]() { sync_event.wait(); });
+        m_thread_pool->post([sync_event]() { sync_event->wait(); });
     }
     auto req_msg = create_req_get_data_message(1);
     auto sut = create_sut();
@@ -320,7 +320,7 @@ TEST_F(Connection, WriteOperationFails)
     auto f = sut->request_async(req_msg.copy());
     m_pipe_endpoint->invalidate();
 
-    sync_event.set();
+    sync_event->set();
     f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_unknown_error); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
@@ -328,9 +328,9 @@ TEST_F(Connection, WriteOperationFails)
 
 TEST_F(Connection, WriteOperationTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     for(unsigned i = 0; i < m_thread_pool->get_num(); ++i) {
-        m_thread_pool->post([&]() { sync_event.wait(); });
+        m_thread_pool->post([sync_event]() { sync_event->wait(); });
     }
     auto req_msg = create_req_get_data_message(1);
     auto sut = create_sut(std::chrono::milliseconds(0), std::chrono::milliseconds(10000));
@@ -339,7 +339,7 @@ TEST_F(Connection, WriteOperationTimeout)
     auto f = sut->request_async(req_msg.copy());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_timeout_error); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
@@ -347,9 +347,9 @@ TEST_F(Connection, WriteOperationTimeout)
 
 TEST_F(Connection, RequestTimeout)
 {
-    event sync_event;
+    auto sync_event = std::make_shared<event>();
     for(unsigned i = 0; i < m_thread_pool->get_num(); ++i) {
-        m_thread_pool->post([&]() { sync_event.wait(); });
+        m_thread_pool->post([sync_event]() { sync_event->wait(); });
     }
     auto req_msg = create_req_get_data_message(1);
     auto sut = create_sut(std::chrono::milliseconds(10000), std::chrono::milliseconds(0));
@@ -358,7 +358,7 @@ TEST_F(Connection, RequestTimeout)
     auto f = sut->request_async(req_msg.copy());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    sync_event.set();
+    sync_event->set();
     f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::timeout); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
