@@ -51,6 +51,11 @@ protected:
         m_thread_pool = std::make_shared<thread_pool>(2);
     }
 
+    void TearDown() override
+    {
+        m_thread_pool->stop();
+    }
+
 protected:
     std::shared_ptr<thread_pool> m_thread_pool;
 };
