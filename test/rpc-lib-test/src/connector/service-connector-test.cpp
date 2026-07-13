@@ -169,7 +169,6 @@ TEST_F(ServiceConnector, CreatesTwoConnections)
               });
 
     sync_event->wait();
-    while(sut->get_pending_connections_count(), 0);
 }
 
 TEST_F(ServiceConnector, StopsIfPipeConnectionFailed)
