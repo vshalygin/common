@@ -52,8 +52,10 @@
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-functions.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock-impl.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\ordered-lock.h" />
+    <ClInclude Include="common-lib\synchronization\internal\safe-ptr\safe-ptr.h" />
     <ClInclude Include="common-lib\synchronization\ordered-lock.h" />
     <ClInclude Include="common-lib\synchronization\ordered-mutex.h" />
+    <ClInclude Include="common-lib\synchronization\safe-ptr.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h" />
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\thread\future\future.h" />

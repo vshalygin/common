@@ -4,9 +4,6 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest_main.cc">
-      <Filter>gtest</Filter>
-    </ClCompile>
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
@@ -154,6 +151,9 @@
     <ClCompile Include="src\thread\future\future-test.cpp">
       <Filter>thread\future</Filter>
     </ClCompile>
+    <ClCompile Include="src\synchronization\safe-ptr\safe-ptr-test.cpp">
+      <Filter>synchronization\safe-ptr-test</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -227,6 +227,9 @@
     </Filter>
     <Filter Include="thread\thread-pool">
       <UniqueIdentifier>{a50c9ad5-2f7f-47ef-ac87-b6ae928536d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="synchronization\safe-ptr-test">
+      <UniqueIdentifier>{47416760-0a2d-496b-bf1a-385f6dd63eae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
