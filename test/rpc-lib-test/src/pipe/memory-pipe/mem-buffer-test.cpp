@@ -211,8 +211,10 @@ TEST_F(MemBuffer, CannotReadMoreBuffersThanWritten)
         .Times(1);
 
     auto sut = mem_buffer::create(m_thread_pool);
-    sut->write_async(data.copy(), std::nullopt);
-    sut->write_async(data.copy(), std::nullopt);
+    sut->write_async(data.copy(), std::nullopt)
+        .get();
+    sut->write_async(data.copy(), std::nullopt)
+        .get();
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction())
         .get();
