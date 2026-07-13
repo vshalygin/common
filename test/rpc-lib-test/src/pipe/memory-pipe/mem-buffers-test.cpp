@@ -37,6 +37,9 @@ class MemBuffers
 protected:
     void SetUp() override
     {
+        ON_CALL(m_invalidate_callback, Call)
+            .WillByDefault([]() {});
+
         m_thread_pool = std::make_shared<thread_pool>(2);
     }
 
@@ -46,6 +49,7 @@ protected:
     }
 
 protected:
+    MockFunction<void()> m_invalidate_callback;
     std::shared_ptr<thread_pool> m_thread_pool;
 };
 
@@ -101,14 +105,13 @@ TEST_F(MemBuffers, WritesFromServerToClient)
 TEST_F(MemBuffers, SetFewInvalidateCallbacks)
 {
     event sync_event;
-    MockFunction<void()> callback;
-    EXPECT_CALL(callback, Call)
+    EXPECT_CALL(m_invalidate_callback, Call)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
     mem_buffers sut(m_thread_pool);
-    sut.set_invalidate_callback(callback.AsStdFunction());
-    sut.set_invalidate_callback(callback.AsStdFunction());
+    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
+    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 2);
 
     sut.invalidate();
@@ -120,16 +123,15 @@ TEST_F(MemBuffers, SetFewInvalidateCallbacks)
 TEST_F(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
 {
     event sync_event;
-    MockFunction<void()> callback;
-    EXPECT_CALL(callback, Call)
+    EXPECT_CALL(m_invalidate_callback, Call)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
     mem_buffers sut(m_thread_pool);
     sut.invalidate();
 
-    sut.set_invalidate_callback(callback.AsStdFunction());
-    sut.set_invalidate_callback(callback.AsStdFunction());
+    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
+    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
 
     sync_event.wait();
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 0);
@@ -138,14 +140,13 @@ TEST_F(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
 TEST_F(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
 {
     event sync_event;
-    MockFunction<void()> callback;
-    EXPECT_CALL(callback, Call)
+    EXPECT_CALL(m_invalidate_callback, Call)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
     auto sut = std::make_unique<mem_buffers>(m_thread_pool);
-    sut->set_invalidate_callback(callback.AsStdFunction());
-    sut->set_invalidate_callback(callback.AsStdFunction());
+    sut->set_invalidate_callback(m_invalidate_callback.AsStdFunction());
+    sut->set_invalidate_callback(m_invalidate_callback.AsStdFunction());
 
     sut.reset();
     sync_event.wait();
