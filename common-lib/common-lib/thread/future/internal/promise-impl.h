@@ -29,27 +29,32 @@ namespace vshalygin::cl::internal {
             using future_t = T;
             using future_store = future_store_type_or_self_t<future_t>;
 
-            auto func = std::move(m_function);
+            m_thread_pool->post([controller = m_controller,
+                                 func = std::move(m_function),
+                                 args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
+                try {
+                    auto future = std::apply([&func](auto&&...arg) -> decltype(auto) {
+                        return func->call(std::move(arg)...);
+                    }, std::move(args));
 
-            try {
-                auto future = func->call(std::forward<ResolveArgs>(args)...);
-                auto controller = future.get_controller();
-                if constexpr(std::is_void_v<future_store>) {
-                    controller->set_on_success([c = m_controller]() mutable {
-                        c->set_value();
+                    auto prev_controller = future.get_controller();
+                    if constexpr(std::is_void_v<future_store>) {
+                        prev_controller->set_on_success([c = controller]() mutable {
+                            c->set_value();
+                        });
+                    } else {
+                        prev_controller->set_on_success([c = controller](future_store &&v) mutable {
+                            c->set_value(std::forward<future_store>(v));
+                        });
+                    }
+
+                    prev_controller->set_on_fail([c = controller](std::exception_ptr e) mutable {
+                        c->set_exception(e);
                     });
-                } else {
-                    controller->set_on_success([c = m_controller](future_store &&v) mutable {
-                        c->set_value(std::forward<future_store>(v));
-                    });
+                } catch(...) {
+                    controller->set_exception(std::current_exception());
                 }
-
-                controller->set_on_fail([c = m_controller](std::exception_ptr e) mutable {
-                    c->set_exception(e);
-                });
-            } catch (...) {
-                m_controller->set_exception(std::current_exception());
-            }
+            });
         } else {
             m_thread_pool->post([controller = m_controller,
                                 func = std::move(m_function),

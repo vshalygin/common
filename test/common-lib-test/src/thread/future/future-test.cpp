@@ -1437,91 +1437,91 @@ TEST_F(Future, PromiseResolveFunctionReturnsFuture)
     volatile int ii = 2;
 
     auto p0 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() {}); p.resolve();
         return p.get_future();
     }); p0.resolve(6);
     auto f0 = p0.get_future()
         .then([&]() { f0_completed = true; });
     auto p1 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> int { return i; }); p.resolve();
         return p.get_future();
     }); p1.resolve(6);
     auto f1 = p1.get_future()
         .then([&](int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
     auto p2 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> int &{ return i; }); p.resolve();
         return p.get_future();
     }); p2.resolve(6);
     auto f2 = p2.get_future()
         .then([&](int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
     auto p3 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p.resolve();
         return p.get_future();
     }); p3.resolve(6);
     auto f3 = p3.get_future()
         .then([&](int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
     auto p4 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> const int { return i; }); p.resolve();
         return p.get_future();
     }); p4.resolve(6);
     auto f4 = p4.get_future()
         .then([&](const int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
     auto p5 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> const int &{ return i; }); p.resolve();
         return p.get_future();
     }); p5.resolve(6);
     auto f5 = p5.get_future()
         .then([&](const int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
     auto p6 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p.resolve();
         return p.get_future();
     }); p6.resolve(6);
     auto f6 = p6.get_future()
         .then([&](const int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
     auto p7 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> volatile int { return ii; }); p.resolve();
         return p.get_future();
     }); p7.resolve(6);
     auto f7 = p7.get_future()
         .then([&](volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
     auto p8 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> volatile int &{ return ii; }); p.resolve();
         return p.get_future();
     }); p8.resolve(6);
     auto f8 = p8.get_future()
         .then([&](volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
     auto p9 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> volatile int &&{ return std::move(ii); }); p.resolve();
         return p.get_future();
     }); p9.resolve(6);
     auto f9 = p9.get_future()
         .then([&](volatile int &&v) -> decltype(auto) { EXPECT_EQ(v, ii); return std::move(v); });
     auto p10 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> const volatile int { return ii; }); p.resolve();
         return p.get_future();
     }); p10.resolve(6);
     auto f10 = p10.get_future()
         .then([&](const volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
     auto p11 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p.resolve();
         return p.get_future();
     }); p11.resolve(6);
     auto f11 = p11.get_future()
         .then([&](const volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
     auto p12 = make_promise(&m_pool, [&](int) {
-        EXPECT_EQ(master_thread_id, std::this_thread::get_id());
+        EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = make_promise(&m_pool, [&]() -> const volatile int &&{ return std::move(ii); }); p.resolve();
         return p.get_future();
     }); p12.resolve(6);
