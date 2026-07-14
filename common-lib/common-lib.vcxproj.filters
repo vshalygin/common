@@ -91,9 +91,6 @@
     <Filter Include="utils\internal\do-on-destruct">
       <UniqueIdentifier>{7445fbb3-0c68-4f56-a77c-73d3984afb8b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="synchronization\internal\safe-ptr">
-      <UniqueIdentifier>{060473bb-2417-4e48-ac91-d852bed79874}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
@@ -353,12 +350,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\thread\future\internal\is-future-tuple.h">
       <Filter>thread\future\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\safe-ptr.h">
-      <Filter>synchronization</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\internal\safe-ptr\safe-ptr.h">
-      <Filter>synchronization\internal\safe-ptr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
