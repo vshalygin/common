@@ -154,6 +154,9 @@
     <ClCompile Include="src\utils\type-qualifiers-cast\type-qualifiers-cast-test.cpp">
       <Filter>utils\type-qualifiers-cast</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\function\function-test.cpp">
+      <Filter>utils\function</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -230,6 +233,9 @@
     </Filter>
     <Filter Include="utils\type-qualifiers-cast">
       <UniqueIdentifier>{31ca9886-025d-40de-ab3a-ce65c8fd6427}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\function">
+      <UniqueIdentifier>{66e61433-7f76-4caa-9bb2-cf32576365bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

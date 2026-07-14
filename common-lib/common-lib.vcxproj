@@ -83,6 +83,7 @@
     <ClInclude Include="common-lib\utils\buffer.h" />
     <ClInclude Include="common-lib\utils\cbuffer-view.h" />
     <ClInclude Include="common-lib\utils\do-on-destruct.h" />
+    <ClInclude Include="common-lib\utils\function.h" />
     <ClInclude Include="common-lib\utils\internal\do-on-destruct\do-on-destruct.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-first-tuple-element.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\extract-last-tuple-element.h" />
