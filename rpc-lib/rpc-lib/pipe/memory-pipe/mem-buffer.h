@@ -5,7 +5,7 @@
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
-#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/value-locker.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -79,7 +79,7 @@ namespace vshalygin::rpc {
                 boost::multi_index::ordered_unique<
                     boost::multi_index::member<read_promise_data, uint64_t, &read_promise_data::id>>>>;
 
-        std::shared_ptr<cl::guarded_value<read_promise_container>> m_read_promises;
+        std::shared_ptr<cl::value_locker<read_promise_container>> m_read_promises;
         uint64_t m_next_read_promise_id = 0;
 
         cl::multiple_timer m_timer;

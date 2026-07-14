@@ -10,7 +10,7 @@ namespace vshalygin::rpc {
 
     mem_buffer::mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool)
         : m_thread_pool(std::move(thread_pool))
-        , m_read_promises(std::make_shared<cl::guarded_value<read_promise_container>>())
+        , m_read_promises(std::make_shared<cl::value_locker<read_promise_container>>())
         , m_timer(m_thread_pool->get_io_context())
     {}
 
@@ -60,8 +60,8 @@ namespace vshalygin::rpc {
         if(m_is_valid) {
             m_is_valid = false;
             m_buffer = {};
-            auto [g, read_promises] = m_read_promises->get();
-            auto &q = read_promises.get<0>();
+            auto read_promises = m_read_promises->lock();
+            auto &q = read_promises->get<0>();
             for(auto it = q.begin(); it != q.end(); ++it) {
                 q.modify(it, [](read_promise_data &el) {
                     el.promise.resolve(pipe_op_res::canceled, {});
@@ -86,8 +86,7 @@ namespace vshalygin::rpc {
 
     size_t mem_buffer::get_pending_read_handlers_count() const
     {
-        auto [g, read_promises] = m_read_promises->get();
-        return read_promises.get<0>().size();
+        return m_read_promises->lock()->get<0>().size();
     }
 
     pipe_op_res mem_buffer::write_impl(cl::buffer &&data, const auto &timeout_point)
@@ -114,8 +113,8 @@ namespace vshalygin::rpc {
     void mem_buffer::resolve_read_promises()
     {
         std::lock_guard guard(m_mtx);
-        auto [g, read_promises] = m_read_promises->get();
-        auto &q = read_promises.get<0>();
+        auto read_promises = m_read_promises->lock();
+        auto &q = read_promises->get<0>();
         if(!q.empty() && !m_buffer.empty()) {
             auto buffer = std::move(m_buffer.front());
             m_buffer.pop();
@@ -147,7 +146,7 @@ namespace vshalygin::rpc {
         else {
             const auto id = m_next_read_promise_id++;
 
-            auto [g, read_promises] = m_read_promises->get();
+            auto read_promises = m_read_promises->lock();
             std::optional<uint64_t> timer_id;
             if(timeout) {
                 auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
@@ -155,8 +154,8 @@ namespace vshalygin::rpc {
                         //avoid deadlock in case future callback stores mem_buffer itself
                         read_promise promise;
                         {
-                            auto [g, promises] = read_promises->get();
-                            auto &m = promises.get<1>();
+                            auto promises = read_promises->lock();
+                            auto &m = promises->get<1>();
                             auto it = m.find(id);
                             if(it != m.end()) {
                                 m.modify(it, [&promise](read_promise_data &el) {
@@ -173,7 +172,8 @@ namespace vshalygin::rpc {
 
                 timer_id = m_timer.start(std::move(timeout_callback), *timeout);
             }
-            read_promises.push_back({ id, timer_id, std::move(promise) });
+
+            read_promises->push_back({ id, timer_id, std::move(promise) });
         }
     }
 }

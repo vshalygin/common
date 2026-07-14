@@ -7,7 +7,7 @@
 #include <rpc-lib/internal/connection/connection.h>
 #include <rpc-lib/internal/service/iservice.h>
 
-#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/value-locker.h>
 
 #include <mutex>
 #include <unordered_map>
@@ -76,7 +76,7 @@ namespace vshalygin::rpc::internal {
         const std::chrono::milliseconds m_send_timeout;
         const std::chrono::milliseconds m_recv_timeout;
 
-        cl::guarded_value<std::unordered_map<uint64_t, connection_future>> m_connection_future_map;
+        cl::value_locker<std::unordered_map<uint64_t, connection_future>> m_connection_future_map;
     };
 
     server_connector::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
@@ -118,8 +118,7 @@ namespace vshalygin::rpc::internal {
 
     size_t server_connector::impl::get_pending_connections_count() const
     {
-        auto [guard, map] = m_connection_future_map.get();
-        return map.size();
+        return m_connection_future_map.lock()->size();
     }
 
     void server_connector::impl::notify_on_start()
@@ -209,10 +208,7 @@ namespace vshalygin::rpc::internal {
             //TODO fix duplication erase after 'finally' method will be added to future interface
         });
 
-        {
-            auto [guard, map] = m_connection_future_map.get();
-            map[connection_id] = promise.get_future();
-        }
+        (*m_connection_future_map.lock())[connection_id] = promise.get_future();
         
         m_connect_pipe_future
             .then([promise = std::move(promise), self = shared_from_this(), is_running_sp]
@@ -245,11 +241,11 @@ namespace vshalygin::rpc::internal {
     {
         connection_future to_delete;
 
-        auto [guard, map] = m_connection_future_map.get();
-        auto it = map.find(connection_id);
-        if(it != map.end()) {
+        auto map = m_connection_future_map.lock();
+        auto it = map->find(connection_id);
+        if(it != map->end()) {
             to_delete = std::move(it->second);
-            map.erase(it);
+            map->erase(it);
         }
     }
 
@@ -257,8 +253,8 @@ namespace vshalygin::rpc::internal {
     {
         std::vector<connection_future> to_delete;
 
-        auto [guard, map] = m_connection_future_map.get();
-        for(auto &el : map) {
+        auto map = m_connection_future_map.lock();
+        for(auto &el : *map) {
             to_delete.push_back(std::move(el.second));
         }
     }

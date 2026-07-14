@@ -1,5 +1,5 @@
 #pragma once
-#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/value-locker.h>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -57,7 +57,7 @@ namespace vshalygin::cl {
         std::atomic_bool m_is_canceled = false;
         size_t m_current_periods_count = 0;
 
-        cl::guarded_value<std::optional<size_t>> m_periods_count;
+        value_locker<std::optional<size_t>> m_periods_count;
     };
 
     template<typename Callback>

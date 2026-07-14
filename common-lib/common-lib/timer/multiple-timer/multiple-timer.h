@@ -1,5 +1,5 @@
 #pragma once
-#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/value-locker.h>
 #include <common-lib/synchronization/event/event.h>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -28,7 +28,7 @@ namespace vshalygin::cl {
         boost::asio::io_context &m_io_context;
 
         using timers_map = std::unordered_map<uint64_t, boost::asio::steady_timer>;
-        std::shared_ptr<cl::guarded_value<timers_map>> m_timers_map;
+        std::shared_ptr<value_locker<timers_map>> m_timers_map;
 
         std::atomic<uint64_t> m_next_id = 0;
     };
@@ -38,7 +38,7 @@ namespace vshalygin::cl {
                                    std::chrono::milliseconds timeout)
     {
         const auto timer_id = m_next_id.fetch_add(1);
-        auto [guard, timers_map] = m_timers_map->get();
+        auto timers_map = m_timers_map->lock();
 
         boost::asio::steady_timer timer(m_io_context);
         timer.expires_after(timeout);
@@ -47,10 +47,10 @@ namespace vshalygin::cl {
                           (const boost::system::error_code &ec) mutable
         {
             if(auto timers_map = timers_map_wp.lock()){
-                auto [guard, map] = timers_map->get();
-                auto it = map.find(timer_id);
-                if(it != map.end()) {
-                    map.erase(it);
+                auto locked_map = timers_map->lock();
+                auto it = locked_map->find(timer_id);
+                if(it != locked_map->end()) {
+                    locked_map->erase(it);
                 }
             }
 
@@ -60,8 +60,8 @@ namespace vshalygin::cl {
             }
         });
 
-        assert(timers_map.count(timer_id) == 0);
-        timers_map.insert(std::make_pair(timer_id, std::move(timer)));
+        assert(timers_map->count(timer_id) == 0);
+        timers_map->insert(std::make_pair(timer_id, std::move(timer)));
 
         return timer_id;
     }

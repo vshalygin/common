@@ -38,20 +38,17 @@ namespace vshalygin::cl {
 
     void periodic_timer::set_periods_count(size_t periods)
     {
-        auto [guard, periods_count] = m_periods_count.get();
-        periods_count = periods;
+        *m_periods_count.lock() = periods;
     }
 
     void periodic_timer::clear_periods_count()
     {
-        auto [guard, periods_count] = m_periods_count.get();
-        periods_count.reset();
+        m_periods_count.lock()->reset();
     }
 
     bool periodic_timer::is_all_periods_completed() const
     {
-        auto [guard, periods_count] = m_periods_count.get();
-        return periods_count == m_current_periods_count;
+        return *m_periods_count.lock() == m_current_periods_count;
     }
 
     void periodic_timer::increment_periods_count()

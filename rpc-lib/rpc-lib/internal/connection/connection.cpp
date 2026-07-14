@@ -4,7 +4,7 @@
 #include <rpc-lib/internal/service/iservice.h>
 #include <rpc-lib/internal/transport/transport.h>
 
-#include <common-lib/synchronization/guarded-value/guarded-value.h>
+#include <common-lib/synchronization/value-locker.h>
 #include <common-lib/timer/multiple-timer/multiple-timer.h>
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
@@ -68,7 +68,7 @@ namespace vshalygin::rpc::internal {
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<iservice> m_service;
 
-        cl::guarded_value<request_map> m_request_map;
+        cl::value_locker<request_map> m_request_map;
 
         cl::multiple_timer m_multiple_timer;
         transport m_transport;
@@ -203,13 +203,13 @@ namespace vshalygin::rpc::internal {
         req_result_promise promise;
 
         {
-            auto [guard, map] = m_request_map.get();
-            auto it = map.find(req_msg_number);
-            if(it != map.end()) {
+            auto map = m_request_map.lock();
+            auto it = map->find(req_msg_number);
+            if(it != map->end()) {
                 auto &req_data = it->second;
                 promise = std::move(req_data.promise);
                 m_multiple_timer.cancel(req_data.timer_id);
-                map.erase(it);
+                map->erase(it);
             }
         }
 
@@ -225,21 +225,21 @@ namespace vshalygin::rpc::internal {
             self->complete_request(msg_number, request_result::timeout, {});
         };
 
-        auto [guard, map] = m_request_map.get();
-        assert(map.count(msg_number) == 0);
+        auto map = m_request_map.lock();
+        assert(map->count(msg_number) == 0);
         auto timer_id = m_multiple_timer.start(std::move(timer_callback),
                                                m_recv_timeout);
-        map[msg_number] = request_data{ std::move(promise), timer_id };
+        (*map)[msg_number] = request_data{ std::move(promise), timer_id };
     }
 
     void connection::impl::remove_request_from_map(uint64_t msg_number) noexcept
     {
         try {
-            auto [guard, map] = m_request_map.get();
-            auto it = map.find(msg_number);
-            if(it != map.end()) {
+            auto map = m_request_map.lock();
+            auto it = map->find(msg_number);
+            if(it != map->end()) {
                 m_multiple_timer.cancel(it->second.timer_id);
-                map.erase(it);
+                map->erase(it);
             }
         } catch(...) {
         }
@@ -247,19 +247,18 @@ namespace vshalygin::rpc::internal {
 
     void connection::impl::cancel_active_requests()
     {
-        auto [guard, map] = m_request_map.get();
-        for(auto &el : map) {
+        auto map = m_request_map.lock();
+        for(auto &el : *map) {
             auto &req_data = el.second;
             req_data.promise.resolve(request_result::canceled, {});
             m_multiple_timer.cancel(req_data.timer_id);
         }
-        map.clear();
+        map->clear();
     }
 
     size_t connection::impl::get_pending_requests_count() const
     {
-        auto [guard, map] = m_request_map.get();
-        return map.size();
+        return m_request_map.lock()->size();
     }
 
     size_t connection::impl::get_active_timers_count() const

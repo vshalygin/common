@@ -28,9 +28,6 @@
     <Filter Include="synchronization\event">
       <UniqueIdentifier>{c2b0a754-8959-407c-9144-909082f786f4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="synchronization\guarded-value">
-      <UniqueIdentifier>{e56c6fff-1c30-4d70-a21c-5f4dbec0e978}</UniqueIdentifier>
-    </Filter>
     <Filter Include="synchronization\spinlock">
       <UniqueIdentifier>{d1d2a2e0-ec06-474f-b529-e6ca6f10263a}</UniqueIdentifier>
     </Filter>
@@ -107,9 +104,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\event\event.h">
       <Filter>synchronization\event</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\guarded-value\guarded-value.h">
-      <Filter>synchronization\guarded-value</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h">
       <Filter>synchronization\spinlock</Filter>
