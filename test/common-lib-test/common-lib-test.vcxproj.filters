@@ -151,6 +151,9 @@
     <ClCompile Include="src\thread\future\future-test.cpp">
       <Filter>thread\future</Filter>
     </ClCompile>
+    <ClCompile Include="src\synchronization\value-locker-test.cpp">
+      <Filter>synchronization</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

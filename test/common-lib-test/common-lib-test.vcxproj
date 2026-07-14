@@ -37,6 +37,7 @@
     <ClCompile Include="src\synchronization\ordered-lock\ordered-lock-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\compare-ordered-lockable-tuples-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-mutex\ordered-mutex-test.cpp" />
+    <ClCompile Include="src\synchronization\value-locker-test.cpp" />
     <ClCompile Include="src\thread\future\future-test.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
