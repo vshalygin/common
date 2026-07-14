@@ -96,6 +96,7 @@
     <ClInclude Include="common-lib\utils\internal\tuple-utils\swap-first-two-tuple-elements.h" />
     <ClInclude Include="common-lib\utils\internal\tuple-utils\tie-tuple.h" />
     <ClInclude Include="common-lib\utils\tuple-utils.h" />
+    <ClInclude Include="common-lib\utils\type-qualifiers-cast.h" />
     <ClInclude Include="common-lib\utils\type-wrapper.h" />
   </ItemGroup>
   <ItemGroup>

@@ -151,6 +151,9 @@
     <ClCompile Include="src\synchronization\value-locker-test.cpp">
       <Filter>synchronization</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\type-qualifiers-cast\type-qualifiers-cast-test.cpp">
+      <Filter>utils\type-qualifiers-cast</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -224,6 +227,9 @@
     </Filter>
     <Filter Include="thread\thread-pool">
       <UniqueIdentifier>{a50c9ad5-2f7f-47ef-ac87-b6ae928536d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\type-qualifiers-cast">
+      <UniqueIdentifier>{31ca9886-025d-40de-ab3a-ce65c8fd6427}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -61,6 +61,7 @@
     <ClCompile Include="src\utils\tuple-utils\sort-tuple2-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\swap-first-two-tuple-elements-test.cpp" />
     <ClCompile Include="src\utils\tuple-utils\tie-tuple-test.cpp" />
+    <ClCompile Include="src\utils\type-qualifiers-cast\type-qualifiers-cast-test.cpp" />
     <ClCompile Include="src\utils\type-wrapper\type-wrapper-test.cpp" />
   </ItemGroup>
   <ItemGroup>
