@@ -1,6 +1,8 @@
 #pragma once
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/function-traits.h>
+#include <common-lib/utils/type-qualifiers-cast.h>
+
 #include <tuple>
 
 namespace vshalygin::cl::internal {
@@ -37,7 +39,7 @@ namespace vshalygin::cl::internal {
                               future_tuple<TupleTypes...> &tuple,
                               std::index_sequence<I...>)
     {
-        return func(static_cast<function_arg_t<I, Func>>(std::get<I>(tuple.to_underlying()))...);
+        return func(type_qualifiers_cast<function_arg_t<I, Func>>(std::get<I>(tuple.to_underlying()))...);
     }
 
     template<typename Func, typename...TupleTypes, size_t...I>
@@ -45,7 +47,7 @@ namespace vshalygin::cl::internal {
                               future_tuple<TupleTypes...> &&tuple,
                               std::index_sequence<I...>)
     {
-        return func(static_cast<function_arg_t<I, Func>>(std::get<I>(std::move(tuple.to_underlying())))...);
+        return func(type_qualifiers_cast<function_arg_t<I, Func>>(std::get<I>(std::move(tuple.to_underlying())))...);
     }
 
     template<typename Func, typename...TupleTypes>

@@ -3,6 +3,7 @@
 #include "is-future-tuple.h"
 
 #include <common-lib/mpl/type-traits.h>
+#include <common-lib/utils/type-qualifiers-cast.h>
 
 namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
@@ -35,7 +36,7 @@ namespace vshalygin::cl::internal {
                           "unable to convert stored type to function parameter");
 
             auto [guard, val] = m_controller->get_val();
-            func(static_cast<arg_t>(val));
+            func(type_qualifiers_cast<arg_t>(val));
         }
     }
 }
