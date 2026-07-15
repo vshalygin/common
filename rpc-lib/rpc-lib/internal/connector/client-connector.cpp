@@ -53,10 +53,7 @@ namespace vshalygin::rpc::internal {
         client_connector::impl::create_connection_async(std::shared_ptr<iservice> service,
                                                         std::chrono::milliseconds pipe_waiting_timeout)
     {
-        auto promise = make_promise(m_thread_pool.get(), [self = shared_from_this(), pipe_waiting_timeout]() {
-            return self->m_pipe_env->open_pipe(pipe_waiting_timeout);
-        });
-        auto future = promise.get_future()
+        auto f = m_pipe_env->open_pipe(pipe_waiting_timeout)
             .then([self = weak_from_this(), service]
                   (pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
                       if(is_fail(r)) {
@@ -92,8 +89,7 @@ namespace vshalygin::rpc::internal {
                   });
             
         
-        promise.resolve();
-        return future;
+        return f;
     }
 
     void client_connector::impl::cancel_connect_waiting()

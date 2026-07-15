@@ -90,7 +90,7 @@ TEST_F(Future, ExecutesSuccessCallback)
     auto promise = make_promise(&m_pool, []() { return 2; });
     promise.resolve();
     auto future = promise.get_future();
-    future.then([&i](int &&ii) { i = ii; return 0; })
+    future.then([&](int &&ii) { i = ii; return 0; })
           .get();
 
     ASSERT_EQ(i, 2);
@@ -244,27 +244,6 @@ TEST_F(Future, ExceptionCatchedInChainedHanler)
     sync_event.wait();
 }
 
-TEST_F(Future, ExceptionCatchedInClosestChainedHanler)
-{
-    event sync_event;
-    auto p = make_promise(&m_pool, []() { return 2; });
-    p.resolve();
-    p.get_future()
-        .then([](int)->int { throw std::runtime_error("message"); })
-        .catched([&sync_event](std::exception_ptr e) {
-                     try {
-                         std::rethrow_exception(e);
-                     } catch(const std::runtime_error &e) {
-                         EXPECT_EQ(e.what(), std::string("message"));
-                         sync_event.set();
-                     }
-                 })
-        .then([](int i) { return i + 1; })
-        .catched([](std::exception_ptr) { FAIL(); });
-
-    sync_event.wait();
-}
-
 TEST_F(Future, IgnorePassedExceptionHandler)
 {
     event sync_event;
@@ -298,28 +277,6 @@ TEST_F(Future, MayGetValueAfterCatchHandlerSet)
         .get();
 
     r.apply([](int i) { ASSERT_EQ(i, 9); });
-}
-
-TEST_F(Future, CatchedMethodAppliedToLValue)
-{
-    auto p = make_promise(&m_pool, []() { return 1; });
-    p.resolve();
-    auto f = p.get_future();
-    f.catched([](std::exception_ptr) {})
-        .then([](int i) { return i; });
-
-    f.get().apply([](int i) { ASSERT_EQ(i, 1); });
-}
-
-TEST_F(Future, CatchedMethodAppliedToRValue)
-{
-    auto p = make_promise(&m_pool, []() { return 2; });
-    p.resolve();
-    auto f = p.get_future()
-        .then([](int) { return 3; })
-        .catched([](std::exception_ptr) { FAIL(); });
-
-    f.get().apply([](int i) { ASSERT_EQ(i, 3); });
 }
 
 TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)
@@ -447,36 +404,6 @@ TEST_F(Future, ExecuteErrorHandlerIfThisHandlerSetAfterTaskExecution)
     });
 
     sync_event.wait();
-}
-
-TEST_F(Future, CannotSetSuccessHandlerTwice)
-{
-    auto p = make_promise(&m_pool, []() -> int { return 0; });
-    p.resolve();
-    auto f = p.get_future();
-
-    f.then([](int) { return 0; });
-    EXPECT_ANY_THROW(f.then([](int) { return 2; }));
-}
-
-TEST_F(Future, CannotSetFailHandlerTwice)
-{
-    auto p = make_promise(&m_pool, []() -> int { return 0; });
-    p.resolve();
-    auto f = p.get_future();
-
-    f.catched([](std::exception_ptr) {});
-    EXPECT_ANY_THROW(f.catched([](std::exception_ptr) {}));
-}
-
-TEST_F(Future, CannotSetFailHandlerAfterSetSuccessHandler)
-{
-    auto p = make_promise(&m_pool, []() -> int { return 0; });
-    p.resolve();
-    auto f = p.get_future();
-
-    f.then([](int) { return 0; });
-    EXPECT_ANY_THROW(f.catched([](std::exception_ptr) {}));
 }
 
 TEST_F(Future, SuccessHandlerExecutesIfCorrespondingFutureAndPromiseDestroyed)
@@ -1087,35 +1014,37 @@ TEST_F(Future, ThenFunctionMayReferenceParameterIfFutureStoreValue)
     int *a1 = nullptr;
     auto p1 = make_promise(&m_pool, [&]() { return 1; }); p1.resolve();
     auto f1 = p1.get_future();
-    f1.then([&](int &v) { a1 = &v; v = 2; });
+    auto f1_ = f1.then([&](int &v) { a1 = &v; v = 2; });
     int *a2 = nullptr;
     auto p2 = make_promise(&m_pool, [&]() { return 1; }); p2.resolve();
     auto f2 = p2.get_future();
-    f2.then([&](int &&v) { a2 = &v; v = 2; });
+    auto f2_ = f2.then([&](int &&v) { a2 = &v; v = 2; });
     const int *a3 = nullptr;
     auto p3 = make_promise(&m_pool, [&]() { return 1; }); p3.resolve();
     auto f3 = p3.get_future();
-    f3.then([&](const int &v) { a3 = &v; });
+    auto f3_ = f3.then([&](const int &v) { a3 = &v; });
     const int *a4 = nullptr;
     auto p4 = make_promise(&m_pool, [&]() { return 1; }); p4.resolve();
     auto f4 = p4.get_future();
-    f4.then([&](const int &&v) { a4 = &v; });
+    auto f4_ = f4.then([&](const int &&v) { a4 = &v; });
     volatile int *a5 = nullptr;
     auto p5 = make_promise(&m_pool, [&]() { return 1; }); p5.resolve();
     auto f5 = p5.get_future();
-    f5.then([&](volatile int &v) { a5 = &v; v = 2; });
+    auto f5_ = f5.then([&](volatile int &v) { a5 = &v; v = 2; });
     volatile int *a6 = nullptr;
     auto p6 = make_promise(&m_pool, [&]() { return 1; }); p6.resolve();
     auto f6 = p6.get_future();
-    f6.then([&](volatile int &&v) { a6 = &v; v = 2; });
+    auto f6_ = f6.then([&](volatile int &&v) { a6 = &v; v = 2; });
     const volatile int *a7 = nullptr;
     auto p7 = make_promise(&m_pool, [&]() { return 1; }); p7.resolve();
     auto f7 = p7.get_future();
-    f7.then([&](const volatile int &v) { a7 = &v; });
+    auto f7_ = f7.then([&](const volatile int &v) { a7 = &v; });
     const volatile int *a8 = nullptr;
     auto p8 = make_promise(&m_pool, [&]() { return 1; }); p8.resolve();
     auto f8 = p8.get_future();
-    f8.then([&](const volatile int &&v) { a8 = &v; });
+    auto f8_ = f8.then([&](const volatile int &&v) { a8 = &v; });
+
+    f1_.get(); f2_.get(); f3_.get(); f4_.get(); f5_.get(); f6_.get(); f7_.get(); f8_.get();
 
     f1.get().apply([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a1, &v); });
     f2.get().apply([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a2, &v); });
@@ -1126,7 +1055,6 @@ TEST_F(Future, ThenFunctionMayReferenceParameterIfFutureStoreValue)
     f7.get().apply([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a7, &v); });
     f8.get().apply([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a8, &v); });
 }
-
 
 TEST_F(Future, MoveOnlyObjectMayBePassedToSuccessCallbackByRValueRef)
 {
@@ -1163,10 +1091,14 @@ TEST_F(Future, DoNotExecuteTheRestOfHandlerIfExceptionHappened)
 {
     auto p = make_promise(&m_pool, []() {});
     p.resolve();
-    p.get_future()
+    auto f = p.get_future()
         .then([]() {})
         .then([]() { throw std::runtime_error(""); })
         .then([]() { FAIL(); });
+
+    try {
+        f.get();
+    } catch(...){}
 }
 
 TEST_F(Future, FutureDataFunctionParameterMayBeValue)
@@ -1649,11 +1581,10 @@ TEST_F(Future, FutureTupleStoresValuesByDefault)
     p.resolve();
     auto f = p.get_future()
         .then([&]() { return ftuple{ std::move(i) }; });
-    f.then([&](const int &ii) { ASSERT_NE(&i, &ii); });
+    f.then([&](const int &ii) { ASSERT_NE(&i, &ii); })
+     .get();
 
     static_assert(std::is_same_v<decltype(f), future<thread_pool, ftuple<int>>>);
-
-    f.get();
 }
 
 TEST_F(Future, FutureTupleAsStoredValueMayBeConvertedToTypeWithAnyQualifiers)
@@ -1823,4 +1754,121 @@ TEST_F(Future, FutureDataWithFutureTupleType)
     f4.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
     //f4.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
     f4.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+}
+
+TEST_F(Future, MaySetSeveralSuccessCallbacks)
+{
+    event sync_event1;
+    event sync_event2;
+    event sync_event3;
+    auto p = make_promise(&m_pool, []() {});
+    auto f = p.get_future();
+    f.then([&]() { sync_event1.set(); });
+    f.then([&]() { sync_event2.set(); });
+    p.resolve();
+    f.get();
+    f.then([&]() { sync_event3.set(); });
+
+    sync_event1.wait();
+    sync_event2.wait();
+    sync_event3.wait();
+}
+
+TEST_F(Future, MaySetSeveralFailCallbacks)
+{
+    event sync_event1;
+    event sync_event2;
+    event sync_event3;
+    auto p = make_promise(&m_pool, []() { throw std::runtime_error(""); });
+    auto f = p.get_future();
+    f.catched([&](std::exception_ptr) { sync_event1.set(); });
+    f.catched([&](std::exception_ptr) { sync_event2.set(); });
+    p.resolve();
+    try {
+        f.get();
+    } catch(...){}
+    f.catched([&](std::exception_ptr) { sync_event3.set(); });
+
+    sync_event1.wait();
+    sync_event2.wait();
+    sync_event3.wait();
+}
+
+TEST_F(Future, EveryThenFunctionReturnsDifferentFuture)
+{
+    auto p = make_promise(&m_pool, []() {});
+    auto f = p.get_future();
+    auto f1 = f.then([&]() { });
+    auto f2 = f.then([&]() { return 1; });
+    auto f3 = f.then([&]() { return 's'; });
+    p.resolve();
+
+    f1.get();
+    f2.get().apply([](int i) { EXPECT_EQ(i, 1); });
+    f3.get().apply([](char i) { EXPECT_EQ(i, 's'); });
+}
+
+TEST_F(Future, EveryCathcedFunctionReturnsDifferentFuture)
+{
+    event sync_event1;
+    event sync_event2;
+    auto p = make_promise(&m_pool, []() { throw std::runtime_error(""); });
+    auto f = p.get_future();
+    f.catched([&](std::exception_ptr) { sync_event1.set(); });
+    f.catched([&](std::exception_ptr) { sync_event2.set(); });
+    p.resolve();
+
+    sync_event1.wait();
+    sync_event2.wait();
+}
+
+TEST_F(Future, FailCallbackMayBeSetBeforeSuccessCallback)
+{
+    event sync_event1;
+    auto p1 = make_promise(&m_pool, []() { throw std::runtime_error(""); });
+    auto f1 = p1.get_future();
+    f1.catched([&](std::exception_ptr) { sync_event1.set(); });
+    f1.then([&]() { });
+    p1.resolve();
+
+    sync_event1.wait();
+
+    event sync_event2;
+    auto p2 = make_promise(&m_pool, []() { });
+    auto f2 = p2.get_future();
+    f2.catched([&](std::exception_ptr) { });
+    f2.then([&]() { sync_event2.set(); });
+    p2.resolve();
+
+    sync_event2.wait();
+}
+
+TEST_F(Future, CathcedExceptionPassFutherAlongTheChain)
+{
+    event sync_event1;
+    event sync_event2;
+    auto p = make_promise(&m_pool, []() { return 2; });
+    p.resolve();
+    p.get_future()
+       .then([](int)->int { throw std::runtime_error("message"); })
+       .catched([&sync_event1](std::exception_ptr e) {
+                    try {
+                        std::rethrow_exception(e);
+                    } catch(const std::runtime_error &e) {
+                        EXPECT_EQ(e.what(), std::string("message"));
+                        sync_event1.set();
+                    }
+                })
+       .then([](int i) { return i + 1; })
+       .catched([&sync_event2](std::exception_ptr e) {
+                    try {
+                        std::rethrow_exception(e);
+                    } catch(const std::runtime_error &e) {
+                        EXPECT_EQ(e.what(), std::string("message"));
+                        sync_event2.set();
+                    }
+                });
+
+    sync_event1.wait();
+    sync_event2.wait();
 }

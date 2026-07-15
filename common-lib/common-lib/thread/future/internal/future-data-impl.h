@@ -32,9 +32,6 @@ namespace vshalygin::cl::internal {
 
             using arg_t = function_arg_t<0, Func>;
 
-            static_assert(is_lvalue_static_castable_v<val_t, arg_t>,
-                          "unable to convert stored type to function parameter");
-
             auto [guard, val] = m_controller->get_val();
             func(type_qualifiers_cast<arg_t>(val));
         }

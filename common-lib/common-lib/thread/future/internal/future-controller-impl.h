@@ -1,6 +1,5 @@
 #pragma once
 #include "future-controller.h"
-#include <common-lib/utils/do-on-destruct.h>
 #include <common-lib/utils/type-qualifiers-cast.h>
 #include <common-lib/mpl/tuple-traits.h>
 
@@ -28,29 +27,23 @@ namespace vshalygin::cl::internal {
         if constexpr(!std::is_void_v<T>) {
             static_assert(function_arg_count_v<Func> == 1,
                           "success callback arg count is not 1");
-            static_assert(is_lvalue_static_castable_v<T &&, function_arg_t<0, Func>>,
-                          "value cannot be converted to success callback parameter");
         } else {
             static_assert(function_arg_count_v<Func> == 0,
                           "success callback arg count is not 0");
         }
 
         ordered_lock guard(m_on_success_mtx);
-        if(m_on_success) {
-            throw std::logic_error("success handler already set");
-        }
-
         if constexpr(std::is_void_v<T>) {
-            m_on_success = std::forward<Func>(func);
+            m_on_success_queue.push(std::forward<Func>(func));
         } else {
-            m_on_success = [func = std::forward<Func>(func)](std::add_rvalue_reference_t<T> val) mutable {
+            m_on_success_queue.push([func = std::forward<Func>(func)](std::add_rvalue_reference_t<T> val) mutable {
                 func(type_qualifiers_cast<function_arg_t<0, Func>>(val));
-            };
+            });
         }
 
         ordered_lock guard2(push_back(std::move(guard), m_val_mtx));
         if(m_val) {
-            post_success(false);
+            post_success();
         }
     }
 
@@ -59,30 +52,12 @@ namespace vshalygin::cl::internal {
         function<void(std::exception_ptr)> &&func)
     {
         ordered_lock guard(m_on_fail_mtx);
-        if(m_on_fail) {
-            throw std::logic_error("fail handler already set");
-        }
 
-        m_on_fail = std::move(func);
+        m_on_fail_queue.push(std::move(func));
 
         ordered_lock g(push_back(std::move(guard), m_exception_mtx));
         if(m_exception) {
-            post_fail(false);
-        }
-    }
-
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::set_on_fail_if_not_set(
-        function<void(std::exception_ptr)> &&func)
-    {
-        ordered_lock guard(m_on_fail_mtx);
-        if(!m_on_fail) {
-            m_on_fail = std::move(func);
-
-            ordered_lock g(push_back(std::move(guard), m_exception_mtx));
-            if(m_exception) {
-                post_fail(false);
-            }
+            post_fail();
         }
     }
 
@@ -94,8 +69,6 @@ namespace vshalygin::cl::internal {
         } else {
             static_assert(sizeof...(value) == 1);
         }
-
-        bool need_notify = false;
 
         {
             ordered_lock g(m_on_success_mtx, m_val_mtx, m_exception_mtx);
@@ -109,24 +82,15 @@ namespace vshalygin::cl::internal {
                 m_val.emplace(type_wrapper{ std::forward<decltype(value)>(value)... });
             }
 
-            if(m_on_success) {
-                post_success(true);
-            } else {
-                m_is_value_ready = true;
-                need_notify = true;
-            }
+            post_success();
         }
 
-        if(need_notify) {
-            m_cv.notify_all();
-        }
+        m_cv.notify_all();
     }
 
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::set_exception(const std::exception_ptr &e)
     {
-        bool need_notify = false;
-
         {
             ordered_lock g(m_on_fail_mtx, m_val_mtx, m_exception_mtx);
             if(m_val || m_exception) {
@@ -134,17 +98,11 @@ namespace vshalygin::cl::internal {
             }
 
             m_exception = e;
-            if(m_on_fail) {
-                post_fail(true);
-            } else {
-                m_is_exception_ready = true;
-                need_notify = true;
-            }
+
+            post_fail();
         }
 
-        if(need_notify) {
-            m_cv.notify_all();
-        }
+        m_cv.notify_all();
     }
 
     template<typename T, typename ThreadPool>
@@ -195,57 +153,57 @@ namespace vshalygin::cl::internal {
     void future_controller<T, ThreadPool>::wait_data_ready_or_throw() const
     {
         ordered_lock lock(m_val_mtx, m_exception_mtx);
-        m_cv.wait(lock, [this]() { return m_is_value_ready || m_is_exception_ready; });
+        m_cv.wait(lock, [this]() { return m_val || m_exception; });
         if(m_exception) {
             std::rethrow_exception(*m_exception);
         }
     }
 
     template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::post_success(bool need_notify)
+    void future_controller<T, ThreadPool>::post_success()
     {
-        m_thread_pool->post([s = this->shared_from_this(), need_notify]() {
-            s->call_success(need_notify);
-        });
-    }
-
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::post_fail(bool need_notify)
-    {
-        m_thread_pool->post([s = this->shared_from_this(), need_notify]() {
-            s->call_fail(need_notify);
-        });
-    }
-
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::call_success(bool need_notify)
-    {
-        do_on_destruct d1([this, need_notify]() { if(need_notify) m_cv.notify_all(); });
-        ordered_lock guard(m_val_mtx);
-        do_on_destruct d2([this, need_notify]() { m_is_value_ready = true; });
-
-        //m_on_success here is defined and will not change,
-        //no need m_on_success_mtx block
-        assert(m_val);
-        assert(m_on_success);
-        if constexpr(!std::is_void_v<T>) {
-            m_on_success(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(m_val->to_underlying()));
-        } else {
-            m_on_success();
+        while(!m_on_success_queue.empty()) {
+            auto f = std::move(m_on_success_queue.front());
+            m_on_success_queue.pop();
+            m_thread_pool->post([s = this->shared_from_this(), f = std::move(f)]() mutable {
+                s->call_success(std::move(f));
+            });
         }
     }
 
     template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::call_fail(bool need_notify)
+    void future_controller<T, ThreadPool>::post_fail()
     {
-        do_on_destruct d1([this, need_notify]() { if(need_notify) m_cv.notify_all(); });
-        ordered_lock guard(m_exception_mtx);
-        do_on_destruct d2([this, need_notify]() { m_is_exception_ready = true; });
+        while(!m_on_fail_queue.empty()) {
+            auto f = std::move(m_on_fail_queue.front());
+            m_on_fail_queue.pop();
+            m_thread_pool->post([s = this->shared_from_this(), f = std::move(f)]() mutable {
+                s->call_fail(std::move(f));
+            });
+        }
+    }
 
-        //m_on_fail here is defined and will not change,
-        //no need m_on_fail_mtx block
+    template<typename T, typename ThreadPool>
+    void future_controller<T, ThreadPool>::call_success(on_success_t &&func)
+    {
+        ordered_lock guard(m_val_mtx);
+
+        assert(m_val);
+        assert(func);
+        if constexpr(!std::is_void_v<T>) {
+            func(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(m_val->to_underlying()));
+        } else {
+            func();
+        }
+    }
+
+    template<typename T, typename ThreadPool>
+    void future_controller<T, ThreadPool>::call_fail(on_fail_t &&func)
+    {
+        ordered_lock guard(m_exception_mtx);
+
         assert(m_exception);
-        assert(m_on_fail);
-        m_on_fail(*m_exception);
+        assert(func);
+        func(*m_exception);
     }
 }

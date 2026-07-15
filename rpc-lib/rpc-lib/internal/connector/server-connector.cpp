@@ -161,7 +161,7 @@ namespace vshalygin::rpc::internal {
         }
 
         m_connect_pipe_future = m_pipe_env->create_pipe()
-                                    .then([](pipe_op_res r, std::shared_ptr<ipipe_endpoint> ep) {
+                                    .then([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> ep) {
                                               if(is_fail(r)) {
                                                   throw std::runtime_error("pipe is not connected");
                                               }

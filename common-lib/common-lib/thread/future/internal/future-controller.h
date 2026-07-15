@@ -9,16 +9,19 @@
 
 #include <memory>
 #include <cassert>
-#include <functional>
 #include <optional>
 #include <mutex>
 #include <condition_variable>
+#include <queue>
 
 namespace vshalygin::cl::internal {
     template<typename T, typename ThreadPool>
     class future_controller
         : public std::enable_shared_from_this<future_controller<T, ThreadPool>>
     {
+        using on_success_t = function<void(std::add_rvalue_reference_t<T>)>;
+        using on_fail_t = function<void(std::exception_ptr)>;
+
         class creator
         {};
 
@@ -34,7 +37,6 @@ namespace vshalygin::cl::internal {
         void set_on_success(Func &&func);
 
         void set_on_fail(function<void(std::exception_ptr)> &&func);
-        void set_on_fail_if_not_set(function<void(std::exception_ptr)> &&func);
 
         void set_value(auto&&...value);
         void set_exception(const std::exception_ptr &e);
@@ -48,11 +50,11 @@ namespace vshalygin::cl::internal {
     private:
         void wait_data_ready_or_throw() const;
 
-        void post_success(bool need_notify);
-        void post_fail(bool need_notify);
+        void post_success();
+        void post_fail();
 
-        void call_success(bool need_notify);
-        void call_fail(bool need_notify);
+        void call_success(on_success_t &&func);
+        void call_fail(on_fail_t &&func);
 
     private:
         using type_wrapper = type_wrapper<T>;
@@ -60,18 +62,16 @@ namespace vshalygin::cl::internal {
         ThreadPool *m_thread_pool;
 
         mutable ordered_mutex<0> m_on_success_mtx;
-        function<void(std::add_rvalue_reference_t<T>)> m_on_success;
+        std::queue<on_success_t> m_on_success_queue;
 
         mutable ordered_mutex<1> m_on_fail_mtx;
-        function<void(std::exception_ptr)> m_on_fail;
+        std::queue<on_fail_t> m_on_fail_queue;
 
         mutable ordered_mutex<2> m_val_mtx;
         std::optional<type_wrapper> m_val;
-        bool m_is_value_ready = false;
 
         mutable ordered_mutex<3> m_exception_mtx;
         std::optional<std::exception_ptr> m_exception;
-        bool m_is_exception_ready = false;
 
         mutable std::condition_variable_any m_cv;
     };

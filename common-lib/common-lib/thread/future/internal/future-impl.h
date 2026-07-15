@@ -6,6 +6,8 @@
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/type-traits.h>
 
+#include <common-lib/utils/type-qualifiers-cast.h>
+
 #include "future.h"
 
 namespace vshalygin::cl::internal {
@@ -74,9 +76,9 @@ namespace vshalygin::cl::internal {
                         using arg_t = function_arg_t<0, Func>;
 
                         if constexpr(!std::is_void_v<ret_t>) {
-                            new_controller->set_value(task(static_cast<arg_t>(val)));
+                            new_controller->set_value(task(type_qualifiers_cast<arg_t>(val)));
                         } else {
-                            task(static_cast<arg_t>(val));
+                            task(type_qualifiers_cast<arg_t>(val));
                             new_controller->set_value();
                         }
                     }
@@ -89,7 +91,7 @@ namespace vshalygin::cl::internal {
         auto fail = [new_controller](std::exception_ptr e) {
             new_controller->set_exception(e);
         };
-        m_controller->set_on_fail_if_not_set(std::move(fail));
+        m_controller->set_on_fail(std::move(fail));
 
         if constexpr(is_future_v<ret_t>) {
             static_assert(is_value_v<ret_t>);
@@ -110,12 +112,12 @@ namespace vshalygin::cl::internal {
                     });
                 }
 
-                controller->set_on_fail_if_not_set([next_controller2](std::exception_ptr e) {
+                controller->set_on_fail([next_controller2](std::exception_ptr e) {
                     next_controller2->set_exception(e);
                 });
             });
 
-            new_controller->set_on_fail_if_not_set([next_controller2](std::exception_ptr e) {
+            new_controller->set_on_fail([next_controller2](std::exception_ptr e) {
                 next_controller2->set_exception(e);
             });
 

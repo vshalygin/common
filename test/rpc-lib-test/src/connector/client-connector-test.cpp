@@ -205,7 +205,7 @@ TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
 TEST_F(ClientConnector, WaitingCancelsOnDestruction)
 {
     auto sut = create_sut();
-    auto f = sut->create_connection_async(nullptr, 10s);
+    auto f = sut->create_connection_async(nullptr, 1000s);
 
     sut.reset();
 
