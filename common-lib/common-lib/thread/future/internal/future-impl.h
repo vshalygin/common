@@ -32,6 +32,41 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
+    template<typename Future>
+    auto future<ThreadPool, T>::flatten_future(auto controller)
+    {
+        static_assert(is_future_v<Future>);
+        static_assert(is_value_v<Future>);
+
+        using future_t = Future;
+        using future_store = future_store_type_or_self_t<future_t>;
+
+        auto next_controller2 = future_controller<future_store, ThreadPool>::create(m_thread_pool);
+        controller->set_on_success([next_controller2](future_t &&val) {
+            auto controller = val.get_controller();
+            if constexpr(std::is_void_v<future_store>) {
+                controller->set_on_success([next_controller2]() {
+                    next_controller2->set_value();
+                });
+            } else {
+                controller->set_on_success([next_controller2](future_store &&v) {
+                    next_controller2->set_value(std::forward<future_store>(v));
+                });
+            }
+
+            controller->set_on_fail([next_controller2](std::exception_ptr e) {
+                next_controller2->set_exception(e);
+            });
+        });
+
+        controller->set_on_fail([next_controller2](std::exception_ptr e) {
+            next_controller2->set_exception(e);
+        });
+
+        return future<ThreadPool, future_store>(m_thread_pool, std::move(next_controller2));
+    }
+
+    template<typename ThreadPool, typename T>
     template<typename Func>
     auto future<ThreadPool, T>::then(Func &&task)
     {
@@ -93,34 +128,7 @@ namespace vshalygin::cl::internal {
         });
 
         if constexpr(is_future_v<ret_t>) {
-            static_assert(is_value_v<ret_t>);
-
-            using future_t = ret_t;
-            using future_store = future_store_type_or_self_t<future_t>;
-
-            auto next_controller2 = future_controller<future_store, ThreadPool>::create(m_thread_pool);
-            new_controller->set_on_success([next_controller2]([[maybe_unused]] future_t &&val) {
-                auto controller = val.get_controller();
-                if constexpr(std::is_void_v<future_store>) {
-                    controller->set_on_success([next_controller2]() {
-                        next_controller2->set_value();
-                    });
-                } else {
-                    controller->set_on_success([next_controller2](future_store &&v) {
-                        next_controller2->set_value(std::forward<future_store>(v));
-                    });
-                }
-
-                controller->set_on_fail([next_controller2](std::exception_ptr e) {
-                    next_controller2->set_exception(e);
-                });
-            });
-
-            new_controller->set_on_fail([next_controller2](std::exception_ptr e) {
-                next_controller2->set_exception(e);
-            });
-
-            return future<ThreadPool, future_store>(m_thread_pool, std::move(next_controller2));
+            return flatten_future<ret_t>(std::move(new_controller));
         } else {
             return future<ThreadPool, ret_t>(m_thread_pool, std::move(new_controller));
         }
