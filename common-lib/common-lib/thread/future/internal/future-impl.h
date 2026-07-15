@@ -43,7 +43,7 @@ namespace vshalygin::cl::internal {
                                          task = std::forward<Func>(task)]() mutable {
                 try {
                     static_assert(function_arg_count_v<Func> == 0,
-                                  "callback must have 0 argument");
+                                  "success callback must have 0 argument");
 
                     if constexpr(!std::is_void_v<ret_t>) {
                         new_controller->set_value(task());
@@ -72,7 +72,7 @@ namespace vshalygin::cl::internal {
 
                     } else {
                         static_assert(function_arg_count_v<Func> == 1,
-                                      "callback must have 1 argument");
+                                      "success callback must have 1 argument");
                         using arg_t = function_arg_t<0, Func>;
 
                         if constexpr(!std::is_void_v<ret_t>) {
@@ -88,10 +88,9 @@ namespace vshalygin::cl::internal {
             });
         }
 
-        auto fail = [new_controller](std::exception_ptr e) {
+        m_controller->set_on_fail([new_controller](std::exception_ptr e) {
             new_controller->set_exception(e);
-        };
-        m_controller->set_on_fail(std::move(fail));
+        });
 
         if constexpr(is_future_v<ret_t>) {
             static_assert(is_value_v<ret_t>);
@@ -128,19 +127,55 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    future<ThreadPool, T> &future<ThreadPool, T>::catched(
-            function<void(std::exception_ptr)> &&task) &
+    template<typename Func>
+    auto future<ThreadPool, T>::catched(Func &&task)
     {
-        m_controller->set_on_fail(std::move(task));
-        return *this;
-    }
+        using ret_t = function_ret_t<Func>;
 
-    template<typename ThreadPool, typename T>
-    future<ThreadPool, T> future<ThreadPool, T>::catched(
-                                     function<void(std::exception_ptr)> &&task) &&
-    {
-        m_controller->set_on_fail(std::move(task));
-        return std::move(*this);
+        static_assert(function_arg_count_v<Func> == 1,
+                      "fail callback must have one argument");
+        static_assert(std::is_same_v<function_arg_t<0, Func>, std::exception_ptr>,
+                      "fail callback argument must be std::exception_ptr");
+        static_assert(std::is_same_v<ret_t, T> || std::is_void_v<ret_t>,
+                      "fail callback argument must return future storing type or void");
+
+        auto new_controller = future_controller<ret_t, ThreadPool>::create(m_thread_pool);
+
+        if constexpr(std::is_void_v<T>) {
+            m_controller->set_on_success([new_controller]() mutable {
+                new_controller->set_value();
+            });
+        } else if constexpr (std::is_void_v<ret_t>) {
+            m_controller->set_on_success([new_controller]
+                                         (add_lvalue_ref_to_value_t<T>) mutable {
+                new_controller->set_value();
+            });
+        } else {
+            m_controller->set_on_success([new_controller]
+                                         (add_lvalue_ref_to_value_t<T> v) mutable {
+                try {
+                    new_controller->set_value(std::forward<T>(v));
+                } catch (...) {
+                    new_controller->set_exception(std::current_exception());
+                }
+            });
+        }
+
+        m_controller->set_on_fail([new_controller,
+                                  task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
+            try {
+                if constexpr(!std::is_void_v<ret_t>) {
+                    new_controller->set_value(task(ep));
+                } else {
+                    task(ep);
+                    new_controller->set_value();
+                }
+            } catch(...) {
+                new_controller->set_exception(std::current_exception());
+            }
+        });
+
+        return future<ThreadPool, ret_t>(m_thread_pool, std::move(new_controller));
     }
 
     template<typename ThreadPool, typename T>

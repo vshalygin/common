@@ -118,7 +118,7 @@ namespace vshalygin::cl {
     public:
         using type = void;
 
-        type_wrapper() = default;
+        type_wrapper() noexcept = default;
 
         type_wrapper(const type_wrapper &) = default;
         type_wrapper &operator=(const type_wrapper &) = default;

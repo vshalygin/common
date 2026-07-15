@@ -18,6 +18,11 @@ static_assert(std::is_move_constructible_v<future<thread_pool, int>>);
 static_assert(std::is_move_assignable_v<future<thread_pool, int>>);
 
 namespace {
+    void declare_fail()
+    {
+        FAIL();
+    }
+
     class counter
     {
     public:
@@ -247,11 +252,12 @@ TEST_F(Future, ExceptionCatchedInChainedHanler)
 TEST_F(Future, IgnorePassedExceptionHandler)
 {
     event sync_event;
+    bool first_catch_called = false;
     auto p = make_promise(&m_pool, []() { return 2; });
     p.resolve();
     p.get_future()
         .then([](int) { return 0; })
-        .catched([](std::exception_ptr) { FAIL(); })
+        .catched([&](std::exception_ptr) { first_catch_called = true; return 0; })
         .then([](int)->int{ throw std::runtime_error("message"); })
         .catched([&sync_event](std::exception_ptr e) {
             try{
@@ -263,20 +269,23 @@ TEST_F(Future, IgnorePassedExceptionHandler)
         });
 
     sync_event.wait();
+    ASSERT_FALSE(first_catch_called);
 }
 
 TEST_F(Future, MayGetValueAfterCatchHandlerSet)
 {
+    bool catch_called = false;
     auto p = make_promise(&m_pool, []() { return 2; });
     p.resolve();
     auto r = p.get_future()
         .then([](int i) { return i + 3; })
-        .catched([](std::exception_ptr) { FAIL(); })
+        .catched([&](std::exception_ptr) { catch_called = true; return 0; })
         .then([](int i)->int { return i + 4; })
-        .catched([](std::exception_ptr) { FAIL(); })
+        .catched([&](std::exception_ptr) { catch_called = true; return 0; })
         .get();
 
     r.apply([](int i) { ASSERT_EQ(i, 9); });
+    ASSERT_FALSE(catch_called);
 }
 
 TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)
@@ -541,7 +550,7 @@ TEST_F(Future, FailHandlerNeverCopyIfMovedToCatchedMethod)
 
     EXPECT_EQ(counter::copy_num, 0u);
     EXPECT_EQ(counter::copy_assign_num, 0u);
-    EXPECT_EQ(counter::move_num, 2u);
+    EXPECT_EQ(counter::move_num, 3u);
     EXPECT_EQ(counter::move_assign_num, 0u);
 }
 
@@ -1287,12 +1296,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAll
         .catched([&](std::exception_ptr) { sync_event1.set(); });
 
     sync_event1.wait();
-    try {
-        f1.get();
-        FAIL();
-    } catch (const std::runtime_error &e) {
-        EXPECT_EQ(std::string(e.what()), "message");
-    }
+    ASSERT_NO_THROW(f1.get());
 
 
     event sync_event2;
@@ -1308,14 +1312,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAll
         .catched([&](std::exception_ptr) { sync_event2.set(); });
 
     sync_event2.wait();
-    try {
-        f2.get();
-        FAIL();
-    }
-    catch(const std::runtime_error &e) {
-        EXPECT_EQ(std::string(e.what()), "message");
-    }
-
+    ASSERT_NO_THROW(f2.get());
 
     event sync_event3;
     auto p3 = make_promise(&m_pool, []() {}); p3.resolve();
@@ -1330,12 +1327,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAll
         .catched([&](std::exception_ptr) { sync_event3.set(); });
 
     sync_event3.wait();
-    try {
-        f3.get();
-        FAIL();
-    } catch(const std::runtime_error &e) {
-        EXPECT_EQ(std::string(e.what()), "message");
-    }
+    ASSERT_NO_THROW(f3.get());
 }
 
 TEST_F(Future, PromiseResolveFunctionReturnsFuture)
@@ -1478,12 +1470,7 @@ TEST_F(Future, PromiseResolveFunctionReturnsFutureWhichThrowsException)
         .catched([&](std::exception_ptr) { sync_event1.set(); });
 
     sync_event1.wait();
-    try {
-        f1.get();
-        FAIL();
-    } catch (const std::runtime_error &e) {
-        EXPECT_EQ(std::string(e.what()), "test");
-    }
+    ASSERT_NO_THROW(f1.get());
 
     event sync_event2;
     auto p2 = make_promise(&m_pool, [&](int) {
@@ -1499,13 +1486,7 @@ TEST_F(Future, PromiseResolveFunctionReturnsFutureWhichThrowsException)
         .catched([&](std::exception_ptr) { sync_event2.set(); });
 
     sync_event2.wait();
-    try {
-        f2.get();
-        FAIL();
-    } catch(const std::runtime_error &e) {
-        EXPECT_EQ(std::string(e.what()), "test");
-    }
-
+    ASSERT_NO_THROW(f2.get());
 }
 
 TEST_F(Future, PromiseFunctionWhichReturnsFutureAcceptsMoveOnlyTypeAndPassesItFuther)
@@ -1843,32 +1824,323 @@ TEST_F(Future, FailCallbackMayBeSetBeforeSuccessCallback)
     sync_event2.wait();
 }
 
-TEST_F(Future, CathcedExceptionPassFutherAlongTheChain)
+TEST_F(Future, CatchedMethodReturnsNewPromise)
 {
-    event sync_event1;
-    event sync_event2;
-    auto p = make_promise(&m_pool, []() { return 2; });
-    p.resolve();
-    p.get_future()
-       .then([](int)->int { throw std::runtime_error("message"); })
-       .catched([&sync_event1](std::exception_ptr e) {
-                    try {
-                        std::rethrow_exception(e);
-                    } catch(const std::runtime_error &e) {
-                        EXPECT_EQ(e.what(), std::string("message"));
-                        sync_event1.set();
-                    }
-                })
-       .then([](int i) { return i + 1; })
-       .catched([&sync_event2](std::exception_ptr e) {
-                    try {
-                        std::rethrow_exception(e);
-                    } catch(const std::runtime_error &e) {
-                        EXPECT_EQ(e.what(), std::string("message"));
-                        sync_event2.set();
-                    }
-                });
+    auto p1 = make_promise(&m_pool, []() { return 2; });
+    auto f1 = p1.get_future()
+        .then([](int) -> int { throw std::runtime_error(""); });
+    auto f1_ = f1.catched([](std::exception_ptr) { return 34; });
+    p1.resolve();
 
-    sync_event1.wait();
-    sync_event2.wait();
+    f1_.get().apply([](int i) { ASSERT_EQ(i, 34); });
+
+    auto p2 = make_promise(&m_pool, []() { return 2; });
+    auto f2 = p2.get_future()
+        .then([](int) -> int { throw std::runtime_error(""); });
+    auto f2_ = f2.catched([](std::exception_ptr) {});
+    p2.resolve();
+
+    f2_.get();
+}
+
+TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
+{
+    bool is_catch_called = false;
+    auto p1 = make_promise(&m_pool, []() { return 2; });
+    p1.resolve();
+    auto f1 = p1.get_future()
+        .then([](int i) { return i + 8; })
+        .catched([&](std::exception_ptr) { is_catch_called = true; return 5545; })
+        .then([](int i) { return i * 2; });
+    f1.get().apply([](int i) { ASSERT_EQ(i, 20); });
+    ASSERT_FALSE(is_catch_called);
+
+    auto p2 = make_promise(&m_pool, []() { return 2; });
+    p2.resolve();
+    auto f2 = p2.get_future()
+        .then([](int i) { return i + 8; })
+        .catched([&](std::exception_ptr) { is_catch_called = true; return 5545; });
+    f2.get().apply([](int i) { ASSERT_EQ(i, 10); });
+    ASSERT_FALSE(is_catch_called);
+
+    auto p3 = make_promise(&m_pool, []() { return 2; });
+    p3.resolve();
+    auto f3 = p3.get_future()
+        .then([](int i) { return i + 8; })
+        .catched([&](std::exception_ptr) { is_catch_called = true; })
+        .then([]() { return 45; });
+    f3.get().apply([](int i) { ASSERT_EQ(i, 45); });
+    ASSERT_FALSE(is_catch_called);
+
+    auto p4 = make_promise(&m_pool, []() { return 2; });
+    p4.resolve();
+    auto f4 = p4.get_future()
+        .then([](int i) { return i + 8; })
+        .catched([&](std::exception_ptr) { is_catch_called = true; });
+    f4.get();
+    ASSERT_FALSE(is_catch_called);
+}
+
+TEST_F(Future, ExceptionCatchesInClosesErrorHandlerThenExecutionCompleted)
+{
+    bool is_first_then_called1 = false;
+    bool is_catch_called1 = false;
+    auto p1 = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    p1.resolve();
+    auto f1 = p1.get_future()
+        .then([&](int i) { is_first_then_called1 = true; return i + 8; })
+        .catched([&](std::exception_ptr) { is_catch_called1 = true; return 100; })
+        .then([](int i) { return i * 2; })
+        .catched([](std::exception_ptr) { declare_fail(); return 0; });
+    f1.get().apply([](int i) { ASSERT_EQ(i, 200); });
+    ASSERT_FALSE(is_first_then_called1);
+    ASSERT_TRUE(is_catch_called1);
+
+    bool is_first_then_called2 = false;
+    bool is_catch_called2 = false;
+    auto p2 = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    p2.resolve();
+    auto f2 = p2.get_future()
+        .then([&](int i) { is_first_then_called2 = true; return i + 8; })
+        .catched([&](std::exception_ptr) { is_catch_called2 = true; })
+        .then([]() { return 50; })
+        .catched([](std::exception_ptr) { declare_fail(); return 0; });
+    f2.get().apply([](int i) { ASSERT_EQ(i, 50); });
+    ASSERT_FALSE(is_first_then_called2);
+    ASSERT_TRUE(is_catch_called2);
+}
+
+TEST_F(Future, SetPromiseFailIfErrorHandlerThrowsException)
+{
+    bool is_second_then_called1 = false;
+    bool is_catch_called1 = false;
+    auto p1 = make_promise(&m_pool, []() -> int { return 0; });
+    p1.resolve();
+    auto f1 = p1.get_future()
+        .then([&](int) -> int { throw std::runtime_error("sdfsdfsdf"); })
+        .catched([&](std::exception_ptr ep) -> int {
+                     try {
+                         std::rethrow_exception(ep);
+                     } catch(const std::runtime_error &e) {
+                         EXPECT_EQ(e.what(), std::string("sdfsdfsdf"));
+                         throw std::runtime_error("sdfvvbn");
+                     } catch (...) {
+                         declare_fail();
+                     }
+                  })
+        .then([&](int i) { is_second_then_called1 = true; return i * 2; })
+        .catched([&](std::exception_ptr ep) {
+                     try {
+                         std::rethrow_exception(ep);
+                     } catch(const std::runtime_error &e) {
+                         EXPECT_EQ(e.what(), std::string("sdfvvbn"));
+                     } catch (...){
+                         declare_fail();
+                     }
+                     is_catch_called1 = true;
+                     return 55;
+                 });
+    f1.get().apply([](int i) { ASSERT_EQ(i, 55); });
+    ASSERT_FALSE(is_second_then_called1);
+    ASSERT_TRUE(is_catch_called1);
+
+    bool is_second_then_called2 = false;
+    bool is_catch_called2 = false;
+    auto p2 = make_promise(&m_pool, []() -> int { return 0; });
+    p2.resolve();
+    auto f2 = p2.get_future()
+        .then([&](int) -> int { throw std::runtime_error("sfdsf"); })
+        .catched([&](std::exception_ptr ep) -> void {
+                     try {
+                         std::rethrow_exception(ep);
+                     } catch(const std::runtime_error &e) {
+                         EXPECT_EQ(e.what(), std::string("sfdsf"));
+                         throw std::runtime_error("sdfvvbn");
+                     } catch (...) {
+                         declare_fail();
+                     }
+                 })
+        .then([&]() { is_second_then_called2 = true; return 34; })
+        .catched([&](std::exception_ptr ep) -> void {
+                     try {
+                         std::rethrow_exception(ep);
+                     } catch(const std::runtime_error &e) {
+                         EXPECT_EQ(e.what(), std::string("sdfvvbn"));
+                     } catch (...){
+                         declare_fail();
+                     }
+                     is_catch_called2 = true;
+                  });
+    f2.get();
+    ASSERT_FALSE(is_second_then_called2);
+    ASSERT_TRUE(is_catch_called2);
+}
+
+TEST_F(Future, ThrowsOnAttemtToGetDataFromFailedFuture)
+{
+    auto p1 = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    p1.resolve();
+    auto f1 = p1.get_future();
+    ASSERT_THROW(f1.get(), std::runtime_error);
+
+    auto p2 = make_promise(&m_pool, []() -> int { return 0; });
+    p2.resolve();
+    auto f2 = p2.get_future()
+        .then([](int) { throw std::runtime_error(""); });
+    ASSERT_THROW(f2.get(), std::runtime_error);
+}
+
+TEST_F(Future, SeveralErrorHandlersDoNotExecuteIfNoExceptionInFirst)
+{
+    auto p1 = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    p1.resolve();
+    auto f1 = p1.get_future()
+        .catched([](std::exception_ptr) { return 34; })
+        .catched([](std::exception_ptr) { declare_fail(); return 44; })
+        .catched([](std::exception_ptr) { declare_fail(); return 54; })
+        .catched([](std::exception_ptr) { declare_fail(); return 64; });
+    f1.get().apply([](int i) { ASSERT_EQ(i, 34); });
+
+    auto p2 = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    p2.resolve();
+    auto f2 = p2.get_future()
+        .catched([](std::exception_ptr) { })
+        .catched([](std::exception_ptr) { declare_fail();})
+        .catched([](std::exception_ptr) { declare_fail();})
+        .catched([](std::exception_ptr) { declare_fail();});
+    f2.get();
+}
+
+TEST_F(Future, ErrorHandlerMayReturnTypeWithAnySpecifier)
+{
+    int i = 0;
+    volatile int ii = 1;
+
+    auto p1 = make_promise(&m_pool, [&]() -> int { return i; }); p1.resolve();
+    p1.get_future()
+        .catched([&](std::exception_ptr) -> int { return i; })
+        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p2 = make_promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
+    p2.get_future()
+        .catched([&](std::exception_ptr) -> int &{ return i; })
+        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p3 = make_promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
+    p3.get_future()
+        .catched([&](std::exception_ptr) -> int &&{ return std::move(i); })
+        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p4 = make_promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
+    p4.get_future()
+        .catched([&](std::exception_ptr) -> const int { return i; })
+        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p5 = make_promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
+    p5.get_future()
+        .catched([&](std::exception_ptr) -> const int &{ return i; })
+        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p6 = make_promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
+    p6.get_future()
+        .catched([&](std::exception_ptr) -> const int &&{ return std::move(i); })
+        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p7 = make_promise(&m_pool, [&]() -> volatile int { return ii; }); p7.resolve();
+    p7.get_future()
+        .catched([&](std::exception_ptr) -> volatile int { return ii; })
+        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p8 = make_promise(&m_pool, [&]() -> volatile int &{ return ii; }); p8.resolve();
+    p8.get_future()
+        .catched([&](std::exception_ptr) -> volatile int &{ return ii; })
+        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p9 = make_promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
+    p9.get_future()
+        .catched([&](std::exception_ptr) -> volatile int &&{ return std::move(i); })
+        .then([&](volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p10 = make_promise(&m_pool, [&]() -> const volatile int { return ii; }); p10.resolve();
+    p10.get_future()
+        .catched([&](std::exception_ptr) -> const volatile int { return ii; })
+        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p11 = make_promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p11.resolve();
+    p11.get_future()
+        .catched([&](std::exception_ptr) -> const volatile int &{ return ii; })
+        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p12 = make_promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
+    p12.get_future()
+        .catched([&](std::exception_ptr) -> const volatile int &&{ return std::move(i); })
+        .then([&](const volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+}
+
+TEST_F(Future, ErrorHandlerMayAcceptAndReturnFtupleStoringTypeWithAnySpecifier)
+{
+    int i = 0;
+    volatile int ii = 1;
+
+    auto p1 = make_promise(&m_pool, [&]() { return ftuple<int>(i); }); p1.resolve();
+    p1.get_future()
+        .catched([&](std::exception_ptr){ return ftuple<int>(i); })
+        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p2 = make_promise(&m_pool, [&]() { return ftuple<int &>(i); }); p2.resolve();
+    p2.get_future()
+        .catched([&](std::exception_ptr){ return ftuple<int &>(i); })
+        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p3 = make_promise(&m_pool, [&]() { return ftuple<int &&>(std::move(i)); }); p3.resolve();
+    p3.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<int &&>(std::move(i)); })
+        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p4 = make_promise(&m_pool, [&]() { return ftuple<const int>(i); }); p4.resolve();
+    p4.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<const int>(i); })
+        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p5 = make_promise(&m_pool, [&]() { return ftuple<const int &>(i); }); p5.resolve();
+    p5.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<const int &>(i); })
+        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p6 = make_promise(&m_pool, [&]() { return ftuple<const int &&>(std::move(i)); }); p6.resolve();
+    p6.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<const int &&>(std::move(i)); })
+        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p7 = make_promise(&m_pool, [&]() { return ftuple<volatile int>(ii); }); p7.resolve();
+    p7.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<volatile int>(ii); })
+        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p8 = make_promise(&m_pool, [&]() { return ftuple<volatile int &>(ii); }); p8.resolve();
+    p8.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<volatile int &>(ii); })
+        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p9 = make_promise(&m_pool, [&]() { return ftuple<volatile int &&>(std::move(ii)); }); p9.resolve();
+    p9.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<volatile int &&>(std::move(ii)); })
+        .then([&](volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p10 = make_promise(&m_pool, [&]() { return ftuple<const volatile int>(ii); }); p10.resolve();
+    p10.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<const volatile int>(ii); })
+        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p11 = make_promise(&m_pool, [&]() { return ftuple<const volatile int &>(ii); }); p11.resolve();
+    p11.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<const volatile int &>(ii); })
+        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p12 = make_promise(&m_pool, [&]() { return ftuple<const volatile int &&>(std::move(ii)); }); p12.resolve();
+    p12.get_future()
+        .catched([&](std::exception_ptr) { return ftuple<const volatile int &&>(std::move(ii)); })
+        .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .get();
 }
