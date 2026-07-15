@@ -73,6 +73,9 @@ namespace vshalygin::cl {
         type_wrapper(const type_wrapper &) = default;
         type_wrapper &operator=(const type_wrapper &) = delete;
 
+        type_wrapper(type_wrapper &&) = default;
+        type_wrapper &operator=(type_wrapper &&) = delete;
+
         template<typename U,
             std::enable_if_t<!is_const_v<T> &&
                               std::is_same_v<remove_type_qualifiers_t<U>,

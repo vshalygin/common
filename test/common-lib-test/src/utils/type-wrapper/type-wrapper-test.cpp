@@ -336,6 +336,17 @@ TEST(TypeWrapperRef, MayBeCopyAssignedByValueWithAnyQualifier)
     s6 = std::move(i5);
 }
 
+TEST(TypeWrapperRef, IsMoveConstructable)
+{
+    int v = 0;
+
+    type_wrapper<int &> s1(v);
+    auto s2(std::move(s1));
+
+    s2 = 5;
+    ASSERT_EQ(v, 5);
+}
+
 TEST(TypeWrapperVoid, BasicTest)
 {
     type_wrapper<void> v1;

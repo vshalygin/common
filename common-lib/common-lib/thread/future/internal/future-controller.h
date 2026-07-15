@@ -66,7 +66,7 @@ namespace vshalygin::cl::internal {
         function<void(std::exception_ptr)> m_on_fail;
 
         mutable ordered_mutex<2> m_val_mtx;
-        std::unique_ptr<type_wrapper> m_val;
+        std::optional<type_wrapper> m_val;
         bool m_is_value_ready = false;
 
         mutable ordered_mutex<3> m_exception_mtx;

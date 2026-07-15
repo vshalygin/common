@@ -104,9 +104,9 @@ namespace vshalygin::cl::internal {
             }
 
             if constexpr(std::is_void_v<T>) {
-                m_val = std::make_unique<type_wrapper>();
+                m_val.emplace(type_wrapper{});
             } else {
-                m_val = std::make_unique<type_wrapper>(std::forward<decltype(value)>(value)...);
+                m_val.emplace(type_wrapper{ std::forward<decltype(value)>(value)... });
             }
 
             if(m_on_success) {
