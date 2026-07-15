@@ -8,8 +8,7 @@ namespace vshalygin::cl::internal {
     promise<ThreadPool, T, ResolveArgs...>::promise(ThreadPool *thread_pool,
                                                     Function &&function)
         : m_thread_pool(thread_pool)
-        , m_function(std::make_shared<promise_function<Function, T, ResolveArgs...>>
-                                                        (std::forward<Function>(function)))
+        , m_function(std::forward<Function>(function))
         , m_controller(future_controller<future_store_type_or_self_t<T>, ThreadPool>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
@@ -34,7 +33,7 @@ namespace vshalygin::cl::internal {
                                  args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
                 try {
                     auto future = std::apply([&func](auto&&...arg) -> decltype(auto) {
-                        return func->call(std::move(arg)...);
+                        return func(std::move(arg)...);
                     }, std::move(args));
 
                     auto prev_controller = future.get_controller();
@@ -62,11 +61,11 @@ namespace vshalygin::cl::internal {
                 try {
                     if constexpr(!std::is_void_v<T>) {
                         controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
-                            return func->call(std::move(arg)...);
+                            return func(std::move(arg)...);
                         }, std::move(args)));
                     } else {
                         std::apply([&func](auto&&...arg) {
-                            func->call(std::move(arg)...);
+                            func(std::move(arg)...);
                         }, std::move(args));
                         controller->set_value();
                     }

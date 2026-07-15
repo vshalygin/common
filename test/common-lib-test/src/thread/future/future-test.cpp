@@ -60,18 +60,6 @@ namespace {
             move_assign_num = 0;
         }
     };
-
-    class thread_pool_with_functor_copy_requirement
-    {
-    public:
-        void post(std::function<void()> &&task)
-        {
-            m_pool.post(std::move(task));
-        }
-
-    private:
-        thread_pool m_pool{ 2 };
-    };
 }
 
 class Future
@@ -332,17 +320,6 @@ TEST_F(Future, CatchedMethodAppliedToRValue)
         .catched([](std::exception_ptr) { FAIL(); });
 
     f.get().apply([](int i) { ASSERT_EQ(i, 3); });
-}
-
-TEST_F(Future, MayWorkOnThreadPoolWithoutMoveOnlyFunctorsSupport)
-{
-    thread_pool_with_functor_copy_requirement pool;
-    auto p = make_promise(&pool, []() { return 2; });
-    p.resolve();
-    auto f = p.get_future()
-        .then([](int i) { return i + 3; });
-
-    f.get().apply([](int i) { ASSERT_EQ(i, 5); });
 }
 
 TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)

@@ -147,9 +147,6 @@
     <ClInclude Include="common-lib\thread\future\internal\promise.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\promise-function.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread\future\internal\promise-impl.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>

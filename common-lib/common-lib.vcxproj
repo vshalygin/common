@@ -70,7 +70,6 @@
     <ClInclude Include="common-lib\thread\future\internal\is-future-tuple.h" />
     <ClInclude Include="common-lib\thread\future\internal\is-future.h" />
     <ClInclude Include="common-lib\thread\future\internal\make-promise.h" />
-    <ClInclude Include="common-lib\thread\future\internal\promise-function.h" />
     <ClInclude Include="common-lib\thread\future\internal\promise-impl.h" />
     <ClInclude Include="common-lib\thread\future\internal\promise.h" />
     <ClInclude Include="common-lib\thread\thread-pool\internal\thread-pool-task-impl.h" />
