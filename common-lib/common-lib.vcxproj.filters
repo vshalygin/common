@@ -126,9 +126,6 @@
     <ClInclude Include="common-lib\thread\future\internal\future.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-callback.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread\future\internal\future-controller.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
@@ -323,9 +320,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\ordered-mutex.h">
       <Filter>synchronization</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-callback-void.h">
-      <Filter>thread\future\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\thread\future\internal\make-promise.h">
       <Filter>thread\future\internal</Filter>

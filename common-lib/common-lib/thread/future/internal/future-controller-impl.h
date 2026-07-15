@@ -1,6 +1,7 @@
 #pragma once
 #include "future-controller.h"
 #include <common-lib/utils/do-on-destruct.h>
+#include <common-lib/utils/type-qualifiers-cast.h>
 #include <common-lib/mpl/tuple-traits.h>
 
 namespace vshalygin::cl::internal {
@@ -39,8 +40,13 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("success handler already set");
         }
 
-        m_on_success = std::make_unique<future_callback<T, Func>>
-                                              (std::forward<Func>(func));
+        if constexpr(std::is_void_v<T>) {
+            m_on_success = std::forward<Func>(func);
+        } else {
+            m_on_success = [func = std::forward<Func>(func)](std::add_rvalue_reference_t<T> val) mutable {
+                func(type_qualifiers_cast<function_arg_t<0, Func>>(val));
+            };
+        }
 
         ordered_lock guard2(push_back(std::move(guard), m_val_mtx));
         if(m_val) {
@@ -223,9 +229,9 @@ namespace vshalygin::cl::internal {
         assert(m_val);
         assert(m_on_success);
         if constexpr(!std::is_void_v<T>) {
-            m_on_success->call(static_cast<typename type_wrapper::type &&>(m_val->to_underlying()));
+            m_on_success(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(m_val->to_underlying()));
         } else {
-            m_on_success->call();
+            m_on_success();
         }
     }
 

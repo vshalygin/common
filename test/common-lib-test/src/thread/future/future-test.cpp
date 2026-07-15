@@ -570,7 +570,7 @@ TEST_F(Future, SuccessHandlerNeverCopyIfMovedToThenMethod)
 
     EXPECT_EQ(counter::copy_num, 0u);
     EXPECT_EQ(counter::copy_assign_num, 0u);
-    EXPECT_EQ(counter::move_num, 3u);
+    EXPECT_EQ(counter::move_num, 4u);
     EXPECT_EQ(counter::move_assign_num, 0u);
 }
 

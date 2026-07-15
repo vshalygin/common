@@ -1,12 +1,11 @@
 #pragma once
-#include "future-callback.h"
-#include "future-callback-void.h"
 #include "future-data.h"
 
 #include <common-lib/mpl/type-traits.h>
 #include <common-lib/synchronization/ordered-mutex.h>
 #include <common-lib/synchronization/ordered-lock.h>
 #include <common-lib/utils/type-wrapper.h>
+#include <common-lib/utils/function.h>
 
 #include <memory>
 #include <cassert>
@@ -61,7 +60,7 @@ namespace vshalygin::cl::internal {
         ThreadPool *m_thread_pool;
 
         mutable ordered_mutex<0> m_on_success_mtx;
-        std::unique_ptr<ifuture_callback<T>> m_on_success;
+        function<void(std::add_rvalue_reference_t<T>)> m_on_success;
 
         mutable ordered_mutex<1> m_on_fail_mtx;
         std::function<void(std::exception_ptr)> m_on_fail;
