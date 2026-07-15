@@ -33,8 +33,8 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         void set_on_success(Func &&func);
 
-        void set_on_fail(std::function<void(std::exception_ptr)> &&func);
-        void set_on_fail_if_not_set(std::function<void(std::exception_ptr)> &&func);
+        void set_on_fail(function<void(std::exception_ptr)> &&func);
+        void set_on_fail_if_not_set(function<void(std::exception_ptr)> &&func);
 
         void set_value(auto&&...value);
         void set_exception(const std::exception_ptr &e);
@@ -63,7 +63,7 @@ namespace vshalygin::cl::internal {
         function<void(std::add_rvalue_reference_t<T>)> m_on_success;
 
         mutable ordered_mutex<1> m_on_fail_mtx;
-        std::function<void(std::exception_ptr)> m_on_fail;
+        function<void(std::exception_ptr)> m_on_fail;
 
         mutable ordered_mutex<2> m_val_mtx;
         std::unique_ptr<type_wrapper> m_val;

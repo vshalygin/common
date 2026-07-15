@@ -56,7 +56,7 @@ namespace vshalygin::cl::internal {
 
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::set_on_fail(
-        std::function<void(std::exception_ptr)> &&func)
+        function<void(std::exception_ptr)> &&func)
     {
         ordered_lock guard(m_on_fail_mtx);
         if(m_on_fail) {
@@ -73,7 +73,7 @@ namespace vshalygin::cl::internal {
 
     template<typename T, typename ThreadPool>
     void future_controller<T, ThreadPool>::set_on_fail_if_not_set(
-        std::function<void(std::exception_ptr)> &&func)
+        function<void(std::exception_ptr)> &&func)
     {
         ordered_lock guard(m_on_fail_mtx);
         if(!m_on_fail) {

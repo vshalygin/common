@@ -2,6 +2,8 @@
 #include "future-controller-impl.h"
 #include "future-data-impl.h"
 
+#include <common-lib/utils/function.h>
+
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T, typename...ResolveArgs>
     class promise;
@@ -32,8 +34,8 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         auto then(Func &&task);
 
-        future<ThreadPool, T> &catched(std::function<void(std::exception_ptr)> &&task) &;
-        future<ThreadPool, T> catched(std::function<void(std::exception_ptr)> &&task) &&;
+        future<ThreadPool, T> &catched(function<void(std::exception_ptr)> &&task) &;
+        future<ThreadPool, T> catched(function<void(std::exception_ptr)> &&task) &&;
 
         bool is_valid() const;
 
