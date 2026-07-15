@@ -33,7 +33,7 @@ namespace vshalygin::cl {
                 std::construct_at(reinterpret_cast<F *>(m_buffer),
                                   std::forward<Func>(func));
 
-                call = [](const void *obj, Args...args) {
+                call = [](const void *obj, Args...args) -> R {
                     return std::invoke(*const_cast<F *>(reinterpret_cast<const F *>(obj)),
                                        std::forward<Args>(args)...);
                 };
@@ -49,7 +49,7 @@ namespace vshalygin::cl {
             } else {
                 *reinterpret_cast<F **>(m_buffer) = new F(std::forward<Func>(func));
                 
-                call = [](const void *obj, Args...args) {
+                call = [](const void *obj, Args...args) -> R {
                     return std::invoke(**reinterpret_cast<F * const *>(obj),
                                        std::forward<Args>(args)...);
                 };

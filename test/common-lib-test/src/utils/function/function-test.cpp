@@ -457,3 +457,39 @@ TEST_F(Function, MoveParameter)
 
     ASSERT_TRUE(t && *t == 9);
 }
+
+TEST_F(Function, MayReturnTypesWithAnyQualifiers)
+{
+    static int t = 0;
+
+    function<int()> f1([]() -> int { return t; }); f1();
+    function<int &()> f2([]() -> int &{ return t; }); f2();
+    function<int &&()> f3([]() -> int &&{ return std::move(t); }); f3();
+    function<const int()> f4([]() -> const int { return t; }); f4();
+    function<const int &()> f5([]() -> const int &{ return t; }); f5();
+    function<const int &&()> f6([]() -> const int &&{ return std::move(t); }); f6();
+    function<volatile int()> f7([]() -> volatile int { return t; }); f7();
+    function<volatile int &()> f8([]() -> volatile int &{ return t; }); f8();
+    function<volatile int &&()> f9([]() -> volatile int &&{ return std::move(t); }); f9();
+    function<const volatile int()> f10([]() -> const volatile int { return t; }); f10();
+    function<const volatile int &()> f11([]() -> const volatile int &{ return t; }); f11();
+    function<const volatile int &&()> f12([]() -> const volatile int &&{ return std::move(t); }); f12();
+}
+
+TEST_F(Function, MayHaveTypeWithAnyQualifiersAsArgumtn)
+{
+    static int t = 0;
+
+    function<void(int)> f1([](int) { }); f1(t);
+    function<void(int &)> f2([](int &) { }); f2(t);
+    function<void(int &&)> f3([](int &&) { }); f3(std::move(t));
+    function<void(const int)> f4([](const int) { }); f4(t);
+    function<void(const int &)> f5([](const int &) { }); f5(t);
+    function<void(const int &&)> f6([](const int &&) { }); f6(std::move(t));
+    function<void(volatile int)> f7([](volatile int) { }); f7(t);
+    function<void(volatile int &)> f8([](volatile int &) { }); f8(t);
+    function<void(volatile int &&)> f9([](volatile int &&) { }); f9(std::move(t));
+    function<void(const volatile int)> f10([](const volatile int) { }); f10(t);
+    function<void(const volatile int &)> f11([](const volatile int &) { }); f11(t);
+    function<void(const volatile int &&)> f12([](const volatile int &&) { }); f12(std::move(t));
+}
