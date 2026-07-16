@@ -33,6 +33,21 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
+    template<typename U>
+    std::shared_ptr<future_controller<ThreadPool, U>>
+        future<ThreadPool, T>::create_child_controller(auto controller)
+    {
+        auto next_controller_temp = std::make_unique<future_controller<ThreadPool, U>>(m_thread_pool);
+        auto next_controller_ptr = next_controller_temp.get();
+        controller->add_child(std::move(next_controller_temp));
+        auto next_controller =
+            std::shared_ptr<future_controller<ThreadPool, U>>(controller, next_controller_ptr);
+        next_controller->set_self_shared_ptr(next_controller);
+
+        return next_controller;
+    }
+
+    template<typename ThreadPool, typename T>
     template<typename Future>
     auto future<ThreadPool, T>::flatten_future(auto controller)
     {
@@ -42,14 +57,12 @@ namespace vshalygin::cl::internal {
         using future_t = Future;
         using future_store = future_store_type_or_self_t<future_t>;
 
-        auto next_controller2_temp = std::make_unique<future_controller<ThreadPool, future_store>>(m_thread_pool);
-        auto next_controller2_ptr = next_controller2_temp.get();
-        controller->add_child(std::move(next_controller2_temp));
-        auto next_controller2 =
-            std::shared_ptr<future_controller<ThreadPool, future_store>>(controller, next_controller2_ptr);
-        next_controller2->set_self_shared_ptr(next_controller2);
+        auto next_controller = create_child_controller<future_store>(controller);
 
-        controller->set_on_success([next_controller2_wp = std::weak_ptr(next_controller2)](future_t &&val) {
+        controller->set_on_success([next_controller_wp = std::weak_ptr(next_controller)](future_t &&val) {
+            assert(!next_controller_wp.expired());
+            std::shared_ptr next_controller(next_controller_wp);
+
             auto controller = val.get_controller();
             if constexpr(std::is_void_v<future_store>) {
                 controller->set_on_success([next_controller2_wp]() {
@@ -87,11 +100,7 @@ namespace vshalygin::cl::internal {
     {
         using ret_t = function_ret_t<Func>;
 
-        auto new_controller_temp = std::make_unique<future_controller<ThreadPool, ret_t>>(m_thread_pool);
-        auto new_controller_ptr = new_controller_temp.get();
-        m_controller->add_child(std::move(new_controller_temp));
-        auto new_controller = std::shared_ptr<future_controller<ThreadPool, ret_t>>(m_controller, new_controller_ptr);
-        new_controller->set_self_shared_ptr(new_controller);
+        auto new_controller = create_child_controller<ret_t>(m_controller);
 
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
@@ -187,11 +196,7 @@ namespace vshalygin::cl::internal {
         static_assert(std::is_same_v<ret_t, T> || std::is_void_v<ret_t>,
                       "fail callback argument must return future storing type or void");
 
-        auto new_controller_temp = std::make_unique<future_controller<ThreadPool, ret_t>>(m_thread_pool);
-        auto new_controller_ptr = new_controller_temp.get();
-        m_controller->add_child(std::move(new_controller_temp));
-        auto new_controller = std::shared_ptr<future_controller<ThreadPool, ret_t>>(m_controller, new_controller_ptr);
-        new_controller->set_self_shared_ptr(new_controller);
+        auto new_controller = create_child_controller<ret_t>(m_controller);
 
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]() mutable {

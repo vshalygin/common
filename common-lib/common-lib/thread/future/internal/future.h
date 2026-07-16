@@ -45,6 +45,9 @@ namespace vshalygin::cl::internal {
         template<typename Future>
         auto flatten_future(auto controller);
 
+        template<typename U>
+        std::shared_ptr<future_controller<ThreadPool, U>> create_child_controller(auto controller);
+
     private:
         ThreadPool *m_thread_pool = nullptr;
         std::shared_ptr<future_controller<ThreadPool, T>> m_controller;
