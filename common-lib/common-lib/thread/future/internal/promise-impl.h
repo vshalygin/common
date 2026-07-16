@@ -9,7 +9,7 @@ namespace vshalygin::cl::internal {
                                                     Function &&function)
         : m_thread_pool(thread_pool)
         , m_function(std::forward<Function>(function))
-        , m_controller(future_controller<future_store_type_or_self_t<T>, ThreadPool>::create(thread_pool))
+        , m_controller(future_controller<ThreadPool, future_store_type_or_self_t<T>>::create(thread_pool))
         , m_future(thread_pool, m_controller)
     {
         assert(m_thread_pool);

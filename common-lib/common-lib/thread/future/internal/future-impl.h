@@ -14,7 +14,7 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     future<ThreadPool, T>::future(
                          ThreadPool *thread_pool,
-                         std::shared_ptr<future_controller<T, ThreadPool>> controller)
+                         std::shared_ptr<future_controller<ThreadPool, T>> controller)
         : m_thread_pool(thread_pool)
         , m_controller(std::move(controller))
     {
@@ -41,7 +41,7 @@ namespace vshalygin::cl::internal {
         using future_t = Future;
         using future_store = future_store_type_or_self_t<future_t>;
 
-        auto next_controller2 = future_controller<future_store, ThreadPool>::create(m_thread_pool);
+        auto next_controller2 = future_controller<ThreadPool, future_store>::create(m_thread_pool);
         controller->set_on_success([next_controller2](future_t &&val) {
             auto controller = val.get_controller();
             if constexpr(std::is_void_v<future_store>) {
@@ -71,7 +71,7 @@ namespace vshalygin::cl::internal {
     auto future<ThreadPool, T>::then(Func &&task)
     {
         using ret_t = function_ret_t<Func>;
-        auto new_controller = future_controller<ret_t, ThreadPool>::create(m_thread_pool);
+        auto new_controller = future_controller<ThreadPool, ret_t>::create(m_thread_pool);
 
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller,
@@ -147,7 +147,7 @@ namespace vshalygin::cl::internal {
         static_assert(std::is_same_v<ret_t, T> || std::is_void_v<ret_t>,
                       "fail callback argument must return future storing type or void");
 
-        auto new_controller = future_controller<ret_t, ThreadPool>::create(m_thread_pool);
+        auto new_controller = future_controller<ThreadPool, ret_t>::create(m_thread_pool);
 
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller]() mutable {

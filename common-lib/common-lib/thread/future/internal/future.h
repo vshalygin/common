@@ -19,7 +19,7 @@ namespace vshalygin::cl::internal {
 
         explicit future(
             ThreadPool *thread_pool,
-            std::shared_ptr<future_controller<T, ThreadPool>> controller);
+            std::shared_ptr<future_controller<ThreadPool, T>> controller);
 
     public:
         future() = default;
@@ -47,6 +47,6 @@ namespace vshalygin::cl::internal {
 
     private:
         ThreadPool *m_thread_pool = nullptr;
-        std::shared_ptr<future_controller<T, ThreadPool>> m_controller;
+        std::shared_ptr<future_controller<ThreadPool, T>> m_controller;
     };
 }

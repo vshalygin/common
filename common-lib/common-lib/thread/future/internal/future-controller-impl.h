@@ -4,23 +4,23 @@
 #include <common-lib/mpl/tuple-traits.h>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
-    std::shared_ptr<future_controller<T, ThreadPool>>
-        future_controller<T, ThreadPool>::create(ThreadPool *thread_pool)
+    template<typename ThreadPool, typename T>
+    std::shared_ptr<future_controller<ThreadPool, T>>
+        future_controller<ThreadPool, T>::create(ThreadPool *thread_pool)
     {
         return std::make_shared<future_controller>(thread_pool, creator{});
     }
 
-    template<typename T, typename ThreadPool>
-    future_controller<T, ThreadPool>::future_controller(ThreadPool *thread_pool, creator)
+    template<typename ThreadPool, typename T>
+    future_controller<ThreadPool, T>::future_controller(ThreadPool *thread_pool, creator)
         : m_thread_pool(thread_pool)
     {
         assert(m_thread_pool);
     }
 
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T>
     template<typename Func>
-    void future_controller<T, ThreadPool>::set_on_success(Func &&func)
+    void future_controller<ThreadPool, T>::set_on_success(Func &&func)
     {
         static_assert(std::is_same_v<void, function_ret_t<Func>>,
                       "success callback return type is not void");
@@ -47,8 +47,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::set_on_fail(
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_on_fail(
         function<void(std::exception_ptr)> &&func)
     {
         ordered_lock guard(m_on_fail_mtx);
@@ -61,8 +61,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::set_value(auto&&...value)
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_value(auto&&...value)
     {
         if constexpr(std::is_void_v<T>) {
             static_assert(sizeof...(value) == 0);
@@ -88,8 +88,8 @@ namespace vshalygin::cl::internal {
         m_cv.notify_all();
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::set_exception(const std::exception_ptr &e)
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_exception(const std::exception_ptr &e)
     {
         {
             ordered_lock g(m_on_fail_mtx, m_val_mtx, m_exception_mtx);
@@ -105,8 +105,8 @@ namespace vshalygin::cl::internal {
         m_cv.notify_all();
     }
 
-    template<typename T, typename ThreadPool>
-    auto future_controller<T, ThreadPool>::get() const
+    template<typename ThreadPool, typename T>
+    auto future_controller<ThreadPool, T>::get() const
     {
         wait_data_ready_or_throw();
         if constexpr(!std::is_void_v<T>) {
@@ -114,8 +114,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    auto future_controller<T, ThreadPool>::get()
+    template<typename ThreadPool, typename T>
+    auto future_controller<ThreadPool, T>::get()
     {
         wait_data_ready_or_throw();
         if constexpr(!std::is_void_v<T>) {
@@ -123,8 +123,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    auto future_controller<T, ThreadPool>::get_val()
+    template<typename ThreadPool, typename T>
+    auto future_controller<ThreadPool, T>::get_val()
     {
         if constexpr(!std::is_void_v<T>) {
             using val_t = decltype(m_val->to_underlying());
@@ -136,8 +136,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    auto future_controller<T, ThreadPool>::get_val() const
+    template<typename ThreadPool, typename T>
+    auto future_controller<ThreadPool, T>::get_val() const
     {
         if constexpr(!std::is_void_v<T>) {
             using val_t = decltype(m_val->to_underlying());
@@ -149,8 +149,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::wait_data_ready_or_throw() const
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::wait_data_ready_or_throw() const
     {
         ordered_lock lock(m_val_mtx, m_exception_mtx);
         m_cv.wait(lock, [this]() { return m_val || m_exception; });
@@ -159,8 +159,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::post_success()
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::post_success()
     {
         while(!m_on_success_queue.empty()) {
             auto f = std::move(m_on_success_queue.front());
@@ -171,8 +171,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::post_fail()
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::post_fail()
     {
         while(!m_on_fail_queue.empty()) {
             auto f = std::move(m_on_fail_queue.front());
@@ -183,8 +183,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::call_success(on_success_t &&func)
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::call_success(on_success_t &&func)
     {
         ordered_lock guard(m_val_mtx);
 
@@ -197,8 +197,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename T, typename ThreadPool>
-    void future_controller<T, ThreadPool>::call_fail(on_fail_t &&func)
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::call_fail(on_fail_t &&func)
     {
         ordered_lock guard(m_exception_mtx);
 

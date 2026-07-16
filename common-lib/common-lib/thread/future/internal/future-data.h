@@ -2,15 +2,15 @@
 #include <memory>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T>
     class future_controller;
 
     template<typename T, typename ThreadPool>
     class future_data final
     {
-        friend class future_controller<T, ThreadPool>;
+        friend class future_controller<ThreadPool, T>;
 
-        using controller_t = future_controller<T, ThreadPool>;
+        using controller_t = future_controller<ThreadPool, T>;
 
         explicit future_data(std::shared_ptr<controller_t> controller);
 

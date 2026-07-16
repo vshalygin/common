@@ -15,9 +15,9 @@
 #include <queue>
 
 namespace vshalygin::cl::internal {
-    template<typename T, typename ThreadPool>
+    template<typename ThreadPool, typename T>
     class future_controller
-        : public std::enable_shared_from_this<future_controller<T, ThreadPool>>
+        : public std::enable_shared_from_this<future_controller<ThreadPool, T>>
     {
         using on_success_t = function<void(std::add_rvalue_reference_t<T>)>;
         using on_fail_t = function<void(std::exception_ptr)>;

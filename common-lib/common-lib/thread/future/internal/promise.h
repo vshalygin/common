@@ -37,7 +37,7 @@ namespace vshalygin::cl::internal {
 
         function<T(ResolveArgs...)> m_function;
 
-        std::shared_ptr<future_controller<future_store_type_or_self_t<T>, ThreadPool>> m_controller;
+        std::shared_ptr<future_controller<ThreadPool, future_store_type_or_self_t<T>>> m_controller;
         future<ThreadPool, future_store_type_or_self_t<T>> m_future;
     };
 }
