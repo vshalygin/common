@@ -5,14 +5,7 @@
 
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
-    std::shared_ptr<future_controller<ThreadPool, T>>
-        future_controller<ThreadPool, T>::create(ThreadPool *thread_pool)
-    {
-        return std::make_shared<future_controller>(thread_pool, creator{});
-    }
-
-    template<typename ThreadPool, typename T>
-    future_controller<ThreadPool, T>::future_controller(ThreadPool *thread_pool, creator)
+    future_controller<ThreadPool, T>::future_controller(ThreadPool *thread_pool)
         : m_thread_pool(thread_pool)
     {
         assert(m_thread_pool);
@@ -72,9 +65,7 @@ namespace vshalygin::cl::internal {
 
         {
             ordered_lock g(m_on_success_mtx, m_val_mtx, m_exception_mtx);
-            if(m_val || m_exception) {
-                throw std::logic_error("value or exception already set");
-            }
+            assert(!m_val && !m_exception);
 
             if constexpr(std::is_void_v<T>) {
                 m_val.emplace(type_wrapper{});
@@ -93,9 +84,7 @@ namespace vshalygin::cl::internal {
     {
         {
             ordered_lock g(m_on_fail_mtx, m_val_mtx, m_exception_mtx);
-            if(m_val || m_exception) {
-                throw std::logic_error("value or exception already set");
-            }
+            assert(!m_val && !m_exception);
 
             m_exception = e;
 
@@ -205,5 +194,11 @@ namespace vshalygin::cl::internal {
         assert(m_exception);
         assert(func);
         func(*m_exception);
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::add_child(std::unique_ptr<ifuture_controller> child)
+    {
+        m_children.lock()->push_back(std::move(child));
     }
 }

@@ -4,8 +4,10 @@
 #include <common-lib/mpl/type-traits.h>
 #include <common-lib/synchronization/ordered-mutex.h>
 #include <common-lib/synchronization/ordered-lock.h>
+#include <common-lib/synchronization/value-locker.h>
 #include <common-lib/utils/type-wrapper.h>
 #include <common-lib/utils/function.h>
+#include <common-lib/memory/enable-shared-from-this-manual-set.h>
 
 #include <memory>
 #include <cassert>
@@ -13,22 +15,25 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <vector>
 
 namespace vshalygin::cl::internal {
+    class ifuture_controller
+    {
+    public:
+        virtual ~ifuture_controller() = default;
+    };
+
     template<typename ThreadPool, typename T>
     class future_controller
-        : public std::enable_shared_from_this<future_controller<ThreadPool, T>>
+        : public enable_shared_from_this_manual_set<future_controller<ThreadPool, T>>
+        , public ifuture_controller
     {
         using on_success_t = function<void(std::add_rvalue_reference_t<T>)>;
         using on_fail_t = function<void(std::exception_ptr)>;
 
-        class creator
-        {};
-
     public:
-        static std::shared_ptr<future_controller> create(ThreadPool *thread_pool);
-
-        explicit future_controller(ThreadPool *thread_pool, creator);
+        explicit future_controller(ThreadPool *thread_pool);
 
         future_controller(const future_controller &) = delete;
         future_controller &operator=(const future_controller &) = delete;
@@ -47,6 +52,8 @@ namespace vshalygin::cl::internal {
         auto get_val();
         auto get_val() const;
 
+        void add_child(std::unique_ptr<ifuture_controller> child);
+
     private:
         void wait_data_ready_or_throw() const;
 
@@ -60,6 +67,8 @@ namespace vshalygin::cl::internal {
         using type_wrapper = type_wrapper<T>;
 
         ThreadPool *m_thread_pool;
+
+        value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
 
         mutable ordered_mutex<0> m_on_success_mtx;
         std::queue<on_success_t> m_on_success_queue;

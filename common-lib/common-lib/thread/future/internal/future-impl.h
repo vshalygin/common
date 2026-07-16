@@ -19,6 +19,7 @@ namespace vshalygin::cl::internal {
         , m_controller(std::move(controller))
     {
         assert(m_thread_pool);
+        m_controller->set_self_shared_ptr(m_controller);
     }
 
     template<typename ThreadPool, typename T>
@@ -41,26 +42,40 @@ namespace vshalygin::cl::internal {
         using future_t = Future;
         using future_store = future_store_type_or_self_t<future_t>;
 
-        auto next_controller2 = future_controller<ThreadPool, future_store>::create(m_thread_pool);
-        controller->set_on_success([next_controller2](future_t &&val) {
+        auto next_controller2_temp = std::make_unique<future_controller<ThreadPool, future_store>>(m_thread_pool);
+        auto next_controller2_ptr = next_controller2_temp.get();
+        controller->add_child(std::move(next_controller2_temp));
+        auto next_controller2 =
+            std::shared_ptr<future_controller<ThreadPool, future_store>>(controller, next_controller2_ptr);
+        next_controller2->set_self_shared_ptr(next_controller2);
+
+        controller->set_on_success([next_controller2_wp = std::weak_ptr(next_controller2)](future_t &&val) {
             auto controller = val.get_controller();
             if constexpr(std::is_void_v<future_store>) {
-                controller->set_on_success([next_controller2]() {
-                    next_controller2->set_value();
+                controller->set_on_success([next_controller2_wp]() {
+                    if(auto next_controller2 = next_controller2_wp.lock()) {
+                        next_controller2->set_value();
+                    }
                 });
             } else {
-                controller->set_on_success([next_controller2](future_store &&v) {
-                    next_controller2->set_value(std::forward<future_store>(v));
+                controller->set_on_success([next_controller2_wp](future_store &&v) {
+                    if(auto next_controller2 = next_controller2_wp.lock()) {
+                        next_controller2->set_value(std::forward<future_store>(v));
+                    }
                 });
             }
 
-            controller->set_on_fail([next_controller2](std::exception_ptr e) {
-                next_controller2->set_exception(e);
+            controller->set_on_fail([next_controller2_wp](std::exception_ptr e) {
+                if(auto next_controller2 = next_controller2_wp.lock()) {
+                    next_controller2->set_exception(e);
+                }
             });
         });
 
-        controller->set_on_fail([next_controller2](std::exception_ptr e) {
-            next_controller2->set_exception(e);
+        controller->set_on_fail([next_controller2_wp = std::weak_ptr(next_controller2)](std::exception_ptr e) {
+            if(auto next_controller2 = next_controller2_wp.lock()) {
+                next_controller2->set_exception(e);
+            }
         });
 
         return future<ThreadPool, future_store>(m_thread_pool, std::move(next_controller2));
@@ -71,27 +86,39 @@ namespace vshalygin::cl::internal {
     auto future<ThreadPool, T>::then(Func &&task)
     {
         using ret_t = function_ret_t<Func>;
-        auto new_controller = future_controller<ThreadPool, ret_t>::create(m_thread_pool);
+
+        auto new_controller_temp = std::make_unique<future_controller<ThreadPool, ret_t>>(m_thread_pool);
+        auto new_controller_ptr = new_controller_temp.get();
+        m_controller->add_child(std::move(new_controller_temp));
+        auto new_controller = std::shared_ptr<future_controller<ThreadPool, ret_t>>(m_controller, new_controller_ptr);
+        new_controller->set_self_shared_ptr(new_controller);
 
         if constexpr(std::is_void_v<T>) {
-            m_controller->set_on_success([new_controller,
+            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
                                          task = std::forward<Func>(task)]() mutable {
                 try {
                     static_assert(function_arg_count_v<Func> == 0,
                                   "success callback must have 0 argument");
 
                     if constexpr(!std::is_void_v<ret_t>) {
-                        new_controller->set_value(task());
+                        decltype(auto) v = task();
+                        if(auto controller = new_controller_wp.lock()) {
+                            controller->set_value(std::forward<decltype(v)>(v));
+                        }
                     } else {
                         task();
-                        new_controller->set_value();
+                        if(auto controller = new_controller_wp.lock()) {
+                            controller->set_value();
+                        }
                     }
                 } catch(...) {
-                    new_controller->set_exception(std::current_exception());
+                    if(auto controller = new_controller_wp.lock()) {
+                        controller->set_exception(std::current_exception());
+                    }
                 }
             });
         } else {
-            m_controller->set_on_success([new_controller,
+            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
                                          task = std::forward<Func>(task)]
                                          (add_lvalue_ref_to_value_t<T> val) mutable {
                 try {
@@ -99,32 +126,45 @@ namespace vshalygin::cl::internal {
                         static_assert(is_value_v<T>);
 
                         if constexpr(!std::is_void_v<ret_t>) {
-                            new_controller->set_value(apply(task, val));
+                            decltype(auto) v = apply(task, val);
+                            if(auto controller = new_controller_wp.lock()) {
+                                controller->set_value(std::forward<decltype(v)>(v));
+                            }
                         } else {
                             apply(task, val);
-                            new_controller->set_value();
+                            if(auto controller = new_controller_wp.lock()) {
+                                controller->set_value();
+                            }
                         }
-
                     } else {
                         static_assert(function_arg_count_v<Func> == 1,
                                       "success callback must have 1 argument");
                         using arg_t = function_arg_t<0, Func>;
 
                         if constexpr(!std::is_void_v<ret_t>) {
-                            new_controller->set_value(task(type_qualifiers_cast<arg_t>(val)));
+                            decltype(auto) v = task(type_qualifiers_cast<arg_t>(val));
+                            if(auto controller = new_controller_wp.lock()) {
+                                controller->set_value(std::forward<decltype(v)>(v));
+                            }
                         } else {
                             task(type_qualifiers_cast<arg_t>(val));
-                            new_controller->set_value();
+                            if(auto controller = new_controller_wp.lock()) {
+                                controller->set_value();
+                            }
                         }
                     }
                 } catch(...) {
-                    new_controller->set_exception(std::current_exception());
+                    if(auto controller = new_controller_wp.lock()) {
+                        controller->set_exception(std::current_exception());
+                    }
                 }
             });
         }
 
-        m_controller->set_on_fail([new_controller](std::exception_ptr e) {
-            new_controller->set_exception(e);
+        m_controller->set_on_fail([new_controller_wp = std::weak_ptr(new_controller)](std::exception_ptr e) {
+            if(auto controller = new_controller_wp.lock()) {
+                controller->set_exception(e);
+            }
         });
 
         if constexpr(is_future_v<ret_t>) {
@@ -147,39 +187,58 @@ namespace vshalygin::cl::internal {
         static_assert(std::is_same_v<ret_t, T> || std::is_void_v<ret_t>,
                       "fail callback argument must return future storing type or void");
 
-        auto new_controller = future_controller<ThreadPool, ret_t>::create(m_thread_pool);
+        auto new_controller_temp = std::make_unique<future_controller<ThreadPool, ret_t>>(m_thread_pool);
+        auto new_controller_ptr = new_controller_temp.get();
+        m_controller->add_child(std::move(new_controller_temp));
+        auto new_controller = std::shared_ptr<future_controller<ThreadPool, ret_t>>(m_controller, new_controller_ptr);
+        new_controller->set_self_shared_ptr(new_controller);
 
         if constexpr(std::is_void_v<T>) {
-            m_controller->set_on_success([new_controller]() mutable {
-                new_controller->set_value();
+            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]() mutable {
+                if(auto new_controller = new_controller_wp.lock()) {
+                    new_controller->set_value();
+                }
             });
         } else if constexpr (std::is_void_v<ret_t>) {
-            m_controller->set_on_success([new_controller]
+            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
                                          (add_lvalue_ref_to_value_t<T>) mutable {
-                new_controller->set_value();
+                if(auto new_controller = new_controller_wp.lock()) {
+                    new_controller->set_value();
+                }
             });
         } else {
-            m_controller->set_on_success([new_controller]
+            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
                                          (add_lvalue_ref_to_value_t<T> v) mutable {
                 try {
-                    new_controller->set_value(std::forward<T>(v));
+                    if(auto new_controller = new_controller_wp.lock()) {
+                        new_controller->set_value(std::forward<T>(v));
+                    }
                 } catch (...) {
-                    new_controller->set_exception(std::current_exception());
+                    if(auto new_controller = new_controller_wp.lock()) {
+                        new_controller->set_exception(std::current_exception());
+                    }
                 }
             });
         }
 
-        m_controller->set_on_fail([new_controller,
+        m_controller->set_on_fail([new_controller_wp = std::weak_ptr(new_controller),
                                   task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
             try {
                 if constexpr(!std::is_void_v<ret_t>) {
-                    new_controller->set_value(task(ep));
+                    decltype(auto) v = task(ep);
+                    if(auto new_controller = new_controller_wp.lock()) {
+                        new_controller->set_value(task(ep));
+                    }
                 } else {
                     task(ep);
-                    new_controller->set_value();
+                    if(auto new_controller = new_controller_wp.lock()) {
+                        new_controller->set_value();
+                    }
                 }
             } catch(...) {
-                new_controller->set_exception(std::current_exception());
+                if(auto new_controller = new_controller_wp.lock()) {
+                    new_controller->set_exception(std::current_exception());
+                }
             }
         });
 

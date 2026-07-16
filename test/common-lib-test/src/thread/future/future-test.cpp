@@ -2144,3 +2144,23 @@ TEST_F(Future, ErrorHandlerMayAcceptAndReturnFtupleStoringTypeWithAnySpecifier)
         .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
         .get();
 }
+
+TEST_F(Future, AllFuturesStoreDataExistsAlongAllChain)
+{
+    int *i;
+    auto promise = make_promise(&m_pool, []() { return 2; });
+    promise.resolve();
+    auto f = promise.get_future()
+        .then([&](int &v) -> int &{ i = &v; return v; })
+        .then([&](int &v) {
+                  auto p = make_promise(&m_pool, [&]() -> int &{ return v; });
+                  p.resolve();
+                  return p.get_future();
+              })
+        .then([&](int &v) -> int &{ return v; });
+
+    promise = {};
+
+    f.get().apply([&](int &v) { ASSERT_EQ(&v, i); v = 7; });
+    ASSERT_EQ(*i, 7);
+}

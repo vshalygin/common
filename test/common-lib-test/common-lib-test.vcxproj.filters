@@ -157,9 +157,11 @@
     <ClCompile Include="src\utils\function\function-test.cpp">
       <Filter>utils\function</Filter>
     </ClCompile>
-    <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest_main.cc" />
     <ClCompile Include="src\memory\safe-ptr\enable-shared-from-this-manual-set-test.cpp">
       <Filter>memory</Filter>
+    </ClCompile>
+    <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest_main.cc">
+      <Filter>gtest</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
