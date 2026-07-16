@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\memory\safe-ptr\enable-shared-from-this-manual-set-test.cpp" />
     <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp" />

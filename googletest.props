@@ -11,6 +11,5 @@
   <ItemGroup>
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc" />
     <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest-all.cc" />
-    <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest_main.cc" />
   </ItemGroup>
 </Project>

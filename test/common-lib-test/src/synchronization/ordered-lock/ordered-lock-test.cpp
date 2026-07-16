@@ -5,8 +5,9 @@ using namespace vshalygin::cl;
 using namespace testing;
 
 namespace {
-    std::vector<size_t> lock_order;
-    std::vector<size_t> unlock_order;
+
+    std::unique_ptr<std::vector<size_t>> lock_order;
+    std::unique_ptr<std::vector<size_t>> unlock_order;
 
     template<size_t Order, bool ThrowsOnConstruct = false>
     class test
@@ -25,7 +26,7 @@ namespace {
             }
 
             m_is_locked = true;
-            lock_order.push_back(order);
+            lock_order->push_back(order);
         }
 
         void unlock()
@@ -35,7 +36,7 @@ namespace {
             }
 
             m_is_locked = false;
-            unlock_order.push_back(order);
+            unlock_order->push_back(order);
         }
 
         bool is_locked() const
@@ -54,16 +55,19 @@ class OrderedLock
 protected:
     void SetUp() override
     {
-        lock_order.clear();
-        unlock_order.clear();
+        lock_order = std::make_unique<std::vector<size_t>>();
+        unlock_order = std::make_unique<std::vector<size_t>>();
     }
 
     void TearDown() override
     {
-        ASSERT_EQ(lock_order.size(), unlock_order.size());
-        for(size_t i = 0; i < lock_order.size(); ++i) {
-            EXPECT_EQ(lock_order[i], unlock_order[lock_order.size() - i - 1]);
+        ASSERT_EQ(lock_order->size(), unlock_order->size());
+        for(size_t i = 0; i < lock_order->size(); ++i) {
+            EXPECT_EQ(lock_order->at(i), unlock_order->at(lock_order->size() - i - 1));
         }
+        
+        lock_order.reset();
+        unlock_order.reset();
     }
 };
 
@@ -76,8 +80,9 @@ TEST_F(OrderedLock, BasicTest)
 
     auto lock = ordered_lock(t4, t1, t3, t2);
     static_assert(std::is_same_v<decltype(lock),
-                                 ordered_lock<test<3>, test<0>, test<2>, test<1>>>);
+                  ordered_lock<test<3>, test<0>, test<2>, test<1>>>);
 
+    
     EXPECT_TRUE(t1.is_locked());
     EXPECT_TRUE(t2.is_locked());
     EXPECT_TRUE(t3.is_locked());
@@ -95,11 +100,11 @@ TEST_F(OrderedLock, LocksInOrder)
 
     auto lock = ordered_lock(t4, t1, t3, t2);
 
-    ASSERT_EQ(lock_order.size(), 4);
-    EXPECT_EQ(lock_order[0], 0);
-    EXPECT_EQ(lock_order[1], 1);
-    EXPECT_EQ(lock_order[2], 2);
-    EXPECT_EQ(lock_order[3], 3);
+    ASSERT_EQ((*lock_order).size(), 4);
+    EXPECT_EQ((*lock_order)[0], 0);
+    EXPECT_EQ((*lock_order)[1], 1);
+    EXPECT_EQ((*lock_order)[2], 2);
+    EXPECT_EQ((*lock_order)[3], 3);
 }
 
 TEST_F(OrderedLock, UnlocksInReverseOrder)
@@ -113,11 +118,11 @@ TEST_F(OrderedLock, UnlocksInReverseOrder)
         auto lock = ordered_lock(t4, t1, t3, t2);
     }
     
-    ASSERT_EQ(unlock_order.size(), 4);
-    EXPECT_EQ(unlock_order[0], 3);
-    EXPECT_EQ(unlock_order[1], 2);
-    EXPECT_EQ(unlock_order[2], 1);
-    EXPECT_EQ(unlock_order[3], 0);
+    ASSERT_EQ((*unlock_order).size(), 4);
+    EXPECT_EQ((*unlock_order)[0], 3);
+    EXPECT_EQ((*unlock_order)[1], 2);
+    EXPECT_EQ((*unlock_order)[2], 1);
+    EXPECT_EQ((*unlock_order)[3], 0);
 }
 
 TEST_F(OrderedLock, DefaultConstructible)
@@ -210,7 +215,7 @@ TEST_F(OrderedLock, AssignAnotherOrderLock)
     auto lock2 = ordered_lock(t3, t4);
     lock2 = std::move(lock1);
 
-    EXPECT_EQ(unlock_order.size(), 2);
+    EXPECT_EQ((*unlock_order).size(), 2);
     EXPECT_TRUE(t1.is_locked());
     EXPECT_TRUE(t2.is_locked());
     EXPECT_FALSE(t3.is_locked());
@@ -232,7 +237,7 @@ TEST_F(OrderedLock, AssignAnotherOrderLockWithMessedTemplateParameters)
     auto lock2 = ordered_lock(t4, t3);
     lock2 = std::move(lock1);
 
-    EXPECT_EQ(unlock_order.size(), 2);
+    EXPECT_EQ((*unlock_order).size(), 2);
     EXPECT_TRUE(t1.is_locked());
     EXPECT_TRUE(t2.is_locked());
     EXPECT_FALSE(t3.is_locked());
@@ -251,7 +256,7 @@ TEST_F(OrderedLock, AssignItselfDoesNothing)
     auto lock1 = ordered_lock(t1, t2);
     lock1 = std::move(lock1);
 
-    EXPECT_EQ(unlock_order.size(), 0);
+    EXPECT_EQ((*unlock_order).size(), 0);
     EXPECT_TRUE(t1.is_locked());
     EXPECT_TRUE(t2.is_locked());
     EXPECT_TRUE(lock1.is_locked());
@@ -323,7 +328,7 @@ TEST_F(OrderedLock, PushBackNewLockablesInLockState)
     auto lock1 = ordered_lock(t1, t2);
     auto lock2 = push_back(std::move(lock1), t3);
 
-    EXPECT_EQ(unlock_order.size(), 0);
+    EXPECT_EQ((*unlock_order).size(), 0);
     EXPECT_TRUE(t1.is_locked());
     EXPECT_TRUE(t2.is_locked());
     EXPECT_TRUE(t3.is_locked());
@@ -340,7 +345,7 @@ TEST_F(OrderedLock, PushBackNewLockablesInUnlockState)
     auto lock1 = ordered_lock(defer_lock_t{}, t1, t2);
     auto lock2 = push_back(std::move(lock1), t3);
 
-    EXPECT_EQ(unlock_order.size(), 0);
+    EXPECT_EQ((*unlock_order).size(), 0);
     EXPECT_FALSE(t1.is_locked());
     EXPECT_FALSE(t2.is_locked());
     EXPECT_FALSE(t3.is_locked());
