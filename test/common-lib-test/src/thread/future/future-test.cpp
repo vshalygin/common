@@ -2164,3 +2164,43 @@ TEST_F(Future, AllFuturesStoreDataExistsAlongAllChain)
     f.get().apply([&](int &v) { ASSERT_EQ(&v, i); v = 7; });
     ASSERT_EQ(*i, 7);
 }
+
+TEST_F(Future, SeveralFutureReturnSuccessMayBeChainConsequentially)
+{
+    auto promise = make_promise(&m_pool, []() { return 2; });
+    promise.resolve();
+    auto f = promise.get_future()
+        .then([&](int &v) {
+                  auto p = make_promise(&m_pool, [&](){ return v * 2; });
+                  p.resolve();
+                  return p.get_future()
+                      .then([&](int i) {
+                                auto pp = make_promise(&m_pool, [&]() { return i * 2; });
+                                pp.resolve();
+                                return pp.get_future();
+                            });
+              })
+        .then([&](int &v) {
+                  auto p = make_promise(&m_pool, [&](){ return v * 2; });
+                  p.resolve();
+                  return p.get_future();
+              });
+
+    f.get().apply([](int i) { ASSERT_EQ(i, 16); });
+}
+
+TEST_F(Future, ExceptionGoesThroughSuccessHanlderReturningFuture)
+{
+    auto promise = make_promise(&m_pool, []() ->int { throw std::runtime_error(""); });
+    promise.resolve();
+    auto f = promise.get_future()
+        .then([&](int v) {
+                  auto p = make_promise(&m_pool, [&]() { return v * 2; });
+                  p.resolve();
+                  return p.get_future();
+              })
+        .catched([](std::exception_ptr) { return 55; });
+
+
+    f.get().apply([](int i) { ASSERT_EQ(i, 55); });
+}
