@@ -2174,7 +2174,7 @@ TEST_F(Future, SeveralFutureReturnSuccessMayBeChainConsequentially)
                   auto p = make_promise(&m_pool, [&](){ return v * 2; });
                   p.resolve();
                   return p.get_future()
-                      .then([&](int i) {
+                      .then([&](int &i) {
                                 auto pp = make_promise(&m_pool, [&]() { return i * 2; });
                                 pp.resolve();
                                 return pp.get_future();

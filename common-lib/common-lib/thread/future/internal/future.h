@@ -59,6 +59,9 @@ namespace vshalygin::cl::internal {
         template<typename U>
         std::shared_ptr<future_controller<ThreadPool, U>> create_child_controller(auto controller);
 
+        template<typename U>
+        std::shared_ptr<future_controller<ThreadPool, U>> create_controller();
+
     private:
         ThreadPool *m_thread_pool = nullptr;
         std::shared_ptr<future_controller<ThreadPool, T>> m_controller;
