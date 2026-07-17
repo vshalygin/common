@@ -65,33 +65,87 @@ namespace vshalygin::cl::internal {
 
             auto controller = val.get_controller();
             if constexpr(std::is_void_v<future_store>) {
-                controller->set_on_success([next_controller2_wp]() {
-                    if(auto next_controller2 = next_controller2_wp.lock()) {
-                        next_controller2->set_value();
-                    }
+                controller->set_on_success([next_controller]() {
+                    next_controller->set_value();
                 });
             } else {
-                controller->set_on_success([next_controller2_wp](future_store &&v) {
-                    if(auto next_controller2 = next_controller2_wp.lock()) {
-                        next_controller2->set_value(std::forward<future_store>(v));
-                    }
+                controller->set_on_success([next_controller](future_store &&v) {
+                    next_controller->set_value(std::forward<future_store>(v));
                 });
             }
 
-            controller->set_on_fail([next_controller2_wp](std::exception_ptr e) {
-                if(auto next_controller2 = next_controller2_wp.lock()) {
-                    next_controller2->set_exception(e);
-                }
+            controller->set_on_fail([next_controller](std::exception_ptr e) {
+                next_controller->set_exception(e);
             });
         });
 
-        controller->set_on_fail([next_controller2_wp = std::weak_ptr(next_controller2)](std::exception_ptr e) {
-            if(auto next_controller2 = next_controller2_wp.lock()) {
-                next_controller2->set_exception(e);
-            }
+        controller->set_on_fail([next_controller_wp = std::weak_ptr(next_controller)](std::exception_ptr e) {
+            assert(!next_controller_wp.expired());
+            std::shared_ptr next_controller(next_controller_wp);
+
+            next_controller->set_exception(e);
         });
 
-        return future<ThreadPool, future_store>(m_thread_pool, std::move(next_controller2));
+        return future<ThreadPool, future_store>(m_thread_pool, std::move(next_controller));
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename Func,
+             typename U, std::enable_if_t<!std::is_void_v<U>, int>>
+    void future<ThreadPool, T>::exec_then_on_success(auto controller,
+                                                     Func &&task,
+                                                     add_lvalue_ref_to_value_t<U> param)
+    {
+        using ret_t = function_ret_t<Func>;
+
+        try {
+            if constexpr(is_future_tuple_v<T>) {
+                static_assert(is_value_v<T>);
+
+                if constexpr(!std::is_void_v<ret_t>) {
+                    controller->set_value(apply(task, param));
+                } else {
+                    apply(task, param);
+                    controller->set_value();
+                }
+            } else {
+                static_assert(function_arg_count_v<Func> == 1,
+                              "success callback must have 1 argument");
+                using arg_t = function_arg_t<0, Func>;
+
+                if constexpr(!std::is_void_v<ret_t>) {
+                    controller->set_value(task(type_qualifiers_cast<arg_t>(param)));
+                } else {
+                    task(type_qualifiers_cast<arg_t>(param));
+                    controller->set_value();
+                }
+            }
+        } catch(...) {
+            controller->set_exception(std::current_exception());
+        }
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename Func,
+              typename Dummy, std::enable_if_t<std::is_void_v<Dummy>, int>>
+    void future<ThreadPool, T>::exec_then_on_success(auto controller,
+                                                     Func &&task)
+    {
+        using ret_t = function_ret_t<Func>;
+
+        try {
+            static_assert(function_arg_count_v<Func> == 0,
+                          "success callback must have 0 argument");
+
+            if constexpr(!std::is_void_v<ret_t>) {
+                controller->set_value(task());
+            } else {
+                task();
+                controller->set_value();
+            }
+        } catch(...) {
+            controller->set_exception(std::current_exception());
+        }
     }
 
     template<typename ThreadPool, typename T>
@@ -105,75 +159,26 @@ namespace vshalygin::cl::internal {
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
                                          task = std::forward<Func>(task)]() mutable {
-                try {
-                    static_assert(function_arg_count_v<Func> == 0,
-                                  "success callback must have 0 argument");
-
-                    if constexpr(!std::is_void_v<ret_t>) {
-                        decltype(auto) v = task();
-                        if(auto controller = new_controller_wp.lock()) {
-                            controller->set_value(std::forward<decltype(v)>(v));
-                        }
-                    } else {
-                        task();
-                        if(auto controller = new_controller_wp.lock()) {
-                            controller->set_value();
-                        }
-                    }
-                } catch(...) {
-                    if(auto controller = new_controller_wp.lock()) {
-                        controller->set_exception(std::current_exception());
-                    }
-                }
+                assert(!new_controller_wp.expired());
+                std::shared_ptr new_controller(new_controller_wp);
+                exec_then_on_success(std::move(new_controller), std::forward<Func>(task));
             });
         } else {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
                                          task = std::forward<Func>(task)]
                                          (add_lvalue_ref_to_value_t<T> val) mutable {
-                try {
-                    if constexpr(is_future_tuple_v<T>) {
-                        static_assert(is_value_v<T>);
-
-                        if constexpr(!std::is_void_v<ret_t>) {
-                            decltype(auto) v = apply(task, val);
-                            if(auto controller = new_controller_wp.lock()) {
-                                controller->set_value(std::forward<decltype(v)>(v));
-                            }
-                        } else {
-                            apply(task, val);
-                            if(auto controller = new_controller_wp.lock()) {
-                                controller->set_value();
-                            }
-                        }
-                    } else {
-                        static_assert(function_arg_count_v<Func> == 1,
-                                      "success callback must have 1 argument");
-                        using arg_t = function_arg_t<0, Func>;
-
-                        if constexpr(!std::is_void_v<ret_t>) {
-                            decltype(auto) v = task(type_qualifiers_cast<arg_t>(val));
-                            if(auto controller = new_controller_wp.lock()) {
-                                controller->set_value(std::forward<decltype(v)>(v));
-                            }
-                        } else {
-                            task(type_qualifiers_cast<arg_t>(val));
-                            if(auto controller = new_controller_wp.lock()) {
-                                controller->set_value();
-                            }
-                        }
-                    }
-                } catch(...) {
-                    if(auto controller = new_controller_wp.lock()) {
-                        controller->set_exception(std::current_exception());
-                    }
-                }
+                assert(!new_controller_wp.expired());
+                std::shared_ptr new_controller(new_controller_wp);
+                exec_then_on_success(std::move(new_controller),
+                                     std::forward<Func>(task),
+                                     std::forward<decltype(val)>(val));
             });
         }
 
         m_controller->set_on_fail([new_controller_wp = std::weak_ptr(new_controller)](std::exception_ptr e) {
-            if(auto controller = new_controller_wp.lock()) {
-                controller->set_exception(e);
-            }
+            assert(!new_controller_wp.expired());
+            std::shared_ptr controller(new_controller_wp);
+            controller->set_exception(e);
         });
 
         if constexpr(is_future_v<ret_t>) {

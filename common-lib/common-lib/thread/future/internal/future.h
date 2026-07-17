@@ -40,6 +40,17 @@ namespace vshalygin::cl::internal {
         bool is_valid() const;
 
     private:
+        template<typename Func,
+                 typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
+        static void exec_then_on_success(auto controller,
+                                         Func &&task,
+                                         add_lvalue_ref_to_value_t<U> param);
+
+        template<typename Func,
+                 typename U = T, std::enable_if_t<std::is_void_v<U>, int> = 0>
+        static void exec_then_on_success(auto controller,
+                                         Func &&task);
+
         auto get_controller() const noexcept;
 
         template<typename Future>
