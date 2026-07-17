@@ -160,7 +160,9 @@
     <ClCompile Include="src\memory\safe-ptr\enable-shared-from-this-manual-set-test.cpp">
       <Filter>memory</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <Filter>gtest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">

@@ -138,6 +138,7 @@
     <ClCompile Include="src\controller\request-controller-test.cpp" />
     <ClCompile Include="src\controller\response-controller-test.cpp" />
     <ClCompile Include="src\endpoint\endpoint-test.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffer-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-env-test.cpp" />

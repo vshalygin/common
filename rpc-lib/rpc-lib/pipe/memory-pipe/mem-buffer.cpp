@@ -112,6 +112,8 @@ namespace vshalygin::rpc {
 
     void mem_buffer::resolve_read_promises()
     {
+        read_promise to_delete;
+
         std::lock_guard guard(m_mtx);
         auto read_promises = m_read_promises->lock();
         auto &q = read_promises->get<0>();
@@ -123,8 +125,9 @@ namespace vshalygin::rpc {
                 m_timer.cancel(*q.begin()->timer_id);
             }
             
-            q.modify(q.begin(), [&buffer](read_promise_data &el) mutable {
+            q.modify(q.begin(), [&buffer, &to_delete](read_promise_data &el) mutable {
                 el.promise.resolve(pipe_op_res::success, std::move(buffer));
+                to_delete = std::move(el.promise);
             });
             q.pop_front();
         }
