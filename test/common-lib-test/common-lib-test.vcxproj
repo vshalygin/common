@@ -66,6 +66,7 @@
     <ClCompile Include="src\utils\tuple-utils\tie-tuple-test.cpp" />
     <ClCompile Include="src\utils\type-qualifiers-cast\type-qualifiers-cast-test.cpp" />
     <ClCompile Include="src\utils\type-wrapper\type-wrapper-test.cpp" />
+    <ClCompile Include="src\utils\value-proxy\value-proxy-test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\common-lib\common-lib.vcxproj">

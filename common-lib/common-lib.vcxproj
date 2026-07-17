@@ -97,6 +97,7 @@
     <ClInclude Include="common-lib\utils\tuple-utils.h" />
     <ClInclude Include="common-lib\utils\type-qualifiers-cast.h" />
     <ClInclude Include="common-lib\utils\type-wrapper.h" />
+    <ClInclude Include="common-lib\utils\value-proxy.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\synchronization\event\event.cpp" />

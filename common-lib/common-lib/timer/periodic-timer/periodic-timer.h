@@ -9,6 +9,7 @@
 #include <atomic>
 #include <condition_variable>
 
+//TODO Есть утечки
 namespace vshalygin::cl {
     class periodic_timer final
     {
