@@ -236,29 +236,20 @@ namespace vshalygin::cl::internal {
 
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]() mutable {
-                if(auto new_controller = new_controller_wp.lock()) {
-                    new_controller->set_value();
-                }
+                assert(!new_controller_wp.expired());
+                std::shared_ptr(new_controller_wp)->set_reference();
             });
         } else if constexpr (std::is_void_v<ret_t>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
                                          (add_lvalue_ref_to_value_t<T>) mutable {
-                if(auto new_controller = new_controller_wp.lock()) {
-                    new_controller->set_value();
-                }
+                assert(!new_controller_wp.expired());
+                std::shared_ptr(new_controller_wp)->set_reference();
             });
         } else {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
                                          (add_lvalue_ref_to_value_t<T> v) mutable {
-                try {
-                    if(auto new_controller = new_controller_wp.lock()) {
-                        new_controller->set_value(std::forward<T>(v));
-                    }
-                } catch (...) {
-                    if(auto new_controller = new_controller_wp.lock()) {
-                        new_controller->set_exception(std::current_exception());
-                    }
-                }
+                assert(!new_controller_wp.expired());
+                std::shared_ptr(new_controller_wp)->set_reference(std::forward<decltype(v)>(v));
             });
         }
 
@@ -266,20 +257,16 @@ namespace vshalygin::cl::internal {
                                   task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
             try {
                 if constexpr(!std::is_void_v<ret_t>) {
-                    decltype(auto) v = task(ep);
-                    if(auto new_controller = new_controller_wp.lock()) {
-                        new_controller->set_value(task(ep));
-                    }
+                    assert(!new_controller_wp.expired());
+                    std::shared_ptr(new_controller_wp)->set_value(task(ep));
                 } else {
+                    assert(!new_controller_wp.expired());
                     task(ep);
-                    if(auto new_controller = new_controller_wp.lock()) {
-                        new_controller->set_value();
-                    }
+                    std::shared_ptr(new_controller_wp)->set_value();
                 }
             } catch(...) {
-                if(auto new_controller = new_controller_wp.lock()) {
-                    new_controller->set_exception(std::current_exception());
-                }
+                assert(!new_controller_wp.expired());
+                std::shared_ptr(new_controller_wp)->set_exception(std::current_exception());
             }
         });
 

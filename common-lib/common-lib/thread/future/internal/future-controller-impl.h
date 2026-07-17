@@ -63,19 +63,44 @@ namespace vshalygin::cl::internal {
             static_assert(sizeof...(value) == 1);
         }
 
+        value_proxy val;
+        if constexpr(std::is_reference_v<T>) {
+            val = value_proxy{ std::forward<decltype(value)>(value)...,
+                               value_proxy_external };
+        } else if constexpr (!std::is_void_v<T>) {
+            val = value_proxy{ std::forward<decltype(value)>(value)...,
+                               value_proxy_owned };
+        }
+
+        set_success(std::move(val));
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_reference(auto&&...value)
+    {
+        if constexpr(std::is_void_v<T>) {
+            static_assert(sizeof...(value) == 0);
+        } else {
+            static_assert(sizeof...(value) == 1);
+        }
+
+        value_proxy val;
+        if constexpr(!std::is_void_v<T>) {
+            val = value_proxy{ std::forward<decltype(value)>(value)...,
+                               value_proxy_external };
+        }
+
+        set_success(std::move(val));
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_success(value_proxy value)
+    {
         {
             ordered_lock g(m_on_success_mtx, m_val_mtx, m_exception_mtx);
             assert(!m_val && !m_exception);
 
-            if constexpr(std::is_void_v<T>) {
-                m_val.emplace(value_proxy{});
-            } else if constexpr(std::is_reference_v<T>) {
-                m_val.emplace(value_proxy{ std::forward<decltype(value)>(value)...,
-                                           value_proxy_external});
-            } else {
-                m_val.emplace(value_proxy{ std::forward<decltype(value)>(value)...,
-                                           value_proxy_owned });
-            }
+            m_val.emplace(std::move(value));
 
             post_success();
         }

@@ -45,6 +45,8 @@ namespace vshalygin::cl::internal {
         void set_on_fail(function<void(std::exception_ptr)> &&func);
 
         void set_value(auto&&...value);
+        void set_reference(auto&&...value);
+
         void set_exception(const std::exception_ptr &e);
 
         auto get() const;
@@ -56,6 +58,10 @@ namespace vshalygin::cl::internal {
         void add_child(std::unique_ptr<ifuture_controller> child);
 
     private:
+        using value_proxy = value_proxy<add_lvalue_ref_to_value_t<T>>;
+
+        void set_success(value_proxy value);
+
         void wait_data_ready_or_throw() const;
 
         void post_success();
@@ -65,8 +71,6 @@ namespace vshalygin::cl::internal {
         void call_fail(on_fail_t &&func);
 
     private:
-        using value_proxy = value_proxy<add_lvalue_ref_to_value_t<T>>;
-
         ThreadPool *m_thread_pool;
 
         value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
