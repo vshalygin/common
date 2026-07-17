@@ -68,9 +68,13 @@ namespace vshalygin::cl::internal {
             assert(!m_val && !m_exception);
 
             if constexpr(std::is_void_v<T>) {
-                m_val.emplace(type_wrapper{});
+                m_val.emplace(value_proxy{});
+            } else if constexpr(std::is_reference_v<T>) {
+                m_val.emplace(value_proxy{ std::forward<decltype(value)>(value)...,
+                                           value_proxy_external});
             } else {
-                m_val.emplace(type_wrapper{ std::forward<decltype(value)>(value)... });
+                m_val.emplace(value_proxy{ std::forward<decltype(value)>(value)...,
+                                           value_proxy_owned });
             }
 
             post_success();

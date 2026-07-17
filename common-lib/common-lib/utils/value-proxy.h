@@ -4,11 +4,13 @@
 #include <memory>
 
 namespace vshalygin::cl {
-    struct value_proxy_owned_t {
-    } value_proxy_owned;
+    struct value_proxy_owned_t
+    { };
+    inline constexpr value_proxy_owned_t value_proxy_owned;
 
-    struct value_proxy_external_t {
-    } value_proxy_external;
+    struct value_proxy_external_t
+    { };
+    inline constexpr value_proxy_external_t value_proxy_external;
 
     template<typename T>
     class value_proxy
@@ -208,5 +210,23 @@ namespace vshalygin::cl {
 
     private:
         mutable alignas(alignment) std::byte m_buffer[size];
+    };
+
+    template<>
+    class value_proxy<void>
+    {
+    public:
+        value_proxy() = default;
+
+        void to_underlying() const noexcept
+        {}
+
+        operator void() noexcept
+        {}
+
+        bool is_valid() const noexcept
+        {
+            return true;
+        }
     };
 }

@@ -204,3 +204,11 @@ TEST(ValueProxy, MoveAssignEmpty)
     ASSERT_FALSE(sut1.is_valid());
     ASSERT_FALSE(sut2.is_valid());
 }
+
+TEST(ValueProxy, MayStoreVoidType)
+{
+    value_proxy<void> sut;
+
+    sut.to_underlying();
+    ASSERT_TRUE(sut.is_valid());
+}

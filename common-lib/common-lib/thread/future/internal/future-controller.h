@@ -2,10 +2,11 @@
 #include "future-data.h"
 
 #include <common-lib/mpl/type-traits.h>
+#include <common-lib/mpl/type-transform.h>
 #include <common-lib/synchronization/ordered-mutex.h>
 #include <common-lib/synchronization/ordered-lock.h>
 #include <common-lib/synchronization/value-locker.h>
-#include <common-lib/utils/type-wrapper.h>
+#include <common-lib/utils/value-proxy.h>
 #include <common-lib/utils/function.h>
 #include <common-lib/memory/enable-shared-from-this-manual-set.h>
 
@@ -64,7 +65,7 @@ namespace vshalygin::cl::internal {
         void call_fail(on_fail_t &&func);
 
     private:
-        using type_wrapper = type_wrapper<T>;
+        using value_proxy = value_proxy<add_lvalue_ref_to_value_t<T>>;
 
         ThreadPool *m_thread_pool;
 
@@ -77,7 +78,7 @@ namespace vshalygin::cl::internal {
         std::queue<on_fail_t> m_on_fail_queue;
 
         mutable ordered_mutex<2> m_val_mtx;
-        std::optional<type_wrapper> m_val;
+        std::optional<value_proxy> m_val;
 
         mutable ordered_mutex<3> m_exception_mtx;
         std::optional<std::exception_ptr> m_exception;
