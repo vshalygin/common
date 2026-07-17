@@ -77,9 +77,9 @@ protected:
 
     std::shared_ptr<mem_pipe_env> m_mem_pipe_env;
 
-    std::chrono::milliseconds m_handshake_timeout{10000};
-    std::chrono::milliseconds m_send_timeout{ 10000 };
-    std::chrono::milliseconds m_recv_timeout{ 10000 };
+    std::chrono::milliseconds m_handshake_timeout{1000000};
+    std::chrono::milliseconds m_send_timeout{ 1000000 };
+    std::chrono::milliseconds m_recv_timeout{ 1000000 };
 
     std::shared_ptr<thread_pool> m_thread_pool;
 };

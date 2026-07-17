@@ -13,9 +13,6 @@
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest_main.cc">
-      <Filter>gtest</Filter>
-    </ClCompile>
     <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>
@@ -66,6 +63,9 @@
     </ClCompile>
     <ClCompile Include="src\client-endpoint-test.cpp" />
     <ClCompile Include="src\server-endpoint-test.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <Filter>gtest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
