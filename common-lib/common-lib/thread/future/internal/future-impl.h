@@ -237,19 +237,20 @@ namespace vshalygin::cl::internal {
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]() mutable {
                 assert(!new_controller_wp.expired());
-                std::shared_ptr(new_controller_wp)->set_reference();
+                std::shared_ptr(new_controller_wp)->set_value_reference();
             });
         } else if constexpr (std::is_void_v<ret_t>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
                                          (add_lvalue_ref_to_value_t<T>) mutable {
                 assert(!new_controller_wp.expired());
-                std::shared_ptr(new_controller_wp)->set_reference();
+                std::shared_ptr(new_controller_wp)->set_value_reference();
             });
         } else {
-            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
+            auto &mtx = m_controller->get_value_mtx();
+            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller), &mtx]
                                          (add_lvalue_ref_to_value_t<T> v) mutable {
                 assert(!new_controller_wp.expired());
-                std::shared_ptr(new_controller_wp)->set_reference(std::forward<decltype(v)>(v));
+                std::shared_ptr(new_controller_wp)->set_value_reference(mtx, std::forward<decltype(v)>(v));
             });
         }
 

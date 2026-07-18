@@ -76,6 +76,11 @@ protected:
         counter::clear();
     }
 
+    void TearDown() override
+    {
+        m_pool.stop();
+    }
+
 protected:
     thread_pool m_pool{ 2 };
 };
@@ -2203,4 +2208,34 @@ TEST_F(Future, ExceptionGoesThroughSuccessHanlderReturningFuture)
 
 
     f.get().apply([](int i) { ASSERT_EQ(i, 55); });
+}
+
+TEST_F(Future, SavePrevValueReferenceInCatchFuture)
+{
+    auto promise = make_promise(&m_pool, []() { return std::make_unique<int>(3); });
+    promise.resolve();
+    auto f = promise.get_future()
+        .then([](std::unique_ptr<int> &&p) { return std::move(p); });
+    auto f1 = f.catched([](std::exception_ptr) { return std::make_unique<int>(5); });
+    f1.get().apply([](std::unique_ptr<int> &p) { EXPECT_EQ(*p, 3); });
+    auto f2 = f1.then([](std::unique_ptr<int> &&p) { return std::move(p); });
+
+    f2.get().apply([](std::unique_ptr<int> &&p) { EXPECT_EQ(*p, 3); });
+    f.get().apply([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
+    f1.get().apply([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
+}
+
+TEST_F(Future, SavePrevValueReferenceInCatchFutureChain)
+{
+    auto ptr = std::make_unique<int>(3);
+    auto p = ptr.get();
+    auto promise = make_promise(&m_pool, [&ptr]() { return std::move(ptr); });
+    promise.resolve();
+    auto f = promise.get_future()
+        .catched([](std::exception_ptr) { return std::make_unique<int>(5); })
+        .catched([](std::exception_ptr) { return std::make_unique<int>(5); })
+        .catched([](std::exception_ptr) { return std::make_unique<int>(5); })
+        .catched([](std::exception_ptr) { return std::make_unique<int>(5); });
+
+    f.get().apply([&](std::unique_ptr<int> &v) { ASSERT_EQ(v.get(), p); });
 }

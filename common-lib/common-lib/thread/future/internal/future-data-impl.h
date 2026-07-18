@@ -22,8 +22,6 @@ namespace vshalygin::cl::internal {
         static_assert(std::is_reference_v<val_t>);
 
         if constexpr(is_future_tuple_v<std::remove_reference_t<val_t>>) {
-            using future_tuple = std::remove_reference_t<val_t>;
-
             auto [guard, val] = m_controller->get_val();
             ::vshalygin::cl::internal::apply(func, std::forward<val_t>(val));
         } else {

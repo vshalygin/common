@@ -23,6 +23,16 @@ namespace vshalygin::cl {
             m_mtx.unlock();
         }
 
+        std::mutex &get_underlying() noexcept
+        {
+            return m_mtx;
+        }
+
+        const std::mutex &get_underlying() const noexcept
+        {
+            return m_mtx;
+        }
+
     private:
         std::mutex m_mtx;
     };

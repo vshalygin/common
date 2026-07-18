@@ -72,35 +72,34 @@ namespace vshalygin::cl::internal {
                                value_proxy_owned };
         }
 
-        set_success(std::move(val));
+        set_success(outer_val_mtx_ref{}, std::move(val));
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_reference(auto&&...value)
+    template<typename TT, std::enable_if_t<std::is_void_v<TT>, int>>
+    void future_controller<ThreadPool, T>::set_value_reference()
     {
-        if constexpr(std::is_void_v<T>) {
-            static_assert(sizeof...(value) == 0);
-        } else {
-            static_assert(sizeof...(value) == 1);
-        }
-
-        value_proxy val;
-        if constexpr(!std::is_void_v<T>) {
-            val = value_proxy{ std::forward<decltype(value)>(value)...,
-                               value_proxy_external };
-        }
-
-        set_success(std::move(val));
+        set_success(outer_val_mtx_ref{}, value_proxy{});
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_success(value_proxy value)
+    template<typename U, typename TT, std::enable_if_t<!std::is_void_v<TT>, int>>
+    void future_controller<ThreadPool, T>::set_value_reference(std::mutex &outer_mtx, U &&value)
+    {
+        set_success(outer_val_mtx_ref{ outer_mtx },
+                    value_proxy{ std::forward<U>(value), value_proxy_external });
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_success(outer_val_mtx_ref outer_mtx_ref,
+                                                       value_proxy value)
     {
         {
             ordered_lock g(m_on_success_mtx, m_val_mtx, m_exception_mtx);
             assert(!m_val && !m_exception);
 
             m_val.emplace(std::move(value));
+            m_outer_val_mtx = outer_mtx_ref;
 
             post_success();
         }
@@ -146,9 +145,9 @@ namespace vshalygin::cl::internal {
     {
         if constexpr(!std::is_void_v<T>) {
             using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
+            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx), decltype(m_outer_val_mtx)>, val_t>;
 
-            ordered_lock lock(m_val_mtx);
+            ordered_lock lock(m_val_mtx, m_outer_val_mtx);
             assert(m_val);
             return tuple_t{ std::move(lock), m_val->to_underlying()};
         }
@@ -159,9 +158,9 @@ namespace vshalygin::cl::internal {
     {
         if constexpr(!std::is_void_v<T>) {
             using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx)>, val_t>;
+            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx), decltype(m_outer_val_mtx)>, val_t>;
 
-            ordered_lock lock(m_val_mtx);
+            ordered_lock lock(m_val_mtx, m_outer_val_mtx);
             assert(m_val);
             return tuple_t{ std::move(lock), m_val->to_underlying() };
         }
@@ -204,11 +203,11 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     void future_controller<ThreadPool, T>::call_success(on_success_t &&func)
     {
-        ordered_lock guard(m_val_mtx);
-
-        assert(m_val);
         assert(func);
+
         if constexpr(!std::is_void_v<T>) {
+            ordered_lock guard(m_val_mtx, m_outer_val_mtx);
+            assert(m_val);
             func(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(m_val->to_underlying()));
         } else {
             func();
@@ -229,5 +228,14 @@ namespace vshalygin::cl::internal {
     void future_controller<ThreadPool, T>::add_child(std::unique_ptr<ifuture_controller> child)
     {
         m_children.lock()->push_back(std::move(child));
+    }
+
+    template<typename ThreadPool, typename T>
+    std::mutex &future_controller<ThreadPool, T>::get_value_mtx() const noexcept
+    {
+        if(m_outer_val_mtx.has_underlying()) {
+            return m_outer_val_mtx.get_underlying();
+        }
+        return m_val_mtx.get_underlying();
     }
 }
