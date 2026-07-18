@@ -2402,3 +2402,16 @@ TEST_F(Future, TestFinallyMethodWhenCallbackReturnsFuture)
 
     EXPECT_EQ(10, beacon);
 }
+
+TEST_F(Future, FinallyMaySetSeveralTimes)
+{
+    std::atomic_uint64_t beacon;
+
+    auto p = make_promise(&m_pool, []() {}); p.resolve();
+    auto f = p.get_future();
+    f.finally([&]() { ++beacon; });
+    f.finally([&]() { ++beacon; });
+    f.finally([&]() { ++beacon; });
+
+    while(beacon != 3);
+}
