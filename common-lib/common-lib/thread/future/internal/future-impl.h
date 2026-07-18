@@ -234,13 +234,13 @@ namespace vshalygin::cl::internal {
         if constexpr(std::is_void_v<T>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]() {
                 assert(!new_controller_wp.expired());
-                std::shared_ptr(new_controller_wp)->set_value_reference();
+                std::shared_ptr(new_controller_wp)->set_value();
             });
         } else if constexpr(std::is_void_v<ret_t>) {
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
                                          (add_lvalue_ref_to_value_t<T> /*ignore_value*/) mutable {
                 assert(!new_controller_wp.expired());
-                std::shared_ptr(new_controller_wp)->set_value_reference();
+                std::shared_ptr(new_controller_wp)->set_value();
             });
         } else {
             auto &mtx = m_controller->get_value_mtx();

@@ -48,10 +48,11 @@ namespace vshalygin::cl::internal {
 
         void set_on_finally(on_finally_t &&func);
 
-        void set_value(auto&&...value);
-
         template<typename TT = T, std::enable_if_t<std::is_void_v<TT>, int> = 0>
-        void set_value_reference();
+        void set_value();
+
+        template<typename U, typename TT = T, std::enable_if_t<!std::is_void_v<TT>, int> = 0>
+        void set_value(U &&val);
 
         template<typename U, typename TT = T, std::enable_if_t<!std::is_void_v<TT>, int> = 0>
         void set_value_reference(std::mutex &outer_mtx, U &&value);
@@ -177,31 +178,25 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_value(auto&&...value)
+    template<typename TT, std::enable_if_t<std::is_void_v<TT>, int>>
+    void future_controller<ThreadPool, T>::set_value()
     {
-        if constexpr(std::is_void_v<T>) {
-            static_assert(sizeof...(value) == 0);
-        } else {
-            static_assert(sizeof...(value) == 1);
-        }
-
-        value_proxy val;
-        if constexpr(std::is_reference_v<T>) {
-            val = value_proxy{ std::forward<decltype(value)>(value)...,
-                               value_proxy_external };
-        } else if constexpr (!std::is_void_v<T>) {
-            val = value_proxy{ std::forward<decltype(value)>(value)...,
-                               value_proxy_owned };
-        }
-
-        set_success(outer_val_mtx_ref{}, std::move(val));
+        set_success(outer_val_mtx_ref{}, value_proxy{});
     }
 
     template<typename ThreadPool, typename T>
-    template<typename TT, std::enable_if_t<std::is_void_v<TT>, int>>
-    void future_controller<ThreadPool, T>::set_value_reference()
+    template<typename U, typename TT, std::enable_if_t<!std::is_void_v<TT>, int>>
+    void future_controller<ThreadPool, T>::set_value(U &&val)
     {
-        set_success(outer_val_mtx_ref{}, value_proxy{});
+        value_proxy v;
+
+        if constexpr(std::is_reference_v<T>) {
+            v = value_proxy{ std::forward<U>(val), value_proxy_external };
+        } else {
+            v = value_proxy{ std::forward<U>(val), value_proxy_owned };
+        }
+
+        set_success(outer_val_mtx_ref{}, std::move(v));
     }
 
     template<typename ThreadPool, typename T>
