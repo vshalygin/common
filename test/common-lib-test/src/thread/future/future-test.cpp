@@ -2239,3 +2239,52 @@ TEST_F(Future, SavePrevValueReferenceInCatchFutureChain)
 
     f.get().apply([&](std::unique_ptr<int> &v) { ASSERT_EQ(v.get(), p); });
 }
+
+TEST_F(Future, CatchedFlattensReturnedFutureType)
+{
+    std::atomic_uint64_t beacon;
+
+    auto promise = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    promise.resolve();
+    promise.get_future()
+        .catched([&](std::exception_ptr) {
+                     beacon.fetch_add(1, std::memory_order_relaxed);
+                     auto p = make_promise(&m_pool, []() { return 34; });
+                     p.resolve();
+                     return p.get_future();
+                 })
+        .then([&](int i) { ASSERT_EQ(i, 34); beacon.fetch_add(1, std::memory_order_relaxed); throw std::runtime_error(""); })
+        .catched([&](std::exception_ptr) {
+                     auto p = make_promise(&m_pool, [&]() { beacon.fetch_add(1, std::memory_order_relaxed); });
+                     p.resolve();
+                     return p.get_future();
+                 })
+        .then([]() { throw std::runtime_error(""); })
+        .catched([&](std::exception_ptr) {
+                     beacon.fetch_add(1, std::memory_order_relaxed);
+                     auto p = make_promise(&m_pool, []() { throw std::runtime_error(""); });
+                     p.resolve();
+                     return p.get_future();
+                 })
+        .catched([&](std::exception_ptr) {
+                     auto p = make_promise(&m_pool, []() { throw std::runtime_error(""); });
+                     beacon.fetch_add(1, std::memory_order_relaxed);
+                     p.resolve();
+                     return p.get_future()
+                         .catched([&](std::exception_ptr) {
+                                      beacon.fetch_add(1, std::memory_order_relaxed);
+                                      throw std::runtime_error("");
+                                  });
+                 })
+        .catched([&](std::exception_ptr) -> future<thread_pool, void> {
+                     beacon.fetch_add(1, std::memory_order_relaxed);
+                     throw std::runtime_error("");
+                 })
+        .catched([&](std::exception_ptr) {
+                     beacon.fetch_add(1, std::memory_order_relaxed);
+                 })
+        .then([]() { return 34; })
+        .get().apply([](int i) { ASSERT_EQ(i, 34); });
+
+    ASSERT_EQ(beacon, 8);
+}
