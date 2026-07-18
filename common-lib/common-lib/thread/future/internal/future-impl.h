@@ -305,6 +305,31 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
+    template<typename Func>
+    auto future<ThreadPool, T>::finally(Func &&task)
+    {
+        static_assert(function_arg_count_v<Func> == 0,
+                      "finally callback must have no argument");
+        static_assert(std::is_same_v<function_ret_t<Func>, void>,
+                      "finally callback must return void type");
+
+        auto new_controller = create_child_controller<void>(m_controller);
+        m_controller->set_on_finally([new_controller_wp = std::weak_ptr(new_controller),
+                                     task = std::forward<Func>(task)]() mutable {
+            assert(!new_controller_wp.expired());
+            std::shared_ptr new_controller(new_controller_wp);
+            try {
+                task();
+                new_controller->set_value();
+            } catch(...) {
+                new_controller->set_exception(std::current_exception());
+            }
+        });
+
+        return future<ThreadPool, void>(m_thread_pool, std::move(new_controller));
+    }
+
+    template<typename ThreadPool, typename T>
     bool future<ThreadPool, T>::is_valid() const
     {
         return m_controller != nullptr;

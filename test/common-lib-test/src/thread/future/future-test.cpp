@@ -2288,3 +2288,55 @@ TEST_F(Future, CatchedFlattensReturnedFutureType)
 
     ASSERT_EQ(beacon, 8);
 }
+
+TEST_F(Future, TestFinallyMethod)
+{
+    std::atomic_uint64_t beacon;
+
+    auto p1 = make_promise(&m_pool, []() -> int { return 0; });
+    auto p2 = make_promise(&m_pool, []() {});
+    auto p3 = make_promise(&m_pool, []() -> int { throw std::runtime_error(""); });
+    auto p4 = make_promise(&m_pool, []() { throw std::runtime_error(""); });
+    auto f1 = p1.get_future();
+    auto f2 = p2.get_future();
+    auto f3 = p3.get_future();
+    auto f4 = p4.get_future();
+
+    auto f1_ = f1.finally([&]() { ++beacon; });
+    auto f2_ = f2.finally([&]() { ++beacon; });
+    auto f3_ = f3.finally([&]() { ++beacon; });
+    auto f4_ = f4.finally([&]() { ++beacon; });
+    auto f5_ = f1.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    auto f6_ = f2.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    auto f7_ = f3.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    auto f8_ = f4.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    p1.resolve(); p2.resolve(); p3.resolve(); p4.resolve();
+
+    auto f9_ = f1.finally([&]() { ++beacon; });
+    auto f10_ = f2.finally([&]() { ++beacon; });
+    auto f11_ = f3.finally([&]() { ++beacon; });
+    auto f12_ = f4.finally([&]() { ++beacon; });
+    auto f13_ = f1.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    auto f14_ = f2.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    auto f15_ = f3.finally([&]() { ++beacon; throw std::runtime_error(""); });
+    auto f16_ = f4.finally([&]() { ++beacon; throw std::runtime_error(""); });
+
+    f1_.get();
+    f2_.get();
+    f3_.get();
+    f4_.get();
+    ASSERT_ANY_THROW(f5_.get());
+    ASSERT_ANY_THROW(f6_.get());
+    ASSERT_ANY_THROW(f7_.get());
+    ASSERT_ANY_THROW(f8_.get());
+    f9_.get();
+    f10_.get();
+    f11_.get();
+    f12_.get();
+    ASSERT_ANY_THROW(f13_.get());
+    ASSERT_ANY_THROW(f14_.get());
+    ASSERT_ANY_THROW(f15_.get());
+    ASSERT_ANY_THROW(f16_.get());
+
+    ASSERT_EQ(beacon, 16);
+}

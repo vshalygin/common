@@ -33,6 +33,7 @@ namespace vshalygin::cl::internal {
     {
         using on_success_t = function<void(std::add_rvalue_reference_t<T>)>;
         using on_fail_t = function<void(std::exception_ptr)>;
+        using on_finally_t = function<void()>;
 
     public:
         explicit future_controller(ThreadPool *thread_pool);
@@ -43,7 +44,9 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         void set_on_success(Func &&func);
 
-        void set_on_fail(function<void(std::exception_ptr)> &&func);
+        void set_on_fail(on_fail_t &&func);
+
+        void set_on_finally(on_finally_t &&func);
 
         void set_value(auto&&...value);
 
@@ -69,9 +72,10 @@ namespace vshalygin::cl::internal {
         using value_proxy = value_proxy<add_lvalue_ref_to_value_t<T>>;
         using on_success_mtx = ordered_mutex<0>;
         using on_fail_mtx = ordered_mutex<1>;
-        using val_mtx = ordered_mutex<2>;
-        using exception_mtx = ordered_mutex<3>;
-        using outer_val_mtx_ref = ordered_mutex_ref<4>;
+        using on_finally_mtx = ordered_mutex<2>;
+        using val_mtx = ordered_mutex<3>;
+        using exception_mtx = ordered_mutex<4>;
+        using outer_val_mtx_ref = ordered_mutex_ref<5>;
 
         void set_success(outer_val_mtx_ref outer_mtx_ref, value_proxy value);
 
@@ -79,6 +83,7 @@ namespace vshalygin::cl::internal {
 
         void post_success();
         void post_fail();
+        void post_finally();
 
         void call_success(on_success_t &&func);
         void call_fail(on_fail_t &&func);
@@ -93,6 +98,9 @@ namespace vshalygin::cl::internal {
 
         mutable on_fail_mtx m_on_fail_mtx;
         std::queue<on_fail_t> m_on_fail_queue;
+
+        mutable on_finally_mtx m_on_finally_mtx;
+        std::queue<on_finally_t> m_on_finally_queue;
 
         mutable val_mtx m_val_mtx;
         std::optional<value_proxy> m_val;
@@ -130,7 +138,8 @@ namespace vshalygin::cl::internal {
         if constexpr(std::is_void_v<T>) {
             m_on_success_queue.push(std::forward<Func>(func));
         } else {
-            m_on_success_queue.push([func = std::forward<Func>(func)](std::add_rvalue_reference_t<T> val) mutable {
+            m_on_success_queue.push([func = std::forward<Func>(func)]
+                                    (std::add_rvalue_reference_t<T> val) mutable {
                 func(type_qualifiers_cast<function_arg_t<0, Func>>(val));
             });
         }
@@ -142,8 +151,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_on_fail(
-        function<void(std::exception_ptr)> &&func)
+    void future_controller<ThreadPool, T>::set_on_fail(on_fail_t &&func)
     {
         ordered_lock guard(m_on_fail_mtx);
 
@@ -152,6 +160,19 @@ namespace vshalygin::cl::internal {
         ordered_lock g(push_back(std::move(guard), m_exception_mtx));
         if(m_exception) {
             post_fail();
+        }
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::set_on_finally(on_finally_t &&func)
+    {
+        ordered_lock guard(m_on_finally_mtx);
+
+        m_on_finally_queue.push(std::move(func));
+
+        ordered_lock g(push_back(std::move(guard), m_val_mtx, m_exception_mtx));
+        if(m_val || m_exception) {
+            post_finally();
         }
     }
 
@@ -196,13 +217,14 @@ namespace vshalygin::cl::internal {
                                                        value_proxy value)
     {
         {
-            ordered_lock g(m_on_success_mtx, m_val_mtx, m_exception_mtx);
+            ordered_lock g(m_on_success_mtx, m_on_finally_mtx, m_val_mtx, m_exception_mtx);
             assert(!m_val && !m_exception);
 
             m_val.emplace(std::move(value));
             m_outer_val_mtx = outer_mtx_ref;
 
             post_success();
+            post_finally();
         }
 
         m_cv.notify_all();
@@ -212,12 +234,13 @@ namespace vshalygin::cl::internal {
     void future_controller<ThreadPool, T>::set_exception(const std::exception_ptr &e)
     {
         {
-            ordered_lock g(m_on_fail_mtx, m_val_mtx, m_exception_mtx);
+            ordered_lock g(m_on_fail_mtx, m_on_finally_mtx, m_val_mtx, m_exception_mtx);
             assert(!m_val && !m_exception);
 
             m_exception = e;
 
             post_fail();
+            post_finally();
         }
 
         m_cv.notify_all();
@@ -297,6 +320,18 @@ namespace vshalygin::cl::internal {
             m_on_fail_queue.pop();
             m_thread_pool->post([s = this->shared_from_this(), f = std::move(f)]() mutable {
                 s->call_fail(std::move(f));
+            });
+        }
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::post_finally()
+    {
+        while(!m_on_finally_queue.empty()) {
+            auto f = std::move(m_on_finally_queue.front());
+            m_on_finally_queue.pop();
+            m_thread_pool->post([f = std::move(f)]() mutable {
+                f();
             });
         }
     }
