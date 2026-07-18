@@ -1,7 +1,7 @@
 #pragma once
 #include "internal/future-impl.h"
 #include "internal/promise-impl.h"
-#include "internal/future-data-impl.h"
+#include "internal/future-data.h"
 #include "internal/make-promise.h"
 #include "internal/future-tuple.h"
 

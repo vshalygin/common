@@ -129,13 +129,7 @@
     <ClInclude Include="common-lib\thread\future\internal\future-controller.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-controller-impl.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread\future\internal\future-data.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\future-data-impl.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\thread\future\internal\future-impl.h">

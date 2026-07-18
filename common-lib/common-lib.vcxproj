@@ -59,9 +59,7 @@
     <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h" />
     <ClInclude Include="common-lib\synchronization\value-locker.h" />
     <ClInclude Include="common-lib\thread\future\future.h" />
-    <ClInclude Include="common-lib\thread\future\internal\future-controller-impl.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-controller.h" />
-    <ClInclude Include="common-lib\thread\future\internal\future-data-impl.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-data.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-impl.h" />
     <ClInclude Include="common-lib\thread\future\internal\future-store-type-or-self.h" />
