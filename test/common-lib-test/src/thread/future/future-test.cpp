@@ -2311,6 +2311,15 @@ TEST_F(Future, TestFinallyMethod)
     auto f7_ = f3.finally([&]() { ++beacon; throw std::runtime_error(""); });
     auto f8_ = f4.finally([&]() { ++beacon; throw std::runtime_error(""); });
     p1.resolve(); p2.resolve(); p3.resolve(); p4.resolve();
+    f1_.get();
+    f2_.get();
+    f3_.get();
+    f4_.get();
+    ASSERT_ANY_THROW(f5_.get());
+    ASSERT_ANY_THROW(f6_.get());
+    ASSERT_ANY_THROW(f7_.get());
+    ASSERT_ANY_THROW(f8_.get());
+
 
     auto f9_ = f1.finally([&]() { ++beacon; });
     auto f10_ = f2.finally([&]() { ++beacon; });
@@ -2321,14 +2330,6 @@ TEST_F(Future, TestFinallyMethod)
     auto f15_ = f3.finally([&]() { ++beacon; throw std::runtime_error(""); });
     auto f16_ = f4.finally([&]() { ++beacon; throw std::runtime_error(""); });
 
-    f1_.get();
-    f2_.get();
-    f3_.get();
-    f4_.get();
-    ASSERT_ANY_THROW(f5_.get());
-    ASSERT_ANY_THROW(f6_.get());
-    ASSERT_ANY_THROW(f7_.get());
-    ASSERT_ANY_THROW(f8_.get());
     f9_.get();
     f10_.get();
     f11_.get();
@@ -2339,4 +2340,65 @@ TEST_F(Future, TestFinallyMethod)
     ASSERT_ANY_THROW(f16_.get());
 
     ASSERT_EQ(beacon, 16);
+}
+
+TEST_F(Future, TestFinallyMethodWhenCallbackReturnsFuture)
+{
+    std::atomic_uint64_t beacon;
+
+    auto p1 = make_promise(&m_pool, []() {}); p1.resolve();
+    auto p2 = make_promise(&m_pool, []() {}); p2.resolve();
+    auto p3 = make_promise(&m_pool, []() {}); p3.resolve();
+    auto p4 = make_promise(&m_pool, []() { throw std::runtime_error(""); }); p4.resolve();
+    auto p5 = make_promise(&m_pool, []() { throw std::runtime_error(""); }); p5.resolve();
+    auto p6 = make_promise(&m_pool, []() { throw std::runtime_error(""); }); p6.resolve();
+
+    auto f1 = p1.get_future();
+    auto f2 = p2.get_future();
+    auto f3 = p3.get_future();
+    auto f4 = p4.get_future();
+    auto f5 = p5.get_future();
+    auto f6 = p6.get_future();
+
+    auto f1_ = f1.finally([&]() {
+                              ++beacon;
+                              auto p = make_promise(&m_pool, [&](){ ++beacon; });
+                              p.resolve();
+                              return p.get_future();
+                          });
+    auto f2_ = f2.finally([&]() {
+                              ++beacon;
+                              auto p = make_promise(&m_pool, [&]() { ++beacon; throw std::runtime_error(""); });
+                              p.resolve();
+                              return p.get_future();
+                          });
+    auto f3_ = f3.finally([&]() -> future<thread_pool, void> {
+                              ++beacon;
+                              throw std::runtime_error("");
+                          });
+    auto f4_ = f4.finally([&]() {
+                              ++beacon;
+                              auto p = make_promise(&m_pool, [&]() { ++beacon; });
+                              p.resolve();
+                              return p.get_future();
+                          });
+    auto f5_ = f5.finally([&]() {
+                              ++beacon;
+                              auto p = make_promise(&m_pool, [&]() { ++beacon; throw std::runtime_error(""); });
+                              p.resolve();
+                              return p.get_future();
+                          });
+    auto f6_ = f6.finally([&]() -> future<thread_pool, void> {
+                              ++beacon;
+                              throw std::runtime_error("");
+                          });
+
+    f1_.get();
+    EXPECT_ANY_THROW(f2_.get());
+    EXPECT_ANY_THROW(f3_.get());
+    f4_.get();
+    EXPECT_ANY_THROW(f5_.get());
+    EXPECT_ANY_THROW(f6_.get());
+
+    EXPECT_EQ(10, beacon);
 }

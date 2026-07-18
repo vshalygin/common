@@ -308,10 +308,12 @@ namespace vshalygin::cl::internal {
     template<typename Func>
     auto future<ThreadPool, T>::finally(Func &&task)
     {
+        using ret_t = function_ret_t<Func>;
+
         static_assert(function_arg_count_v<Func> == 0,
                       "finally callback must have no argument");
-        static_assert(std::is_same_v<function_ret_t<Func>, void>,
-                      "finally callback must return void type");
+        static_assert(std::is_same_v<ret_t, void> || std::is_same_v<ret_t, future<ThreadPool, void>>,
+                      "finally callback must return void or future storing void type");
 
         auto new_controller = create_child_controller<void>(m_controller);
         m_controller->set_on_finally([new_controller_wp = std::weak_ptr(new_controller),
@@ -319,8 +321,21 @@ namespace vshalygin::cl::internal {
             assert(!new_controller_wp.expired());
             std::shared_ptr new_controller(new_controller_wp);
             try {
-                task();
-                new_controller->set_value();
+                if constexpr(std::is_void_v<ret_t>) {
+                    task();
+                    new_controller->set_value();
+                } else {
+                    static_assert(is_future_v<ret_t>);
+
+                    auto future = task();
+                    auto future_controller = future.get_controller();
+                    future_controller->set_on_success([new_controller]() {
+                        new_controller->set_value();
+                    });
+                    future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
+                        new_controller->set_exception(ep);
+                    });
+                }
             } catch(...) {
                 new_controller->set_exception(std::current_exception());
             }
