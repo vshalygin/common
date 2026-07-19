@@ -82,8 +82,8 @@ namespace vshalygin::cl::internal {
 
         void wait_data_ready_or_throw() const;
 
-        void post_success();
-        void post_fail();
+        void post_on_success();
+        void post_on_fail();
         void post_finally();
 
         void call_success(on_success_t &&func);
@@ -147,7 +147,7 @@ namespace vshalygin::cl::internal {
 
         ordered_lock guard2(push_back(std::move(guard), m_val_mtx));
         if(m_val) {
-            post_success();
+            post_on_success();
         }
     }
 
@@ -160,7 +160,7 @@ namespace vshalygin::cl::internal {
 
         ordered_lock g(push_back(std::move(guard), m_exception_mtx));
         if(m_exception) {
-            post_fail();
+            post_on_fail();
         }
     }
 
@@ -218,7 +218,7 @@ namespace vshalygin::cl::internal {
             m_val.emplace(std::move(value));
             m_outer_val_mtx = outer_mtx_ref;
 
-            post_success();
+            post_on_success();
             post_finally();
         }
 
@@ -234,7 +234,7 @@ namespace vshalygin::cl::internal {
 
             m_exception = e;
 
-            post_fail();
+            post_on_fail();
             post_finally();
         }
 
@@ -296,7 +296,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::post_success()
+    void future_controller<ThreadPool, T>::post_on_success()
     {
         while(!m_on_success_queue.empty()) {
             auto f = std::move(m_on_success_queue.front());
@@ -308,7 +308,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::post_fail()
+    void future_controller<ThreadPool, T>::post_on_fail()
     {
         while(!m_on_fail_queue.empty()) {
             auto f = std::move(m_on_fail_queue.front());

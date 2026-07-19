@@ -40,7 +40,7 @@ namespace vshalygin::cl::internal {
         template<typename Func>
         auto finally(Func &&task);
 
-        bool is_valid() const;
+        bool is_valid() const noexcept;
 
     private:
         template<typename Func,

@@ -345,7 +345,7 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    bool future<ThreadPool, T>::is_valid() const
+    bool future<ThreadPool, T>::is_valid() const noexcept
     {
         return m_controller != nullptr;
     }
