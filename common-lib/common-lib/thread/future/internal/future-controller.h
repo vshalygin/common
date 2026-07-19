@@ -83,8 +83,8 @@ namespace vshalygin::cl::internal {
 
         void wait_data_ready_or_throw() const;
 
-        void post_on_success();
-        void post_on_fail();
+        void process_on_success_async();
+        void process_on_fail_async();
 
         void call_success(on_success_t &&func);
         void call_fail(on_fail_t &&func);
@@ -134,6 +134,7 @@ namespace vshalygin::cl::internal {
         }
 
         ordered_lock guard(m_on_success_mtx);
+
         if constexpr(std::is_void_v<T>) {
             m_on_success_queue.push(std::forward<Func>(func));
         } else {
@@ -143,10 +144,7 @@ namespace vshalygin::cl::internal {
             });
         }
 
-        ordered_lock guard2(push_back(std::move(guard), m_val_mtx));
-        if(m_val) {
-            post_on_success();
-        }
+        process_on_success_async();
     }
 
     template<typename ThreadPool, typename T>
@@ -156,10 +154,7 @@ namespace vshalygin::cl::internal {
 
         m_on_fail_queue.push(std::move(func));
 
-        ordered_lock g(push_back(std::move(guard), m_exception_mtx));
-        if(m_exception) {
-            post_on_fail();
-        }
+        process_on_fail_async();
     }
 
     template<typename ThreadPool, typename T>
@@ -197,13 +192,13 @@ namespace vshalygin::cl::internal {
                                                        value_proxy value)
     {
         {
-            ordered_lock g(m_on_success_mtx, m_val_mtx, m_exception_mtx);
-            assert(!m_val && !m_exception);
+            ordered_lock g(m_val_mtx);
 
             m_val.emplace(std::move(value));
             m_outer_val_mtx = outer_mtx_ref;
 
-            post_on_success();
+            process_on_success_async();
+            process_on_fail_async();
         }
 
         m_cv.notify_all();
@@ -213,12 +208,12 @@ namespace vshalygin::cl::internal {
     void future_controller<ThreadPool, T>::set_exception(const std::exception_ptr &e)
     {
         {
-            ordered_lock g(m_on_fail_mtx, m_val_mtx, m_exception_mtx);
-            assert(!m_val && !m_exception);
+            ordered_lock g(m_exception_mtx);
 
             m_exception = e;
 
-            post_on_fail();
+            process_on_success_async();
+            process_on_fail_async();
         }
 
         m_cv.notify_all();
@@ -299,27 +294,63 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::post_on_success()
+    void future_controller<ThreadPool, T>::process_on_success_async()
     {
-        while(!m_on_success_queue.empty()) {
-            auto f = std::move(m_on_success_queue.front());
-            m_on_success_queue.pop();
-            m_thread_pool->post([s = this->shared_from_this(), f = std::move(f)]() mutable {
-                s->call_success(std::move(f));
-            });
-        }
+        m_thread_pool->post([s = this->shared_from_this()] {
+            std::queue<on_success_t> temp;
+
+            {
+                ordered_lock l(s->m_on_success_mtx, s->m_val_mtx, s->m_exception_mtx);
+                assert(!(s->m_val && s->m_exception));
+
+                if(s->m_val) {
+                    temp.swap(s->m_on_success_queue);
+                } else if (s->m_exception) {
+                    temp.swap(s->m_on_success_queue);
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            while(!temp.empty()) {
+                auto f = std::move(temp.front());
+                temp.pop();
+                s->m_thread_pool->post([s, f = std::move(f)]() mutable {
+                    s->call_success(std::move(f));
+                });
+            }
+        });
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::post_on_fail()
+    void future_controller<ThreadPool, T>::process_on_fail_async()
     {
-        while(!m_on_fail_queue.empty()) {
-            auto f = std::move(m_on_fail_queue.front());
-            m_on_fail_queue.pop();
-            m_thread_pool->post([s = this->shared_from_this(), f = std::move(f)]() mutable {
-                s->call_fail(std::move(f));
-            });
-        }
+        m_thread_pool->post([s = this->shared_from_this()] {
+            std::queue<on_fail_t> temp;
+
+            {
+                ordered_lock l(s->m_on_fail_mtx, s->m_val_mtx, s->m_exception_mtx);
+                assert(!(s->m_val && s->m_exception));
+
+                if(s->m_exception) {
+                    temp.swap(s->m_on_fail_queue);
+                } else if(s->m_val) {
+                    temp.swap(s->m_on_fail_queue);
+                    return;
+                } else {
+                    return;
+                }
+            }
+
+            while(!temp.empty()) {
+                auto f = std::move(temp.front());
+                temp.pop();
+                s->m_thread_pool->post([s, f = std::move(f)]() mutable {
+                    s->call_fail(std::move(f));
+                });
+            }
+        });
     }
 
     template<typename ThreadPool, typename T>
