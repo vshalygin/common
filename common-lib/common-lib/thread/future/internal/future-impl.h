@@ -34,6 +34,26 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
+    void future<ThreadPool, T>::wait() const
+    {
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
+
+        return m_controller->wait();
+    }
+
+    template<typename ThreadPool, typename T>
+    bool future<ThreadPool, T>::wait_for(std::chrono::milliseconds timeout) const
+    {
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
+
+        return m_controller->wait_for(timeout);
+    }
+
+    template<typename ThreadPool, typename T>
     template<typename U>
     std::shared_ptr<future_controller<ThreadPool, U>>
         future<ThreadPool, T>::create_child_controller(auto controller)

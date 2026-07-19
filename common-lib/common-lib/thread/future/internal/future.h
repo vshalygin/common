@@ -31,6 +31,9 @@ namespace vshalygin::cl::internal {
 
         auto get() const;
 
+        void wait() const;
+        bool wait_for(std::chrono::milliseconds timeout) const;
+
         template<typename Func>
         auto then(Func &&task);
 

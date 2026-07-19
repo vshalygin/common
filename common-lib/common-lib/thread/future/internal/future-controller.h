@@ -18,6 +18,7 @@
 #include <condition_variable>
 #include <queue>
 #include <vector>
+#include <chrono>
 
 namespace vshalygin::cl::internal {
     class ifuture_controller
@@ -58,6 +59,9 @@ namespace vshalygin::cl::internal {
 
         auto get() const;
         auto get();
+
+        void wait() const;
+        bool wait_for(std::chrono::milliseconds timeout) const;
 
         auto get_val();
         auto get_val() const;
@@ -237,6 +241,27 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::wait() const
+    {
+        ordered_lock lock(m_val_mtx, m_exception_mtx);
+        m_cv.wait(lock, [this]() { return m_val || m_exception; });
+    }
+
+    template<typename ThreadPool, typename T>
+    bool future_controller<ThreadPool, T>::wait_for(std::chrono::milliseconds timeout) const
+    {
+        using clock = std::chrono::steady_clock;
+
+        const auto now = clock::now();
+        const auto max_tp = clock::time_point::max();
+
+        clock::time_point tp = (timeout > max_tp - now) ? max_tp : now + timeout;
+
+        ordered_lock lock(m_val_mtx, m_exception_mtx);
+        return m_cv.wait_until(lock, tp, [this]() { return m_val || m_exception; });
+    }
+
+    template<typename ThreadPool, typename T>
     auto future_controller<ThreadPool, T>::get_val()
     {
         if constexpr(!std::is_void_v<T>) {
@@ -265,8 +290,7 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     void future_controller<ThreadPool, T>::wait_data_ready_or_throw() const
     {
-        ordered_lock lock(m_val_mtx, m_exception_mtx);
-        m_cv.wait(lock, [this]() { return m_val || m_exception; });
+        wait();
         if(m_exception) {
             std::rethrow_exception(*m_exception);
         }

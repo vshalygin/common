@@ -2710,3 +2710,34 @@ TEST_F(Future, FinallyHandlerMayStoreFtupleStoringTypeWithAnySpecifier)
         .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
         .get();
 }
+
+TEST_F(Future, TestWait)
+{
+    future<thread_pool, void> f1;
+    ASSERT_ANY_THROW(f1.wait());
+
+    auto p2 = make_promise(&m_pool, [&]() { });
+    p2.resolve();
+    p2.get_future().wait();
+
+    auto p3 = make_promise(&m_pool, [&]() { throw std::runtime_error(""); });
+    p3.resolve();
+    p3.get_future().wait();
+}
+
+TEST_F(Future, TestWaitFor)
+{
+    future<thread_pool, void> f1;
+    ASSERT_ANY_THROW(f1.wait_for(std::chrono::milliseconds(20)));
+
+    auto p2 = make_promise(&m_pool, [&]() {});
+    p2.resolve();
+    ASSERT_TRUE(p2.get_future().wait_for(std::chrono::seconds(10)));
+
+    auto p3 = make_promise(&m_pool, [&]() { throw std::runtime_error(""); });
+    p3.resolve();
+    ASSERT_TRUE(p3.get_future().wait_for(std::chrono::seconds(10)));
+
+    auto p4 = make_promise(&m_pool, [&]() { });
+    ASSERT_FALSE(p4.get_future().wait_for(std::chrono::milliseconds(1)));
+}
