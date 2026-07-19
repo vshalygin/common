@@ -89,8 +89,9 @@ namespace vshalygin::cl::internal {
         using future_store = future_store_type_or_self_t<future_t>;
 
         auto next_controller = create_child_controller<future_store>(m_controller);
+        auto next_controller_wp = std::weak_ptr(next_controller);
 
-        controller->set_on_success([next_controller_wp = std::weak_ptr(next_controller)](future_t &&val) {
+        controller->set_on_success([next_controller_wp](future_t &&val) {
             auto controller = val.get_controller();
             if constexpr(std::is_void_v<future_store>) {
                 controller->set_on_success([next_controller_wp]() {
@@ -110,7 +111,7 @@ namespace vshalygin::cl::internal {
             });
         });
 
-        controller->set_on_fail([next_controller_wp = std::weak_ptr(next_controller)](std::exception_ptr e) {
+        controller->set_on_fail([next_controller_wp](std::exception_ptr e) {
             assert(!next_controller_wp.expired());
             std::shared_ptr next_controller(next_controller_wp);
 
@@ -187,15 +188,17 @@ namespace vshalygin::cl::internal {
 
         if constexpr(!is_future_v<ret_t>) {
             auto new_controller = create_child_controller<ret_t>(m_controller);
+            auto new_controller_wp = std::weak_ptr(new_controller);
 
             if constexpr(std::is_void_v<T>) {
-                m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
+                m_controller->set_on_success([new_controller_wp,
                                              task = std::forward<Func>(task)]() mutable {
                     assert(!new_controller_wp.expired());
-                    exec_then_on_success(std::shared_ptr(new_controller_wp), std::forward<Func>(task));
+                    exec_then_on_success(std::shared_ptr(new_controller_wp),
+                                         std::forward<Func>(task));
                 });
             } else {
-                m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller),
+                m_controller->set_on_success([new_controller_wp,
                                              task = std::forward<Func>(task)]
                                              (add_lvalue_ref_to_value_t<T> val) mutable {
                     assert(!new_controller_wp.expired());
@@ -205,7 +208,7 @@ namespace vshalygin::cl::internal {
                 });
             }
 
-            m_controller->set_on_fail([new_controller_wp = std::weak_ptr(new_controller)](std::exception_ptr e) {
+            m_controller->set_on_fail([new_controller_wp](std::exception_ptr e) {
                 assert(!new_controller_wp.expired());
                 std::shared_ptr(new_controller_wp)->set_exception(e);
             });
@@ -213,6 +216,7 @@ namespace vshalygin::cl::internal {
             return future<ThreadPool, ret_t>(m_thread_pool, std::move(new_controller));
         } else {
             auto new_controller = create_controller<ret_t>();
+            m_controller->add_dependent(new_controller);
 
             if constexpr(std::is_void_v<T>) {
                 m_controller->set_on_success([new_controller,
@@ -251,21 +255,22 @@ namespace vshalygin::cl::internal {
                       "fail callback argument must return future storing type or void");
 
         auto new_controller = create_child_controller<future_store_type_or_self_t<ret_t>>(m_controller);
+        auto new_controller_wp = std::weak_ptr(new_controller);
 
         if constexpr(std::is_void_v<T>) {
-            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]() {
+            m_controller->set_on_success([new_controller_wp]() {
                 assert(!new_controller_wp.expired());
                 std::shared_ptr(new_controller_wp)->set_value();
             });
         } else if constexpr(std::is_void_v<ret_t>) {
-            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller)]
+            m_controller->set_on_success([new_controller_wp]
                                          (add_lvalue_ref_to_value_t<T> /*ignore_value*/) mutable {
                 assert(!new_controller_wp.expired());
                 std::shared_ptr(new_controller_wp)->set_value();
             });
         } else {
             auto &mtx = m_controller->get_value_mtx_ref();
-            m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller), &mtx]
+            m_controller->set_on_success([new_controller_wp, &mtx]
                                          (add_lvalue_ref_to_value_t<T> v) {
                 assert(!new_controller_wp.expired());
                 std::shared_ptr(new_controller_wp)->set_value_reference(mtx, std::forward<decltype(v)>(v));
@@ -273,7 +278,7 @@ namespace vshalygin::cl::internal {
         }
 
         if constexpr(!is_future_v<ret_t>) {
-            m_controller->set_on_fail([new_controller_wp = std::weak_ptr(new_controller),
+            m_controller->set_on_fail([new_controller_wp,
                                       task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
                 try {
                     if constexpr(!std::is_void_v<ret_t>) {
@@ -294,12 +299,13 @@ namespace vshalygin::cl::internal {
             using future_t = ret_t;
             using future_store = future_store_type_or_self_t<future_t>;
 
-            m_controller->set_on_fail([new_controller_wp = std::weak_ptr(new_controller),
+            m_controller->set_on_fail([new_controller_wp,
                                       task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
                 try {
                     auto future = task(ep);
                     auto future_controller = future.get_controller();
                     std::shared_ptr new_controller(new_controller_wp);
+                    future_controller->add_dependent(new_controller);
 
                     if constexpr(std::is_void_v<future_store>) {
                         future_controller->set_on_success([new_controller] () {
@@ -353,6 +359,8 @@ namespace vshalygin::cl::internal {
             
                         auto future = (*task_sp)();
                         auto future_controller = future.get_controller();
+                        future_controller->add_dependent(new_controller);
+
                         future_controller->set_on_success([new_controller]() {
                             new_controller->set_value();
                         });
@@ -379,6 +387,8 @@ namespace vshalygin::cl::internal {
             
                         auto future = (*task_sp)();
                         auto future_controller = future.get_controller();
+                        future_controller->add_dependent(new_controller);
+
                         type_wrapper<decltype(val)> v(std::forward<decltype(val)>(val));
                         future_controller->set_on_success([new_controller, &mtx, v]() mutable {
                             new_controller->set_value_reference(mtx, v.to_underlying());
@@ -405,6 +415,8 @@ namespace vshalygin::cl::internal {
 
                     auto future = (*task_sp)();
                     auto future_controller = future.get_controller();
+                    future_controller->add_dependent(new_controller);
+
                     future_controller->set_on_success([new_controller, ep]() mutable {
                         new_controller->set_exception(ep);
                     });

@@ -67,6 +67,7 @@ namespace vshalygin::cl::internal {
         auto get_val() const;
 
         void add_child(std::unique_ptr<ifuture_controller> child);
+        void add_dependent(std::shared_ptr<ifuture_controller> dependent);
 
         std::mutex &get_value_mtx_ref() const noexcept;
 
@@ -92,6 +93,7 @@ namespace vshalygin::cl::internal {
         ThreadPool *m_thread_pool;
 
         value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
+        value_locker<std::vector<std::shared_ptr<ifuture_controller>>> m_dependent;
 
         mutable on_success_mtx m_on_success_mtx;
         std::queue<on_success_t> m_on_success_queue;
@@ -348,6 +350,12 @@ namespace vshalygin::cl::internal {
     void future_controller<ThreadPool, T>::add_child(std::unique_ptr<ifuture_controller> child)
     {
         m_children.lock()->push_back(std::move(child));
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::add_dependent(std::shared_ptr<ifuture_controller> dependent)
+    {
+        m_dependent.lock()->push_back(std::move(dependent));
     }
 
     template<typename ThreadPool, typename T>
