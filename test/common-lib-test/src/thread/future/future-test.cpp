@@ -2313,8 +2313,8 @@ TEST_F(Future, TestFinallyMethod)
     p1.resolve(); p2.resolve(); p3.resolve(); p4.resolve();
     f1_.get();
     f2_.get();
-    f3_.get();
-    f4_.get();
+    ASSERT_ANY_THROW(f3_.get());
+    ASSERT_ANY_THROW(f4_.get());
     ASSERT_ANY_THROW(f5_.get());
     ASSERT_ANY_THROW(f6_.get());
     ASSERT_ANY_THROW(f7_.get());
@@ -2332,13 +2332,13 @@ TEST_F(Future, TestFinallyMethod)
 
     f9_.get();
     f10_.get();
-    f11_.get();
-    f12_.get();
+    ASSERT_ANY_THROW(f11_.get());
+    ASSERT_ANY_THROW(f12_.get());
     ASSERT_ANY_THROW(f13_.get());
     ASSERT_ANY_THROW(f14_.get());
     ASSERT_ANY_THROW(f15_.get());
     ASSERT_ANY_THROW(f16_.get());
-
+   
     ASSERT_EQ(beacon, 16);
 }
 
@@ -2396,7 +2396,7 @@ TEST_F(Future, TestFinallyMethodWhenCallbackReturnsFuture)
     f1_.get();
     EXPECT_ANY_THROW(f2_.get());
     EXPECT_ANY_THROW(f3_.get());
-    f4_.get();
+    EXPECT_ANY_THROW(f4_.get());
     EXPECT_ANY_THROW(f5_.get());
     EXPECT_ANY_THROW(f6_.get());
 
@@ -2414,4 +2414,299 @@ TEST_F(Future, FinallyMaySetSeveralTimes)
     f.finally([&]() { ++beacon; });
 
     while(beacon != 3);
+}
+
+TEST_F(Future, FinallyIsTransparentInCallbackChain)
+{
+    std::atomic_uint64_t beacon;
+
+    auto p1 = make_promise(&m_pool, []() { return std::make_unique<int>(34); });
+    p1.resolve();
+    auto p2 = make_promise(&m_pool, []() { return std::make_unique<int>(35); });
+    p2.resolve();
+    auto p3 = make_promise(&m_pool, []() -> std::unique_ptr<int> { throw std::runtime_error(""); });
+    p3.resolve();
+    auto p4 = make_promise(&m_pool, []() -> std::unique_ptr<int> { throw std::runtime_error(""); });
+    p4.resolve();
+
+    p1.get_future()
+        .finally([]() {})
+        .get().apply([](std::unique_ptr<int> &&i) { ASSERT_EQ(*i, 34); });
+    p2.get_future()
+        .finally([&]() {auto p = make_promise(&m_pool, [] {}); p.resolve(); return p.get_future(); })
+        .get().apply([](std::unique_ptr<int> &&i) { ASSERT_EQ(*i, 35); });
+    p3.get_future()
+        .finally([]() {})
+        .catched([&](std::exception_ptr) { ++beacon; })
+        .get();
+    p4.get_future()
+        .finally([&]() {auto p = make_promise(&m_pool, [] {}); p.resolve(); return p.get_future(); })
+        .catched([&](std::exception_ptr) { ++beacon; })
+        .get();
+
+    ASSERT_EQ(beacon, 2);
+}
+
+TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
+{
+    int i = 0;
+    volatile int ii = 1;
+
+    auto p1 = make_promise(&m_pool, [&]() -> int { return i; }); p1.resolve();
+    p1.get_future()
+        .finally([]() {})
+        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p2 = make_promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
+    p2.get_future()
+        .finally([]() {})
+        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p3 = make_promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
+    p3.get_future()
+        .finally([]() {})
+        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p4 = make_promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
+    p4.get_future()
+        .finally([]() {})
+        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p5 = make_promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
+    p5.get_future()
+        .finally([]() {})
+        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p6 = make_promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
+    p6.get_future()
+        .finally([]() {})
+        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p7 = make_promise(&m_pool, [&]() -> volatile int { return ii; }); p7.resolve();
+    p7.get_future()
+        .finally([]() {})
+        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p8 = make_promise(&m_pool, [&]() -> volatile int &{ return ii; }); p8.resolve();
+    p8.get_future()
+        .finally([]() {})
+        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p9 = make_promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
+    p9.get_future()
+        .finally([]() {})
+        .then([&](volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p10 = make_promise(&m_pool, [&]() -> const volatile int { return ii; }); p10.resolve();
+    p10.get_future()
+        .finally([]() {})
+        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p11 = make_promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p11.resolve();
+    p11.get_future()
+        .finally([]() {})
+        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p12 = make_promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
+    p12.get_future()
+        .finally([]() {})
+        .then([&](const volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p13 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(&m_pool, [&]() -> int{ return i; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p13.resolve();
+    p13.get_future()
+        .finally([]() {})
+        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p14 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(&m_pool, [&]() -> int &{ return i; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p14.resolve();
+    p14.get_future()
+        .finally([]() {})
+        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p15 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> int &&{ return std::move(i); });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p15.resolve();
+    p15.get_future()
+        .finally([]() {})
+        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p16 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> const int{ return i; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p16.resolve();
+    p16.get_future()
+        .finally([]() {})
+        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p17 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> const int & { return i; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p17.resolve();
+    p17.get_future()
+        .finally([]() {})
+        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p18 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> const int &&{ return std::move(i); });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p18.resolve();
+    p18.get_future()
+        .finally([]() {})
+        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p19 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> volatile int{ return ii; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p19.resolve();
+    p19.get_future()
+        .finally([]() {})
+        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p20 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> volatile int &{ return ii; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p20.resolve();
+    p20.get_future()
+        .finally([]() {})
+        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p21 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> volatile int &&{ return std::move(ii); });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p21.resolve();
+    p21.get_future()
+        .finally([]() {})
+        .then([&](volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p22 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> const volatile int { return ii; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p22.resolve();
+    p22.get_future()
+        .finally([]() {})
+        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p23 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> const volatile int &{ return ii; });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p23.resolve();
+    p23.get_future()
+        .finally([]() {})
+        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p24 = make_promise(&m_pool, [&]() {
+                                         auto p = make_promise(
+                                             &m_pool, [&]() -> const volatile int &&{ return std::move(ii); });
+                                         p.resolve();
+                                         return p.get_future();
+                                     });
+    p24.resolve();
+    p24.get_future()
+        .finally([]() {})
+        .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .get();
+}
+
+TEST_F(Future, FinallyHandlerMayStoreFtupleStoringTypeWithAnySpecifier)
+{
+    int i = 0;
+    volatile int ii = 1;
+
+    auto p1 = make_promise(&m_pool, [&]() { return ftuple<int>(i); }); p1.resolve();
+    p1.get_future()
+        .finally([]() {})
+        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p2 = make_promise(&m_pool, [&]() { return ftuple<int &>(i); }); p2.resolve();
+    p2.get_future()
+        .finally([]() {})
+        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p3 = make_promise(&m_pool, [&]() { return ftuple<int &&>(std::move(i)); }); p3.resolve();
+    p3.get_future()
+        .finally([]() {})
+        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p4 = make_promise(&m_pool, [&]() { return ftuple<const int>(i); }); p4.resolve();
+    p4.get_future()
+        .finally([]() {})
+        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .get();
+    auto p5 = make_promise(&m_pool, [&]() { return ftuple<const int &>(i); }); p5.resolve();
+    p5.get_future()
+        .finally([]() {})
+        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p6 = make_promise(&m_pool, [&]() { return ftuple<const int &&>(std::move(i)); }); p6.resolve();
+    p6.get_future()
+        .finally([]() {})
+        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .get();
+    auto p7 = make_promise(&m_pool, [&]() { return ftuple<volatile int>(ii); }); p7.resolve();
+    p7.get_future()
+        .finally([]() {})
+        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p8 = make_promise(&m_pool, [&]() { return ftuple<volatile int &>(ii); }); p8.resolve();
+    p8.get_future()
+        .finally([]() {})
+        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p9 = make_promise(&m_pool, [&]() { return ftuple<volatile int &&>(std::move(ii)); }); p9.resolve();
+    p9.get_future()
+        .finally([]() {})
+        .then([&](volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p10 = make_promise(&m_pool, [&]() { return ftuple<const volatile int>(ii); }); p10.resolve();
+    p10.get_future()
+        .finally([]() {})
+        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .get();
+    auto p11 = make_promise(&m_pool, [&]() { return ftuple<const volatile int &>(ii); }); p11.resolve();
+    p11.get_future()
+        .finally([]() {})
+        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .get();
+    auto p12 = make_promise(&m_pool, [&]() { return ftuple<const volatile int &&>(std::move(ii)); }); p12.resolve();
+    p12.get_future()
+        .finally([]() {})
+        .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .get();
 }

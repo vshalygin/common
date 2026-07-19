@@ -7,6 +7,7 @@
 #include <common-lib/mpl/type-traits.h>
 
 #include <common-lib/utils/type-qualifiers-cast.h>
+#include <common-lib/utils/type-wrapper.h>
 
 #include "future.h"
 
@@ -243,7 +244,7 @@ namespace vshalygin::cl::internal {
                 std::shared_ptr(new_controller_wp)->set_value();
             });
         } else {
-            auto &mtx = m_controller->get_value_mtx();
+            auto &mtx = m_controller->get_value_mtx_ref();
             m_controller->set_on_success([new_controller_wp = std::weak_ptr(new_controller), &mtx]
                                          (add_lvalue_ref_to_value_t<T> v) {
                 assert(!new_controller_wp.expired());
@@ -315,22 +316,77 @@ namespace vshalygin::cl::internal {
         static_assert(std::is_same_v<ret_t, void> || std::is_same_v<ret_t, future<ThreadPool, void>>,
                       "finally callback must return void or future storing void type");
 
-        auto new_controller = create_child_controller<void>(m_controller);
-        m_controller->set_on_finally([new_controller_wp = std::weak_ptr(new_controller),
-                                     task = std::forward<Func>(task)]() mutable {
+        auto new_controller = create_child_controller<T>(m_controller);
+        auto new_controller_wp = std::weak_ptr(new_controller);
+        auto task_sp = std::make_shared<remove_type_qualifiers_t<Func>>(std::forward<Func>(task));
+
+        if constexpr(std::is_void_v<T>) {
+            m_controller->set_on_success([new_controller_wp, task_sp]() mutable {
+                assert(!new_controller_wp.expired());
+                std::shared_ptr new_controller(new_controller_wp);
+                try {
+                    if constexpr(std::is_void_v<ret_t>) {
+                        (*task_sp)();
+                        new_controller->set_value();
+                    } else {
+                        static_assert(is_future_v<ret_t>);
+            
+                        auto future = (*task_sp)();
+                        auto future_controller = future.get_controller();
+                        future_controller->set_on_success([new_controller]() {
+                            new_controller->set_value();
+                        });
+                        future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
+                            new_controller->set_exception(ep);
+                        });
+                    }
+                } catch(...) {
+                    new_controller->set_exception(std::current_exception());
+                }
+            });
+        } else {
+            auto &mtx = m_controller->get_value_mtx_ref();
+            m_controller->set_on_success([new_controller_wp, task_sp, &mtx]
+                                         (add_lvalue_ref_to_value_t<T> val) mutable {
+                assert(!new_controller_wp.expired());
+                std::shared_ptr new_controller(new_controller_wp);
+                try {
+                    if constexpr(std::is_void_v<ret_t>) {
+                        (*task_sp)();
+                        new_controller->set_value_reference(mtx, std::forward<decltype(val)>(val));
+                    } else {
+                        static_assert(is_future_v<ret_t>);
+            
+                        auto future = (*task_sp)();
+                        auto future_controller = future.get_controller();
+                        type_wrapper<decltype(val)> v(std::forward<decltype(val)>(val));
+                        future_controller->set_on_success([new_controller, &mtx, v]() mutable {
+                            new_controller->set_value_reference(mtx, v.to_underlying());
+                        });
+                        future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
+                            new_controller->set_exception(ep);
+                        });
+                    }
+                } catch(...) {
+                    new_controller->set_exception(std::current_exception());
+                }
+            });
+        }
+        
+        m_controller->set_on_fail([new_controller_wp, task_sp] (std::exception_ptr ep) mutable {
             assert(!new_controller_wp.expired());
             std::shared_ptr new_controller(new_controller_wp);
             try {
                 if constexpr(std::is_void_v<ret_t>) {
-                    task();
-                    new_controller->set_value();
+                    (*task_sp)();
+                    new_controller->set_exception(ep);
                 } else {
                     static_assert(is_future_v<ret_t>);
 
-                    auto future = task();
+                    auto future = (*task_sp)();
                     auto future_controller = future.get_controller();
-                    future_controller->set_on_success([new_controller]() {
-                        new_controller->set_value();
+                    future_controller->set_on_success([new_controller, ep]() mutable {
+                        new_controller->set_exception(ep);
                     });
                     future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
                         new_controller->set_exception(ep);
@@ -341,7 +397,7 @@ namespace vshalygin::cl::internal {
             }
         });
 
-        return future<ThreadPool, void>(m_thread_pool, std::move(new_controller));
+        return future<ThreadPool, T>(m_thread_pool, std::move(new_controller));
     }
 
     template<typename ThreadPool, typename T>
