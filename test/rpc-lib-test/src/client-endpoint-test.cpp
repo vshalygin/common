@@ -5,7 +5,7 @@
 #include <rpc-lib/internal/transfer-message/transfer-message.h>
 #include <rpc-lib/closure-guard/closure-guard.h>
 
-#include <common-lib/synchronization/event/event.h>
+#include <common-lib/synchronization/event.h>
 
 #pragma warning(push, 0)
 #include "proto/test-messages.pb.h"

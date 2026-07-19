@@ -1,13 +1,11 @@
-#include "event.h"
-#include "common-lib/synchronization/spinlock/spinlock-guard.h"
-#include <condition_variable>
-#include <atomic>
+#include "../../event.h"
 
 namespace vshalygin::cl {
     class event::impl final
     {
     public:
-        explicit impl(bool manual_reset, bool initial_set)
+        impl(bool manual_reset,
+             bool initial_set)
             : m_manual_reset(manual_reset)
             , m_is_set(initial_set)
         {}
@@ -50,11 +48,17 @@ namespace vshalygin::cl {
             }
         }
 
-        bool wait_for(const std::chrono::microseconds &mcs)
+        bool wait_for(std::chrono::milliseconds timeout)
         {
+            using clock = std::chrono::steady_clock;
+
+            const auto now = clock::now();
+            const auto max = clock::time_point::max();
+
+            const clock::time_point tp = (timeout > max - now) ? max : now + timeout;
+
             spinlock_guard guard(m_spinlock);
-            const auto deadline = std::chrono::steady_clock::now() + mcs; //TODO возможно переполнение
-            auto signaled = m_cv.wait_until(guard, deadline, [this]() { return m_is_set; });
+            auto signaled = m_cv.wait_until(guard, tp, [this]() { return m_is_set; });
             if(signaled && !m_manual_reset) {
                 m_is_set = false;
             }
@@ -72,36 +76,31 @@ namespace vshalygin::cl {
 
     event::event(bool manual_reset,
                  bool initial_set)
-        : m_impl(std::make_unique<impl>(manual_reset, initial_set))
+        : m_impl(std::make_shared<impl>(manual_reset, initial_set))
     {}
-
-    event::~event() = default;
-
-    event::event(event &&) noexcept = default;
-    event &event::operator=(event &&) noexcept = default;
 
     void event::set() noexcept
     {
-        m_impl->set();
+        std::shared_ptr(m_impl)->set();
     }
 
     bool event::is_set() const noexcept
     {
-        return m_impl->is_set();
+        return std::shared_ptr(m_impl)->is_set();
     }
 
     void event::reset() noexcept
     {
-        m_impl->reset();
+        std::shared_ptr(m_impl)->reset();
     }
 
     void event::wait()
     {
-        m_impl->wait();
+        std::shared_ptr(m_impl)->wait();
     }
 
-    bool event::wait_for(const std::chrono::microseconds &mcs)
+    bool event::wait_for(std::chrono::milliseconds timeout)
     {
-        return m_impl->wait_for(mcs);
+        return std::shared_ptr(m_impl)->wait_for(timeout);
     }
 }

@@ -1,4 +1,8 @@
 #pragma once
+#include <common-lib/synchronization/spinlock/spinlock-guard.h>
+
+#include <condition_variable>
+#include <atomic>
 #include <chrono>
 #include <memory>
 
@@ -8,24 +12,22 @@ namespace vshalygin::cl {
     public:
         explicit event(bool manual_reset = true,
                        bool initial_set = false);
-        ~event();
 
-        event(event &) = delete;
-        event &operator=(event &) = delete;
+        event(const event &) = default;
+        event &operator=(const event &) = default;
 
-        event(event &&) noexcept;
-        event &operator=(event &&) noexcept;
+        event(event &&) = default;
+        event &operator=(event &&) = default;
 
         void set() noexcept;
         bool is_set() const noexcept;
         void reset() noexcept;
 
         void wait();
-        bool wait_for(const std::chrono::microseconds &mcs);
+        bool wait_for(std::chrono::milliseconds timeout);
 
     private:
-        //TODO удалить impl
         class impl;
-        std::unique_ptr<impl> m_impl;
+        std::shared_ptr<impl> m_impl;
     };
 }

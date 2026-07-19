@@ -40,8 +40,8 @@
     <ClInclude Include="common-lib\mpl\tuple-transform.h" />
     <ClInclude Include="common-lib\mpl\type-traits.h" />
     <ClInclude Include="common-lib\mpl\type-transform.h" />
+    <ClInclude Include="common-lib\synchronization\event.h" />
     <ClInclude Include="common-lib\synchronization\ordered-mutex-ref.h" />
-    <ClInclude Include="common-lib\synchronization\event\event.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\compare-ordered-lockable-tuples.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\has-integral-order-static-member.h" />
     <ClInclude Include="common-lib\synchronization\internal\ordered-lock\is-lockable.h" />
@@ -99,7 +99,7 @@
     <ClInclude Include="common-lib\utils\value-proxy.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="common-lib\synchronization\event\event.cpp" />
+    <ClCompile Include="common-lib\synchronization\internal\event\event.cpp" />
     <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp" />
     <ClCompile Include="common-lib\thread\thread-pool\strand.cpp" />
     <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp" />

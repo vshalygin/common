@@ -1,6 +1,5 @@
 #pragma once
 #include <common-lib/synchronization/value-locker.h>
-#include <common-lib/synchronization/event/event.h>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <atomic>

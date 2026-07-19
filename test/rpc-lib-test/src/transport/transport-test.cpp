@@ -1,7 +1,7 @@
 #include "rpc-lib/internal/transport/transport.h"
 #include "rpc-lib/pipe/memory-pipe/mem-pipe-env.h"
 #include "rpc-lib/pipe/ipipe-endpoint.h"
-#include "common-lib/synchronization/event/event.h"
+#include "common-lib/synchronization/event.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

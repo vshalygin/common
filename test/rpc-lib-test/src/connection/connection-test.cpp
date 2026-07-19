@@ -6,7 +6,7 @@
 #include <rpc-lib/closure-guard/closure-guard.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
-#include <common-lib/synchronization/event/event.h>
+#include <common-lib/synchronization/event.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

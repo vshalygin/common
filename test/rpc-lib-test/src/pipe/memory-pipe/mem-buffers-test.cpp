@@ -1,5 +1,5 @@
 #include <rpc-lib/pipe/memory-pipe/mem-buffers.h>
-#include <common-lib/synchronization/event/event.h>
+#include <common-lib/synchronization/event.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
