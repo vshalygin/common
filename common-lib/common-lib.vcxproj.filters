@@ -7,12 +7,6 @@
     <Filter Include="memory">
       <UniqueIdentifier>{7840e649-abb3-464c-a00d-dca379f24b1b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="memory\allocator">
-      <UniqueIdentifier>{a7622fbf-a8c5-431a-967a-87c051fa713b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="memory\unique-ptr2">
-      <UniqueIdentifier>{0926c359-cea5-4e7b-9c95-7f930581c207}</UniqueIdentifier>
-    </Filter>
     <Filter Include="timer">
       <UniqueIdentifier>{d65c15c0-a64d-47d2-be98-da146e873b45}</UniqueIdentifier>
     </Filter>
@@ -88,14 +82,11 @@
     <Filter Include="synchronization\internal\event">
       <UniqueIdentifier>{263bf524-508a-46b4-b89d-30329b2a8af8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="memory\allocator">
+      <UniqueIdentifier>{b3448d23-9d96-4687-8e41-97a75595b7c6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
-      <Filter>memory\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h">
-      <Filter>memory\unique-ptr2</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h">
       <Filter>timer\multiple-timer</Filter>
     </ClInclude>
@@ -347,6 +338,15 @@
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\event.h">
       <Filter>synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\memory\unique-ptr2.h">
+      <Filter>memory</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\memory\allocator\default-allocator.h">
+      <Filter>memory\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\memory\memory.h">
+      <Filter>memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

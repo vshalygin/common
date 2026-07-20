@@ -13,7 +13,8 @@
   <ItemGroup>
     <ClInclude Include="common-lib\memory\allocator\default-allocator.h" />
     <ClInclude Include="common-lib\memory\enable-shared-from-this-manual-set.h" />
-    <ClInclude Include="common-lib\memory\unique-ptr2\unique-ptr2.h" />
+    <ClInclude Include="common-lib\memory\memory.h" />
+    <ClInclude Include="common-lib\memory\unique-ptr2.h" />
     <ClInclude Include="common-lib\mpl\function-traits.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits\function-traits.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits\is-function-pointer.h" />

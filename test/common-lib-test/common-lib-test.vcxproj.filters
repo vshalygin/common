@@ -16,9 +16,6 @@
     <ClCompile Include="src\utils\buffer\buffer-test.cpp">
       <Filter>utils\buffer</Filter>
     </ClCompile>
-    <ClCompile Include="src\memory\unique-ptr2\unique-ptr2-test.cpp">
-      <Filter>memory\unique-ptr2</Filter>
-    </ClCompile>
     <ClCompile Include="src\timer\multiple-timer\multiple-timer-test.cpp">
       <Filter>timer\multiple-timer</Filter>
     </ClCompile>
@@ -157,14 +154,17 @@
     <ClCompile Include="src\utils\function\function-test.cpp">
       <Filter>utils\function</Filter>
     </ClCompile>
-    <ClCompile Include="src\memory\safe-ptr\enable-shared-from-this-manual-set-test.cpp">
-      <Filter>memory</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\value-proxy\value-proxy-test.cpp">
       <Filter>utils\value-proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memory\enable-shared-from-this-manual-set-test.cpp">
+      <Filter>memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memory\unique-ptr2-test.cpp">
+      <Filter>memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -182,9 +182,6 @@
     </Filter>
     <Filter Include="memory">
       <UniqueIdentifier>{465acbd0-1231-4b6d-ac9b-2b56e4aa2633}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="memory\unique-ptr2">
-      <UniqueIdentifier>{db266bdf-b269-480b-9d55-145ef0d62621}</UniqueIdentifier>
     </Filter>
     <Filter Include="timer">
       <UniqueIdentifier>{6590e062-a557-48c4-af9f-c758e9b16705}</UniqueIdentifier>

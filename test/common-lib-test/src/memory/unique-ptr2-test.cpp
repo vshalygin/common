@@ -1,4 +1,5 @@
-#include <common-lib/memory/unique-ptr2/unique-ptr2.h>
+#include <common-lib/memory/unique-ptr2.h>
+#include <common-lib/memory/allocator/default-allocator.h>
 
 #include <gtest/gtest.h>
 
@@ -8,7 +9,6 @@ using namespace vshalygin::cl;
 using namespace testing;
 
 namespace {
-    //TODO move to common test library
     class test_allocator
     {
     public:
@@ -16,7 +16,7 @@ namespace {
         T *allocate() const
         {
             once_allocated = true;
-            auto ans = allocator.allocate<T>();
+            auto ans = default_allocator{}.allocate<T>();
             allocated_memory.insert(static_cast<void *>(ans));
             return ans;
         }
@@ -27,7 +27,7 @@ namespace {
             ASSERT_TRUE(it != allocated_memory.end());
             allocated_memory.erase(it);
 
-            allocator.deallocate(ptr);
+            default_allocator{}.deallocate(ptr);
         }
 
         inline static std::set<void *> allocated_memory;
@@ -38,9 +38,6 @@ namespace {
             allocated_memory.clear();
             once_allocated = true;
         }
-
-    private:
-        default_allocator allocator;
     };
 
     //TODO move to common test library
@@ -308,12 +305,12 @@ namespace {
     };
 
     template<typename T>
-    using test_unique_ptr2 = unique_ptr2<T, test_allocator>;
+    using test_unique_ptr2 = unique_ptr2<test_allocator, T>;
 
     template<typename T, typename...Args>
     test_unique_ptr2<T> make_test_unique2(Args&&...args)
     {
-        return make_unique2<T, test_allocator>(test_allocator(), std::forward<Args>(args)...);
+        return make_unique2<test_allocator, T, Args...>(std::forward<Args>(args)...);
     }
 }
 
