@@ -12,6 +12,8 @@ namespace vshalygin::cl {
     using remove_function_qualifiers_t =
         internal::remove_function_qualifiers_t<T>;
 
+    //any function-like to function type, skip any qualifiers
+    //e.g. void(*&)->void(), void(C::*)() & noexcept -> void()
     template<typename T>
     using make_function_type_t =
         internal::make_function_type_t<T>;

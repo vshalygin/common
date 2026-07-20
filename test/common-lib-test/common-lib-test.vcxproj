@@ -17,6 +17,7 @@
     <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-function-pointer-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-std-function-test.cpp" />
+    <ClCompile Include="src\mpl\function-transform\make-function-type-test.cpp" />
     <ClCompile Include="src\mpl\function-transform\remove-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\function-transform\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\is-std-tuple-test.cpp" />

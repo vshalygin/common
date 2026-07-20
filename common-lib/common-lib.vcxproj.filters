@@ -189,19 +189,10 @@
     <ClInclude Include="common-lib\mpl\internal\type-transform\add-const.h">
       <Filter>mpl\internal\type-transform</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-transform\make-function-type.h">
-      <Filter>mpl\internal\type-transform</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-const.h">
       <Filter>mpl\internal\type-transform</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-c-ref.h">
-      <Filter>mpl\internal\type-transform</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-function-qualifiers.h">
-      <Filter>mpl\internal\type-transform</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-member-function-qualifiers.h">
       <Filter>mpl\internal\type-transform</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-type-qualifiers.h">

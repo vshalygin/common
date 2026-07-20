@@ -35,11 +35,8 @@
     <ClInclude Include="common-lib\mpl\internal\type-traits\is-lvalue-static-castable.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\add-const.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\add-lvalue-ref-to-value.h" />
-    <ClInclude Include="common-lib\mpl\internal\type-transform\make-function-type.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-c-ref.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-const.h" />
-    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-function-qualifiers.h" />
-    <ClInclude Include="common-lib\mpl\internal\type-transform\remove-member-function-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-type-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\tuple-traits.h" />
     <ClInclude Include="common-lib\mpl\tuple-transform.h" />
