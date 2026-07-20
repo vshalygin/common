@@ -32,7 +32,9 @@
     <ClCompile Include="src\mpl\type-traits\is-lvalue-static-castable-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\add-const-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\add-lvalue-ref-to-value-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\remove-c-ref-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp" />
+    <ClCompile Include="src\mpl\type-transform\remove-type-qualifiers-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\is-lockable-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\is-there-repeating-order-number-test.cpp" />

@@ -38,6 +38,7 @@
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-c-ref.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-const.h" />
     <ClInclude Include="common-lib\mpl\internal\type-transform\remove-type-qualifiers.h" />
+    <ClInclude Include="common-lib\mpl\mpl.h" />
     <ClInclude Include="common-lib\mpl\tuple-traits.h" />
     <ClInclude Include="common-lib\mpl\tuple-transform.h" />
     <ClInclude Include="common-lib\mpl\type-traits.h" />

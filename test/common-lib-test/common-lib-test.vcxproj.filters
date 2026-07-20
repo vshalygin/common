@@ -169,6 +169,12 @@
     <ClCompile Include="src\mpl\function-transform\make-function-type-test.cpp">
       <Filter>mpl\function-transform</Filter>
     </ClCompile>
+    <ClCompile Include="src\mpl\type-transform\remove-c-ref-test.cpp">
+      <Filter>mpl\type-transform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\type-transform\remove-type-qualifiers-test.cpp">
+      <Filter>mpl\type-transform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
