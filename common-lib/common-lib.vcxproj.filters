@@ -19,9 +19,6 @@
     <Filter Include="synchronization">
       <UniqueIdentifier>{ef150fed-a7d1-4648-bd29-bf5a42196a9e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="synchronization\spinlock">
-      <UniqueIdentifier>{d1d2a2e0-ec06-474f-b529-e6ca6f10263a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mpl">
       <UniqueIdentifier>{1d528489-a74f-453f-b7e2-1b5b616f822c}</UniqueIdentifier>
     </Filter>
@@ -95,12 +92,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\timer\periodic-timer\periodic-timer.h">
       <Filter>timer\periodic-timer</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\spinlock\spinlock.h">
-      <Filter>synchronization\spinlock</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\synchronization\spinlock\spinlock-guard.h">
-      <Filter>synchronization\spinlock</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\mpl\function-traits.h">
       <Filter>mpl</Filter>
@@ -357,6 +348,9 @@
     <ClInclude Include="common-lib\mpl\mpl.h">
       <Filter>mpl</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\synchronization\spinlock.h">
+      <Filter>synchronization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\timer\multiple-timer\multiple-timer.cpp">
@@ -364,9 +358,6 @@
     </ClCompile>
     <ClCompile Include="common-lib\timer\periodic-timer\periodic-timer.cpp">
       <Filter>timer\periodic-timer</Filter>
-    </ClCompile>
-    <ClCompile Include="common-lib\synchronization\spinlock\spinlock.cpp">
-      <Filter>synchronization\spinlock</Filter>
     </ClCompile>
     <ClCompile Include="common-lib\thread\thread-pool\strand.cpp">
       <Filter>thread\thread-pool</Filter>

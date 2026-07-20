@@ -1,5 +1,5 @@
 #pragma once
-#include <common-lib/synchronization/spinlock/spinlock-guard.h>
+#include <common-lib/synchronization/spinlock.h>
 
 #include <condition_variable>
 #include <atomic>

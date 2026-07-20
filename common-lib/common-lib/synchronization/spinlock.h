@@ -1,7 +1,34 @@
 #pragma once
-#include "spinlock.h"
+#include <atomic>
+#include <thread>
 
 namespace vshalygin::cl {
+    class spinlock_guard;
+    class spinlock;
+
+    class spinlock final
+    {
+    public:
+        spinlock() noexcept = default;
+
+        spinlock(spinlock &) = delete;
+        spinlock &operator=(spinlock &) = delete;
+
+        void lock() noexcept
+        {
+            while(m_flag.test_and_set(std::memory_order_acquire)) {
+                std::this_thread::yield();
+            }
+        }
+        void unlock() noexcept
+        {
+            m_flag.clear(std::memory_order_release);
+        }
+
+    private:
+        std::atomic_flag m_flag = ATOMIC_FLAG_INIT;
+    };
+
     class spinlock_guard final
     {
     public:
