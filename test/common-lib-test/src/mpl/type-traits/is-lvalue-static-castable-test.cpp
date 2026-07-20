@@ -1,4 +1,5 @@
 #include <common-lib/mpl/type-traits.h>
+#include <memory>
 
 using namespace vshalygin::cl;
 
@@ -315,4 +316,15 @@ static_assert(!is_lvalue_static_castable_v<const volatile int &&, const volatile
 static_assert(is_lvalue_static_castable_v<const volatile int &&, const volatile double &&>);
 
 
-//TODO add tests for std::unique_ptr -> bool
+static_assert(is_lvalue_static_castable_v<std::unique_ptr<int>, bool>);
+static_assert(is_lvalue_static_castable_v<std::unique_ptr<int> &, bool>);
+static_assert(is_lvalue_static_castable_v<std::unique_ptr<int> &&, bool>);
+static_assert(is_lvalue_static_castable_v<const std::unique_ptr<int>, bool>);
+static_assert(is_lvalue_static_castable_v<const std::unique_ptr<int> &, bool>);
+static_assert(is_lvalue_static_castable_v<const std::unique_ptr<int> &&, bool>);
+static_assert(!is_lvalue_static_castable_v<volatile std::unique_ptr<int>, bool>);
+static_assert(!is_lvalue_static_castable_v<volatile std::unique_ptr<int> &, bool>);
+static_assert(!is_lvalue_static_castable_v<volatile std::unique_ptr<int> &&, bool>);
+static_assert(!is_lvalue_static_castable_v<const volatile std::unique_ptr<int>, bool>);
+static_assert(!is_lvalue_static_castable_v<const volatile std::unique_ptr<int> &, bool>);
+static_assert(!is_lvalue_static_castable_v<const volatile std::unique_ptr<int> &&, bool>);
