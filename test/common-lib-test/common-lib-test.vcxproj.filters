@@ -52,12 +52,6 @@
     <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp">
       <Filter>mpl\type-transform</Filter>
     </ClCompile>
-    <ClCompile Include="src\mpl\type-transform\remove-function-qualifiers-test.cpp">
-      <Filter>mpl\type-transform</Filter>
-    </ClCompile>
-    <ClCompile Include="src\mpl\type-transform\remove-member-function-qualifiers-test.cpp">
-      <Filter>mpl\type-transform</Filter>
-    </ClCompile>
     <ClCompile Include="src\mpl\type-traits\check-type-test.cpp">
       <Filter>mpl\type-traits</Filter>
     </ClCompile>
@@ -166,6 +160,12 @@
     <ClCompile Include="src\memory\unique-ptr2-test.cpp">
       <Filter>memory</Filter>
     </ClCompile>
+    <ClCompile Include="src\mpl\function-transform\remove-function-qualifiers-test.cpp">
+      <Filter>mpl\function-transform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mpl\function-transform\remove-member-function-qualifiers-test.cpp">
+      <Filter>mpl\function-transform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="gtest">
@@ -245,6 +245,9 @@
     </Filter>
     <Filter Include="utils\value-proxy">
       <UniqueIdentifier>{c86162b2-807d-41eb-af93-cc9d3a0259f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mpl\function-transform">
+      <UniqueIdentifier>{e80fa363-8efd-4f25-b6f1-719020f64df4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

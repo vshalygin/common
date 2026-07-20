@@ -1,6 +1,6 @@
 #pragma once
 #include "internal/thread-pool-task-impl.h"
-#include <common-lib/mpl/function-traits.h>
+#include <common-lib/mpl/function-transform.h>
 
 namespace vshalygin::cl {
     class thread_pool;

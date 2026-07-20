@@ -85,6 +85,9 @@
     <Filter Include="memory\allocator">
       <UniqueIdentifier>{b3448d23-9d96-4687-8e41-97a75595b7c6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mpl\internal\function-transform">
+      <UniqueIdentifier>{9666a278-9efd-42a6-8152-71f54e83e107}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common-lib\timer\multiple-timer\multiple-timer.h">
@@ -347,6 +350,18 @@
     </ClInclude>
     <ClInclude Include="common-lib\memory\memory.h">
       <Filter>memory</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\function-transform.h">
+      <Filter>mpl</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\function-transform\make-function-type.h">
+      <Filter>mpl\internal\function-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\function-transform\remove-function-qualifiers.h">
+      <Filter>mpl\internal\function-transform</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\mpl\internal\function-transform\remove-member-function-qualifiers.h">
+      <Filter>mpl\internal\function-transform</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

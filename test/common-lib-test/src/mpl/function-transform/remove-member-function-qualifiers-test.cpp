@@ -1,4 +1,4 @@
-#include <common-lib/mpl/type-transform.h>
+#include <common-lib/mpl/function-transform.h>
 #include <type_traits>
 
 using namespace vshalygin::cl;
@@ -85,4 +85,3 @@ namespace {
                   remove_member_function_qualifiers_t<decltype(&test_class::f23)>>);
 
 }
-

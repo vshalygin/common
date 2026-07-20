@@ -1,6 +1,6 @@
 #pragma once
 #include <common-lib/mpl/type-transform.h>
-#include <stdexcept>
+#include <functional>
 
 namespace vshalygin::cl {
     template<typename Signature>

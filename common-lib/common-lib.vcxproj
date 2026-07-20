@@ -16,9 +16,13 @@
     <ClInclude Include="common-lib\memory\memory.h" />
     <ClInclude Include="common-lib\memory\unique-ptr2.h" />
     <ClInclude Include="common-lib\mpl\function-traits.h" />
+    <ClInclude Include="common-lib\mpl\function-transform.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits\function-traits.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits\is-function-pointer.h" />
     <ClInclude Include="common-lib\mpl\internal\function-traits\is-std-function.h" />
+    <ClInclude Include="common-lib\mpl\internal\function-transform\make-function-type.h" />
+    <ClInclude Include="common-lib\mpl\internal\function-transform\remove-function-qualifiers.h" />
+    <ClInclude Include="common-lib\mpl\internal\function-transform\remove-member-function-qualifiers.h" />
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\is-std-tuple.h" />
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-element.h" />
     <ClInclude Include="common-lib\mpl\internal\tuple-traits\tuple-size.h" />

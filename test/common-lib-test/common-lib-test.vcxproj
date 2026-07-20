@@ -17,6 +17,8 @@
     <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-function-pointer-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-std-function-test.cpp" />
+    <ClCompile Include="src\mpl\function-transform\remove-function-qualifiers-test.cpp" />
+    <ClCompile Include="src\mpl\function-transform\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\is-std-tuple-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\tuple-element-test.cpp" />
     <ClCompile Include="src\mpl\tuple-traits\tuple-size-test.cpp" />
@@ -30,8 +32,6 @@
     <ClCompile Include="src\mpl\type-transform\add-const-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\add-lvalue-ref-to-value-test.cpp" />
     <ClCompile Include="src\mpl\type-transform\remove-const-test.cpp" />
-    <ClCompile Include="src\mpl\type-transform\remove-function-qualifiers-test.cpp" />
-    <ClCompile Include="src\mpl\type-transform\remove-member-function-qualifiers-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\has-integral-order-static-member-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\is-lockable-test.cpp" />
     <ClCompile Include="src\synchronization\ordered-lock\is-there-repeating-order-number-test.cpp" />
