@@ -1,7 +1,7 @@
 #pragma once
 #include "../type-transform/remove-type-qualifiers.h"
-#include "../type-transform/remove-function-qualifiers.h"
-#include "../type-transform/remove-member-function-qualifiers.h"
+#include "../function-transform/remove-function-qualifiers.h"
+#include "../function-transform/remove-member-function-qualifiers.h"
 #include "is-std-function.h"
 #include "is-function-pointer.h"
 
@@ -75,13 +75,13 @@ namespace vshalygin::cl::internal {
     {};
 
     template<typename F>
-    struct function_traits<F, std::enable_if_t<std::is_function_v<F>>>
-        : public function_traits_base<remove_function_qualifiers_t<F>>
+    struct function_traits<F, std::enable_if_t<std::is_function_v<remove_type_qualifiers_t<F>>>>
+        : public function_traits_base<remove_function_qualifiers_t<remove_type_qualifiers_t<F>>>
     {};
 
     template<typename F>
     struct function_traits<F, std::enable_if_t<is_function_pointer_v<F>>>
         : public function_traits_base<
-                  remove_function_qualifiers_t<std::remove_pointer_t<F>>>
+                  remove_function_qualifiers_t<std::remove_pointer_t<remove_type_qualifiers_t<F>>>>
     {};
 }
