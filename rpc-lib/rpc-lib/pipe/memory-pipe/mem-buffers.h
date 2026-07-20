@@ -1,5 +1,8 @@
 #pragma once
 #include "mem-buffer.h"
+
+#include <common-lib/thread/thread-pool/thread-pool-task.h>
+
 #include <memory>
 #include <mutex>
 #include <vector>

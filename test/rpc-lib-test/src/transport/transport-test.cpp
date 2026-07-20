@@ -1,7 +1,9 @@
 #include "rpc-lib/internal/transport/transport.h"
 #include "rpc-lib/pipe/memory-pipe/mem-pipe-env.h"
 #include "rpc-lib/pipe/ipipe-endpoint.h"
+
 #include "common-lib/synchronization/event.h"
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -122,7 +124,7 @@ TEST_F(Transport, SetsStopCallback)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    m_sut->set_stop_callback(m_stop_callback.AsStdFunction());
+    m_sut->set_stop_callback(thread_pool_task(m_thread_pool.get(), m_stop_callback.AsStdFunction()));
     m_sut->stop();
 
     sync_event->wait();

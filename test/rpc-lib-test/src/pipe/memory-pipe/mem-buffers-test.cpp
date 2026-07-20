@@ -110,8 +110,8 @@ TEST_F(MemBuffers, SetFewInvalidateCallbacks)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
     mem_buffers sut(m_thread_pool);
-    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
-    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
+    sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
+    sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 2);
 
     sut.invalidate();
@@ -130,8 +130,8 @@ TEST_F(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
     mem_buffers sut(m_thread_pool);
     sut.invalidate();
 
-    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
-    sut.set_invalidate_callback(m_invalidate_callback.AsStdFunction());
+    sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
+    sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
 
     sync_event.wait();
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 0);
@@ -145,8 +145,8 @@ TEST_F(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
     auto sut = std::make_unique<mem_buffers>(m_thread_pool);
-    sut->set_invalidate_callback(m_invalidate_callback.AsStdFunction());
-    sut->set_invalidate_callback(m_invalidate_callback.AsStdFunction());
+    sut->set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
+    sut->set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
 
     sut.reset();
     sync_event.wait();

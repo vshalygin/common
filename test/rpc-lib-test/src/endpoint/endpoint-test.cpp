@@ -78,9 +78,9 @@ TEST_F(Endpoint, TestSetDisconnectHandler)
 
     EXPECT_CALL(*m_connection_mock, set_stop_callback)
         .Times(1)
-        .WillOnce([&](auto &&f) { m_thread_pool->post(std::move(f)); });
+        .WillOnce([](auto &&f) { f.exec(); });
 
-    m_sut->set_disconnect_callback(disconnect_callback.AsStdFunction());
+    m_sut->set_disconnect_callback(thread_pool_task(m_thread_pool.get(), disconnect_callback.AsStdFunction()));
     sync_event->wait();
 }
 

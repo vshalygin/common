@@ -42,7 +42,7 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         if(m_invalidated) {
-            m_thread_pool->post(std::move(callback));
+            callback.exec();
         } else {
             m_on_invalidate.push_back(std::move(callback));
         }
@@ -56,7 +56,7 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
         m_invalidated = true;
         for(auto &cb : m_on_invalidate) {
-            m_thread_pool->post(std::move(cb));
+            cb.exec();
         }
         m_on_invalidate.clear();
     }

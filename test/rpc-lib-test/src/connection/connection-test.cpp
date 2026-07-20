@@ -168,7 +168,7 @@ TEST_F(Connection, SetStopCallback)
 
     auto sut = create_sut();
     sut->start();
-    sut->set_stop_callback(stop_callback.AsStdFunction());
+    sut->set_stop_callback(thread_pool_task(m_thread_pool.get(), stop_callback.AsStdFunction()));
     sut->deactivate();
 
     sync_event->wait();
@@ -185,7 +185,7 @@ TEST_F(Connection, SetStopCallback2)
 
     auto sut = create_sut();
     sut->start();
-    sut->set_stop_callback(stop_callback.AsStdFunction());
+    sut->set_stop_callback(thread_pool_task(m_thread_pool.get(), stop_callback.AsStdFunction()));
     m_other_pipe_enpoint->invalidate();
 
     sync_event->wait();
@@ -202,7 +202,7 @@ TEST_F(Connection, SetStopCallback3)
 
     auto sut = create_sut();
     sut->start();
-    sut->set_stop_callback(stop_callback.AsStdFunction());
+    sut->set_stop_callback(thread_pool_task(m_thread_pool.get(), stop_callback.AsStdFunction()));
     sut.reset();
 
     sync_event->wait();

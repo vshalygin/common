@@ -90,7 +90,7 @@ TEST_F(MemPipeEndpoint, SetsInvalidateCallback)
 
     test_mem_pipe_endpoint sut(true, buffers);
 
-    sut.set_disconnect_callback(callback.AsStdFunction());
+    sut.set_disconnect_callback(thread_pool_task(m_thread_pool.get(), callback.AsStdFunction()));
     sut.invalidate();
 
     ASSERT_FALSE(sut.is_connected());
@@ -154,7 +154,7 @@ TEST_F(MemPipeEndpoint, ExecuteDisconnectCallbackOnDestruction)
     EXPECT_CALL(callback, Call)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
-    sut->set_disconnect_callback(callback.AsStdFunction());
+    sut->set_disconnect_callback(thread_pool_task(m_thread_pool.get(), callback.AsStdFunction()));
 
     sut.reset();
 

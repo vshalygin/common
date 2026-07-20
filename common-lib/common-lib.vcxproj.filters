@@ -37,9 +37,6 @@
     <Filter Include="thread\thread-pool">
       <UniqueIdentifier>{0c642025-84c4-4795-b55b-7d0adc57580e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="thread\thread-pool\internal">
-      <UniqueIdentifier>{833fd6c3-5a65-4efe-9760-35dc5be2618a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="utils\internal">
       <UniqueIdentifier>{4fc9f3a9-e1cb-4045-ac81-08d6896fa339}</UniqueIdentifier>
     </Filter>
@@ -131,9 +128,6 @@
     </ClInclude>
     <ClInclude Include="common-lib\thread\thread-pool\thread-pool-task.h">
       <Filter>thread\thread-pool</Filter>
-    </ClInclude>
-    <ClInclude Include="common-lib\thread\thread-pool\internal\thread-pool-task-impl.h">
-      <Filter>thread\thread-pool\internal</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\utils\type-wrapper.h">
       <Filter>utils</Filter>
@@ -349,6 +343,9 @@
       <Filter>mpl</Filter>
     </ClInclude>
     <ClInclude Include="common-lib\synchronization\spinlock.h">
+      <Filter>synchronization</Filter>
+    </ClInclude>
+    <ClInclude Include="common-lib\synchronization\synchronization.h">
       <Filter>synchronization</Filter>
     </ClInclude>
   </ItemGroup>

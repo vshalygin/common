@@ -326,3 +326,16 @@ static_assert(std::is_same_v<make_function_type_t<void(t:: *volatile &&)() const
 static_assert(std::is_same_v<make_function_type_t<void(t:: *const volatile)() const volatile &&noexcept>, void()>);
 static_assert(std::is_same_v<make_function_type_t<void(t:: *const volatile &)() const volatile &&noexcept>, void()>);
 static_assert(std::is_same_v<make_function_type_t<void(t:: *const volatile &&)() const volatile &&noexcept>, void()>);
+
+static_assert(std::is_same_v<make_function_type_t<std::function<void()>>, void()>);
+static_assert(std::is_same_v<make_function_type_t<std::function<void()> &>, void()>);
+static_assert(std::is_same_v<make_function_type_t<std::function<void()> &&>, void()>);
+static_assert(std::is_same_v<make_function_type_t<const std::function<void()>>, void()>);
+static_assert(std::is_same_v<make_function_type_t<const std::function<void()> &>, void()>);
+static_assert(std::is_same_v<make_function_type_t<const std::function<void()> &&>, void()>);
+static_assert(std::is_same_v<make_function_type_t<volatile std::function<void()>>, void()>);
+static_assert(std::is_same_v<make_function_type_t<volatile std::function<void()> &>, void()>);
+static_assert(std::is_same_v<make_function_type_t<volatile std::function<void()> &&>, void()>);
+static_assert(std::is_same_v<make_function_type_t<const volatile std::function<void()>>, void()>);
+static_assert(std::is_same_v<make_function_type_t<const volatile std::function<void()> &>, void()>);
+static_assert(std::is_same_v<make_function_type_t<const volatile std::function<void()> &&>, void()>);
