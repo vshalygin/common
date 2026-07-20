@@ -198,14 +198,12 @@ namespace vshalygin::rpc::internal {
                                                                 s->m_recv_timeout);
 
                           s->notify_on_new_connection(connection_id, std::move(c), is_running_sp);
-                          s->erase_connection_future_from_map(connection_id);
                       })
-                .catched([self, connection_id](std::exception_ptr) {
+                .finally([self, connection_id]() {
                              if(auto s = self.lock()) {
                                  s->erase_connection_future_from_map(connection_id);
                              }
                          });
-            //TODO fix duplication erase after 'finally' method will be added to future interface
         });
 
         (*m_connection_future_map.lock())[connection_id] = promise.get_future();
