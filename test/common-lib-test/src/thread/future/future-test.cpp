@@ -2741,3 +2741,25 @@ TEST_F(Future, TestWaitFor)
     auto p4 = make_promise(&m_pool, [&]() { });
     ASSERT_FALSE(p4.get_future().wait_for(std::chrono::milliseconds(1)));
 }
+
+TEST_F(Future, FinallyExecutesAfterCatchedIfNoException)
+{
+    std::atomic_uint64_t beacon;
+
+    auto p1 = make_promise(&m_pool, []() {});
+    p1.resolve();
+    p1.get_future()
+        .catched([](std::exception_ptr) { FAIL(); })
+        .finally([&]() { ++beacon; })
+        .wait();
+
+    auto p2 = make_promise(&m_pool, [&]() {});
+    auto f2 = p2.get_future()
+        .catched([](std::exception_ptr) { FAIL(); })
+        .finally([&]() { ++beacon; });
+
+    p2.resolve();
+    f2.wait();
+
+    ASSERT_EQ(beacon, 2);
+}
