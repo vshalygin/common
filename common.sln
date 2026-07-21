@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pipe-connection-example", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win-lib", "win-lib\win-lib.vcxproj", "{8F5A7E59-2330-4E04-9FC4-51962AAB961A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win-lib-test", "test\win-lib-test\win-lib-test.vcxproj", "{F716CF65-2EC5-4B84-ABB4-5196EDB38DFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -49,6 +51,10 @@ Global
 		{8F5A7E59-2330-4E04-9FC4-51962AAB961A}.Debug|x64.Build.0 = Debug|x64
 		{8F5A7E59-2330-4E04-9FC4-51962AAB961A}.Release|x64.ActiveCfg = Release|x64
 		{8F5A7E59-2330-4E04-9FC4-51962AAB961A}.Release|x64.Build.0 = Release|x64
+		{F716CF65-2EC5-4B84-ABB4-5196EDB38DFE}.Debug|x64.ActiveCfg = Debug|x64
+		{F716CF65-2EC5-4B84-ABB4-5196EDB38DFE}.Debug|x64.Build.0 = Debug|x64
+		{F716CF65-2EC5-4B84-ABB4-5196EDB38DFE}.Release|x64.ActiveCfg = Release|x64
+		{F716CF65-2EC5-4B84-ABB4-5196EDB38DFE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,6 +63,7 @@ Global
 		{4BDBB3A5-4331-4161-A341-A5D1C5E24138} = {50EC9BAA-35F1-403D-B35C-FB6A3F8F77EC}
 		{85F2E21C-F51A-4560-85D4-1378CC14F103} = {50EC9BAA-35F1-403D-B35C-FB6A3F8F77EC}
 		{C0F2EF4F-AF8A-4E7A-BA11-8E0D354F45E8} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F716CF65-2EC5-4B84-ABB4-5196EDB38DFE} = {50EC9BAA-35F1-403D-B35C-FB6A3F8F77EC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {66A89EB9-424E-45BB-B721-77F88BBF7ADE}

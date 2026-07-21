@@ -1,5 +1,4 @@
 #pragma once
-#ifdef _WIN32
 #include <Windows.h>
 
 #include <type_traits>
@@ -108,5 +107,3 @@ namespace vshalygin::win::internal {
         handle_type m_handle;
     };
 }
-
-#endif

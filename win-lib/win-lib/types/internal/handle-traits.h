@@ -18,5 +18,4 @@ namespace vshalygin::win::internal {
         }
     };
 }
-
 #endif

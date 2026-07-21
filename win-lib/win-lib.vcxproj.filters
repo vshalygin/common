@@ -15,5 +15,8 @@
     <ClInclude Include="win-lib\types\internal\handle-traits.h">
       <Filter>types\internal</Filter>
     </ClInclude>
+    <ClInclude Include="win-lib\types\handle.h">
+      <Filter>types</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

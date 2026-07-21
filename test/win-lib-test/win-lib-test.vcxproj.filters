@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
+      <Filter>gtest</Filter>
+    </ClCompile>
+    <ClCompile Include="$(GOOGLETEST_ROOT)\googletest\src\gtest-all.cc">
+      <Filter>gtest</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>gtest</Filter>
+    </ClCompile>
+    <ClCompile Include="src\types\unique-handle-test.cpp">
+      <Filter>types</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="gtest">
+      <UniqueIdentifier>{72059165-ba81-49b7-8977-d11f291f5812}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="types">
+      <UniqueIdentifier>{ea0c298c-5a0e-43d6-bf60-f8a66557c474}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
