@@ -11,15 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="win-lib\types\handle.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="win-lib\types\handle.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="win-lib\types\internal\handle-traits.h" />
+    <ClInclude Include="win-lib\types\internal\unique-handle.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

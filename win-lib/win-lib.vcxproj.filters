@@ -4,15 +4,16 @@
     <Filter Include="types">
       <UniqueIdentifier>{233f164f-de4d-418c-a031-0f04736d54da}</UniqueIdentifier>
     </Filter>
+    <Filter Include="types\internal">
+      <UniqueIdentifier>{585a5252-12d3-4d50-b0a7-ddd11048cf16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="win-lib\types\handle.h">
-      <Filter>types</Filter>
+    <ClInclude Include="win-lib\types\internal\unique-handle.h">
+      <Filter>types\internal</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="win-lib\types\handle.cpp">
-      <Filter>types</Filter>
-    </ClCompile>
+    <ClInclude Include="win-lib\types\internal\handle-traits.h">
+      <Filter>types\internal</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
