@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="types">
+      <UniqueIdentifier>{233f164f-de4d-418c-a031-0f04736d54da}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="win-lib\types\handle.h">
+      <Filter>types</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="win-lib\types\handle.cpp">
+      <Filter>types</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
