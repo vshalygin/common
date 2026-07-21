@@ -1,15 +1,14 @@
 #pragma once
 #include <common-lib/synchronization/value-locker.h>
+#include <common-lib/utils/function.h>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
 
 #include <chrono>
-#include <optional>
-#include <atomic>
 #include <condition_variable>
+#include <memory>
 
-//TODO Есть утечки
 namespace vshalygin::cl {
     class periodic_timer final
     {
@@ -28,83 +27,47 @@ namespace vshalygin::cl {
         ~periodic_timer();
 
         template<typename Callback>
-        void start(Callback &&callback, const std::chrono::milliseconds &period);
+        void start(Callback &&callback,
+                   std::chrono::milliseconds period,
+                   size_t total_periods = static_cast<size_t>(-1));
 
-        void cancel();
+        void stop();
 
         bool is_active() const;
 
-        void set_periods_count(size_t periods);
-        void clear_periods_count();
-
     private:
-        template<typename Callback>
-        void start_period(Callback &&callback, const std::chrono::milliseconds &period);
-
-        bool is_all_periods_completed() const;
-        void increment_periods_count();
-
-        void set_active_or_throw_if_already();
-        void set_inactive_and_notify();
+        void start_period(std::unique_ptr<function<callback_ret()>> &&func);
 
     private:
         boost::asio::io_context &m_io_context;
         boost::asio::steady_timer m_timer;
 
-        mutable std::mutex m_is_active_mtx;
-        std::condition_variable m_is_deactivated_cv;
+        mutable std::mutex m_mtx;
+        std::condition_variable m_cv;
         bool m_is_active = false;
-
-        std::atomic_bool m_is_canceled = false;
+        bool m_is_stopped = false;
         size_t m_current_periods_count = 0;
-
-        value_locker<std::optional<size_t>> m_periods_count;
+        size_t m_total_periods_count = 0;
+        std::chrono::milliseconds m_period;
     };
 
     template<typename Callback>
-    void periodic_timer::start(Callback &&callback, const std::chrono::milliseconds &period)
+    void periodic_timer::start(Callback &&callback,
+                               std::chrono::milliseconds period,
+                               size_t total_periods)
     {
-        set_active_or_throw_if_already();
+        std::lock_guard guard(m_mtx);
+        if(m_is_active) {
+            throw std::logic_error("periodic timer already running");
+        }
+        auto func = std::make_unique<function<callback_ret()>>(std::forward<Callback>(callback));
 
+        m_is_active = true;
+        m_is_stopped = false;
         m_current_periods_count = 0;
-        m_is_canceled.store(false, std::memory_order_release);
-        start_period<Callback>(std::move(callback), period);
-    }
+        m_total_periods_count = total_periods;
+        m_period = period;
 
-    template<typename Callback>
-    void periodic_timer::start_period(Callback &&callback,
-                                      const std::chrono::milliseconds &period)
-    {
-        //TODO check Callback signature
-
-        m_timer.expires_after(period);
-        m_timer.async_wait([this, period, callback = std::move(callback)]
-                           (const boost::system::error_code &ec) mutable {
-            if(!ec) {
-                auto ret = callback_ret::Abort;
-                try {
-                    ret = callback();
-                } catch(...) {
-                    //TODO log
-                }
-
-                increment_periods_count();
-                if(ret == callback_ret::Abort ||
-                   m_is_canceled.load(std::memory_order_acquire) ||
-                   is_all_periods_completed())
-                {
-                    set_inactive_and_notify();
-                }
-                else
-                {
-                    start_period<Callback>(std::move(callback), period);
-                }
-            } else if(ec == boost::asio::error::operation_aborted) {
-                set_inactive_and_notify();
-            } else {
-                //TODO log something unexpected
-                set_inactive_and_notify();
-            }
-        });
+        start_period(std::move(func));
     }
 }

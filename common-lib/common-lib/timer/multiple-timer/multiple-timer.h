@@ -4,7 +4,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <atomic>
 
-//TODO проверить на утечки
 namespace vshalygin::cl {
     class multiple_timer final
     {

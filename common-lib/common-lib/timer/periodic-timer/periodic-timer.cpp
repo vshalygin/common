@@ -8,70 +8,66 @@ namespace vshalygin::cl {
 
     periodic_timer::~periodic_timer()
     {
-        try {
-            cancel();
-        } catch (...) {
-            //TODO safe log
-        }
+        stop();
     }
 
-    void periodic_timer::cancel()
+    void periodic_timer::stop()
     {
-        std::unique_lock lock(m_is_active_mtx);
+        std::unique_lock lock(m_mtx);
         if(!m_is_active) {
             return;
         }
 
-        if(!m_is_canceled.exchange(true, std::memory_order_acq_rel)) {
-            m_timer.cancel();
-        }
+        m_timer.cancel();
+        m_is_stopped = true;
 
-        //TODO нужно ли дожидатся
-        m_is_deactivated_cv.wait(lock, [this]() { return !m_is_active; });
+        m_cv.wait(lock, [this]() { return !m_is_active; });
     }
 
     bool periodic_timer::is_active() const
     {
-        std::lock_guard lock(m_is_active_mtx);
+        std::lock_guard lock(m_mtx);
         return m_is_active;
     }
 
-    void periodic_timer::set_periods_count(size_t periods)
+    void periodic_timer::start_period(std::unique_ptr<function<callback_ret()>> &&func)
     {
-        *m_periods_count.lock() = periods;
-    }
+        //m_mtx here must be locked before
 
-    void periodic_timer::clear_periods_count()
-    {
-        m_periods_count.lock()->reset();
-    }
+        m_timer.expires_after(m_period);
+        m_timer.async_wait([this, func = std::move(func)]
+        (const boost::system::error_code &ec) mutable {
+            if(ec) {
+                std::lock_guard guard(m_mtx);
+                m_is_active = false;
 
-    bool periodic_timer::is_all_periods_completed() const
-    {
-        return *m_periods_count.lock() == m_current_periods_count;
-    }
+                //do under mutex intentionally,
+                //must not allow other thread to set m_is_active in start
+                m_cv.notify_all();
+            } else {
+                auto ret = callback_ret::Abort;
+                try {
+                    ret = (*func)();
+                } catch(...) {
+                }
 
-    void periodic_timer::increment_periods_count()
-    {
-        ++m_current_periods_count;
-    }
+                std::unique_lock guard(m_mtx);
+                ++m_current_periods_count;
 
-    void periodic_timer::set_active_or_throw_if_already()
-    {
-        std::lock_guard lock(m_is_active_mtx);
-        if(m_is_active) {
-            throw std::logic_error("periodic timer already started");
-        }
-        m_is_active = true;
-    }
+                if(ret == callback_ret::Continue && !m_is_stopped &&
+                   m_current_periods_count < m_total_periods_count)
+                {
+                    start_period(std::move(func));
+                }
+                else
+                {
+                    m_is_active = false;
 
-    void periodic_timer::set_inactive_and_notify()
-    {
-        {
-            std::lock_guard lock(m_is_active_mtx);
-            m_is_active = false;
-        }
-
-        m_is_deactivated_cv.notify_all();
+                    //do under mutex intentionally,
+                    //must not allow other thread to set m_is_active in start
+                    m_cv.notify_all();
+                }
+            }
+        });
     }
 }
