@@ -1,7 +1,7 @@
 #pragma once
 #include <type_traits>
 
-namespace vshalygin::cl::internal { //TODO тесты
+namespace vshalygin::cl::internal {
     template<typename T>
     struct add_lvalue_ref_to_value
     {

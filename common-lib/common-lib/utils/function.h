@@ -1,5 +1,6 @@
 #pragma once
 #include <common-lib/mpl/type-transform.h>
+
 #include <functional>
 
 namespace vshalygin::cl {

@@ -1,5 +1,5 @@
 #pragma once
-#include "common-lib/utils/buffer.h"
+#include "buffer.h"
 #include <iterator>
 
 namespace vshalygin::cl {
