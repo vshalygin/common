@@ -20,7 +20,7 @@ TEST(Strand, ExecuteTasksConsecutively)
         .WillOnce([&]() { sync_event.set(); });
 
     thread_pool pool(2);
-    auto sut = pool.create_strand();
+    strand sut(pool.get_io_context());
     sut.post(mock1.AsStdFunction());
     sut.post(mock2.AsStdFunction());
 
@@ -41,7 +41,7 @@ TEST(Strand, ExecuteTaskAfterDestruction)
     thread_pool pool(2);
 
     {
-        auto sut = pool.create_strand();
+        strand sut(pool.get_io_context());
         sut.post(mock1.AsStdFunction());
         sut.post(mock2.AsStdFunction());
     }
@@ -53,7 +53,7 @@ TEST(Strand, ExecuteTaskAfterDestruction)
 TEST(Strand, AnswerFalseOnCheckExecutingContextIfItIsNoIn)
 {
     thread_pool pool(2);
-    auto sut = pool.create_strand();
+    strand sut(pool.get_io_context());
 
     ASSERT_FALSE(sut.is_running_in_this_thread());
 }
@@ -62,7 +62,7 @@ TEST(Strand, AnswerTrueOnCheckExecutingContextIfItIsIn)
 {
     event sync_event;
     thread_pool pool(2);
-    auto sut = pool.create_strand();
+    strand sut(pool.get_io_context());
 
     sut.post([&]() {
         ASSERT_TRUE(sut.is_running_in_this_thread());
@@ -95,7 +95,7 @@ TEST(Strand, AnswerTrueOnCheckExecutingInFunctorDestructor)
 
     event sync_event;
     thread_pool pool(2);
-    auto sut = pool.create_strand();
+    strand sut(pool.get_io_context());
 
     sut.post([checker = std::make_shared<desctructor_checker>(sync_event, &sut)]() {});
 
@@ -106,7 +106,7 @@ TEST(Strand, DispatchesTaskByPostingInExecutionQueue)
 {
     event sync_event;
     thread_pool pool(2);
-    auto sut = pool.create_strand();
+    strand sut(pool.get_io_context());
     InSequence s;
     MockFunction<void()> mock1, mock2;
     EXPECT_CALL(mock1, Call())
@@ -123,7 +123,7 @@ TEST(Strand, DispatchesTaskByExecutingInPlace)
 {
     event sync_event1, sync_event2;
     thread_pool pool(2);
-    auto sut = pool.create_strand();
+    strand sut(pool.get_io_context());
     InSequence s;
     MockFunction<void()> mock1, mock2, mock3;
     EXPECT_CALL(mock1, Call())

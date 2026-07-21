@@ -6,6 +6,7 @@
 #include <rpc-lib/internal/connector/server-connector.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread-pool/strand.h>
 
 #include <memory>
 #include <vector>

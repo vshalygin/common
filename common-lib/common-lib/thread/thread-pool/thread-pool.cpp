@@ -1,5 +1,4 @@
 #include "thread-pool.h"
-#include "strand.h"
 
 #include <boost/asio/post.hpp>
 
@@ -54,10 +53,5 @@ namespace vshalygin::cl {
     const boost::asio::io_context &thread_pool::get_io_context() const noexcept
     {
         return m_io_context;
-    }
-
-    strand thread_pool::create_strand()
-    {
-        return strand(m_io_context);
     }
 }

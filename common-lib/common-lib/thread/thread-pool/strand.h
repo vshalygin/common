@@ -10,8 +10,8 @@ namespace vshalygin::cl {
     public:
         explicit strand(boost::asio::io_context &io_context);
 
-        strand(strand &) = delete;
-        strand &operator=(strand &) = delete;
+        strand(const strand &) = delete;
+        strand &operator=(const strand &) = delete;
 
         strand(strand &&) = default;
         strand &operator=(strand &&) = default;

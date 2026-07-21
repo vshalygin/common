@@ -8,6 +8,7 @@
 #include <rpc-lib/internal/service/iservice.h>
 
 #include <common-lib/synchronization/value-locker.h>
+#include <common-lib/thread/thread-pool/strand.h>
 
 #include <mutex>
 #include <unordered_map>
@@ -89,7 +90,7 @@ namespace vshalygin::rpc::internal {
                                  std::chrono::milliseconds send_timeout,
                                  std::chrono::milliseconds recv_timeout)
         : m_thread_pool(std::move(thread_pool))
-        , m_notify_strand(m_thread_pool->create_strand())
+        , m_notify_strand(m_thread_pool->get_io_context())
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
         , m_create_service(std::move(create_service))
