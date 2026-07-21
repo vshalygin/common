@@ -34,7 +34,7 @@ namespace vshalygin::cl {
         thread_pool_task(thread_pool_task &&other) = default;
         thread_pool_task &operator=(thread_pool_task &&) = default;
 
-        operator bool() const noexcept
+        explicit operator bool() const noexcept
         {
             return static_cast<bool>(m_func);
         }

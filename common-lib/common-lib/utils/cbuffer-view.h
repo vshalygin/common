@@ -22,7 +22,7 @@ namespace vshalygin::cl {
 
         const std::byte &operator[](size_t pos) const noexcept;
 
-        operator bool() const noexcept;
+        explicit operator bool() const noexcept;
 
         const std::byte &at(size_t pos) const;
 

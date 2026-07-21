@@ -86,7 +86,7 @@ namespace vshalygin::cl::internal {
         void unlock() noexcept;
         bool is_locked() const noexcept;
 
-        operator bool() const noexcept;
+        explicit operator bool() const noexcept;
 
     private:
         void clear() noexcept;

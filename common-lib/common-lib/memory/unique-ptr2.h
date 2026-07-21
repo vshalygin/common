@@ -121,7 +121,7 @@ namespace vshalygin::cl {
             return *get();
         }
 
-        operator bool() const noexcept
+        explicit operator bool() const noexcept
         {
             return get() != nullptr;
         }

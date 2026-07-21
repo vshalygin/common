@@ -120,7 +120,7 @@ namespace vshalygin::cl {
             return call(static_cast<const void *>(m_buffer), std::forward<Args>(args)...);
         }
 
-        operator bool() const noexcept
+        explicit operator bool() const noexcept
         {
             return call != nullptr;
         }
