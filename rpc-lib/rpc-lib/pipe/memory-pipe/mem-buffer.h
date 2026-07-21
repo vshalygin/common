@@ -4,7 +4,7 @@
 #include <rpc-lib/types/future.h>
 
 #include <common-lib/utils/buffer.h>
-#include <common-lib/timer/multiple-timer/multiple-timer.h>
+#include <common-lib/timer/multiple-timer.h>
 #include <common-lib/synchronization/value-locker.h>
 
 #include <boost/multi_index_container.hpp>
