@@ -6,5 +6,8 @@
 namespace vshalygin::win {
     using event_handle =
         internal::unique_handle<internal::event_handle_traits>;
+
+    using iocp_handle =
+        internal::unique_handle<internal::iocp_handle_traits>;
 }
 #endif

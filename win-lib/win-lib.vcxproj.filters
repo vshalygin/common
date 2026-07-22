@@ -18,5 +18,13 @@
     <ClInclude Include="win-lib\types\handle.h">
       <Filter>types</Filter>
     </ClInclude>
+    <ClInclude Include="win-lib\types\iocp.h">
+      <Filter>types</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="win-lib\types\iocp.cpp">
+      <Filter>types</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

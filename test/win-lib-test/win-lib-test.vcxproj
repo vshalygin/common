@@ -87,6 +87,11 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\types\unique-handle-test.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\win-lib\win-lib.vcxproj">
+      <Project>{8f5a7e59-2330-4e04-9fc4-51962aab961a}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
