@@ -9,5 +9,9 @@ namespace vshalygin::win {
 
     using iocp_handle =
         internal::unique_handle<internal::iocp_handle_traits>;
+
+    using pipe_handle =
+        internal::unique_handle<internal::pipe_handle_traits>;
 }
+
 #endif
