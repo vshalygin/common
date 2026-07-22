@@ -350,9 +350,6 @@
     <ClCompile Include="common-lib\thread\thread-pool\strand.cpp">
       <Filter>thread\thread-pool</Filter>
     </ClCompile>
-    <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp">
-      <Filter>thread\thread-pool</Filter>
-    </ClCompile>
     <ClCompile Include="common-lib\utils\internal\buffer\buffer.cpp">
       <Filter>utils\internal\buffer</Filter>
     </ClCompile>

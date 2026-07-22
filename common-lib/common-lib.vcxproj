@@ -104,7 +104,6 @@
   <ItemGroup>
     <ClCompile Include="common-lib\synchronization\internal\event\event.cpp" />
     <ClCompile Include="common-lib\thread\thread-pool\strand.cpp" />
-    <ClCompile Include="common-lib\thread\thread-pool\thread-pool.cpp" />
     <ClCompile Include="common-lib\timer\multiple-timer.cpp" />
     <ClCompile Include="common-lib\timer\periodic-timer.cpp" />
     <ClCompile Include="common-lib\utils\internal\buffer-view\buffer-view.cpp" />
