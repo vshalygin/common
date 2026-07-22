@@ -37,6 +37,8 @@ namespace vshalygin::win {
 
         iocp_handle::handle_type native_handle() const noexcept;
 
+        void reset() noexcept;
+
     private:
         iocp_handle m_handle;
     };

@@ -73,6 +73,11 @@ namespace vshalygin::win {
     {
         return m_handle.get();
     }
+
+    void iocp::reset() noexcept
+    {
+        m_handle.reset();
+    }
 };
 
 #endif
