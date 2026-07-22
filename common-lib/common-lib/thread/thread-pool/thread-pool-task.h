@@ -18,8 +18,7 @@ namespace vshalygin::cl {
     public:
         thread_pool_task() = default;
 
-        template<typename Func,
-                 std::enable_if_t<!std::is_same_v<remove_type_qualifiers_t<Func>, this_type>, int> = 0>
+        template<typename Func>
         thread_pool_task(thread_pool *thread_pool, Func &&func)
             : m_thread_pool(thread_pool)
             , m_func(std::forward<Func>(func))
