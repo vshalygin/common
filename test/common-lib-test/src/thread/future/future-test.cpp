@@ -2763,3 +2763,19 @@ TEST_F(Future, FinallyExecutesAfterCatchedIfNoException)
 
     ASSERT_EQ(beacon, 2);
 }
+
+TEST_F(Future, FutureMayBeCreatedAlreadyWithSetValue)
+{
+    auto f1 = make_ready_future(&m_pool, 9);
+    f1.then([](int i) { EXPECT_EQ(i, 9); return 4; })
+      .then([](int i) { EXPECT_EQ(i, 4); return 34; })
+      .get().apply([](int i) { ASSERT_EQ(i, 34); });
+    f1.get().apply([](int i) { ASSERT_EQ(i, 9); });
+
+    int flag = 0;
+    auto f2 = make_ready_future(&m_pool);
+    f2.then([&]() { flag = 1; return 34; })
+      .get().apply([](int i) { ASSERT_EQ(i, 34); });
+    f2.wait();
+    ASSERT_EQ(flag, 1);
+}

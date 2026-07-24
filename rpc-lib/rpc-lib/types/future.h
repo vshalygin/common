@@ -18,6 +18,17 @@ namespace vshalygin::rpc {
         return cl::make_promise(thread_pool, std::forward<Func>(func));
     }
 
+    template<typename T>
+    auto make_ready_future(cl::thread_pool *thread_pool, T &&val)
+    {
+        return cl::make_ready_future(thread_pool, std::forward<T>(val));
+    }
+
+    inline auto make_ready_future(cl::thread_pool *thread_pool)
+    {
+        return cl::make_ready_future(thread_pool);
+    }
+
     template<typename...Args>
     using ftuple = cl::ftuple<Args...>;
 }
