@@ -24,6 +24,8 @@
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-buffers.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-endpoint.cpp" />
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp" />
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.cpp" />
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h" />
@@ -57,6 +59,8 @@
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h" />
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h" />
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.h" />
     <ClInclude Include="rpc-lib\server-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\types\future.h" />
@@ -66,6 +70,9 @@
   <ItemGroup>
     <ProjectReference Include="..\common-lib\common-lib.vcxproj">
       <Project>{a73a4837-35c7-451c-b557-3e2f1f779622}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\win-lib\win-lib.vcxproj">
+      <Project>{8f5a7e59-2330-4e04-9fc4-51962aab961a}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -117,7 +124,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)common-lib;$(SolutionDir)rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)common-lib;$(SolutionDir)rpc-lib;$(SolutionDir)win-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -140,7 +147,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>$(SolutionDir)common-lib;$(SolutionDir)rpc-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)common-lib;$(SolutionDir)rpc-lib;$(SolutionDir)win-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>

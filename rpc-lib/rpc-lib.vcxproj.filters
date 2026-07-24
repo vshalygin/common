@@ -46,6 +46,12 @@
     <Filter Include="internal\endpoint">
       <UniqueIdentifier>{487281f9-4992-4e26-a2a9-b5bea3580856}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pipe\win-pipe">
+      <UniqueIdentifier>{171f5db8-58bf-4871-9793-e6f16b3d19a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe\win-pipe\win-pipe-operations">
+      <UniqueIdentifier>{24aec257-a6d6-4bb6-932c-eaad2ed44495}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp">
@@ -86,6 +92,12 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\internal\transport\transport.cpp">
       <Filter>internal\transport</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.cpp">
+      <Filter>pipe\win-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.cpp">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -187,5 +199,11 @@
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\closure-guard.h" />
     <ClInclude Include="rpc-lib\iresponse-controller.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.h">
+      <Filter>pipe\win-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.h">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
