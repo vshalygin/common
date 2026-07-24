@@ -1,10 +1,18 @@
 #ifdef _WIN32
 #include "win-pipe-iocp-owner.h"
 
+#include <algorithm>
+
 namespace vshalygin::rpc::internal {
-    win_pipe_iocp_owner::win_pipe_iocp_owner(const std::wstring &pipe_name)
-        : m_full_pipe_name(L"\\\\.\\pipe\\" + pipe_name)
-        , m_worker([this]() { run_worker_loop(); })
+    namespace {
+        std::wstring make_fule_pipe_name(const std::wstring &pipe_name)
+        {
+            return L"\\\\.\\pipe\\" + pipe_name;
+        }
+    }
+
+    win_pipe_iocp_owner::win_pipe_iocp_owner()
+        : m_worker([this]() { run_worker_loop(); })
     {}
     
     win_pipe_iocp_owner::~win_pipe_iocp_owner()
@@ -15,10 +23,12 @@ namespace vshalygin::rpc::internal {
         m_iocp_thread.stop();
     }
     
-    void win_pipe_iocp_owner::create_pipe_async(win_pipe_create_operation *overlapped)
+    void win_pipe_iocp_owner::create_pipe_async(const std::wstring &pipe_name,
+                                                win_pipe_create_operation *overlapped)
     {
+        const auto full_pipe_name = make_fule_pipe_name(pipe_name);
         win::pipe_handle pipe(
-            ::CreateNamedPipeW(m_full_pipe_name.c_str(),
+            ::CreateNamedPipeW(full_pipe_name.c_str(),
                                PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
                                PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                                PIPE_UNLIMITED_INSTANCES,
@@ -50,6 +60,44 @@ namespace vshalygin::rpc::internal {
                 overlapped->resolve(false, ::GetLastError());
             }
         });
+    }
+
+    win::pipe_handle win_pipe_iocp_owner::open_pipe(const std::wstring &pipe_name,
+                                                    std::chrono::milliseconds timeout)
+    {
+        using clock = std::chrono::steady_clock;
+
+        const auto full_pipe_name = make_fule_pipe_name(pipe_name);
+        const auto start = clock::now();
+        const auto deadline = (clock::time_point::max() - start) < timeout ?
+                               clock::time_point::max() :
+                               start + timeout;
+        while(true)
+        {
+            win::pipe_handle pipe(::CreateFileW(full_pipe_name.c_str(),
+                                                GENERIC_READ | GENERIC_WRITE,
+                                                0,
+                                                nullptr,
+                                                OPEN_EXISTING,
+                                                FILE_FLAG_OVERLAPPED,
+                                                nullptr));
+
+            if(pipe) {
+                m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::read_write));
+                return pipe;
+            }
+
+            if(::GetLastError() != ERROR_PIPE_BUSY) {
+                throw std::system_error(::GetLastError(), std::system_category());
+            }
+
+            auto now = clock::now();
+            const auto t = std::max((deadline - now).count(), 0ll);
+            const DWORD tt = static_cast<DWORD>(std::min(t, static_cast<decltype(t)>(MAXDWORD)));
+            if(!::WaitNamedPipeW(full_pipe_name.c_str(), tt)) {
+                throw std::system_error(::GetLastError(), std::system_category());
+            }
+        }
     }
 
     void win_pipe_iocp_owner::cancel_create(win_pipe_create_operation *overlapped)

@@ -9,28 +9,28 @@
 
 #include <string>
 #include <thread>
+#include <chrono>
 
 namespace vshalygin::rpc::internal {
     enum class win_pipe_iocp_key
     {
         interrupt_iocp,
         connect_pipe,
-        open_pipe,
-        read,
-        write
+        read_write
     };
 
     class win_pipe_iocp_owner final
     {
     public:
-        explicit win_pipe_iocp_owner(const std::wstring &pipe_name);
+        explicit win_pipe_iocp_owner();
 
         win_pipe_iocp_owner(const win_pipe_iocp_owner &) = delete;
         win_pipe_iocp_owner &operator=(const win_pipe_iocp_owner &) = delete;
 
         ~win_pipe_iocp_owner();
 
-        void create_pipe_async(win_pipe_create_operation *overlapped);
+        void create_pipe_async(const std::wstring &pipe_name, win_pipe_create_operation *overlapped);
+        win::pipe_handle open_pipe(const std::wstring &pipe_name, std::chrono::milliseconds timeout);
 
         void cancel_create(win_pipe_create_operation *overlapped);
 
@@ -39,8 +39,6 @@ namespace vshalygin::rpc::internal {
         void interrupt_worker_loop() noexcept;
 
     private:
-        const std::wstring m_full_pipe_name;
-
         win::iocp m_iocp;
 
         cl::thread_pool m_iocp_thread{ 1 };
