@@ -24,6 +24,12 @@ namespace vshalygin::cl::internal {
     public:
         future() = default;
 
+        template<typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
+        explicit future(ThreadPool *thread_pool, U &&val);
+
+        template<typename U = T, std::enable_if_t<std::is_void_v<U>, int> = 0>
+        explicit future(ThreadPool *thread_pool);
+
         future(const future &) = delete;
         future &operator=(const future &) = delete;
         future(future &&) = default;

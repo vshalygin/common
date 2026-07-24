@@ -20,7 +20,30 @@ namespace vshalygin::cl::internal {
         , m_controller(std::move(controller))
     {
         assert(m_thread_pool);
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename U, std::enable_if_t<!std::is_void_v<U>, int>>
+    future<ThreadPool, T>::future(ThreadPool *thread_pool, U &&val)
+        : m_thread_pool(thread_pool)
+        , m_controller(std::make_shared<future_controller<ThreadPool, T>>(thread_pool))
+    {
+        assert(m_thread_pool);
         m_controller->set_self_shared_ptr(m_controller);
+
+        m_controller->set_value(std::forward<T>(val));
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename U, std::enable_if_t<std::is_void_v<U>, int>>
+    future<ThreadPool, T>::future(ThreadPool *thread_pool)
+        : m_thread_pool(thread_pool)
+        , m_controller(std::make_shared<future_controller<ThreadPool, void>>(thread_pool))
+    {
+        assert(m_thread_pool);
+        m_controller->set_self_shared_ptr(m_controller);
+
+        m_controller->set_value();
     }
 
     template<typename ThreadPool, typename T>

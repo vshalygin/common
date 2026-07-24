@@ -52,6 +52,7 @@ namespace vshalygin::cl::internal {
         , m_future(thread_pool, m_controller)
     {
         assert(m_thread_pool);
+        m_controller->set_self_shared_ptr(m_controller);
     }
 
     template<typename ThreadPool, typename T, typename...ResolveArgs>
