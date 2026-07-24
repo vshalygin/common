@@ -16,7 +16,7 @@ namespace vshalygin::rpc::internal {
             : kind(k)
         {}
 
-        //contract: must be first
+        //contract: overlapped must be first
         OVERLAPPED overlapped{};
 
         win_pipe_operation_kind kind;

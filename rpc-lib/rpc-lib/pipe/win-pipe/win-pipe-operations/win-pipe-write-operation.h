@@ -27,7 +27,7 @@ namespace vshalygin::rpc::internal {
         future<ftuple<bool, DWORD>> get_future();
 
     private:
-        //contract: must be first
+        //contract: operation must be first
         win_pipe_operation m_operation{ win_pipe_operation_kind::write }; 
 
         win::pipe_handle::handle_type m_pipe;

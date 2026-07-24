@@ -91,7 +91,8 @@ namespace vshalygin::rpc::internal {
                                                 nullptr));
 
             if(pipe) {
-                m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation));
+                m_iocp.associate(pipe.get(),
+                                 static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation));
                 return pipe;
             }
 
@@ -138,23 +139,25 @@ namespace vshalygin::rpc::internal {
     {
         while(true) {
             const auto status = m_iocp.get();
-            if(static_cast<win_pipe_iocp_key>(status.key) == win_pipe_iocp_key::interrupt_iocp) {
+            auto key = static_cast<win_pipe_iocp_key>(status.key);
+            if(key == win_pipe_iocp_key::interrupt_iocp) {
                 return;
             }
 
+            assert(key == win_pipe_iocp_key::process_operation);
             assert(status.overlapped);
             const auto op = reinterpret_cast<win_pipe_operation *>(status.overlapped);
             switch(op->kind) {
                 case win_pipe_operation_kind::create:
                 {
-                    auto op2 = reinterpret_cast<win_pipe_create_operation *>(op);
-                    op2->resolve(status.success, status.error);
+                    auto create_op = reinterpret_cast<win_pipe_create_operation *>(op);
+                    create_op->resolve(status.success, status.error);
                     break;
                 }
                 case win_pipe_operation_kind::write:
                 {
-                    auto op2 = reinterpret_cast<win_pipe_write_operation *>(op);
-                    op2->resolve(status.success, status.error);
+                    auto write_operation = reinterpret_cast<win_pipe_write_operation *>(op);
+                    write_operation->resolve(status.success, status.error);
                     break;
                 }
                 default:

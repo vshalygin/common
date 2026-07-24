@@ -29,10 +29,12 @@ namespace vshalygin::rpc::internal {
 
         ~win_pipe_iocp_owner();
 
-        void create_pipe_async(const std::wstring &pipe_name, win_pipe_create_operation *overlapped);
+        void create_pipe_async(const std::wstring &pipe_name,
+                               win_pipe_create_operation *overlapped);
         void cancel_create(win_pipe_create_operation *overlapped);
 
-        win::pipe_handle open_pipe(const std::wstring &pipe_name, std::chrono::milliseconds timeout);
+        win::pipe_handle open_pipe(const std::wstring &pipe_name,
+                                   std::chrono::milliseconds timeout);
 
         void write_async(win_pipe_write_operation *overlapped);
         void cancel_write(win_pipe_write_operation *overlapped);
