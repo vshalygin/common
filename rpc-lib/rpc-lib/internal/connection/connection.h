@@ -2,16 +2,13 @@
 #include "iconnection.h"
 
 #include <common-lib/utils/buffer.h>
+#include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <memory>
 #include <chrono>
 
 namespace vshalygin::rpc {
     class ipipe_endpoint;
-}
-
-namespace vshalygin::cl {
-    class thread_pool;
 }
 
 namespace vshalygin::rpc::internal {

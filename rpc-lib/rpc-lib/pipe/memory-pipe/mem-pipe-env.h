@@ -2,9 +2,7 @@
 #include "../iclient-pipe-env.h"
 #include "../iserver-pipe-env.h"
 
-namespace vshalygin::cl {
-    class thread_pool;
-}
+#include <common-lib/thread/thread-pool/thread-pool.h>
 
 namespace vshalygin::rpc {
     class mem_pipe_endpoint;

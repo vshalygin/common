@@ -4,12 +4,10 @@
 #include <rpc-lib/internal/connector/client-connector.h>
 #include <rpc-lib/internal/service/service.h>
 
+#include <common-lib/thread/thread-pool/thread-pool.h>
+
 #include <memory>
 #include <mutex>
-
-namespace vshalygin::cl {
-    class thread_pool;
-}
 
 namespace vshalygin::rpc {
     class iauthenticator;

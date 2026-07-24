@@ -1,11 +1,9 @@
 #pragma once
+#include <common-lib/thread/thread-pool/thread-pool.h>
+
 #include <memory>
 #include <functional>
 #include <chrono>
-
-namespace vshalygin::cl {
-    class thread_pool;
-}
 
 namespace vshalygin::rpc {
     class iauthenticator;

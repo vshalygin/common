@@ -1,16 +1,14 @@
 #pragma once
 #include <rpc-lib/types/future.h>
 
+#include <common-lib/thread/thread-pool/thread-pool.h>
+
 #include <chrono>
 #include <memory>
 
 namespace vshalygin::rpc {
     class iauthenticator;
     class iclient_pipe_env;
-}
-
-namespace vshalygin::cl {
-    class thread_pool;
 }
 
 namespace vshalygin::rpc::internal {

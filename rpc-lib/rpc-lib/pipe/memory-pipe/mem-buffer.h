@@ -6,6 +6,7 @@
 #include <common-lib/utils/buffer.h>
 #include <common-lib/timer/multiple-timer.h>
 #include <common-lib/synchronization/value-locker.h>
+#include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -16,10 +17,6 @@
 #include <memory>
 #include <queue>
 #include <optional>
-
-namespace vshalygin::cl {
-    class thread_pool;
-}
 
 namespace vshalygin::rpc {
     class mem_buffer final

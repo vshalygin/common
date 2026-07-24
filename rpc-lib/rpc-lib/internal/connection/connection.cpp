@@ -6,7 +6,6 @@
 
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/timer/multiple-timer.h>
-#include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <atomic>
 
