@@ -1,5 +1,5 @@
 #pragma once
-#include "promise-impl.h"
+#include "promise.h"
 #include <common-lib/mpl/function-traits.h>
 
 namespace vshalygin::cl::internal {
