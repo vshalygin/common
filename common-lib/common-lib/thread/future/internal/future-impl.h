@@ -87,20 +87,23 @@ namespace vshalygin::cl::internal {
             auto controller = val.get_controller();
             val = {};
 
-            next_controller->add_dependent(controller);
+            controller->add_dependent(next_controller);
 
             if constexpr(std::is_void_v<future_store>) {
-                controller->set_on_success([next_controller]() {
-                    next_controller->set_value();
+                controller->set_on_success([next_controller_wp]() {
+                    assert(!next_controller_wp.expired());
+                    std::shared_ptr(next_controller_wp)->set_value();
                 });
             } else {
-                controller->set_on_success([next_controller](future_store &&v) {
-                    next_controller->set_value(std::forward<future_store>(v));
+                controller->set_on_success([next_controller_wp](future_store &&v) {
+                    assert(!next_controller_wp.expired());
+                    std::shared_ptr(next_controller_wp)->set_value(std::forward<future_store>(v));
                 });
             }
 
-            controller->set_on_fail([next_controller](std::exception_ptr e) {
-                next_controller->set_exception(e);
+            controller->set_on_fail([next_controller_wp](std::exception_ptr e) {
+                assert(!next_controller_wp.expired());
+                std::shared_ptr(next_controller_wp)->set_exception(e);
             });
         });
 
@@ -303,17 +306,20 @@ namespace vshalygin::cl::internal {
                     future_controller->add_dependent(new_controller);
 
                     if constexpr(std::is_void_v<future_store>) {
-                        future_controller->set_on_success([new_controller] () {
-                            new_controller->set_value();
+                        future_controller->set_on_success([new_controller_wp] () {
+                            assert(!new_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_value();
                         });
                     } else {
-                        future_controller->set_on_success([new_controller](future_store &&v) {
-                            new_controller->set_value(std::forward<future_store>(v));
+                        future_controller->set_on_success([new_controller_wp](future_store &&v) {
+                            assert(!new_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_value(std::forward<future_store>(v));
                         });
                     }
 
-                    future_controller->set_on_fail([new_controller] (std::exception_ptr ep) {
-                        new_controller->set_exception(ep);
+                    future_controller->set_on_fail([new_controller_wp] (std::exception_ptr ep) {
+                        assert(!new_controller_wp.expired());
+                        std::shared_ptr(new_controller_wp)->set_exception(ep);
                     });
                 } catch(...) {
                     assert(!new_controller_wp.expired());
@@ -356,11 +362,13 @@ namespace vshalygin::cl::internal {
                         auto future_controller = future.get_controller();
                         future_controller->add_dependent(new_controller);
 
-                        future_controller->set_on_success([new_controller]() {
-                            new_controller->set_value();
+                        future_controller->set_on_success([new_controller_wp]() {
+                            assert(!new_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_value();
                         });
-                        future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
-                            new_controller->set_exception(ep);
+                        future_controller->set_on_fail([new_controller_wp](std::exception_ptr ep) {
+                            assert(!new_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_exception(ep);
                         });
                     }
                 } catch(...) {
@@ -385,11 +393,13 @@ namespace vshalygin::cl::internal {
                         future_controller->add_dependent(new_controller);
 
                         type_wrapper<decltype(val)> v(std::forward<decltype(val)>(val));
-                        future_controller->set_on_success([new_controller, &mtx, v]() mutable {
-                            new_controller->set_value_reference(mtx, v.to_underlying());
+                        future_controller->set_on_success([new_controller_wp, &mtx, v]() mutable {
+                            assert(!new_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_value_reference(mtx, v.to_underlying());
                         });
-                        future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
-                            new_controller->set_exception(ep);
+                        future_controller->set_on_fail([new_controller_wp](std::exception_ptr ep) {
+                            assert(!new_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_exception(ep);
                         });
                     }
                 } catch(...) {
@@ -412,11 +422,13 @@ namespace vshalygin::cl::internal {
                     auto future_controller = future.get_controller();
                     future_controller->add_dependent(new_controller);
 
-                    future_controller->set_on_success([new_controller, ep]() mutable {
-                        new_controller->set_exception(ep);
+                    future_controller->set_on_success([new_controller_wp, ep]() mutable {
+                        assert(!new_controller_wp.expired());
+                        std::shared_ptr(new_controller_wp)->set_exception(ep);
                     });
-                    future_controller->set_on_fail([new_controller](std::exception_ptr ep) {
-                        new_controller->set_exception(ep);
+                    future_controller->set_on_fail([new_controller_wp](std::exception_ptr ep) {
+                        assert(!new_controller_wp.expired());
+                        std::shared_ptr(new_controller_wp)->set_exception(ep);
                     });
                 }
             } catch(...) {
