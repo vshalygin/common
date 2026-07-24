@@ -3,6 +3,14 @@
 
 #include <algorithm>
 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 namespace vshalygin::rpc::internal {
     namespace {
         std::wstring make_fule_pipe_name(const std::wstring &pipe_name)
@@ -43,7 +51,7 @@ namespace vshalygin::rpc::internal {
 
         m_iocp_thread.post([pipe = std::move(pipe), overlapped, this]() mutable {
             std::error_code ec;
-            m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::connect_pipe), ec);
+            m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation), ec);
             if(ec) {
                 overlapped->resolve(false, static_cast<DWORD>(ec.value()));
                 return;
@@ -83,7 +91,7 @@ namespace vshalygin::rpc::internal {
                                                 nullptr));
 
             if(pipe) {
-                m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::read_write));
+                m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation));
                 return pipe;
             }
 
@@ -100,7 +108,26 @@ namespace vshalygin::rpc::internal {
         }
     }
 
+    void win_pipe_iocp_owner::write_async(win_pipe_write_operation *overlapped)
+    {
+        m_iocp_thread.post([overlapped]() {
+            std::error_code ec;
+            overlapped->write(ec);
+
+            if(ec) {
+                overlapped->resolve(false, static_cast<DWORD>(ec.value()));
+            }
+        });
+    }
+
     void win_pipe_iocp_owner::cancel_create(win_pipe_create_operation *overlapped)
+    {
+        m_iocp_thread.post([overlapped]() {
+            overlapped->cancel();
+        });
+    }
+
+    void win_pipe_iocp_owner::cancel_write(win_pipe_write_operation *overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             overlapped->cancel();
@@ -111,14 +138,23 @@ namespace vshalygin::rpc::internal {
     {
         while(true) {
             const auto status = m_iocp.get();
-            switch(static_cast<win_pipe_iocp_key>(status.key)) {
-                case win_pipe_iocp_key::interrupt_iocp:
-                    return;
-                case win_pipe_iocp_key::connect_pipe:
+            if(static_cast<win_pipe_iocp_key>(status.key) == win_pipe_iocp_key::interrupt_iocp) {
+                return;
+            }
+
+            assert(status.overlapped);
+            const auto op = reinterpret_cast<win_pipe_operation *>(status.overlapped);
+            switch(op->kind) {
+                case win_pipe_operation_kind::create:
                 {
-                    assert(status.overlapped);
-                    auto op = reinterpret_cast<win_pipe_create_operation *>(status.overlapped);
-                    op->resolve(status.success, status.error);
+                    auto op2 = reinterpret_cast<win_pipe_create_operation *>(op);
+                    op2->resolve(status.success, status.error);
+                    break;
+                }
+                case win_pipe_operation_kind::write:
+                {
+                    auto op2 = reinterpret_cast<win_pipe_write_operation *>(op);
+                    op2->resolve(status.success, status.error);
                     break;
                 }
                 default:

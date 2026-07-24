@@ -99,6 +99,9 @@
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.cpp">
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.cpp">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\types\request-result.h">
@@ -203,6 +206,12 @@
       <Filter>pipe\win-pipe</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.h">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.h">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-operation.h">
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClInclude>
   </ItemGroup>

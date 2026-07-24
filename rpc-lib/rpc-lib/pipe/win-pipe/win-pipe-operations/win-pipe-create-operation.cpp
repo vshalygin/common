@@ -30,6 +30,11 @@ namespace vshalygin::rpc::internal {
             m_promise.resolve(win::pipe_handle{}, ec);
         }
     }
+
+    future<ftuple<win::pipe_handle, DWORD>> win_pipe_create_operation::get_future()
+    {
+        return m_promise.get_future();
+    }
 }
 
 #endif

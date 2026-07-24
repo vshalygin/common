@@ -2,10 +2,11 @@
 #ifdef _WIN32
 #include <rpc-lib/types/future.h>
 
-#include <win-lib/types/handle.h>
-
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/synchronization/value-locker.h>
+
+#include "win-pipe-operation.h"
+#include <win-lib/types/handle.h>
 
 namespace vshalygin::rpc::internal {
     class win_pipe_create_operation
@@ -22,8 +23,12 @@ namespace vshalygin::rpc::internal {
 
         void resolve(bool success, DWORD ec);
 
+        future<ftuple<win::pipe_handle, DWORD>> get_future();
+
     private:
-        OVERLAPPED m_overlapped{}; //contract: must be first
+        //contract: must be first
+        win_pipe_operation m_operation{ win_pipe_operation_kind::create };
+
         cl::value_locker<win::pipe_handle> m_pipe;
 
         promise<ftuple<win::pipe_handle, DWORD>, win::pipe_handle, DWORD> m_promise;

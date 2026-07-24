@@ -1,6 +1,7 @@
 #pragma once
 #ifdef _WIN32
 #include "win-pipe-operations/win-pipe-create-operation.h"
+#include "win-pipe-operations/win-pipe-write-operation.h"
 
 #include "../pipe-wait-res.h"
 #include "../ipipe-endpoint.h"
@@ -15,8 +16,7 @@ namespace vshalygin::rpc::internal {
     enum class win_pipe_iocp_key
     {
         interrupt_iocp,
-        connect_pipe,
-        read_write
+        process_operation
     };
 
     class win_pipe_iocp_owner final
@@ -30,9 +30,12 @@ namespace vshalygin::rpc::internal {
         ~win_pipe_iocp_owner();
 
         void create_pipe_async(const std::wstring &pipe_name, win_pipe_create_operation *overlapped);
+        void cancel_create(win_pipe_create_operation *overlapped);
+
         win::pipe_handle open_pipe(const std::wstring &pipe_name, std::chrono::milliseconds timeout);
 
-        void cancel_create(win_pipe_create_operation *overlapped);
+        void write_async(win_pipe_write_operation *overlapped);
+        void cancel_write(win_pipe_write_operation *overlapped);
 
     private:
         void run_worker_loop();

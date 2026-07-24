@@ -26,6 +26,7 @@
     <ClCompile Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.cpp" />
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h" />
@@ -61,6 +62,8 @@
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-operation.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.h" />
     <ClInclude Include="rpc-lib\server-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\types\future.h" />
