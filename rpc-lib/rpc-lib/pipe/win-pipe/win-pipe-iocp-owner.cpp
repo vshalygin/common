@@ -51,7 +51,9 @@ namespace vshalygin::rpc::internal {
 
         m_iocp_thread.post([pipe = std::move(pipe), overlapped, this]() mutable {
             std::error_code ec;
-            m_iocp.associate(pipe.get(), static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation), ec);
+            m_iocp.associate(pipe.get(),
+                             static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation),
+                             ec);
             if(ec) {
                 overlapped->resolve(false, static_cast<DWORD>(ec.value()));
                 return;
@@ -109,6 +111,25 @@ namespace vshalygin::rpc::internal {
         }
     }
 
+    void win_pipe_iocp_owner::read_async(win_pipe_read_operation *overlapped)
+    {
+        m_iocp_thread.post([overlapped]() {
+            std::error_code ec;
+            overlapped->read(ec);
+
+            if(ec) {
+                overlapped->resolve(false, static_cast<DWORD>(ec.value()));
+            }
+        });
+    }
+
+    void win_pipe_iocp_owner::cancel_read(win_pipe_read_operation *overlapped)
+    {
+        m_iocp_thread.post([overlapped]() {
+            overlapped->cancel();
+        });
+    }
+
     void win_pipe_iocp_owner::write_async(win_pipe_write_operation *overlapped)
     {
         m_iocp_thread.post([overlapped]() {
@@ -160,8 +181,20 @@ namespace vshalygin::rpc::internal {
                     write_operation->resolve(status.success, status.error);
                     break;
                 }
+                case win_pipe_operation_kind::read:
+                {
+                    auto read_operation = reinterpret_cast<win_pipe_read_operation *>(op);
+                    read_operation->add_read_bytes(status.bytes_transferred);
+                    if(status.success) {
+                        read_operation->resolve(true, status.error);
+                    } else if(status.error == ERROR_MORE_DATA) {
+                        read_async(read_operation);
+                    } else {
+                        read_operation->resolve(false, status.error);
+                    }
+                }
                 default:
-                    assert(false); //TODO temp
+                    assert(!"unknown win_pipe_operation_kind");
             }
             
         }

@@ -10,11 +10,6 @@ namespace vshalygin::rpc::internal {
         , m_promise(thread_pool, [](bool success, DWORD ec) { return ftuple(success, ec); })
     {}
 
-    win::pipe_handle::handle_type win_pipe_write_operation::get_pipe() const noexcept
-    {
-        return m_pipe;
-    }
-
     void win_pipe_write_operation::write(std::error_code ec) noexcept
     {
         ec.clear();

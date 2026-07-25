@@ -2,6 +2,7 @@
 #ifdef _WIN32
 #include "win-pipe-operations/win-pipe-create-operation.h"
 #include "win-pipe-operations/win-pipe-write-operation.h"
+#include "win-pipe-operations/win-pipe-read-operation.h"
 
 #include "../pipe-wait-res.h"
 #include "../ipipe-endpoint.h"
@@ -29,12 +30,13 @@ namespace vshalygin::rpc::internal {
 
         ~win_pipe_iocp_owner();
 
-        void create_pipe_async(const std::wstring &pipe_name,
-                               win_pipe_create_operation *overlapped);
+        void create_pipe_async(const std::wstring &pipe_name, win_pipe_create_operation *overlapped);
         void cancel_create(win_pipe_create_operation *overlapped);
 
-        win::pipe_handle open_pipe(const std::wstring &pipe_name,
-                                   std::chrono::milliseconds timeout);
+        win::pipe_handle open_pipe(const std::wstring &pipe_name, std::chrono::milliseconds timeout);
+
+        void read_async(win_pipe_read_operation *overlapped);
+        void cancel_read(win_pipe_read_operation *overlapped);
 
         void write_async(win_pipe_write_operation *overlapped);
         void cancel_write(win_pipe_write_operation *overlapped);
