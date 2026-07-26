@@ -13,7 +13,7 @@
 
 namespace vshalygin::rpc::internal {
     namespace {
-        std::wstring make_fule_pipe_name(const std::wstring &pipe_name)
+        std::wstring make_full_pipe_name(const std::wstring &pipe_name)
         {
             return L"\\\\.\\pipe\\" + pipe_name;
         }
@@ -34,7 +34,7 @@ namespace vshalygin::rpc::internal {
     void win_pipe_iocp_owner::create_pipe_async(const std::wstring &pipe_name,
                                                 win_pipe_create_operation *overlapped)
     {
-        const auto full_pipe_name = make_fule_pipe_name(pipe_name);
+        const auto full_pipe_name = make_full_pipe_name(pipe_name);
         win::pipe_handle pipe(
             ::CreateNamedPipeW(full_pipe_name.c_str(),
                                PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
@@ -77,7 +77,7 @@ namespace vshalygin::rpc::internal {
     {
         using clock = std::chrono::steady_clock;
 
-        const auto full_pipe_name = make_fule_pipe_name(pipe_name);
+        const auto full_pipe_name = make_full_pipe_name(pipe_name);
         const auto start = clock::now();
         const auto deadline = (clock::time_point::max() - start) < timeout ?
                                clock::time_point::max() :
@@ -114,11 +114,17 @@ namespace vshalygin::rpc::internal {
     void win_pipe_iocp_owner::read_async(win_pipe_read_operation *overlapped)
     {
         m_iocp_thread.post([overlapped]() {
+            if(overlapped->get_result() != win_pipe_operation_res::unknown) {
+                overlapped->resolve();
+                return;
+            }
+
             std::error_code ec;
             overlapped->read(ec);
 
             if(ec) {
-                overlapped->resolve(false, static_cast<DWORD>(ec.value()));
+                overlapped->set_failed_if_possible();
+                overlapped->resolve();
             }
         });
     }
@@ -132,12 +138,12 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_iocp_owner::write_async(win_pipe_write_operation *overlapped)
     {
-        if(overlapped->get_result() != win_pipe_operation_res::unknown) {
-            overlapped->resolve();
-            return;
-        }
-
         m_iocp_thread.post([overlapped]() {
+            if(overlapped->get_result() != win_pipe_operation_res::unknown) {
+                overlapped->resolve();
+                return;
+            }
+
             std::error_code ec;
             overlapped->write(ec);
 
@@ -148,14 +154,14 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    void win_pipe_iocp_owner::cancel_create(win_pipe_create_operation *overlapped)
+    void win_pipe_iocp_owner::cancel_write(win_pipe_write_operation *overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             overlapped->cancel();
         });
     }
 
-    void win_pipe_iocp_owner::cancel_write(win_pipe_write_operation *overlapped)
+    void win_pipe_iocp_owner::cancel_create(win_pipe_create_operation *overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             overlapped->cancel();
@@ -197,11 +203,14 @@ namespace vshalygin::rpc::internal {
                     auto read_operation = reinterpret_cast<win_pipe_read_operation *>(op);
                     read_operation->add_read_bytes(status.bytes_transferred);
                     if(status.success) {
-                        read_operation->resolve(true, status.error);
+                        read_operation->set_success();
+                        read_operation->resolve();
                     } else if(status.error == ERROR_MORE_DATA) {
+                        read_operation->add_buffer_chunk();
                         read_async(read_operation);
                     } else {
-                        read_operation->resolve(false, status.error);
+                        read_operation->set_failed_if_possible();
+                        read_operation->resolve();
                     }
                     break;
                 }

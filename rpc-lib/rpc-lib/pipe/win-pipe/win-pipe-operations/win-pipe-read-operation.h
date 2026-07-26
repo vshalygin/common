@@ -6,17 +6,12 @@
 #include <common-lib/utils/buffer.h>
 
 #include <vector>
+#include <atomic>
 
 #include "win-pipe-operation.h"
 #include <win-lib/types/handle.h>
 
 namespace vshalygin::rpc::internal {
-    struct win_pipe_read_res
-    {
-        std::vector<cl::buffer> buffer;
-        size_t size = 0;
-    };
-
     class win_pipe_read_operation
     {
     public:
@@ -33,22 +28,29 @@ namespace vshalygin::rpc::internal {
 
         void add_buffer_chunk();
 
-        void resolve(bool success, DWORD ec);
+        void resolve();
 
-        future<ftuple<bool, DWORD>> get_future();
+        future<ftuple<win_pipe_operation_res, cl::buffer>> get_future();
 
-        win_pipe_read_res extract_res() noexcept;
+        win_pipe_operation_res get_result() const noexcept;
+
+        void set_success() noexcept;
+        void set_canceled_if_possible() noexcept;
+        void set_timeout_if_possible() noexcept;
+        void set_failed_if_possible() noexcept;
 
     private:
         //contract: operation must be first
         win_pipe_operation m_operation{ win_pipe_operation_kind::read };
 
         win::pipe_handle::handle_type m_pipe;
-        std::vector<cl::buffer> m_buffer;
+        std::vector<cl::buffer> m_buffers;
 
-        promise<ftuple<bool, DWORD>, bool, DWORD> m_promise;
+        promise<ftuple<win_pipe_operation_res, cl::buffer>, win_pipe_operation_res, cl::buffer> m_promise;
 
         DWORD m_read_bytes = 0;
+
+        std::atomic<win_pipe_operation_res> m_res{ win_pipe_operation_res::unknown };
     };
 }
 
