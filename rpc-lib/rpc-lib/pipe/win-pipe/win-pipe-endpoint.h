@@ -28,8 +28,8 @@ namespace vshalygin::rpc {
 
         write_future write_async(cl::buffer &&msg) override;
         read_future read_async() override;
-        write_future write_async(cl::buffer &&msg, const std::chrono::milliseconds &timeout) override;
-        read_future read_async(const std::chrono::milliseconds &timeout) override;
+        write_future write_async(cl::buffer &&msg, std::chrono::milliseconds timeout) override;
+        read_future read_async(std::chrono::milliseconds timeout) override;
 
         void invalidate() override;
 

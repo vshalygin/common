@@ -43,8 +43,8 @@ namespace vshalygin::rpc {
 
         write_future write_async(cl::buffer &&msg);
         read_future read_async();
-        write_future write_async(cl::buffer &&msg, const std::chrono::milliseconds &timeout);
-        read_future read_async(const std::chrono::milliseconds &timeout);
+        write_future write_async(cl::buffer &&msg, std::chrono::milliseconds timeout);
+        read_future read_async(std::chrono::milliseconds timeout);
 
         void invalidate();
 
@@ -131,14 +131,14 @@ namespace vshalygin::rpc {
     }
 
     win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(
-        cl::buffer && /*msg*/, const std::chrono::milliseconds & /*timeout*/)
+        cl::buffer && /*msg*/, std::chrono::milliseconds /*timeout*/)
     {
         //TODO add definition
         return {};
     }
 
     win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(
-        const std::chrono::milliseconds & /*timeout*/)
+        std::chrono::milliseconds /*timeout*/)
     {
         //TODO add definition
         return {};
@@ -241,13 +241,13 @@ namespace vshalygin::rpc {
     }
 
     win_pipe_endpoint::write_future win_pipe_endpoint::write_async(
-        cl::buffer &&msg, const std::chrono::milliseconds &timeout)
+        cl::buffer &&msg, std::chrono::milliseconds timeout)
     {
         return m_impl->write_async(std::move(msg), timeout);
     }
 
     win_pipe_endpoint::read_future win_pipe_endpoint::read_async(
-        const std::chrono::milliseconds &timeout)
+        std::chrono::milliseconds timeout)
     {
         return m_impl->read_async(timeout);
     }

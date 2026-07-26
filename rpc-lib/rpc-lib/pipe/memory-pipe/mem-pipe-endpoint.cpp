@@ -34,12 +34,12 @@ namespace vshalygin::rpc {
     }
 
     mem_pipe_endpoint::write_future mem_pipe_endpoint::write_async(cl::buffer &&msg,
-                                                                   const std::chrono::milliseconds &timeout)
+                                                                   std::chrono::milliseconds timeout)
     {
         return write_async(std::move(msg), std::optional(timeout));
     }
 
-    mem_pipe_endpoint::read_future mem_pipe_endpoint::read_async(const std::chrono::milliseconds &timeout)
+    mem_pipe_endpoint::read_future mem_pipe_endpoint::read_async(std::chrono::milliseconds timeout)
     {
         return read_async(std::optional(timeout));
     }

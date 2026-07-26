@@ -65,7 +65,7 @@ namespace vshalygin::rpc::internal {
             if(r || ::GetLastError() == ERROR_PIPE_CONNECTED) {
                 overlapped->resolve(true, static_cast<DWORD>(ERROR_SUCCESS));
             } else if(::GetLastError() == ERROR_IO_PENDING) {
-                //will be resolved later
+                //will be resolved later in iocp worker thread
             } else {
                 overlapped->resolve(false, ::GetLastError());
             }
