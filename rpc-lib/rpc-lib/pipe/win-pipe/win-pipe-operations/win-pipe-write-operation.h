@@ -6,6 +6,8 @@
 #include "win-pipe-operation.h"
 #include <win-lib/types/handle.h>
 
+#include <atomic>
+
 namespace vshalygin::rpc::internal {
     class win_pipe_write_operation
     {
@@ -20,9 +22,16 @@ namespace vshalygin::rpc::internal {
         void write(std::error_code ec) noexcept;
         void cancel() noexcept;
 
-        void resolve(bool success, DWORD ec);
+        void resolve();
 
-        future<ftuple<bool, DWORD>> get_future();
+        future<win_pipe_operation_res> get_future();
+
+        win_pipe_operation_res get_result() const noexcept;
+
+        void set_success() noexcept;
+        void set_canceled_if_possible() noexcept;
+        void set_timeout_if_possible() noexcept;
+        void set_failed_if_possible() noexcept;
 
     private:
         //contract: operation must be first
@@ -31,7 +40,9 @@ namespace vshalygin::rpc::internal {
         win::pipe_handle::handle_type m_pipe;
         cl::buffer m_buffer;
 
-        promise<ftuple<bool, DWORD>, bool, DWORD> m_promise;
+        promise<win_pipe_operation_res, win_pipe_operation_res> m_promise;
+
+        std::atomic<win_pipe_operation_res> m_res{ win_pipe_operation_res::unknown };
     };
 }
 

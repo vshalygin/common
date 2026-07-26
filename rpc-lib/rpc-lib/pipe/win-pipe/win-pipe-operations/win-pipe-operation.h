@@ -10,6 +10,15 @@ namespace vshalygin::rpc::internal {
         write
     };
 
+    enum class win_pipe_operation_res
+    {
+        unknown,
+        success,
+        canceled,
+        timeout,
+        failed
+    };
+
     struct win_pipe_operation
     {
         win_pipe_operation(win_pipe_operation_kind k)

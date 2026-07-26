@@ -7,7 +7,7 @@ namespace vshalygin::rpc::internal {
                                                        cl::thread_pool *thread_pool)
         : m_pipe(pipe)
         , m_buffer(std::move(buffer))
-        , m_promise(thread_pool, [](bool success, DWORD ec) { return ftuple(success, ec); })
+        , m_promise(thread_pool, [](win_pipe_operation_res r) { return r; })
     {}
 
     void win_pipe_write_operation::write(std::error_code ec) noexcept
@@ -29,14 +29,54 @@ namespace vshalygin::rpc::internal {
         ::CancelIo(m_pipe);
     }
 
-    void win_pipe_write_operation::resolve(bool success, DWORD ec)
+    void win_pipe_write_operation::resolve()
     {
-        m_promise.resolve(success, ec);
+        auto res = m_res.load(std::memory_order_acquire);
+        assert(res != win_pipe_operation_res::unknown);
+
+        m_promise.resolve(res);
     }
 
-    future<ftuple<bool, DWORD>> win_pipe_write_operation::get_future()
+    future<win_pipe_operation_res> win_pipe_write_operation::get_future()
     {
         return m_promise.get_future();
+    }
+
+    win_pipe_operation_res win_pipe_write_operation::get_result() const noexcept
+    {
+        return m_res.load(std::memory_order_acquire);
+    }
+
+    void win_pipe_write_operation::set_success() noexcept
+    {
+        m_res.store(win_pipe_operation_res::success, std::memory_order_release);
+    }
+
+    void win_pipe_write_operation::set_canceled_if_possible() noexcept
+    {
+        auto expected = win_pipe_operation_res::unknown;
+        m_res.compare_exchange_strong(expected,
+                                      win_pipe_operation_res::canceled,
+                                      std::memory_order_release,
+                                      std::memory_order_relaxed);
+    }
+
+    void win_pipe_write_operation::set_timeout_if_possible() noexcept
+    {
+        auto expected = win_pipe_operation_res::unknown;
+        m_res.compare_exchange_strong(expected,
+                                      win_pipe_operation_res::timeout,
+                                      std::memory_order_release,
+                                      std::memory_order_relaxed);
+    }
+
+    void win_pipe_write_operation::set_failed_if_possible() noexcept
+    {
+        auto expected = win_pipe_operation_res::unknown;
+        m_res.compare_exchange_strong(expected,
+                                      win_pipe_operation_res::failed,
+                                      std::memory_order_release,
+                                      std::memory_order_relaxed);
     }
 }
 

@@ -132,12 +132,18 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_iocp_owner::write_async(win_pipe_write_operation *overlapped)
     {
+        if(overlapped->get_result() != win_pipe_operation_res::unknown) {
+            overlapped->resolve();
+            return;
+        }
+
         m_iocp_thread.post([overlapped]() {
             std::error_code ec;
             overlapped->write(ec);
 
             if(ec) {
-                overlapped->resolve(false, static_cast<DWORD>(ec.value()));
+                overlapped->set_failed_if_possible();
+                overlapped->resolve();
             }
         });
     }
@@ -178,7 +184,12 @@ namespace vshalygin::rpc::internal {
                 case win_pipe_operation_kind::write:
                 {
                     auto write_operation = reinterpret_cast<win_pipe_write_operation *>(op);
-                    write_operation->resolve(status.success, status.error);
+                    if(status.success) {
+                        write_operation->set_success();
+                    } else {
+                        write_operation->set_failed_if_possible();
+                    }
+                    write_operation->resolve();
                     break;
                 }
                 case win_pipe_operation_kind::read:
@@ -192,6 +203,7 @@ namespace vshalygin::rpc::internal {
                     } else {
                         read_operation->resolve(false, status.error);
                     }
+                    break;
                 }
                 default:
                     assert(!"unknown win_pipe_operation_kind");
