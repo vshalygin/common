@@ -36,7 +36,7 @@ namespace vshalygin::cl {
     uint64_t multiple_timer::start(Callback &&callback,
                                    std::chrono::milliseconds timeout)
     {
-        const auto timer_id = m_next_id.fetch_add(1);
+        const auto timer_id = m_next_id.fetch_add(1, std::memory_order_relaxed);
         auto timers_map = m_timers_map->lock();
 
         boost::asio::steady_timer timer(m_io_context);
