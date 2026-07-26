@@ -49,14 +49,14 @@ namespace vshalygin::rpc {
 
         void invalidate();
 
-        void wait_current_write_op_completed();
-        void wait_current_read_op_completed();
-
     private:
+        void wait_current_write_ops_completed();
+        void wait_current_read_ops_completed();
+
         void complete_write_op();
         void complete_read_op();
 
-        void set_disconnect();
+        void set_disconnect_on_op_failed();
 
         void cancel();
 
@@ -121,7 +121,7 @@ namespace vshalygin::rpc {
             .then([self = weak_from_this()](op_res r) {
                       if(auto s = self.lock()) {
                           if(r == op_res::failed) {
-                              s->set_disconnect();
+                              s->set_disconnect_on_op_failed();
                           }
                           
                           s->complete_write_op();
@@ -149,7 +149,7 @@ namespace vshalygin::rpc {
             .then([self = weak_from_this()](op_res r, cl::buffer &&b) {
                       if(auto s = self.lock()) {
                           if(r == op_res::failed) {
-                              s->set_disconnect();
+                              s->set_disconnect_on_op_failed();
                           }
 
                           s->complete_read_op();
@@ -175,14 +175,15 @@ namespace vshalygin::rpc {
 
     void win_pipe_endpoint::impl::invalidate()
     {
-        std::lock_guard g(m_pipe_mtx);
-        if(!m_is_connected) {
+        std::unique_lock pipe_lock(m_pipe_mtx);
+        if(!m_pipe) {
             return;
         }
-        m_is_connected = false;
 
-        {
-            std::lock_guard gg(m_write_op_mtx);
+        if(m_is_connected) {
+            m_is_connected = false;
+
+            std::unique_lock write_lock(m_write_op_mtx);
             if(!m_write_ops.empty()) {
                 auto it = m_write_ops.begin();
                 it->set_canceled_if_possible();
@@ -191,10 +192,9 @@ namespace vshalygin::rpc {
                     it->set_canceled_if_possible();
                 }
             }
-        }
+            write_lock.unlock();
 
-        {
-            std::lock_guard gg(m_read_op_mtx);
+            std::unique_lock read_lock(m_read_op_mtx);
             if(!m_read_ops.empty()) {
                 auto it = m_read_ops.begin();
                 it->set_canceled_if_possible();
@@ -203,21 +203,30 @@ namespace vshalygin::rpc {
                     it->set_canceled_if_possible();
                 }
             }
+            read_lock.unlock();
+
+            if(m_disconnect_callback) {
+                m_disconnect_callback.exec();
+                m_disconnect_callback = {};
+            }
         }
 
-        if(m_disconnect_callback) {
-            m_disconnect_callback.exec();
-            m_disconnect_callback = {};
-        }
+        pipe_lock.unlock();
+
+        wait_current_write_ops_completed();
+        wait_current_read_ops_completed();
+
+        pipe_lock.lock();
+        m_pipe.reset();
     }
 
-    void win_pipe_endpoint::impl::wait_current_write_op_completed()
+    void win_pipe_endpoint::impl::wait_current_write_ops_completed()
     {
         std::unique_lock g(m_write_op_mtx);
         m_write_op_cv.wait(g, [this]() { return m_write_ops.empty(); });
     }
 
-    void win_pipe_endpoint::impl::wait_current_read_op_completed()
+    void win_pipe_endpoint::impl::wait_current_read_ops_completed()
     {
         std::unique_lock g(m_read_op_mtx);
         m_read_op_cv.wait(g, [this]() { return m_read_ops.empty(); });
@@ -263,7 +272,7 @@ namespace vshalygin::rpc {
         }
     }
 
-    void win_pipe_endpoint::impl::set_disconnect()
+    void win_pipe_endpoint::impl::set_disconnect_on_op_failed()
     {
         std::lock_guard g(m_pipe_mtx);
         std::lock_guard gg(m_write_op_mtx);
@@ -276,6 +285,11 @@ namespace vshalygin::rpc {
         for(auto it = m_read_ops.begin(); it != m_read_ops.end(); ++it) {
             it->set_failed_if_possible();
         }
+
+        if(m_disconnect_callback) {
+            m_disconnect_callback.exec();
+            m_disconnect_callback = {};
+        }
     }
 
     win_pipe_endpoint::win_pipe_endpoint(win::pipe_handle &&handle,
@@ -287,8 +301,6 @@ namespace vshalygin::rpc {
     win_pipe_endpoint::~win_pipe_endpoint()
     {
         m_impl->invalidate();
-        m_impl->wait_current_write_op_completed();
-        m_impl->wait_current_read_op_completed();
     }
 
     bool win_pipe_endpoint::is_connected() const
