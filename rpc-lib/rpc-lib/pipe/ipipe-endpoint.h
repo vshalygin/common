@@ -22,6 +22,7 @@ namespace vshalygin::rpc {
     // 7) If the connection has already been lost at the moment the disconnect_callback is set, the disconnect_callback
     //    must be invoked immediately.
     // 8) The object is created with an active connection. Reconnection is not supported.
+    // 9) read_async may unexpectedly fail only on disconnect event.
 
     class ipipe_endpoint
     {
