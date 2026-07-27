@@ -255,6 +255,7 @@ TEST_F(Connection, CancelActiveRequestOnDeactivation)
     sut->start();
 
     auto f = sut->request_async(msg.copy());
+    m_other_pipe_enpoint->read_async().wait();
     sut->deactivate();
     
     f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::canceled); });
@@ -269,6 +270,7 @@ TEST_F(Connection, CancelActiveRequestOnDestroy)
     sut->start();
 
     auto f = sut->request_async(msg.copy());
+    m_other_pipe_enpoint->read_async().wait();
     sut.reset();
 
     f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::canceled); });
@@ -307,7 +309,7 @@ TEST_F(Connection, IgnoresResponseWithWrongNumber)
     EXPECT_EQ(1, sut->get_pending_requests_count());
 }
 
-TEST_F(Connection, WriteOperationFails)
+TEST_F(Connection, WriteOperationCanceled)
 {
     auto sync_event = std::make_shared<event>();
     for(unsigned i = 0; i < m_thread_pool->get_num(); ++i) {
@@ -321,7 +323,7 @@ TEST_F(Connection, WriteOperationFails)
     m_pipe_endpoint->invalidate();
 
     sync_event->set();
-    f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_failed); });
+    f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_canceled); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
 }
@@ -388,6 +390,7 @@ TEST_F(Connection, CancelsActiveRequestOnDeactivate)
     sut->start();
 
     auto f = sut->request_async(req_msg.copy());
+    m_other_pipe_enpoint->read_async().get();
     sut->deactivate();
 
     f.get().apply([&](request_result r, buffer &&) {
@@ -405,10 +408,11 @@ TEST_F(Connection, CancelsActiveRequestOnConnectionLost)
     sut->start();
 
     auto f = sut->request_async(req_msg.copy());
+    m_other_pipe_enpoint->read_async().wait();
     m_other_pipe_enpoint->invalidate();
 
     f.get().apply([&](request_result r, buffer &&) {
-        ASSERT_EQ(r, request_result::canceled);
+        ASSERT_EQ(r, request_result::canceled); //TODO make failed
     });
 
     while(sut->get_active_timers_count()) {}

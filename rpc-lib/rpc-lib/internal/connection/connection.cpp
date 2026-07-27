@@ -49,6 +49,8 @@ namespace vshalygin::rpc::internal {
         void handle_received_request(cl::buffer &&message);
         void handle_received_response(cl::buffer &&message);
 
+        void process_request_sent(uint64_t req_msg_number);
+
         void complete_request(uint64_t req_msg_number,
                               request_result result,
                               cl::buffer &&res_msg);
@@ -76,6 +78,9 @@ namespace vshalygin::rpc::internal {
     {
         req_result_promise promise;
         uint64_t timer_id;
+
+        bool is_req_sent;
+        std::optional<request_result> fail_req_result;
     };
 
     connection::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
@@ -125,11 +130,13 @@ namespace vshalygin::rpc::internal {
         add_request_to_map(msg_number, std::move(promise));
 
         auto send_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
-            if(res == pipe_op_res::canceled) {
+            if(is_success(res)) {
+                self->process_request_sent(msg_number);
+            } else if(res == pipe_op_res::canceled) {
                 self->complete_request(msg_number, request_result::send_canceled, {});
             } else if(res == pipe_op_res::timeout) {
                 self->complete_request(msg_number, request_result::send_timeout, {});
-            } else if(is_fail(res)) {
+            } else {
                 self->complete_request(msg_number, request_result::send_failed, {});
             }
         };
@@ -194,6 +201,24 @@ namespace vshalygin::rpc::internal {
         complete_request(message_number, request_result::ok, std::move(message));
     }
 
+    void connection::impl::process_request_sent(uint64_t req_msg_number)
+    {
+        req_result_promise to_delete;
+
+        auto map = m_request_map.lock();
+        auto it = map->find(req_msg_number);
+        if(it != map->end()) {
+            auto &req_data = it->second;
+            req_data.is_req_sent = true;
+            if(req_data.fail_req_result) {
+                assert(is_fail(*req_data.fail_req_result));
+                req_data.promise.resolve(*req_data.fail_req_result, {});
+                to_delete = std::move(req_data.promise);
+                map->erase(it);
+            }
+        }
+    }
+
     void connection::impl::complete_request(uint64_t req_msg_number,
                                             request_result result,
                                             cl::buffer &&res_msg)
@@ -227,7 +252,7 @@ namespace vshalygin::rpc::internal {
         assert(map->count(msg_number) == 0);
         auto timer_id = m_multiple_timer.start(std::move(timer_callback),
                                                m_recv_timeout);
-        (*map)[msg_number] = request_data{ std::move(promise), timer_id };
+        map->emplace(msg_number, request_data{ std::move(promise), timer_id, false, std::nullopt });
     }
 
     void connection::impl::complete_receive_routine(pipe_op_res r)
@@ -243,13 +268,19 @@ namespace vshalygin::rpc::internal {
         std::vector<req_result_promise> to_delete;
 
         auto map = m_request_map.lock();
-        for(auto &el : *map) {
-            auto &req_data = el.second;
-            req_data.promise.resolve(req_result, {});
-            to_delete.push_back(std::move(req_data.promise));
+        for(auto it = map->begin(); it != map->end(); ) {
+            auto &req_data = it->second;
             m_multiple_timer.cancel(req_data.timer_id);
+
+            if(req_data.is_req_sent) {
+                req_data.promise.resolve(req_result, {});
+                to_delete.push_back(std::move(req_data.promise));
+                it = map->erase(it);
+            } else {
+                req_data.fail_req_result = req_result;
+                ++it;
+            }
         }
-        map->clear();
     }
 
     size_t connection::impl::get_pending_requests_count() const
