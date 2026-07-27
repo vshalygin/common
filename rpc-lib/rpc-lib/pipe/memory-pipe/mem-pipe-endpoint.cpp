@@ -61,6 +61,6 @@ namespace vshalygin::rpc {
 
     void mem_pipe_endpoint::invalidate()
     {
-        m_mem_buffers->invalidate();
+        m_mem_buffers->invalidate(m_is_server);
     }
 }

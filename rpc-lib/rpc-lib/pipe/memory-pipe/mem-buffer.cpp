@@ -18,7 +18,7 @@ namespace vshalygin::rpc {
 
     mem_buffer::~mem_buffer()
     {
-        invalidate();
+        invalidate(true);
     }
 
     mem_buffer::write_future mem_buffer::write_async(cl::buffer &&data,
@@ -41,7 +41,7 @@ namespace vshalygin::rpc {
                              timeout_point]() mutable
         {
             promise.resolve(self->write_impl(std::move(data), timeout_point));
-            self->resolve_read_promises();
+            self->resolve_read_promise();
         });
         
         return future;
@@ -61,7 +61,7 @@ namespace vshalygin::rpc {
         return future;
     }
 
-    void mem_buffer::invalidate()
+    void mem_buffer::invalidate(bool cancel_read)
     {
         std::lock_guard guard(m_mtx);
         if(m_is_valid) {
@@ -70,8 +70,8 @@ namespace vshalygin::rpc {
             auto read_promises = m_read_promises->lock();
             auto &q = read_promises->get<0>();
             for(auto it = q.begin(); it != q.end(); ++it) {
-                q.modify(it, [](read_promise_data &el) {
-                    el.promise.resolve(pipe_op_res::canceled, {});
+                q.modify(it, [cancel_read](read_promise_data &el) {
+                    el.promise.resolve(cancel_read ? pipe_op_res::canceled : pipe_op_res::failed, {});
                 });
             }
             q.clear();
@@ -117,7 +117,7 @@ namespace vshalygin::rpc {
         return pipe_op_res::success;
     }
 
-    void mem_buffer::resolve_read_promises()
+    void mem_buffer::resolve_read_promise()
     {
         read_promise to_delete;
 

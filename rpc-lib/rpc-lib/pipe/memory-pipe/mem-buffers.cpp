@@ -9,7 +9,7 @@ namespace vshalygin::rpc {
 
     mem_buffers::~mem_buffers()
     {
-        invalidate();
+        invalidate_impl(true, true);
     }
 
     mem_buffers::read_future
@@ -48,10 +48,15 @@ namespace vshalygin::rpc {
         }
     }
 
-    void mem_buffers::invalidate()
+    void mem_buffers::invalidate(bool by_server)
     {
-        m_client_to_server->invalidate();
-        m_server_to_client->invalidate();
+        invalidate_impl(by_server, !by_server);
+    }
+
+    void mem_buffers::invalidate_impl(bool cancel_server_side, bool cancel_client_side)
+    {
+        m_client_to_server->invalidate(cancel_server_side);
+        m_server_to_client->invalidate(cancel_client_side);
 
         std::lock_guard guard(m_mtx);
         m_invalidated = true;

@@ -31,10 +31,13 @@ namespace vshalygin::rpc {
 
         void set_invalidate_callback(cl::thread_pool_task<void()> &&callback);
 
-        void invalidate();
+        void invalidate(bool by_server);
         bool is_valid() const;
 
         size_t get_invalidate_callbacks_count() const;
+
+    private:
+        void invalidate_impl(bool cancel_server_side, bool cancel_client_side);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;

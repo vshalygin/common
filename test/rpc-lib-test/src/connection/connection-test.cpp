@@ -416,7 +416,7 @@ TEST_F(Connection, CancelsActiveRequestOnConnectionLost)
     m_other_pipe_enpoint->invalidate();
 
     f.get().apply([&](request_result r, buffer &&) {
-        ASSERT_EQ(r, request_result::canceled); //TODO make failed
+        ASSERT_EQ(r, request_result::failed);
     });
 
     while(sut->get_active_timers_count()) {}

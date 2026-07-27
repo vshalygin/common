@@ -42,7 +42,7 @@ namespace vshalygin::rpc {
         future<ftuple<pipe_op_res, cl::buffer>>
             read_async(const std::optional<std::chrono::milliseconds> &timeout);
 
-        void invalidate();
+        void invalidate(bool cancel_read);
         bool is_valid() const;
 
         size_t get_pending_messages_count() const;
@@ -53,7 +53,7 @@ namespace vshalygin::rpc {
         void read_impl(read_promise promise,
                        const std::optional<std::chrono::milliseconds> &timeout);
 
-        void resolve_read_promises();
+        void resolve_read_promise();
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;

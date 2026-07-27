@@ -60,7 +60,7 @@ TEST_F(MemBuffer, IsNotValidJustAfterInvalidation)
 {
     auto sut = mem_buffer::create(m_thread_pool);
 
-    sut->invalidate();
+    sut->invalidate(true);
 
     ASSERT_FALSE(sut->is_valid());
 }
@@ -105,7 +105,7 @@ TEST_F(MemBuffer, DoesNotWriteIfInvalidated)
         .Times(1);
 
     auto sut = mem_buffer::create(m_thread_pool);
-    sut->invalidate();
+    sut->invalidate(true);
     sut->write_async({}, std::nullopt)
         .then(callback.AsStdFunction())
         .get();
@@ -132,7 +132,7 @@ TEST_F(MemBuffer, DoesNotReadAsyncIfInvalid)
         .Times(1);
 
     auto sut = mem_buffer::create(m_thread_pool);
-    sut->invalidate();
+    sut->invalidate(true);
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction())
         .get();
@@ -169,7 +169,26 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation)
         .then(read_callback.AsStdFunction());
     while(sut->get_pending_read_handlers_count() != 1) {}
 
-    sut->invalidate();
+    sut->invalidate(true);
+
+    sync_event.wait();
+    ASSERT_TRUE(sut->get_pending_read_handlers_count() == 0);
+}
+
+TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation2)
+{
+    event sync_event;
+    MockFunction<void(pipe_op_res, buffer &&)> read_callback;
+    EXPECT_CALL(read_callback, Call(pipe_op_res::failed, _))
+        .Times(1)
+        .WillOnce([&]() { sync_event.set(); });
+
+    auto sut = mem_buffer::create(m_thread_pool);
+    sut->read_async(std::nullopt)
+        .then(read_callback.AsStdFunction());
+    while(sut->get_pending_read_handlers_count() != 1) {}
+
+    sut->invalidate(false);
 
     sync_event.wait();
     ASSERT_TRUE(sut->get_pending_read_handlers_count() == 0);
@@ -179,7 +198,7 @@ TEST_F(MemBuffer, ClearsPendingMessagesOnInvalidation)
 {
     auto sut = mem_buffer::create(m_thread_pool);
     sut->write_async({}, std::nullopt).get();
-    sut->invalidate();
+    sut->invalidate(true);
 
     ASSERT_TRUE(sut->get_pending_messages_count() == 0);
 }

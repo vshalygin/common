@@ -74,7 +74,7 @@ TEST_F(MemPipeEndpoint, InNotConnectedAfterUnderlyingBuffersInvalidated)
     auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
 
     test_mem_pipe_endpoint sut(true, buffers);
-    buffers->invalidate();
+    buffers->invalidate(true);
 
     ASSERT_FALSE(sut.is_connected());
 }
