@@ -7,7 +7,6 @@
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/timer/multiple-timer.h>
 
-#include <atomic>
 #include <vector>
 
 namespace vshalygin::rpc::internal {
@@ -61,7 +60,8 @@ namespace vshalygin::rpc::internal {
         void complete_receive_routine(pipe_op_res r);
 
     private:
-        std::atomic_bool m_is_started = false;
+        mutable std::mutex m_is_running_mtx;
+        bool m_is_running = false;
 
         const std::chrono::milliseconds m_recv_timeout;
 
@@ -97,8 +97,10 @@ namespace vshalygin::rpc::internal {
 
     void connection::impl::start()
     {
-        if(!m_is_started.exchange(true, std::memory_order_acq_rel)) {
-            do_receive_async();
+        std::lock_guard g(m_is_running_mtx);
+        if(!m_is_running) {
+            m_is_running = true;
+            do_receive_async();;
         }
     }
 
@@ -109,12 +111,14 @@ namespace vshalygin::rpc::internal {
 
     bool connection::impl::is_active() const
     {
-        return m_is_started.load(std::memory_order_acquire) && m_transport.is_running();
+        std::lock_guard g(m_is_running_mtx);
+        return m_is_running && m_transport.is_running();
     }
 
     connection::req_result_future connection::impl::request_async(cl::buffer &&message)
     {
-        if(!is_active()) {
+        std::lock_guard g(m_is_running_mtx);
+        if(!m_is_running || !m_transport.is_running()) {
             return req_result_future(m_thread_pool.get(), ftuple(request_result::failed, cl::buffer{}));
         }
 
@@ -256,10 +260,12 @@ namespace vshalygin::rpc::internal {
 
     void connection::impl::complete_receive_routine(pipe_op_res r)
     {
-        //TODO установить флаг, что больше не принимаем реквесты
+        std::lock_guard g(m_is_running_mtx);
+        m_is_running = false;
 
         assert(is_fail(r));
         assert(r != pipe_op_res::timeout);
+
         request_result req_result = (pipe_op_res::canceled == r) ?
                                      request_result::canceled :
                                      request_result::failed;
