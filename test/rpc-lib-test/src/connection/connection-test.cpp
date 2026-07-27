@@ -209,20 +209,24 @@ TEST_F(Connection, SetStopCallback3)
     Mock::VerifyAndClearExpectations(&stop_callback);
 }
 
-TEST_F(Connection, ThrowsExceptionOnAttemptToMakeRequestOnInactiveTransport)
+TEST_F(Connection, ReturnFailOnAttemptToMakeRequestOnInactiveTransport)
 {
     auto sut = create_sut();
-    
-    ASSERT_ANY_THROW(sut->request_async(create_req_get_data_message(1)));
+
+    auto f = sut->request_async(create_req_get_data_message(1));
+
+    f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::failed); });
 }
 
-TEST_F(Connection, ThrowsExceptionOnAttemptToMakeRequestOnInactiveTransport2)
+TEST_F(Connection, ReturnFailOnAttemptToMakeRequestOnInactiveTransport2)
 {
     auto sut = create_sut();
     sut->start();
     m_other_pipe_enpoint->invalidate();
 
-    ASSERT_ANY_THROW(sut->request_async(create_req_get_data_message(1)));
+    auto f = sut->request_async(create_req_get_data_message(1));
+
+    f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::failed); });
 }
 
 TEST_F(Connection, HasZeroPendingRequestsAfterCreation)

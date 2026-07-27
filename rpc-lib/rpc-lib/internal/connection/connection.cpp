@@ -114,9 +114,8 @@ namespace vshalygin::rpc::internal {
 
     connection::req_result_future connection::impl::request_async(cl::buffer &&message)
     {
-        //TODO лучше устанавливать future
         if(!is_active()) {
-            throw std::runtime_error("transport is not active");
+            return req_result_future(m_thread_pool.get(), ftuple(request_result::failed, cl::buffer{}));
         }
 
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
