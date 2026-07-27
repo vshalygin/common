@@ -7,6 +7,7 @@
 #include <common-lib/timer/multiple-timer.h>
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread-pool/strand.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
@@ -56,6 +57,8 @@ namespace vshalygin::rpc {
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::strand m_read_strand;
+        cl::strand m_write_strand;
 
         mutable std::mutex m_mtx;
         bool m_is_valid = true;

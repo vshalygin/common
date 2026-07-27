@@ -10,6 +10,8 @@ namespace vshalygin::rpc {
 
     mem_buffer::mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool)
         : m_thread_pool(std::move(thread_pool))
+        , m_read_strand(m_thread_pool->get_io_context())
+        , m_write_strand(m_thread_pool->get_io_context())
         , m_read_promises(std::make_shared<cl::value_locker<read_promise_container>>())
         , m_timer(m_thread_pool->get_io_context())
     {}
@@ -28,10 +30,10 @@ namespace vshalygin::rpc {
 
         auto timeout_point = timeout ? std::chrono::steady_clock::now() + *timeout
                                      : std::chrono::steady_clock::time_point::max();
-        m_thread_pool->post([self = shared_from_this(),
-                            promise = std::move(promise),
-                            data = std::move(data),
-                            timeout_point]() mutable
+        m_write_strand.post([self = shared_from_this(),
+                             promise = std::move(promise),
+                             data = std::move(data),
+                             timeout_point]() mutable
         {
             promise.resolve(self->write_impl(std::move(data), timeout_point));
             self->resolve_read_promises();
@@ -47,7 +49,7 @@ namespace vshalygin::rpc {
         auto future = promise.get_future();
 
 
-        m_thread_pool->post([self = shared_from_this(), promise = std::move(promise), timeout]() mutable {
+        m_read_strand.post([self = shared_from_this(), promise = std::move(promise), timeout]() mutable {
             self->read_impl(std::move(promise), timeout);
         });
 
