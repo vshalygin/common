@@ -76,7 +76,7 @@ TEST(RequestController, RpcControllerIsCastableToIRequestController)
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     auto promise = make_promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
-        EXPECT_EQ(request_result::send_canceled_error, r);
+        EXPECT_EQ(request_result::send_canceled, r);
         return rpc::ftuple(r, std::move(m));
     });
     auto future = promise.get_future();
@@ -86,7 +86,7 @@ TEST(RequestController, RpcControllerIsCastableToIRequestController)
 
     google::protobuf::RpcController *rpc_controller = sut;
     auto request_controller = to_request_controller(rpc_controller);
-    request_controller->set_result(request_result::send_canceled_error);
+    request_controller->set_result(request_result::send_canceled);
 
     sut->Run();
     future.get();

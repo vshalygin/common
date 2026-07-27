@@ -8,9 +8,10 @@ namespace vshalygin::rpc {
         ok = 0,
         timeout,
         canceled,
-        send_timeout_error,
-        send_canceled_error,
-        send_unknown_error,
+        failed,
+        send_timeout,
+        send_canceled,
+        send_failed,
         request_not_processed,
         response_parse_error,
         no_connection,
@@ -34,14 +35,16 @@ namespace vshalygin::rpc {
                 return "ok";
             case request_result::timeout:
                 return "timeout";
-            case request_result::send_timeout_error:
-                return "send_timeout_error";
-            case request_result::send_unknown_error:
-                return "send_unknown_error";
-            case request_result::send_canceled_error:
-                return "send_canceled_error";
             case request_result::canceled:
                 return "canceled";
+            case request_result::failed:
+                return "failed";
+            case request_result::send_timeout:
+                return "send_timeout";
+            case request_result::send_canceled:
+                return "send_canceled";
+            case request_result::send_failed:
+                return "send_failed";
             case request_result::request_not_processed:
                 return "request_not_processed";
             case request_result::response_parse_error:

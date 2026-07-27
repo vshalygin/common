@@ -9,9 +9,10 @@ TEST(RequestResult, TestIsSuccess)
 {
     EXPECT_TRUE(is_success(request_result::ok));
     EXPECT_FALSE(is_success(request_result::timeout));
-    EXPECT_FALSE(is_success(request_result::send_timeout_error));
-    EXPECT_FALSE(is_success(request_result::send_unknown_error));
-    EXPECT_FALSE(is_success(request_result::send_canceled_error));
+    EXPECT_FALSE(is_success(request_result::failed));
+    EXPECT_FALSE(is_success(request_result::send_timeout));
+    EXPECT_FALSE(is_success(request_result::send_failed));
+    EXPECT_FALSE(is_success(request_result::send_canceled));
     EXPECT_FALSE(is_success(request_result::canceled));
     EXPECT_FALSE(is_success(request_result::request_not_processed));
     EXPECT_FALSE(is_success(request_result::response_parse_error));
@@ -23,9 +24,10 @@ TEST(RequestResult, TestIsFail)
 {
     EXPECT_FALSE(is_fail(request_result::ok));
     EXPECT_TRUE(is_fail(request_result::timeout));
-    EXPECT_TRUE(is_fail(request_result::send_timeout_error));
-    EXPECT_TRUE(is_fail(request_result::send_unknown_error));
-    EXPECT_TRUE(is_fail(request_result::send_canceled_error));
+    EXPECT_TRUE(is_fail(request_result::failed));
+    EXPECT_TRUE(is_fail(request_result::send_timeout));
+    EXPECT_TRUE(is_fail(request_result::send_failed));
+    EXPECT_TRUE(is_fail(request_result::send_canceled));
     EXPECT_TRUE(is_fail(request_result::canceled));
     EXPECT_TRUE(is_fail(request_result::request_not_processed));
     EXPECT_TRUE(is_fail(request_result::response_parse_error));
@@ -37,9 +39,10 @@ TEST(RequestResult, TestStringConversation)
 {
     EXPECT_EQ(to_string(request_result::ok), "ok");
     EXPECT_EQ(to_string(request_result::timeout), "timeout");
-    EXPECT_EQ(to_string(request_result::send_timeout_error), "send_timeout_error");
-    EXPECT_EQ(to_string(request_result::send_unknown_error), "send_unknown_error");
-    EXPECT_EQ(to_string(request_result::send_canceled_error), "send_canceled_error");
+    EXPECT_EQ(to_string(request_result::failed), "failed");
+    EXPECT_EQ(to_string(request_result::send_timeout), "send_timeout");
+    EXPECT_EQ(to_string(request_result::send_failed), "send_failed");
+    EXPECT_EQ(to_string(request_result::send_canceled), "send_canceled");
     EXPECT_EQ(to_string(request_result::canceled), "canceled");
     EXPECT_EQ(to_string(request_result::request_not_processed), "request_not_processed");
     EXPECT_EQ(to_string(request_result::response_parse_error), "response_parse_error");

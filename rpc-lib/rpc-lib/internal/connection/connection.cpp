@@ -8,6 +8,7 @@
 #include <common-lib/timer/multiple-timer.h>
 
 #include <atomic>
+#include <vector>
 
 namespace vshalygin::rpc::internal {
     class connection::impl final
@@ -55,9 +56,7 @@ namespace vshalygin::rpc::internal {
         void add_request_to_map(uint64_t msg_number,
                                 req_result_promise &&promise);
 
-        void remove_request_from_map(uint64_t msg_number) noexcept;
-
-        void cancel_active_requests();
+        void complete_receive_routine(pipe_op_res r);
 
     private:
         std::atomic_bool m_is_started = false;
@@ -101,7 +100,6 @@ namespace vshalygin::rpc::internal {
     void connection::impl::deactivate()
     {
         m_transport.stop();
-        cancel_active_requests();
     }
 
     bool connection::impl::is_active() const
@@ -111,6 +109,7 @@ namespace vshalygin::rpc::internal {
 
     connection::req_result_future connection::impl::request_async(cl::buffer &&message)
     {
+        //TODO лучше устанавливать future
         if(!is_active()) {
             throw std::runtime_error("transport is not active");
         }
@@ -127,11 +126,11 @@ namespace vshalygin::rpc::internal {
 
         auto send_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
             if(res == pipe_op_res::canceled) {
-                self->complete_request(msg_number, request_result::send_canceled_error, {});
+                self->complete_request(msg_number, request_result::send_canceled, {});
             } else if(res == pipe_op_res::timeout) {
-                self->complete_request(msg_number, request_result::send_timeout_error, {});
+                self->complete_request(msg_number, request_result::send_timeout, {});
             } else if(is_fail(res)) {
-                self->complete_request(msg_number, request_result::send_unknown_error, {});
+                self->complete_request(msg_number, request_result::send_failed, {});
             }
         };
 
@@ -153,6 +152,8 @@ namespace vshalygin::rpc::internal {
                       if(is_success(r)) {
                           self->dispatch_receive_event(std::move(message));
                           self->do_receive_async();
+                      } else {
+                          self->complete_receive_routine(r);
                       }
                   });
     }
@@ -164,11 +165,9 @@ namespace vshalygin::rpc::internal {
 
             if(transfer_msg_type::req == message_type) {
                 handle_received_request(std::move(message));
-            }
-            else if(transfer_msg_type::res == message_type) {
+            } else if(transfer_msg_type::res == message_type) {
                 handle_received_response(std::move(message));
-            }
-            else {
+            } else {
                 assert(!"unknown type of received message");
             }
         } catch (...) {
@@ -231,25 +230,23 @@ namespace vshalygin::rpc::internal {
         (*map)[msg_number] = request_data{ std::move(promise), timer_id };
     }
 
-    void connection::impl::remove_request_from_map(uint64_t msg_number) noexcept
+    void connection::impl::complete_receive_routine(pipe_op_res r)
     {
-        try {
-            auto map = m_request_map.lock();
-            auto it = map->find(msg_number);
-            if(it != map->end()) {
-                m_multiple_timer.cancel(it->second.timer_id);
-                map->erase(it);
-            }
-        } catch(...) {
-        }
-    }
+        //TODO установить флаг, что больше не принимаем реквесты
 
-    void connection::impl::cancel_active_requests()
-    {
+        assert(is_fail(r));
+        assert(r != pipe_op_res::timeout);
+        request_result req_result = (pipe_op_res::canceled == r) ?
+                                     request_result::canceled :
+                                     request_result::failed;
+
+        std::vector<req_result_promise> to_delete;
+
         auto map = m_request_map.lock();
         for(auto &el : *map) {
             auto &req_data = el.second;
-            req_data.promise.resolve(request_result::canceled, {});
+            req_data.promise.resolve(req_result, {});
+            to_delete.push_back(std::move(req_data.promise));
             m_multiple_timer.cancel(req_data.timer_id);
         }
         map->clear();
