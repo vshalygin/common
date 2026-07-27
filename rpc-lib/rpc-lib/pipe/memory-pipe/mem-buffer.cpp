@@ -24,6 +24,11 @@ namespace vshalygin::rpc {
     mem_buffer::write_future mem_buffer::write_async(cl::buffer &&data,
                                                      const std::optional<std::chrono::milliseconds> &timeout)
     {
+        std::lock_guard guard(m_mtx);
+        if(!m_is_valid) {
+            return write_future(m_thread_pool.get(), pipe_op_res::failed);
+        }
+
         auto promise = make_promise(m_thread_pool.get(),
                                     [](pipe_op_res res) { return res; });
         auto future = promise.get_future();
@@ -96,7 +101,7 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
 
         if(!m_is_valid) {
-            return pipe_op_res::failed;
+            return pipe_op_res::canceled;
         }
 
         if(std::chrono::steady_clock::now() > timeout_point) {
@@ -142,13 +147,11 @@ namespace vshalygin::rpc {
 
         if(!m_is_valid) {
             promise.resolve(pipe_op_res::failed, {});
-        }
-        else if(!m_buffer.empty()) {
+        } else if(!m_buffer.empty()) {
             auto msg = std::move(m_buffer.front());
             m_buffer.pop();
             promise.resolve(pipe_op_res::success, std::move(msg));
-        }
-        else {
+        } else {
             const auto id = m_next_read_promise_id++;
 
             auto read_promises = m_read_promises->lock();
