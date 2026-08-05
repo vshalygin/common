@@ -50,19 +50,15 @@ namespace vshalygin::rpc {
         void invalidate();
 
     private:
-        void wait_current_write_ops_completed();
-        void wait_current_read_ops_completed();
-
         void complete_write_op();
         void complete_read_op();
 
-        void set_disconnect_on_op_failed();
+        void invoke_disconnect_callbacks();
 
-        void cancel();
+        void invalidate_impl(bool by_cancel);
 
     private:
         mutable std::mutex m_pipe_mtx;
-        bool m_is_connected = true;
         std::vector<cl::thread_pool_task<void()>> m_disconnect_callbacks;
         win::pipe_handle m_pipe;
 
@@ -70,11 +66,9 @@ namespace vshalygin::rpc {
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         mutable std::mutex m_write_op_mtx;
-        std::condition_variable m_write_op_cv;
         std::list<write_op> m_write_ops;
 
         mutable std::mutex m_read_op_mtx;
-        std::condition_variable m_read_op_cv;
         std::list<read_op> m_read_ops;
     };
 
@@ -91,13 +85,13 @@ namespace vshalygin::rpc {
     bool win_pipe_endpoint::impl::is_connected() const
     {
         std::lock_guard g(m_pipe_mtx);
-        return m_is_connected;
+        return !m_pipe.empty();
     }
 
     void win_pipe_endpoint::impl::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
     {
         std::lock_guard g(m_pipe_mtx);
-        if(m_is_connected) {
+        if(m_pipe) {
             m_disconnect_callbacks.push_back(std::move(callback));
         } else {
             callback.exec();
@@ -107,7 +101,7 @@ namespace vshalygin::rpc {
     win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(cl::buffer &&msg)
     {
         std::lock_guard g(m_pipe_mtx);
-        if(!m_is_connected) {
+        if(!m_pipe) {
             return write_future(m_thread_pool.get(), pipe_op_res::failed);
         }
 
@@ -118,24 +112,21 @@ namespace vshalygin::rpc {
         }
 
         return op.get_future()
-            .then([self = weak_from_this()](op_res r) {
-                      if(auto s = self.lock()) {
-                          if(r == op_res::failed) {
-                              s->set_disconnect_on_op_failed();
-                          }
-                          
-                          s->complete_write_op();
+            .then([self = shared_from_this()](op_res r) {
+                      if(r == op_res::failed) {
+                          self->invalidate_impl(false);
                       }
+
+                      self->complete_write_op();
 
                       return to_pipe_op_res(r);
                   });
-
     }
 
     win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async()
     {
         std::lock_guard g(m_pipe_mtx);
-        if(!m_is_connected) {
+        if(!m_pipe) {
             return read_future(m_thread_pool.get(), ftuple(pipe_op_res::failed, cl::buffer{}));
         }
 
@@ -146,14 +137,12 @@ namespace vshalygin::rpc {
         }
 
         return op.get_future()
-            .then([self = weak_from_this()](op_res r, cl::buffer &&b) {
-                      if(auto s = self.lock()) {
-                          if(r == op_res::failed) {
-                              s->set_disconnect_on_op_failed();
-                          }
-
-                          s->complete_read_op();
+            .then([self = shared_from_this()](op_res r, cl::buffer &&b) {
+                      if(r == op_res::failed) {
+                          self->invalidate_impl(false);
                       }
+
+                      self->complete_read_op();
                       
                       return ftuple(to_pipe_op_res(r), std::move(b));
                   });
@@ -175,121 +164,60 @@ namespace vshalygin::rpc {
 
     void win_pipe_endpoint::impl::invalidate()
     {
-        std::unique_lock pipe_lock(m_pipe_mtx);
-        if(!m_pipe) {
-            return;
-        }
-
-        if(m_is_connected) {
-            m_is_connected = false;
-
-            std::unique_lock write_lock(m_write_op_mtx);
-            if(!m_write_ops.empty()) {
-                auto it = m_write_ops.begin();
-                it->set_canceled_if_possible();
-                m_iocp_owner->cancel_write(&(*it));
-                for(++it; it != m_write_ops.end(); ++it) {
-                    it->set_canceled_if_possible();
-                }
-            }
-            write_lock.unlock();
-
-            std::unique_lock read_lock(m_read_op_mtx);
-            if(!m_read_ops.empty()) {
-                auto it = m_read_ops.begin();
-                it->set_canceled_if_possible();
-                m_iocp_owner->cancel_read(&(*it));
-                for(++it; it != m_read_ops.end(); ++it) {
-                    it->set_canceled_if_possible();
-                }
-            }
-            read_lock.unlock();
-
-            for(auto &cb : m_disconnect_callbacks) {
-                cb.exec();
-            }
-            m_disconnect_callbacks.clear();
-        }
-
-        pipe_lock.unlock();
-
-        wait_current_write_ops_completed();
-        wait_current_read_ops_completed();
-
-        pipe_lock.lock();
-        m_pipe.reset();
-    }
-
-    void win_pipe_endpoint::impl::wait_current_write_ops_completed()
-    {
-        std::unique_lock g(m_write_op_mtx);
-        m_write_op_cv.wait(g, [this]() { return m_write_ops.empty(); });
-    }
-
-    void win_pipe_endpoint::impl::wait_current_read_ops_completed()
-    {
-        std::unique_lock g(m_read_op_mtx);
-        m_read_op_cv.wait(g, [this]() { return m_read_ops.empty(); });
+        invalidate_impl(true);
     }
 
     void win_pipe_endpoint::impl::complete_write_op()
     {
-        bool notify = false;
-
-        {
-            std::unique_lock g(m_write_op_mtx);
-            m_write_ops.pop_front();
-            auto size = m_write_ops.size();
-            if(size == 0) {
-                notify = true;
-            } else {
-                m_iocp_owner->write_async(&m_write_ops.front());
-            }
-        }
-
-        if(notify) {
-            m_write_op_cv.notify_all();
+        std::unique_lock g(m_write_op_mtx);
+        m_write_ops.pop_front();
+        if(!m_write_ops.empty()) {
+            m_iocp_owner->write_async(&m_write_ops.front());
         }
     }
 
     void win_pipe_endpoint::impl::complete_read_op()
     {
-        bool notify = false;
-
-        {
-            std::unique_lock g(m_read_op_mtx);
-            m_read_ops.pop_front();
-            auto size = m_read_ops.size();
-            if(size == 0) {
-                notify = true;
-            } else {
-                m_iocp_owner->read_async(&m_read_ops.front());
-            }
-        }
-
-        if(notify) {
-            m_read_op_cv.notify_all();
+        std::unique_lock g(m_read_op_mtx);
+        m_read_ops.pop_front();
+        if(!m_read_ops.empty()) {
+            m_iocp_owner->read_async(&m_read_ops.front());
         }
     }
 
-    void win_pipe_endpoint::impl::set_disconnect_on_op_failed()
+    void win_pipe_endpoint::impl::invoke_disconnect_callbacks()
     {
-        std::lock_guard g(m_pipe_mtx);
-        std::lock_guard gg(m_write_op_mtx);
-        std::lock_guard ggg(m_read_op_mtx);
-
-        m_is_connected = false;
-        for(auto it = m_write_ops.begin(); it != m_write_ops.end(); ++it) {
-            it->set_failed_if_possible();
-        }
-        for(auto it = m_read_ops.begin(); it != m_read_ops.end(); ++it) {
-            it->set_failed_if_possible();
-        }
-
         for(auto &cb : m_disconnect_callbacks) {
             cb.exec();
         }
         m_disconnect_callbacks.clear();
+    }
+
+    void win_pipe_endpoint::impl::invalidate_impl(bool by_cancel)
+    {
+        std::lock_guard g(m_pipe_mtx);
+        if(!m_pipe) {
+            return;
+        }
+
+        std::lock_guard gg(m_write_op_mtx);
+        std::lock_guard ggg(m_read_op_mtx);
+
+        auto set_write_result = by_cancel ? &write_op::set_canceled_if_possible
+                                          : &write_op::set_failed_if_possible;
+        auto set_read_result = by_cancel ? &read_op::set_canceled_if_possible
+                                         : &read_op::set_failed_if_possible;
+
+        for(auto it = m_write_ops.begin(); it != m_write_ops.end(); ++it) {
+            ((*it).*set_write_result)();
+        }
+        for(auto it = m_read_ops.begin(); it != m_read_ops.end(); ++it) {
+            ((*it).*set_read_result)();
+        }
+
+        m_pipe.reset();
+
+        invoke_disconnect_callbacks();
     }
 
     win_pipe_endpoint::win_pipe_endpoint(win::pipe_handle &&handle,
