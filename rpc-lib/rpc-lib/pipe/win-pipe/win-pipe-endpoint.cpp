@@ -63,7 +63,7 @@ namespace vshalygin::rpc {
     private:
         mutable std::mutex m_pipe_mtx;
         bool m_is_connected = true;
-        cl::thread_pool_task<void()> m_disconnect_callback;
+        std::vector<cl::thread_pool_task<void()>> m_disconnect_callbacks;
         win::pipe_handle m_pipe;
 
         std::shared_ptr<internal::win_pipe_iocp_owner> m_iocp_owner;
@@ -98,7 +98,7 @@ namespace vshalygin::rpc {
     {
         std::lock_guard g(m_pipe_mtx);
         if(m_is_connected) {
-            m_disconnect_callback = std::move(callback);
+            m_disconnect_callbacks.push_back(std::move(callback));
         } else {
             callback.exec();
         }
@@ -205,10 +205,10 @@ namespace vshalygin::rpc {
             }
             read_lock.unlock();
 
-            if(m_disconnect_callback) {
-                m_disconnect_callback.exec();
-                m_disconnect_callback = {};
+            for(auto &cb : m_disconnect_callbacks) {
+                cb.exec();
             }
+            m_disconnect_callbacks.clear();
         }
 
         pipe_lock.unlock();
@@ -286,10 +286,10 @@ namespace vshalygin::rpc {
             it->set_failed_if_possible();
         }
 
-        if(m_disconnect_callback) {
-            m_disconnect_callback.exec();
-            m_disconnect_callback = {};
+        for(auto &cb : m_disconnect_callbacks) {
+            cb.exec();
         }
+        m_disconnect_callbacks.clear();
     }
 
     win_pipe_endpoint::win_pipe_endpoint(win::pipe_handle &&handle,
