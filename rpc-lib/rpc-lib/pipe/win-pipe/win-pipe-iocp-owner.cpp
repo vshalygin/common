@@ -17,6 +17,28 @@ namespace vshalygin::rpc::internal {
         {
             return L"\\\\.\\pipe\\" + pipe_name;
         }
+
+        pipe_wait_res to_pipe_wait_res(win_pipe_operation_res r)
+        {
+            switch(r) {
+                case win_pipe_operation_res::success:
+                    return pipe_wait_res::success;
+                case win_pipe_operation_res::canceled:
+                    return pipe_wait_res::canceled;
+                case win_pipe_operation_res::timeout:
+                    return pipe_wait_res::timeout;
+                case win_pipe_operation_res::failed:
+                    return pipe_wait_res::failed;
+                default:
+                    assert(!"unexpected win_pipe_operation_res");
+                    return pipe_wait_res::failed;
+            }
+        }
+    }
+
+    std::shared_ptr<win_pipe_iocp_owner> win_pipe_iocp_owner::create()
+    {
+        return std::shared_ptr<win_pipe_iocp_owner>(new win_pipe_iocp_owner);
     }
 
     win_pipe_iocp_owner::win_pipe_iocp_owner()
@@ -72,43 +94,26 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    win::pipe_handle win_pipe_iocp_owner::open_pipe(const std::wstring &pipe_name,
-                                                    std::chrono::milliseconds timeout)
+    future<ftuple<pipe_wait_res, win::pipe_handle>> win_pipe_iocp_owner::open_pipe_async(
+        win_pipe_open_operation *op)
     {
-        using clock = std::chrono::steady_clock;
+        auto f = op->get_future();
+        op->start();
 
-        const auto full_pipe_name = make_full_pipe_name(pipe_name);
-        const auto start = clock::now();
-        const auto deadline = (clock::time_point::max() - start) < timeout ?
-                               clock::time_point::max() :
-                               start + timeout;
-        while(true)
-        {
-            win::pipe_handle pipe(::CreateFileW(full_pipe_name.c_str(),
-                                                GENERIC_READ | GENERIC_WRITE,
-                                                0,
-                                                nullptr,
-                                                OPEN_EXISTING,
-                                                FILE_FLAG_OVERLAPPED,
-                                                nullptr));
+        return f.then([s = shared_from_this()](win_pipe_operation_res r, win::pipe_handle &&p) mutable {
+                          if(win_pipe_operation_res::success == r) {
+                              s->m_iocp.associate(
+                                  p.get(),
+                                  static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation));
+                          }
+                          return ftuple(to_pipe_wait_res(r), std::move(p));
+                      });
+    }
 
-            if(pipe) {
-                m_iocp.associate(pipe.get(),
-                                 static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation));
-                return pipe;
-            }
-
-            if(::GetLastError() != ERROR_PIPE_BUSY) {
-                throw std::system_error(::GetLastError(), std::system_category());
-            }
-
-            auto now = clock::now();
-            const auto t = std::max((deadline - now).count(), 0ll);
-            const DWORD tt = static_cast<DWORD>(std::min(t, static_cast<decltype(t)>(MAXDWORD)));
-            if(!::WaitNamedPipeW(full_pipe_name.c_str(), tt)) {
-                throw std::system_error(::GetLastError(), std::system_category());
-            }
-        }
+    //Generally speaking this method is pointless. Added just for symmetry
+    void win_pipe_iocp_owner::cancel_open_pipe(win_pipe_open_operation *op)
+    {
+        op->cancel();
     }
 
     void win_pipe_iocp_owner::read_async(win_pipe_read_operation *overlapped)
@@ -120,7 +125,7 @@ namespace vshalygin::rpc::internal {
             }
 
             std::error_code ec;
-            overlapped->read(ec);
+            overlapped->start(ec);
 
             if(ec) {
                 overlapped->set_failed_if_possible();
@@ -145,7 +150,7 @@ namespace vshalygin::rpc::internal {
             }
 
             std::error_code ec;
-            overlapped->write(ec);
+            overlapped->start(ec);
 
             if(ec) {
                 overlapped->set_failed_if_possible();
@@ -179,7 +184,7 @@ namespace vshalygin::rpc::internal {
 
             assert(key == win_pipe_iocp_key::process_operation);
             assert(status.overlapped);
-            const auto op = reinterpret_cast<win_pipe_operation *>(status.overlapped);
+            const auto op = reinterpret_cast<win_pipe_overlapped *>(status.overlapped);
             switch(op->kind) {
                 case win_pipe_operation_kind::create:
                 {

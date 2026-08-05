@@ -1,6 +1,7 @@
 #pragma once
 #ifdef _WIN32
 #include "win-pipe-operations/win-pipe-create-operation.h"
+#include "win-pipe-operations/win-pipe-open-operation.h"
 #include "win-pipe-operations/win-pipe-write-operation.h"
 #include "win-pipe-operations/win-pipe-read-operation.h"
 
@@ -21,9 +22,12 @@ namespace vshalygin::rpc::internal {
     };
 
     class win_pipe_iocp_owner final
+        : public std::enable_shared_from_this<win_pipe_iocp_owner>
     {
+        win_pipe_iocp_owner();
+
     public:
-        explicit win_pipe_iocp_owner();
+        static std::shared_ptr<win_pipe_iocp_owner> create();
 
         win_pipe_iocp_owner(const win_pipe_iocp_owner &) = delete;
         win_pipe_iocp_owner &operator=(const win_pipe_iocp_owner &) = delete;
@@ -33,7 +37,8 @@ namespace vshalygin::rpc::internal {
         void create_pipe_async(const std::wstring &pipe_name, win_pipe_create_operation *overlapped);
         void cancel_create(win_pipe_create_operation *overlapped);
 
-        win::pipe_handle open_pipe(const std::wstring &pipe_name, std::chrono::milliseconds timeout);
+        future<ftuple<pipe_wait_res, win::pipe_handle>> open_pipe_async(win_pipe_open_operation *op);
+        void cancel_open_pipe(win_pipe_open_operation *op);
 
         void read_async(win_pipe_read_operation *overlapped);
         void cancel_read(win_pipe_read_operation *overlapped);

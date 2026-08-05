@@ -10,7 +10,7 @@ namespace vshalygin::rpc::internal {
         , m_promise(thread_pool, [](win_pipe_operation_res r) { return r; })
     {}
 
-    void win_pipe_write_operation::write(std::error_code ec) noexcept
+    void win_pipe_write_operation::start(std::error_code ec) noexcept
     {
         ec.clear();
 

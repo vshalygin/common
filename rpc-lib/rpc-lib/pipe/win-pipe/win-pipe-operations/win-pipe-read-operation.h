@@ -21,7 +21,7 @@ namespace vshalygin::rpc::internal {
         win_pipe_read_operation(const win_pipe_read_operation &) = delete;
         win_pipe_read_operation &operator=(const win_pipe_read_operation &) = delete;
 
-        void read(std::error_code ec) noexcept;
+        void start(std::error_code ec) noexcept;
         void add_read_bytes(DWORD bytes) noexcept;
 
         void cancel() noexcept;
@@ -40,8 +40,8 @@ namespace vshalygin::rpc::internal {
         void set_failed_if_possible() noexcept;
 
     private:
-        //contract: operation must be first
-        win_pipe_operation m_operation{ win_pipe_operation_kind::read };
+        //contract: overlapped must be first
+        win_pipe_overlapped m_overlapped{ win_pipe_operation_kind::read };
 
         win::pipe_handle::handle_type m_pipe;
         std::vector<cl::buffer> m_buffers;

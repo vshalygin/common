@@ -26,7 +26,7 @@ namespace vshalygin::rpc::internal {
         m_buffers.push_back(cl::buffer(8192));
     }
 
-    void win_pipe_read_operation::read(std::error_code ec) noexcept
+    void win_pipe_read_operation::start(std::error_code ec) noexcept
     {
         ec.clear();
 

@@ -26,8 +26,8 @@ namespace vshalygin::rpc::internal {
         future<ftuple<win::pipe_handle, DWORD>> get_future();
 
     private:
-        //contract: operation must be first
-        win_pipe_operation m_operation{ win_pipe_operation_kind::create };
+        //contract: overlapped must be first
+        win_pipe_overlapped m_overlapped{ win_pipe_operation_kind::create };
 
         cl::value_locker<win::pipe_handle> m_pipe;
 

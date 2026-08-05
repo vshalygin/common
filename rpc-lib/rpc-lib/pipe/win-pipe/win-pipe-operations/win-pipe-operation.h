@@ -19,9 +19,9 @@ namespace vshalygin::rpc::internal {
         failed
     };
 
-    struct win_pipe_operation
+    struct win_pipe_overlapped
     {
-        win_pipe_operation(win_pipe_operation_kind k)
+        win_pipe_overlapped(win_pipe_operation_kind k)
             : kind(k)
         {}
 

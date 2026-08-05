@@ -19,7 +19,7 @@ namespace vshalygin::rpc::internal {
         win_pipe_write_operation(const win_pipe_write_operation &) = delete;
         win_pipe_write_operation &operator=(const win_pipe_write_operation &) = delete;
 
-        void write(std::error_code ec) noexcept;
+        void start(std::error_code ec) noexcept;
         void cancel() noexcept;
 
         void resolve();
@@ -34,8 +34,8 @@ namespace vshalygin::rpc::internal {
         void set_failed_if_possible() noexcept;
 
     private:
-        //contract: operation must be first
-        win_pipe_operation m_operation{ win_pipe_operation_kind::write }; 
+        //contract: overlapped must be first
+        win_pipe_overlapped m_overlapped{ win_pipe_operation_kind::write };
 
         win::pipe_handle::handle_type m_pipe;
         cl::buffer m_buffer;
