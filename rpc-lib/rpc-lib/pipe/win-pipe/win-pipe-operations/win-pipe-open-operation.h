@@ -26,6 +26,9 @@ namespace vshalygin::rpc::internal {
         win_pipe_open_operation(const win_pipe_open_operation &) = delete;
         win_pipe_open_operation &operator=(const win_pipe_open_operation &) = delete;
 
+        win_pipe_open_operation(win_pipe_open_operation &&) = default;
+        win_pipe_open_operation &operator=(win_pipe_open_operation &&) = default;
+
         ~win_pipe_open_operation();
 
         void start();
@@ -37,7 +40,7 @@ namespace vshalygin::rpc::internal {
         void do_openning();
 
     private:
-        const std::wstring m_full_pipe_name;
+        std::wstring m_full_pipe_name;
         promise m_promise;
         cl::event m_canceled_event;
 
