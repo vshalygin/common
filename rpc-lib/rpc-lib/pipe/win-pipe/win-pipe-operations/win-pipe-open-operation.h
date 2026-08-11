@@ -2,12 +2,13 @@
 #ifdef _WIN32
 #include <rpc-lib/types/future.h>
 
-#include <common-lib/synchronization/event.h>
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <thread>
 #include <string>
 #include <utility>
+#include <mutex>
+#include <condition_variable>
 
 #include "win-pipe-operation.h"
 #include <win-lib/types/handle.h>
@@ -26,13 +27,10 @@ namespace vshalygin::rpc::internal {
         win_pipe_open_operation(const win_pipe_open_operation &) = delete;
         win_pipe_open_operation &operator=(const win_pipe_open_operation &) = delete;
 
-        win_pipe_open_operation(win_pipe_open_operation &&) = default;
-        win_pipe_open_operation &operator=(win_pipe_open_operation &&) = default;
-
         ~win_pipe_open_operation();
 
         void start();
-        void cancel() noexcept;
+        void cancel(bool by_timeout) noexcept;
 
         future get_future();
 
@@ -42,7 +40,15 @@ namespace vshalygin::rpc::internal {
     private:
         std::wstring m_full_pipe_name;
         promise m_promise;
-        cl::event m_canceled_event;
+
+        enum class cancel_event
+        {
+            none,
+            canceled,
+            canceled_by_timeout
+        } m_cancel_event = cancel_event::none;
+        std::mutex m_cancel_mtx;
+        std::condition_variable m_cancel_cv;
 
         std::thread m_thread;
     };

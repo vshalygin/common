@@ -11,7 +11,7 @@ namespace vshalygin::rpc::internal {
 
     win_pipe_open_operation::~win_pipe_open_operation()
     {
-        cancel();
+        cancel(false);
         if(m_thread.joinable()) {
             m_thread.join();
         }
@@ -26,9 +26,16 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    void win_pipe_open_operation::cancel() noexcept
+    void win_pipe_open_operation::cancel(bool by_timeout) noexcept
     {
-        m_canceled_event.set();
+        {
+            std::lock_guard g(m_cancel_mtx);
+            if(m_cancel_event == cancel_event::none) {
+                m_cancel_event = by_timeout ? cancel_event::canceled_by_timeout : cancel_event::canceled;
+            }
+        }
+
+        m_cancel_cv.notify_all();
     }
 
     future<ftuple<win_pipe_operation_res, win::pipe_handle>> win_pipe_open_operation::get_future()
@@ -49,6 +56,13 @@ namespace vshalygin::rpc::internal {
                                                 nullptr));
 
             if(pipe) {
+                DWORD mode = PIPE_READMODE_MESSAGE;
+
+                if(!::SetNamedPipeHandleState(pipe.get(), &mode, nullptr, nullptr)) {
+                    m_promise.resolve(win_pipe_operation_res::failed, std::move(pipe));
+                    break;
+                }
+
                 m_promise.resolve(win_pipe_operation_res::success, std::move(pipe));
                 break;
             }
@@ -58,9 +72,14 @@ namespace vshalygin::rpc::internal {
                 break;
             }
 
-            auto r = m_canceled_event.wait_for(std::chrono::milliseconds(100));
+            std::unique_lock lock(m_cancel_mtx);
+            auto r = m_cancel_cv.wait_for(
+                lock, std::chrono::milliseconds(100), [this] { return m_cancel_event != cancel_event::none; });
             if(r) {
-                m_promise.resolve(win_pipe_operation_res::canceled, std::move(pipe));
+                auto res = (m_cancel_event == cancel_event::canceled_by_timeout) ?
+                                               win_pipe_operation_res::timeout :
+                                               win_pipe_operation_res::canceled;
+                m_promise.resolve(res, std::move(pipe));
                 break;
             }
         }

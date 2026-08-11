@@ -93,6 +93,9 @@
     <ClCompile Include="rpc-lib\internal\transport\transport.cpp">
       <Filter>internal\transport</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-client-env.cpp">
+      <Filter>pipe\win-pipe</Filter>
+    </ClCompile>
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-endpoint.cpp">
       <Filter>pipe\win-pipe</Filter>
     </ClCompile>
@@ -211,6 +214,9 @@
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\closure-guard.h" />
     <ClInclude Include="rpc-lib\iresponse-controller.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-client-env.h">
+      <Filter>pipe\win-pipe</Filter>
+    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-endpoint.h">
       <Filter>pipe\win-pipe</Filter>
     </ClInclude>

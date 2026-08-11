@@ -30,6 +30,7 @@
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.cpp" />
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-client-env.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\authenticator\iauthenticator.h" />
@@ -64,6 +65,7 @@
     <ClInclude Include="rpc-lib\pipe\pipe-op-res.h" />
     <ClInclude Include="rpc-lib\pipe\pipe-wait-res.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-iocp-owner.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-client-env.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-endpoint.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation.h" />

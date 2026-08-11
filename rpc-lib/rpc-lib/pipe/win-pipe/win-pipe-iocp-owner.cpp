@@ -113,7 +113,7 @@ namespace vshalygin::rpc::internal {
     //Generally speaking this method is pointless. Added just for symmetry
     void win_pipe_iocp_owner::cancel_open_pipe(win_pipe_open_operation *op)
     {
-        op->cancel();
+        op->cancel(false);
     }
 
     void win_pipe_iocp_owner::read_async(win_pipe_read_operation *overlapped)
