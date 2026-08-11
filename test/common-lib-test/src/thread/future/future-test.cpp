@@ -2779,3 +2779,20 @@ TEST_F(Future, FutureMayBeCreatedAlreadyWithSetValue)
     f2.wait();
     ASSERT_EQ(flag, 1);
 }
+
+TEST_F(Future, ExceptionPropagateAfterFinally)
+{
+    bool finally_called = false;
+    bool catched_called = false;
+    auto p = make_promise(&m_pool, []() { return 1; });
+    auto f = p.get_future();
+    p.resolve();
+    f.then([](int) ->int { throw 1; })
+     .finally([&](){ finally_called = true; })
+     .then([](int ) { FAIL(); })
+     .catched([&](std::exception_ptr){ catched_called = true;})
+     .wait();
+
+    EXPECT_TRUE(finally_called);
+    EXPECT_TRUE(catched_called);
+}
