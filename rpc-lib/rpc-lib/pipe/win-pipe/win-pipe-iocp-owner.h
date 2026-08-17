@@ -41,11 +41,11 @@ namespace vshalygin::rpc::internal {
 
         future<ftuple<pipe_wait_res, win::pipe_handle>> open_pipe_async(win_pipe_open_operation *op);
 
-        void read_async(win_pipe_read_operation *overlapped);
-        void cancel_read(win_pipe_read_operation *overlapped);
+        void read_async(std::shared_ptr<win_pipe_read_operation> overlapped);
+        void cancel_read(std::shared_ptr<win_pipe_read_operation> overlapped);
 
-        void write_async(win_pipe_write_operation *overlapped);
-        void cancel_write(win_pipe_write_operation *overlapped);
+        void write_async(std::shared_ptr<win_pipe_write_operation> overlapped);
+        void cancel_write(std::shared_ptr<win_pipe_write_operation> overlapped);
 
     private:
         void run_worker_loop();

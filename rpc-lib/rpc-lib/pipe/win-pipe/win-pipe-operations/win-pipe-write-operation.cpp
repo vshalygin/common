@@ -2,10 +2,20 @@
 #include "win-pipe-write-operation.h"
 
 namespace vshalygin::rpc::internal {
+    std::shared_ptr<win_pipe_write_operation> win_pipe_write_operation::create(
+        std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
+        cl::buffer &&buffer,
+        cl::thread_pool *thread_pool)
+    {
+        return std::shared_ptr<win_pipe_write_operation>(
+            new win_pipe_write_operation(std::move(pipe), std::move(buffer), thread_pool));
+    }
+
     win_pipe_write_operation::win_pipe_write_operation(std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
                                                        cl::buffer &&buffer,
                                                        cl::thread_pool *thread_pool)
-        : m_pipe(std::move(pipe))
+        : win_pipe_overlapped(win_pipe_operation_kind::write)
+        , m_pipe(std::move(pipe))
         , m_buffer(std::move(buffer))
         , m_promise(thread_pool, [](win_pipe_operation_res r) { return r; })
     {}

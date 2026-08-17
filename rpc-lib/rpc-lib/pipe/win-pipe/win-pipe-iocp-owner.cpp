@@ -94,7 +94,7 @@ namespace vshalygin::rpc::internal {
                       });
     }
 
-    void win_pipe_iocp_owner::read_async(win_pipe_read_operation *overlapped)
+    void win_pipe_iocp_owner::read_async(std::shared_ptr<win_pipe_read_operation> overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             if(overlapped->get_result() != win_pipe_operation_res::unknown) {
@@ -112,14 +112,14 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    void win_pipe_iocp_owner::cancel_read(win_pipe_read_operation *overlapped)
+    void win_pipe_iocp_owner::cancel_read(std::shared_ptr<win_pipe_read_operation> overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             overlapped->cancel();
         });
     }
 
-    void win_pipe_iocp_owner::write_async(win_pipe_write_operation *overlapped)
+    void win_pipe_iocp_owner::write_async(std::shared_ptr<win_pipe_write_operation> overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             if(overlapped->get_result() != win_pipe_operation_res::unknown) {
@@ -137,7 +137,7 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    void win_pipe_iocp_owner::cancel_write(win_pipe_write_operation *overlapped)
+    void win_pipe_iocp_owner::cancel_write(std::shared_ptr<win_pipe_write_operation> overlapped)
     {
         m_iocp_thread.post([overlapped]() {
             overlapped->cancel();
@@ -179,7 +179,7 @@ namespace vshalygin::rpc::internal {
                 }
                 case win_pipe_operation_kind::write:
                 {
-                    auto write_operation = reinterpret_cast<win_pipe_write_operation *>(op);
+                    auto write_operation = reinterpret_cast<win_pipe_write_operation *>(op)->shared_from_this();
                     if(status.success) {
                         write_operation->set_success();
                     } else {
@@ -190,13 +190,12 @@ namespace vshalygin::rpc::internal {
                 }
                 case win_pipe_operation_kind::read:
                 {
-                    auto read_operation = reinterpret_cast<win_pipe_read_operation *>(op);
+                    auto read_operation = reinterpret_cast<win_pipe_read_operation *>(op)->shared_from_this();
                     read_operation->add_read_bytes(status.bytes_transferred);
                     if(status.success) {
                         read_operation->set_success();
                         read_operation->resolve();
-                    } else if(status.error == ERROR_MORE_DATA) {
-                        read_operation->add_buffer_chunk();
+                    } else if(status.error == ERROR_MORE_DATA && read_operation->add_buffer_chunk()) {
                         read_async(read_operation);
                     } else {
                         read_operation->set_failed_if_possible();

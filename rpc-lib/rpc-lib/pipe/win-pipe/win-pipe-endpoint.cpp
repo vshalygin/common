@@ -67,10 +67,10 @@ namespace vshalygin::rpc {
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         mutable std::mutex m_write_op_mtx;
-        std::list<write_op> m_write_ops;
+        std::list<std::shared_ptr<write_op>> m_write_ops;
 
         mutable std::mutex m_read_op_mtx;
-        std::list<read_op> m_read_ops;
+        std::list<std::shared_ptr<read_op>> m_read_ops;
     };
 
     win_pipe_endpoint::impl::impl(win::pipe_handle &&pipe,
@@ -106,12 +106,12 @@ namespace vshalygin::rpc {
         }
 
         std::lock_guard gg(m_write_op_mtx);
-        auto &op = m_write_ops.emplace_front(m_pipe, std::move(msg), m_thread_pool.get());
+        auto &op = m_write_ops.emplace_front(write_op::create(m_pipe, std::move(msg), m_thread_pool.get()));
         if(m_write_ops.size() == 1) {
-            m_iocp_owner->write_async(&m_write_ops.front());
+            m_iocp_owner->write_async(m_write_ops.front());
         }
 
-        return op.get_future()
+        return op->get_future()
             .then([self = shared_from_this()](op_res r) {
                       if(r == op_res::failed) {
                           self->invalidate_impl(false);
@@ -131,12 +131,12 @@ namespace vshalygin::rpc {
         }
 
         std::lock_guard gg(m_read_op_mtx);
-        auto &op = m_read_ops.emplace_front(m_pipe, m_thread_pool.get());
+        auto &op = m_read_ops.emplace_front(read_op::create(m_pipe, m_thread_pool.get()));
         if(m_read_ops.size() == 1) {
-            m_iocp_owner->read_async(&m_read_ops.front());
+            m_iocp_owner->read_async(m_read_ops.front());
         }
 
-        return op.get_future()
+        return op->get_future()
             .then([self = shared_from_this()](op_res r, cl::buffer &&b) {
                       if(r == op_res::failed) {
                           self->invalidate_impl(false);
@@ -171,7 +171,7 @@ namespace vshalygin::rpc {
         std::unique_lock g(m_write_op_mtx);
         m_write_ops.pop_back();
         if(!m_write_ops.empty()) {
-            m_iocp_owner->write_async(&m_write_ops.back());
+            m_iocp_owner->write_async(m_write_ops.back());
         }
     }
 
@@ -180,7 +180,7 @@ namespace vshalygin::rpc {
         std::unique_lock g(m_read_op_mtx);
         m_read_ops.pop_back();
         if(!m_read_ops.empty()) {
-            m_iocp_owner->read_async(&m_read_ops.back());
+            m_iocp_owner->read_async(m_read_ops.back());
         }
     }
 
@@ -208,10 +208,10 @@ namespace vshalygin::rpc {
                                          : &read_op::set_failed_if_possible;
 
         for(auto it = m_write_ops.begin(); it != m_write_ops.end(); ++it) {
-            ((*it).*set_write_result)();
+            (*((*it)).*set_write_result)();
         }
         for(auto it = m_read_ops.begin(); it != m_read_ops.end(); ++it) {
-            ((*it).*set_read_result)();
+            (*((*it)).*set_read_result)();
         }
 
         pipe->reset();

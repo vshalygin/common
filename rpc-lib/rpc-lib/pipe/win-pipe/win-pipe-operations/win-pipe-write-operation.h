@@ -11,11 +11,18 @@
 
 namespace vshalygin::rpc::internal {
     class win_pipe_write_operation
+        : private win_pipe_overlapped //contract: overlapped must be first
+        , public std::enable_shared_from_this<win_pipe_write_operation>
     {
-    public:
         explicit win_pipe_write_operation(std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
                                           cl::buffer &&buffer,
                                           cl::thread_pool *thread_pool);
+
+    public:
+        static std::shared_ptr<win_pipe_write_operation> create(
+            std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
+            cl::buffer &&buffer,
+            cl::thread_pool *thread_pool);
 
         win_pipe_write_operation(const win_pipe_write_operation &) = delete;
         win_pipe_write_operation &operator=(const win_pipe_write_operation &) = delete;
@@ -35,9 +42,6 @@ namespace vshalygin::rpc::internal {
         void set_failed_if_possible() noexcept;
 
     private:
-        //contract: overlapped must be first
-        win_pipe_overlapped m_overlapped{ win_pipe_operation_kind::write };
-
         std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
         cl::buffer m_buffer;
 

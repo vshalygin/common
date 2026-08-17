@@ -104,20 +104,36 @@ namespace {
     }
 }
 
-TEST(TransferMessageReq, IsMessageTooBigReturnFalseIfMessageNotTooBig)
+TEST(TransferMessageReq, IsRequestProtoTooBigReturnFalseIfMessageNotTooBig)
 {
     proto::some_message test_message;
     test_message.set_string_data("small string");
 
-    ASSERT_FALSE(is_transfer_msg_too_big(&test_message));
+    ASSERT_FALSE(is_request_proto_too_big(&test_message));
 }
 
-TEST(TransferMessageReq, IsMessageTooBigReturnTrueIfMessageTooBig)
+TEST(TransferMessageReq, IsResponseProtoTooBigReturnFalseIfMessageNotTooBig)
 {
     proto::some_message test_message;
-    test_message.set_string_data(std::string(8*1024*1024 + 1, 'a'));
+    test_message.set_string_data("small string");
 
-    ASSERT_TRUE(is_transfer_msg_too_big(&test_message));
+    ASSERT_FALSE(is_response_proto_too_big(&test_message));
+}
+
+TEST(TransferMessageReq, IsRequestProtoTooBigReturnTrueIfMessageTooBig)
+{
+    proto::some_message test_message;
+    test_message.set_string_data(std::string(8*1024*1024 + 1001, 'a'));
+
+    ASSERT_TRUE(is_request_proto_too_big(&test_message));
+}
+
+TEST(TransferMessageReq, IsResponseProtoTooBigReturnTrueIfMessageTooBig)
+{
+    proto::some_message test_message;
+    test_message.set_string_data(std::string(8 * 1024 * 1024 + 1001, 'a'));
+
+    ASSERT_TRUE(is_response_proto_too_big(&test_message));
 }
 
 TEST(TransferMessageReq, ResolveMessageType)
