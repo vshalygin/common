@@ -271,3 +271,16 @@ TEST_F(Channel, ParsesResponse)
     sync_event->wait();
     ASSERT_TRUE(MessageDifferencer::Equals(response_message_copy, output_response));
 }
+
+TEST_F(Channel, CallMethodFailsWithRequestTooBigErrorCode)
+{
+    auto sync_event = std::make_shared<event>();
+    EXPECT_CALL(m_request_callback, Call(request_result::request_too_big, _))
+        .Times(1)
+        .WillOnce([sync_event]() { sync_event->set(); });
+
+    m_request_message.mutable_data3()->set_string_data2(std::string(1024 * 1024 + 1, 'a'));
+
+    call_method();
+    sync_event->wait();
+}

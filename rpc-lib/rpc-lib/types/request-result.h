@@ -12,6 +12,7 @@ namespace vshalygin::rpc {
         send_timeout,
         send_canceled,
         send_failed,
+        request_too_big,
         request_not_processed,
         response_parse_error,
         no_connection,
@@ -45,6 +46,8 @@ namespace vshalygin::rpc {
                 return "send_canceled";
             case request_result::send_failed:
                 return "send_failed";
+            case request_result::request_too_big:
+                return "request_too_big";
             case request_result::request_not_processed:
                 return "request_not_processed";
             case request_result::response_parse_error:

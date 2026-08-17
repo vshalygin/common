@@ -28,11 +28,15 @@ namespace vshalygin::rpc::internal {
         assert(done);
 
         closure_guard cg(done);
-
         auto request_controller = to_request_controller(controller);
+
+        if(is_request_proto_too_big(request)) {
+            request_controller->set_result(request_result::request_too_big);
+            return;
+        }
+
         const auto req_id = m_next_req_id.fetch_add(1);
         const auto method_idx = static_cast<uint32_t>(method->index());
-        //TODO не бросать исключения если размер прото слишком большой. Возвращать значение через future
         m_connection->request_async(create_transfer_msg_req(req_id, method_idx, request))
             .then([cg = std::move(cg), request_controller, response, req_id] (request_result rc,
                                                                               cl::buffer &&buffer) mutable
