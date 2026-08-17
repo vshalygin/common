@@ -48,7 +48,7 @@ namespace vshalygin::rpc::internal {
                              reinterpret_cast<OVERLAPPED *>(this));
             if(res == FALSE && ::GetLastError() == ERROR_MORE_DATA) {
                 add_read_bytes(buffer_size);
-                add_buffer_chunk();
+                if(!add_buffer_chunk()) break;
             } else {
                 break;
             }
@@ -70,10 +70,19 @@ namespace vshalygin::rpc::internal {
         ::CancelIo(m_pipe->lock()->get());
     }
 
-    void win_pipe_read_operation::add_buffer_chunk()
+    bool win_pipe_read_operation::add_buffer_chunk()
     {
+        size_t total_size = 0;
+        for(const auto &b : m_buffers) {
+            total_size += b.size();
+        }
+        if(total_size >= MaxTransferMessageSize) {
+            return false;
+        }
         auto prev_size = m_buffers.back().size();
-        m_buffers.push_back(cl::buffer(prev_size * 2));
+        auto new_size = std::min(prev_size * 2, MaxTransferMessageSize - total_size);
+        m_buffers.push_back(cl::buffer(new_size));
+        return true;
     }
 
     void win_pipe_read_operation::resolve()

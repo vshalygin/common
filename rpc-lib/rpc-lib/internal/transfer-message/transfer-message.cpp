@@ -1,4 +1,5 @@
 #include "transfer-message.h"
+#include <rpc-lib/consts.h>
 
 #pragma warning(push, 0)
 #include <google/protobuf/message.h>
@@ -9,8 +10,6 @@
 
 namespace vshalygin::rpc::internal {
     namespace {
-        constexpr uint32_t s_max_transfer_message_size = 8 * 1024 * 1024; //1 MB
-
         constexpr const unsigned s_bits_in_byte = 8;
 
         constexpr const unsigned s_message_type_bytes_count = 1;
@@ -28,6 +27,9 @@ namespace vshalygin::rpc::internal {
 
         constexpr const unsigned s_res_trailer_bytes_count = s_message_number_bytes_count +
                                                              s_result_code_bytes_count;
+
+        static_assert(MaxTransferMessageSize > MaxRequestProtoSize + s_header_bytes_count + s_req_trailer_bytes_count);
+        static_assert(MaxTransferMessageSize > MaxResponseProtoSize + s_header_bytes_count + s_res_trailer_bytes_count);
 
         uint32_t to_uint32_t_big_endian(cl::cbuffer_view bytes)
         {
@@ -172,10 +174,16 @@ namespace vshalygin::rpc::internal {
         }
     }
 
-    bool is_transfer_msg_too_big(const google::protobuf::Message *proto_message)
+    bool is_request_proto_too_big(const google::protobuf::Message *proto_message)
     {
         const auto serialized_message_size = proto_message->ByteSizeLong();
-        return (serialized_message_size > s_max_transfer_message_size);
+        return (serialized_message_size > MaxRequestProtoSize);
+    }
+
+    bool is_response_proto_too_big(const google::protobuf::Message *proto_message)
+    {
+        const auto serialized_message_size = proto_message->ByteSizeLong();
+        return (serialized_message_size > MaxResponseProtoSize);
     }
 
     transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message) noexcept
@@ -244,7 +252,7 @@ namespace vshalygin::rpc::internal {
             serialized_message_size = message->ByteSizeLong();
         }
 
-        if(serialized_message_size > s_max_transfer_message_size) {
+        if(serialized_message_size > MaxRequestProtoSize) {
             throw std::runtime_error("message is too big");
         }
 
@@ -274,7 +282,7 @@ namespace vshalygin::rpc::internal {
             serialized_message_size = message->ByteSizeLong();
         }
 
-        if(serialized_message_size > s_max_transfer_message_size) {
+        if(serialized_message_size > MaxResponseProtoSize) {
             throw std::runtime_error("message is too big");
         }
 

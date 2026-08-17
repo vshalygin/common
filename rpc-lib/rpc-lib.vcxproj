@@ -39,6 +39,7 @@
     <ClInclude Include="rpc-lib\client-endpoint.h" />
     <ClInclude Include="rpc-lib\closure-guard.h" />
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
+    <ClInclude Include="rpc-lib\consts.h" />
     <ClInclude Include="rpc-lib\internal\channel\channel.h" />
     <ClInclude Include="rpc-lib\internal\connection\connection.h" />
     <ClInclude Include="rpc-lib\internal\connection\iconnection.h" />

@@ -33,7 +33,7 @@ namespace vshalygin::rpc::internal {
 
         void cancel() noexcept;
 
-        void add_buffer_chunk();
+        bool add_buffer_chunk();
 
         void resolve();
 

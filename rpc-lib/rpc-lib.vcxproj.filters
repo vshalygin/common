@@ -244,5 +244,6 @@
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation.h">
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\consts.h" />
   </ItemGroup>
 </Project>

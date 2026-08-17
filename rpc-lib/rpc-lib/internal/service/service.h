@@ -94,7 +94,7 @@ namespace vshalygin::rpc::internal {
 
             auto callback = [promise = std::move(promise),
                 req, res, message_number](response_result rc) mutable {
-                if(is_transfer_msg_too_big(res.get())) {
+                if(is_response_proto_too_big(res.get())) {
                     res->Clear();
                     rc = response_result::response_too_big;
                 }
