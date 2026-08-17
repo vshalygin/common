@@ -2,6 +2,7 @@
 #ifdef _WIN32
 #include <rpc-lib/types/future.h>
 #include <common-lib/utils/buffer.h>
+#include <common-lib/synchronization/value-locker.h>
 
 #include "win-pipe-operation.h"
 #include <win-lib/types/handle.h>
@@ -12,7 +13,7 @@ namespace vshalygin::rpc::internal {
     class win_pipe_write_operation
     {
     public:
-        explicit win_pipe_write_operation(win::pipe_handle::handle_type pipe,
+        explicit win_pipe_write_operation(std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
                                           cl::buffer &&buffer,
                                           cl::thread_pool *thread_pool);
 
@@ -37,7 +38,7 @@ namespace vshalygin::rpc::internal {
         //contract: overlapped must be first
         win_pipe_overlapped m_overlapped{ win_pipe_operation_kind::write };
 
-        win::pipe_handle::handle_type m_pipe;
+        std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
         cl::buffer m_buffer;
 
         promise<win_pipe_operation_res, win_pipe_operation_res> m_promise;

@@ -17,9 +17,9 @@ namespace vshalygin::rpc::internal {
         }
     }
 
-    win_pipe_read_operation::win_pipe_read_operation(win::pipe_handle::handle_type pipe,
+    win_pipe_read_operation::win_pipe_read_operation(std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
                                                      cl::thread_pool *thread_pool)
-        : m_pipe(pipe)
+        : m_pipe(std::move(pipe))
         , m_promise(thread_pool,
                     [](win_pipe_operation_res r, cl::buffer b) { return ftuple(r, std::move(b)); })
     {
@@ -32,7 +32,7 @@ namespace vshalygin::rpc::internal {
         BOOL res;
         while(true) {
             auto buffer_size = static_cast<DWORD>(m_buffers.back().size());
-            res = ::ReadFile(m_pipe,
+            res = ::ReadFile(m_pipe->lock()->get(),
                              m_buffers.back().data(),
                              buffer_size,
                              nullptr,
@@ -58,7 +58,7 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_read_operation::cancel() noexcept
     {
-        ::CancelIo(m_pipe);
+        ::CancelIo(m_pipe->lock()->get());
     }
 
     void win_pipe_read_operation::add_buffer_chunk()

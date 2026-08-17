@@ -2,10 +2,10 @@
 #include "win-pipe-write-operation.h"
 
 namespace vshalygin::rpc::internal {
-    win_pipe_write_operation::win_pipe_write_operation(win::pipe_handle::handle_type pipe,
+    win_pipe_write_operation::win_pipe_write_operation(std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
                                                        cl::buffer &&buffer,
                                                        cl::thread_pool *thread_pool)
-        : m_pipe(pipe)
+        : m_pipe(std::move(pipe))
         , m_buffer(std::move(buffer))
         , m_promise(thread_pool, [](win_pipe_operation_res r) { return r; })
     {}
@@ -16,7 +16,7 @@ namespace vshalygin::rpc::internal {
 
         ec.clear();
 
-        auto res = ::WriteFile(m_pipe,
+        auto res = ::WriteFile(m_pipe->lock()->get(),
                                static_cast<const void *>(m_buffer.data()),
                                static_cast<DWORD>(m_buffer.size()),
                                nullptr,
@@ -28,7 +28,7 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_write_operation::cancel() noexcept
     {
-        ::CancelIo(m_pipe);
+        ::CancelIo(m_pipe->lock()->get());
     }
 
     void win_pipe_write_operation::resolve()

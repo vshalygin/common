@@ -4,6 +4,7 @@
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 #include <common-lib/utils/buffer.h>
+#include <common-lib/synchronization/value-locker.h>
 
 #include <vector>
 #include <atomic>
@@ -15,7 +16,7 @@ namespace vshalygin::rpc::internal {
     class win_pipe_read_operation
     {
     public:
-        explicit win_pipe_read_operation(win::pipe_handle::handle_type pipe,
+        explicit win_pipe_read_operation(std::shared_ptr<cl::value_locker<win::pipe_handle>> pipe,
                                          cl::thread_pool *thread_pool);
 
         win_pipe_read_operation(const win_pipe_read_operation &) = delete;
@@ -43,7 +44,7 @@ namespace vshalygin::rpc::internal {
         //contract: overlapped must be first
         win_pipe_overlapped m_overlapped{ win_pipe_operation_kind::read };
 
-        win::pipe_handle::handle_type m_pipe;
+        std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
         std::vector<cl::buffer> m_buffers;
 
         promise<ftuple<win_pipe_operation_res, cl::buffer>, win_pipe_operation_res, cl::buffer> m_promise;
