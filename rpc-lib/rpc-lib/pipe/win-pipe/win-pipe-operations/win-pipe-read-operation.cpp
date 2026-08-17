@@ -29,12 +29,23 @@ namespace vshalygin::rpc::internal {
     void win_pipe_read_operation::start(std::error_code &ec) noexcept
     {
         ec.clear();
+        BOOL res;
+        while(true) {
+            auto buffer_size = static_cast<DWORD>(m_buffers.back().size());
+            res = ::ReadFile(m_pipe,
+                             m_buffers.back().data(),
+                             buffer_size,
+                             nullptr,
+                             reinterpret_cast<OVERLAPPED *>(this));
+            if(res == FALSE && ::GetLastError() == ERROR_MORE_DATA) {
+                add_read_bytes(buffer_size);
+                add_buffer_chunk();
+            } else {
+                break;
+            }
+        }
 
-        auto res = ::ReadFile(m_pipe,
-                              m_buffers.back().data(),
-                              static_cast<DWORD>(m_buffers.back().size()),
-                              nullptr,
-                              reinterpret_cast<OVERLAPPED *>(this));
+
         if(res == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
             ec.assign(::GetLastError(), std::system_category());
         }

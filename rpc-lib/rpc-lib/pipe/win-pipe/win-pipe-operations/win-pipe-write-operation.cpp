@@ -12,6 +12,8 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_write_operation::start(std::error_code &ec) noexcept
     {
+        assert(m_buffer.size() <= static_cast<size_t>(MAXDWORD));
+
         ec.clear();
 
         auto res = ::WriteFile(m_pipe,
