@@ -148,15 +148,14 @@ namespace vshalygin::rpc {
                   });
     }
 
-    win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(
-        cl::buffer && /*msg*/, std::chrono::milliseconds /*timeout*/)
+    win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(cl::buffer && /*msg*/,
+                                                                         std::chrono::milliseconds /*timeout*/)
     {
         //TODO add definition
         return {};
     }
 
-    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(
-        std::chrono::milliseconds /*timeout*/)
+    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(std::chrono::milliseconds /*timeout*/)
     {
         //TODO add definition
         return {};
@@ -170,18 +169,18 @@ namespace vshalygin::rpc {
     void win_pipe_endpoint::impl::complete_write_op()
     {
         std::unique_lock g(m_write_op_mtx);
-        m_write_ops.pop_front();
+        m_write_ops.pop_back();
         if(!m_write_ops.empty()) {
-            m_iocp_owner->write_async(&m_write_ops.front());
+            m_iocp_owner->write_async(&m_write_ops.back());
         }
     }
 
     void win_pipe_endpoint::impl::complete_read_op()
     {
         std::unique_lock g(m_read_op_mtx);
-        m_read_ops.pop_front();
+        m_read_ops.pop_back();
         if(!m_read_ops.empty()) {
-            m_iocp_owner->read_async(&m_read_ops.front());
+            m_iocp_owner->read_async(&m_read_ops.back());
         }
     }
 

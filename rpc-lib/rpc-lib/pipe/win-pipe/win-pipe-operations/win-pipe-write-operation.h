@@ -19,7 +19,7 @@ namespace vshalygin::rpc::internal {
         win_pipe_write_operation(const win_pipe_write_operation &) = delete;
         win_pipe_write_operation &operator=(const win_pipe_write_operation &) = delete;
 
-        void start(std::error_code ec) noexcept;
+        void start(std::error_code &ec) noexcept;
         void cancel() noexcept;
 
         void resolve();

@@ -21,7 +21,7 @@ namespace vshalygin::rpc::internal {
         win_pipe_read_operation(const win_pipe_read_operation &) = delete;
         win_pipe_read_operation &operator=(const win_pipe_read_operation &) = delete;
 
-        void start(std::error_code ec) noexcept;
+        void start(std::error_code &ec) noexcept;
         void add_read_bytes(DWORD bytes) noexcept;
 
         void cancel() noexcept;

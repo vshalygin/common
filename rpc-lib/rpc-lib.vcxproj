@@ -30,6 +30,7 @@
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.cpp" />
+    <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-server-env.cpp" />
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-client-env.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +73,7 @@
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-operation.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation.h" />
     <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation.h" />
+    <ClInclude Include="rpc-lib\pipe\win-pipe\win-pipe-server-env.h" />
     <ClInclude Include="rpc-lib\server-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\types\future.h" />

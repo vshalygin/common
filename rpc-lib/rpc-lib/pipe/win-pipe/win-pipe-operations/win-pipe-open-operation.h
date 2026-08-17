@@ -38,7 +38,7 @@ namespace vshalygin::rpc::internal {
         void do_openning();
 
     private:
-        std::wstring m_full_pipe_name;
+        const std::wstring m_full_pipe_name;
         promise m_promise;
 
         enum class cancel_event
