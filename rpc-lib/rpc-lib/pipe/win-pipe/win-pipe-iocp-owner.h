@@ -54,7 +54,8 @@ namespace vshalygin::rpc::internal {
     private:
         win::iocp m_iocp;
 
-        cl::thread_pool m_iocp_thread{ 1 };
+        cl::thread_pool m_read_iocp_thread{ 1 };
+        cl::thread_pool m_write_iocp_thread{ 1 };
         std::thread m_worker;
     };
 }

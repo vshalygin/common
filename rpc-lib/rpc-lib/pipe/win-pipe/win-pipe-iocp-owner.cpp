@@ -45,7 +45,8 @@ namespace vshalygin::rpc::internal {
         interrupt_worker_loop();
         m_worker.join();
 
-        m_iocp_thread.stop();
+        m_read_iocp_thread.stop();
+        m_write_iocp_thread.stop();
     }
     
     future<ftuple<pipe_wait_res, win::pipe_handle>> win_pipe_iocp_owner::create_pipe_async(
@@ -53,7 +54,7 @@ namespace vshalygin::rpc::internal {
     {
         auto f = overlapped->get_future();
 
-        m_iocp_thread.post([overlapped = std::move(overlapped), this]() mutable {
+        m_read_iocp_thread.post([overlapped = std::move(overlapped), this]() mutable {
             if(!overlapped->create_pipe()) {
                 overlapped->resolve();
                 return;
@@ -96,7 +97,7 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_iocp_owner::read_async(std::shared_ptr<win_pipe_read_operation> overlapped)
     {
-        m_iocp_thread.post([overlapped]() {
+        m_read_iocp_thread.post([overlapped]() {
             if(overlapped->get_result() != win_pipe_operation_res::unknown) {
                 overlapped->resolve();
                 return;
@@ -114,14 +115,14 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_iocp_owner::cancel_read(std::shared_ptr<win_pipe_read_operation> overlapped)
     {
-        m_iocp_thread.post([overlapped]() {
+        m_read_iocp_thread.post([overlapped]() {
             overlapped->cancel();
         });
     }
 
     void win_pipe_iocp_owner::write_async(std::shared_ptr<win_pipe_write_operation> overlapped)
     {
-        m_iocp_thread.post([overlapped]() {
+        m_write_iocp_thread.post([overlapped]() {
             if(overlapped->get_result() != win_pipe_operation_res::unknown) {
                 overlapped->resolve();
                 return;
@@ -139,7 +140,7 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_iocp_owner::cancel_write(std::shared_ptr<win_pipe_write_operation> overlapped)
     {
-        m_iocp_thread.post([overlapped]() {
+        m_write_iocp_thread.post([overlapped]() {
             overlapped->cancel();
         });
     }
@@ -147,7 +148,7 @@ namespace vshalygin::rpc::internal {
     void win_pipe_iocp_owner::cancel_create(
         std::shared_ptr<win_pipe_create_operation> overlapped, bool by_timeout)
     {
-        m_iocp_thread.post([overlapped = std::move(overlapped), by_timeout]() {
+        m_read_iocp_thread.post([overlapped = std::move(overlapped), by_timeout]() {
             overlapped->cancel(by_timeout);
         });
     }
