@@ -49,6 +49,9 @@
     <ClCompile Include="src\pipe\win-pipe\win-pipe-iocp-owner-test.cpp">
       <Filter>pipe\win-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-server-env-test.cpp">
+      <Filter>pipe\win-pipe</Filter>
+    </ClCompile>
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation-test.cpp">
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClCompile>

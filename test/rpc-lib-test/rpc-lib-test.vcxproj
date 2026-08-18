@@ -146,6 +146,7 @@
     <ClCompile Include="src\pipe\win-pipe\win-pipe-client-env-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-endpoint-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-iocp-owner-test.cpp" />
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-server-env-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation-test.cpp" />
