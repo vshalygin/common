@@ -85,10 +85,17 @@ namespace vshalygin::rpc::internal {
     void win_pipe_write_operation::set_failed_if_possible() noexcept
     {
         auto expected = win_pipe_operation_res::unknown;
-        m_res.compare_exchange_strong(expected,
-                                      win_pipe_operation_res::failed,
-                                      std::memory_order_release,
-                                      std::memory_order_relaxed);
+        auto r = m_res.compare_exchange_strong(expected,
+                                               win_pipe_operation_res::failed,
+                                               std::memory_order_release,
+                                               std::memory_order_relaxed);
+        if(!r) {
+            expected = win_pipe_operation_res::timeout;
+            m_res.compare_exchange_strong(expected,
+                                          win_pipe_operation_res::failed,
+                                          std::memory_order_release,
+                                          std::memory_order_relaxed);
+        }
     }
 }
 

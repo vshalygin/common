@@ -48,6 +48,8 @@ namespace vshalygin::rpc::internal {
         void cancel_write(std::shared_ptr<win_pipe_write_operation> overlapped);
 
     private:
+        void read_rest_async(std::shared_ptr<win_pipe_read_operation> overlapped);
+
         void run_worker_loop();
         void interrupt_worker_loop() noexcept;
 

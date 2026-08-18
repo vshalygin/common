@@ -2,9 +2,10 @@
 #include "win-pipe-endpoint.h"
 
 #include <common-lib/synchronization/value-locker.h>
+#include <common-lib/timer/multiple-timer.h>
 
 #include <list>
-#include <condition_variable>
+#include <optional>
 
 namespace vshalygin::rpc {
     using write_op = internal::win_pipe_write_operation;
@@ -52,8 +53,14 @@ namespace vshalygin::rpc {
         void invalidate();
 
     private:
-        void complete_write_op();
-        void complete_read_op();
+        write_future write_async(cl::buffer &&msg, std::optional<std::chrono::milliseconds> timeout);
+        read_future read_async(std::optional<std::chrono::milliseconds> timeout);
+
+        void complete_write_op(uint64_t id, std::optional<uint64_t> timer_id);
+        void complete_read_op(uint64_t id, std::optional<uint64_t> timer_id);
+
+        void cancel_write_op_by_timeout(uint64_t op_id);
+        void cancel_read_op_by_timeout(uint64_t op_id);
 
         void invoke_disconnect_callbacks();
 
@@ -67,10 +74,26 @@ namespace vshalygin::rpc {
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
         mutable std::mutex m_write_op_mtx;
-        std::list<std::shared_ptr<write_op>> m_write_ops;
+        struct write_op_data
+        {
+            uint64_t id;
+            std::shared_ptr<write_op> op;
+            std::optional<uint64_t> timer_id;
+        };
+        uint64_t m_next_write_op_id = 0;
+        std::list<write_op_data> m_write_ops;
 
         mutable std::mutex m_read_op_mtx;
-        std::list<std::shared_ptr<read_op>> m_read_ops;
+        struct read_op_data
+        {
+            uint64_t id;
+            std::shared_ptr<read_op> op;
+            std::optional<uint64_t> timer_id;
+        };
+        uint64_t m_next_read_op_id = 0;
+        std::list<read_op_data> m_read_ops;
+
+        cl::multiple_timer m_timer;
     };
 
     win_pipe_endpoint::impl::impl(win::pipe_handle &&pipe,
@@ -79,6 +102,7 @@ namespace vshalygin::rpc {
         : m_pipe(std::make_shared<cl::value_locker<win::pipe_handle>>(std::move(pipe)))
         , m_iocp_owner(std::move(iocp_owner))
         , m_thread_pool(std::move(thread_pool))
+        , m_timer(m_thread_pool->get_io_context())
     {
         assert(is_connected());
     }
@@ -98,7 +122,29 @@ namespace vshalygin::rpc {
         }
     }
 
+    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async()
+    {
+        return read_async(std::nullopt);
+    }
+
+    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(std::chrono::milliseconds timeout)
+    {
+        return read_async(std::optional(timeout));
+    }
+
     win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(cl::buffer &&msg)
+    {
+        return write_async(std::move(msg), std::nullopt);
+    }
+
+    win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(cl::buffer &&msg,
+                                                                         std::chrono::milliseconds timeout)
+    {
+        return write_async(std::move(msg), std::optional(timeout));
+    }
+
+    win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(
+        cl::buffer &&msg, std::optional<std::chrono::milliseconds> timeout)
     {
         auto pipe = m_pipe->lock();
         if(pipe->empty()) {
@@ -106,24 +152,34 @@ namespace vshalygin::rpc {
         }
 
         std::lock_guard gg(m_write_op_mtx);
-        auto &op = m_write_ops.emplace_front(write_op::create(m_pipe, std::move(msg), m_thread_pool.get()));
-        if(m_write_ops.size() == 1) {
-            m_iocp_owner->write_async(m_write_ops.front());
+        auto id = m_next_write_op_id++;
+        std::optional<uint64_t> timer_id;
+        if(timeout) {
+            timer_id = m_timer.start([s = shared_from_this(), id]() {
+                s->cancel_write_op_by_timeout(id);
+            }, *timeout);
         }
 
-        return op->get_future()
-            .then([self = shared_from_this()](op_res r) {
+        auto &data = m_write_ops.emplace_front(
+            id, write_op::create(m_pipe, std::move(msg), m_thread_pool.get()), timer_id);
+        if(m_write_ops.size() == 1) {
+            m_iocp_owner->write_async(data.op);
+        }
+
+        return data.op->get_future()
+            .then([self = shared_from_this(), timer_id, id](op_res r) {
                       if(r == op_res::failed) {
                           self->invalidate_impl(false);
                       }
 
-                      self->complete_write_op();
+                      self->complete_write_op(id, timer_id);
 
                       return to_pipe_op_res(r);
                   });
     }
 
-    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async()
+    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(
+        std::optional<std::chrono::milliseconds> timeout)
     {
         auto pipe = m_pipe->lock();
         if(pipe->empty()) {
@@ -131,34 +187,28 @@ namespace vshalygin::rpc {
         }
 
         std::lock_guard gg(m_read_op_mtx);
-        auto &op = m_read_ops.emplace_front(read_op::create(m_pipe, m_thread_pool.get()));
+        auto id = m_next_read_op_id++;
+        std::optional<uint64_t> timer_id;
+        if(timeout) {
+            timer_id = m_timer.start([s = shared_from_this(), id]() {
+                s->cancel_read_op_by_timeout(id);
+            }, *timeout);
+        }
+        auto &data = m_read_ops.emplace_front(id, read_op::create(m_pipe, m_thread_pool.get()), timer_id);
         if(m_read_ops.size() == 1) {
-            m_iocp_owner->read_async(m_read_ops.front());
+            m_iocp_owner->read_async(m_read_ops.front().op);
         }
 
-        return op->get_future()
-            .then([self = shared_from_this()](op_res r, cl::buffer &&b) {
+        return data.op->get_future()
+            .then([self = shared_from_this(), timer_id, id](op_res r, cl::buffer &&b) {
                       if(r == op_res::failed) {
                           self->invalidate_impl(false);
                       }
 
-                      self->complete_read_op();
-                      
+                      self->complete_read_op(id, timer_id);
+
                       return ftuple(to_pipe_op_res(r), std::move(b));
                   });
-    }
-
-    win_pipe_endpoint::write_future win_pipe_endpoint::impl::write_async(cl::buffer && /*msg*/,
-                                                                         std::chrono::milliseconds /*timeout*/)
-    {
-        //TODO add definition
-        return {};
-    }
-
-    win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(std::chrono::milliseconds /*timeout*/)
-    {
-        //TODO add definition
-        return {};
     }
 
     void win_pipe_endpoint::impl::invalidate()
@@ -166,21 +216,65 @@ namespace vshalygin::rpc {
         invalidate_impl(true);
     }
 
-    void win_pipe_endpoint::impl::complete_write_op()
+    void win_pipe_endpoint::impl::complete_write_op(uint64_t id, std::optional<uint64_t> timer_id)
     {
         std::unique_lock g(m_write_op_mtx);
-        m_write_ops.pop_back();
-        if(!m_write_ops.empty()) {
-            m_iocp_owner->write_async(m_write_ops.back());
+        if(!m_write_ops.empty() && m_write_ops.back().id == id) {
+            if(timer_id.has_value()) {
+                m_timer.cancel(*timer_id);
+            }
+
+            m_write_ops.pop_back();
+            if(!m_write_ops.empty()) {
+                m_iocp_owner->write_async(m_write_ops.back().op);
+            }
         }
     }
 
-    void win_pipe_endpoint::impl::complete_read_op()
+    void win_pipe_endpoint::impl::complete_read_op(uint64_t id, std::optional<uint64_t> timer_id)
     {
         std::unique_lock g(m_read_op_mtx);
-        m_read_ops.pop_back();
-        if(!m_read_ops.empty()) {
-            m_iocp_owner->read_async(m_read_ops.back());
+        if(!m_read_ops.empty() && m_read_ops.back().id == id) {
+            if(timer_id.has_value()) {
+                m_timer.cancel(*timer_id);
+            }
+
+            m_read_ops.pop_back();
+            if(!m_read_ops.empty()) {
+                m_iocp_owner->read_async(m_read_ops.back().op);
+            }
+        }
+    }
+
+    void win_pipe_endpoint::impl::cancel_write_op_by_timeout(uint64_t op_id)
+    {
+        std::unique_lock g(m_write_op_mtx);
+
+        auto it = std::find_if(m_write_ops.begin(), m_write_ops.end(), [op_id](auto &v) { return v.id == op_id; });
+        if(it != m_write_ops.end()) {
+            it->op->set_timeout_if_possible();
+            if(it->id == m_write_ops.back().id) {
+                m_iocp_owner->cancel_write(it->op);
+            } else {
+                it->op->resolve();
+                m_write_ops.erase(it);
+            }
+        }
+    }
+
+    void win_pipe_endpoint::impl::cancel_read_op_by_timeout(uint64_t op_id)
+    {
+        std::unique_lock g(m_read_op_mtx);
+
+        auto it = std::find_if(m_read_ops.begin(), m_read_ops.end(), [op_id](auto &v) { return v.id == op_id; });
+        if(it != m_read_ops.end()) {
+            it->op->set_timeout_if_possible();
+            if(it->id == m_read_ops.back().id) {
+                m_iocp_owner->cancel_read(it->op);
+            } else {
+                it->op->resolve();
+                m_read_ops.erase(it);
+            }
         }
     }
 
@@ -208,10 +302,10 @@ namespace vshalygin::rpc {
                                          : &read_op::set_failed_if_possible;
 
         for(auto it = m_write_ops.begin(); it != m_write_ops.end(); ++it) {
-            (*((*it)).*set_write_result)();
+            (*(it->op).*set_write_result)();
         }
         for(auto it = m_read_ops.begin(); it != m_read_ops.end(); ++it) {
-            (*((*it)).*set_read_result)();
+            (*(it->op).*set_read_result)();
         }
 
         pipe->reset();

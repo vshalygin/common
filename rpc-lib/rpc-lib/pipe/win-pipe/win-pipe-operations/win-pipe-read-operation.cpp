@@ -62,12 +62,14 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_read_operation::add_read_bytes(DWORD bytes) noexcept
     {
-        m_read_bytes += bytes;
+        m_read_bytes.fetch_add(bytes, std::memory_order_relaxed);
     }
 
     void win_pipe_read_operation::cancel() noexcept
     {
-        ::CancelIo(m_pipe->lock()->get());
+        if(m_read_bytes.load(std::memory_order_relaxed) == 0) {
+            ::CancelIo(m_pipe->lock()->get());
+        }
     }
 
     bool win_pipe_read_operation::add_buffer_chunk()
@@ -91,7 +93,7 @@ namespace vshalygin::rpc::internal {
         assert(res != win_pipe_operation_res::unknown);
 
         if(res == win_pipe_operation_res::success) {
-            m_promise.resolve(res, merge_buffers(m_buffers, m_read_bytes));
+            m_promise.resolve(res, merge_buffers(m_buffers, m_read_bytes.load(std::memory_order_relaxed)));
         } else {
             m_promise.resolve(res, cl::buffer{});
         }
@@ -133,10 +135,17 @@ namespace vshalygin::rpc::internal {
     void win_pipe_read_operation::set_failed_if_possible() noexcept
     {
         auto expected = win_pipe_operation_res::unknown;
-        m_res.compare_exchange_strong(expected,
-                                      win_pipe_operation_res::failed,
-                                      std::memory_order_release,
-                                      std::memory_order_relaxed);
+        auto r = m_res.compare_exchange_strong(expected,
+                                               win_pipe_operation_res::failed,
+                                               std::memory_order_release,
+                                               std::memory_order_relaxed);
+        if(!r) {
+            expected = win_pipe_operation_res::timeout;
+            m_res.compare_exchange_strong(expected,
+                                          win_pipe_operation_res::failed,
+                                          std::memory_order_release,
+                                          std::memory_order_relaxed);
+        }
     }
 }
 #endif

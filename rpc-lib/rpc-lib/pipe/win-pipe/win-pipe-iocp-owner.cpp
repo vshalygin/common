@@ -102,11 +102,24 @@ namespace vshalygin::rpc::internal {
     void win_pipe_iocp_owner::read_async(std::shared_ptr<win_pipe_read_operation> overlapped)
     {
         m_read_iocp_thread.post([overlapped]() {
-            if(overlapped->get_result() != win_pipe_operation_res::unknown) {
+            if(overlapped->get_result() != win_pipe_operation_res::unknown ) {
                 overlapped->resolve();
                 return;
             }
 
+            std::error_code ec;
+            overlapped->start(ec);
+
+            if(ec) {
+                overlapped->set_failed_if_possible();
+                overlapped->resolve();
+            }
+        });
+    }
+
+    void win_pipe_iocp_owner::read_rest_async(std::shared_ptr<win_pipe_read_operation> overlapped)
+    {
+        m_read_iocp_thread.post([overlapped]() {
             std::error_code ec;
             overlapped->start(ec);
 
@@ -187,7 +200,7 @@ namespace vshalygin::rpc::internal {
                     auto write_operation = reinterpret_cast<win_pipe_write_operation *>(op)->shared_from_this();
                     if(status.success) {
                         write_operation->set_success();
-                    } else {
+                    } else if(status.error != ERROR_OPERATION_ABORTED) {
                         write_operation->set_failed_if_possible();
                     }
                     write_operation->resolve();
@@ -200,10 +213,17 @@ namespace vshalygin::rpc::internal {
                     if(status.success) {
                         read_operation->set_success();
                         read_operation->resolve();
-                    } else if(status.error == ERROR_MORE_DATA && read_operation->add_buffer_chunk()) {
-                        read_async(read_operation);
+                    } else if(status.error == ERROR_MORE_DATA) {
+                        if(!read_operation->add_buffer_chunk()) {
+                            read_operation->set_failed_if_possible();
+                            read_operation->resolve();
+                        } else {
+                            read_rest_async(read_operation);
+                        }
                     } else {
-                        read_operation->set_failed_if_possible();
+                        if(status.error != ERROR_OPERATION_ABORTED) {
+                            read_operation->set_failed_if_possible();
+                        }
                         read_operation->resolve();
                     }
                     break;

@@ -52,7 +52,7 @@ namespace vshalygin::rpc::internal {
 
         promise<ftuple<win_pipe_operation_res, cl::buffer>, win_pipe_operation_res, cl::buffer> m_promise;
 
-        DWORD m_read_bytes = 0;
+        std::atomic<DWORD> m_read_bytes = 0;
 
         std::atomic<win_pipe_operation_res> m_res{ win_pipe_operation_res::unknown };
     };
