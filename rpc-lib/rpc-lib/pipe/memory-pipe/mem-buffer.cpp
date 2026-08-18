@@ -53,9 +53,13 @@ namespace vshalygin::rpc {
                                     [](pipe_op_res res, cl::buffer b) { return ftuple(res, std::move(b)); });
         auto future = promise.get_future();
 
-
-        m_read_strand.post([self = shared_from_this(), promise = std::move(promise), timeout]() mutable {
-            self->read_impl(std::move(promise), timeout);
+        std::lock_guard guard(m_mtx);
+        const auto started_while_valid = m_is_valid;
+        m_read_strand.post([self = shared_from_this(),
+                            promise = std::move(promise),
+                            timeout,
+                            started_while_valid]() mutable {
+            self->read_impl(std::move(promise), timeout, started_while_valid);
         });
 
         return future;
@@ -66,6 +70,8 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
         if(m_is_valid) {
             m_is_valid = false;
+            m_read_invalidation_result = cancel_read ? pipe_op_res::canceled
+                                                     : pipe_op_res::failed;
             m_buffer = {};
             auto read_promises = m_read_promises->lock();
             auto &q = read_promises->get<0>();
@@ -141,12 +147,15 @@ namespace vshalygin::rpc {
     }
 
     void mem_buffer::read_impl(read_promise promise,
-                               const std::optional<std::chrono::milliseconds> &timeout)
+                               const std::optional<std::chrono::milliseconds> &timeout,
+                               bool started_while_valid)
     {
         std::lock_guard guard(m_mtx);
 
         if(!m_is_valid) {
-            promise.resolve(pipe_op_res::failed, {});
+            promise.resolve(started_while_valid ? m_read_invalidation_result
+                                                : pipe_op_res::failed,
+                            {});
         } else if(!m_buffer.empty()) {
             auto msg = std::move(m_buffer.front());
             m_buffer.pop();

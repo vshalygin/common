@@ -232,72 +232,80 @@ TEST_F(MemBuffers, ReadsFromServerTimeout)
 
 TEST_F(MemBuffers, ReadsFromClientCanceled)
 {
-    auto sync_event = std::make_shared<event>();
+    auto worker_gate = std::make_shared<event>();
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([worker_gate]() { worker_gate->wait(); });
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::canceled, _))
-        .Times(1)
-        .WillOnce([sync_event]() { sync_event->set(); });
+        .Times(1);
 
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(pool);
     auto f = sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
     
     sut.invalidate(true);
 
-    f.wait();
-    sync_event->wait();
+    worker_gate->set();
+    f.get();
+    pool->stop();
 }
 
 TEST_F(MemBuffers, ReadsFromServerCanceled)
 {
-    auto sync_event = std::make_shared<event>();
+    auto worker_gate = std::make_shared<event>();
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([worker_gate]() { worker_gate->wait(); });
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::canceled, _))
-        .Times(1)
-        .WillOnce([sync_event]() { sync_event->set(); });
+        .Times(1);
 
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(pool);
     auto f = sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
 
     sut.invalidate(false);
 
-    f.wait();
-    sync_event->wait();
+    worker_gate->set();
+    f.get();
+    pool->stop();
 }
 
 TEST_F(MemBuffers, ReadsFromClientFailed)
 {
-    auto sync_event = std::make_shared<event>();
+    auto worker_gate = std::make_shared<event>();
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([worker_gate]() { worker_gate->wait(); });
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::failed, _))
-        .Times(1)
-        .WillOnce([sync_event]() { sync_event->set(); });
+        .Times(1);
 
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(pool);
     auto f = sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
 
     sut.invalidate(false);
 
-    f.wait();
-    sync_event->wait();
+    worker_gate->set();
+    f.get();
+    pool->stop();
 }
 
 TEST_F(MemBuffers, ReadsFromServerFailed)
 {
-    auto sync_event = std::make_shared<event>();
+    auto worker_gate = std::make_shared<event>();
+    auto pool = std::make_shared<thread_pool>(1);
+    pool->post([worker_gate]() { worker_gate->wait(); });
     MockFunction<void(pipe_op_res, buffer &&)> read_callback;
     EXPECT_CALL(read_callback, Call(pipe_op_res::failed, _))
-        .Times(1)
-        .WillOnce([sync_event]() { sync_event->set(); });
+        .Times(1);
 
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(pool);
     auto f = sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
 
     sut.invalidate(true);
 
-    f.wait();
-    sync_event->wait();
+    worker_gate->set();
+    f.get();
+    pool->stop();
 }

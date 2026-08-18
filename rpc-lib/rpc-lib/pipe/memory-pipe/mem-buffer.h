@@ -51,7 +51,8 @@ namespace vshalygin::rpc {
     private:
         pipe_op_res write_impl(cl::buffer &&data, const auto &timeout_point);
         void read_impl(read_promise promise,
-                       const std::optional<std::chrono::milliseconds> &timeout);
+                       const std::optional<std::chrono::milliseconds> &timeout,
+                       bool started_while_valid);
 
         void resolve_read_promise();
 
@@ -62,6 +63,7 @@ namespace vshalygin::rpc {
 
         mutable std::mutex m_mtx;
         bool m_is_valid = true;
+        pipe_op_res m_read_invalidation_result = pipe_op_res::failed;
 
         std::queue<cl::buffer> m_buffer;
 
