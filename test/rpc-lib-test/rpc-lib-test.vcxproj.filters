@@ -46,6 +46,9 @@
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation-test.cpp">
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation-test.cpp">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClCompile>
     <ClCompile Include="src\transport\transport-test.cpp">
       <Filter>transport</Filter>
     </ClCompile>
