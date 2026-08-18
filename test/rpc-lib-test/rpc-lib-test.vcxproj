@@ -146,6 +146,7 @@
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation-test.cpp" />
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-write-operation-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
