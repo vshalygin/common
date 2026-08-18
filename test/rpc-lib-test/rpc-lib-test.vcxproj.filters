@@ -40,6 +40,9 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation-test.cpp">
+      <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClCompile>
     <ClCompile Include="src\transport\transport-test.cpp">
       <Filter>transport</Filter>
     </ClCompile>
@@ -103,6 +106,12 @@
     </Filter>
     <Filter Include="pipe\memory-pipe">
       <UniqueIdentifier>{2f646b38-8694-4fdd-ba50-bdd70dcee8bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe\win-pipe">
+      <UniqueIdentifier>{30f67053-dff4-4c6b-aea4-3d6f582c9406}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe\win-pipe\win-pipe-operations">
+      <UniqueIdentifier>{b032b1e5-6732-48a7-83a7-ef01b885e845}</UniqueIdentifier>
     </Filter>
     <Filter Include="connector">
       <UniqueIdentifier>{b46cf90f-fa2f-4b0e-9cc9-21005b6fa557}</UniqueIdentifier>

@@ -92,7 +92,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)test\rpc-lib-test\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)test\rpc-lib-test\src;$(SolutionDir)common-lib;$(SolutionDir)win-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -112,7 +112,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)test\rpc-lib-test\src;$(SolutionDir)common-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)test\rpc-lib-test\src;$(SolutionDir)common-lib;$(SolutionDir)win-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -143,6 +143,7 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-env-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp" />
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation-test.cpp" />
     <ClCompile Include="src\proto\test-messages.pb.cc">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
