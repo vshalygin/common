@@ -40,6 +40,9 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-client-env-test.cpp">
+      <Filter>pipe\win-pipe</Filter>
+    </ClCompile>
     <ClCompile Include="src\pipe\win-pipe\win-pipe-endpoint-test.cpp">
       <Filter>pipe\win-pipe</Filter>
     </ClCompile>
