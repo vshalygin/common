@@ -171,6 +171,9 @@ namespace vshalygin::rpc {
         auto &q = container.get<0>();
         while(!q.empty()) {
             q.modify(q.begin(), [&](promise_data &el) mutable {
+                if(el.timer_id) {
+                    m_timer.cancel(*el.timer_id);
+                }
                 el.promise.resolve(pipe_wait_res::canceled, {});
                 promises_to_destroy.push_back((std::move(el.promise)));
             });
