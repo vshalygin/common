@@ -227,7 +227,7 @@ namespace vshalygin::rpc {
 
     win_pipe_endpoint::~win_pipe_endpoint()
     {
-        m_impl->invalidate();
+        invalidate();
     }
 
     bool win_pipe_endpoint::is_connected() const

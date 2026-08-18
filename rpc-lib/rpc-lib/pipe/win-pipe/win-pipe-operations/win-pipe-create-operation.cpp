@@ -55,11 +55,7 @@ namespace vshalygin::rpc::internal {
 
     void win_pipe_create_operation::cancel(bool by_timeout) noexcept
     {
-        if(by_timeout) {
-            set_timeout_if_possible();
-        }  else {
-            set_canceled_if_possible();
-        }
+        by_timeout ? set_timeout_if_possible() : set_canceled_if_possible();
 
         auto pipe = m_pipe.lock();
         if(!pipe->empty()) {
@@ -67,9 +63,9 @@ namespace vshalygin::rpc::internal {
         }
     }
 
-    win::pipe_handle::handle_type win_pipe_create_operation::get_pipe() const noexcept
+    void win_pipe_create_operation::exec(const std::function<void(win::pipe_handle::handle_type)> &f)
     {
-        return m_pipe.lock()->get();
+        f(m_pipe.lock()->get());
     }
 
     void win_pipe_create_operation::resolve()

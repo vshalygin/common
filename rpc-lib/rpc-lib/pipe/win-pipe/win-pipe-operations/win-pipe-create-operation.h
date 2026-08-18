@@ -7,6 +7,7 @@
 
 #include <string>
 #include <atomic>
+#include <functional>
 
 #include "win-pipe-operation.h"
 #include <win-lib/types/handle.h>
@@ -34,7 +35,7 @@ namespace vshalygin::rpc::internal {
         bool start_wait_connect();
         void cancel(bool by_timeout) noexcept;
 
-        win::pipe_handle::handle_type get_pipe() const noexcept;
+        void exec(const std::function<void(win::pipe_handle::handle_type)> &f);
 
         void resolve();
         future get_future();

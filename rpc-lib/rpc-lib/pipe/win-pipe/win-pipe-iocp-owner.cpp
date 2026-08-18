@@ -61,9 +61,13 @@ namespace vshalygin::rpc::internal {
             }
 
             std::error_code ec;
-            m_iocp.associate(overlapped->get_pipe(),
-                             static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation),
-                             ec);
+            overlapped->exec(
+                [&ec, this](win::pipe_handle::handle_type p) mutable {
+                    m_iocp.associate(p,
+                                     static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation),
+                                     ec);
+                });
+
             if(ec) {
                 overlapped->set_failed_if_possible();
                 overlapped->resolve();
