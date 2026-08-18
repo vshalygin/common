@@ -143,6 +143,7 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-buffers-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-env-test.cpp" />
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp" />
+    <ClCompile Include="src\pipe\win-pipe\win-pipe-iocp-owner-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-create-operation-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-operations\win-pipe-read-operation-test.cpp" />
