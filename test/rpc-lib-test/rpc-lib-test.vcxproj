@@ -95,6 +95,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)test\rpc-lib-test\src;$(SolutionDir)common-lib;$(SolutionDir)win-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,6 +116,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)rpc-lib;$(SolutionDir)test\rpc-lib-test\src;$(SolutionDir)common-lib;$(SolutionDir)win-lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
