@@ -52,15 +52,15 @@ namespace vshalygin::cl::internal {
         bool is_valid() const noexcept;
 
     private:
-        template<typename Func,
+        template<typename Func, typename ControllerSp,
                  typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
-        static void exec_then_on_success(auto controller,
+        static void exec_then_on_success(ControllerSp controller,
                                          Func &&task,
                                          add_lvalue_ref_to_value_t<U> param);
 
-        template<typename Func,
+        template<typename Func, typename ControllerSp,
                  typename U = T, std::enable_if_t<std::is_void_v<U>, int> = 0>
-        static void exec_then_on_success(auto controller,
+        static void exec_then_on_success(ControllerSp controller,
                                          Func &&task);
 
         auto get_controller() const noexcept;
@@ -68,8 +68,8 @@ namespace vshalygin::cl::internal {
         template<typename Future, typename Controller>
         auto flatten_future(std::shared_ptr<Controller> controller);
 
-        template<typename U>
-        std::shared_ptr<future_controller<ThreadPool, U>> create_child_controller(auto controller);
+        template<typename U, typename ControllerSp>
+        std::shared_ptr<future_controller<ThreadPool, U>> create_child_controller(ControllerSp controller);
 
     private:
         ThreadPool *m_thread_pool = nullptr;

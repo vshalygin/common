@@ -29,6 +29,5 @@ namespace vshalygin::rpc {
         return cl::make_ready_future(thread_pool);
     }
 
-    template<typename...Args>
-    using ftuple = cl::ftuple<Args...>;
+    using cl::ftuple;
 }

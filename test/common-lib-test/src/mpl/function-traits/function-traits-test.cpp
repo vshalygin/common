@@ -147,7 +147,8 @@ static_assert(std::is_same_v<function_args_as_tuple_t<std_function>,
 static_assert(function_arg_count_v<std_function> == 3);
 
 //lambda
-using lambda = decltype([i = 1](const int &, volatile double &&, char)->int { return 0; });
+namespace { auto test_lamba1 = [i = 1](const int &, volatile double &&, char)->int { return 0; }; }
+using lambda = decltype(test_lamba1);
 static_assert(std::is_same_v<function_arg_t<0, lambda>, const int &>);
 static_assert(std::is_same_v<function_arg_t<1, lambda>, volatile double &&>);
 static_assert(std::is_same_v<function_arg_t<2, lambda>, char>);
@@ -1340,5 +1341,7 @@ static_assert(std::is_same_v<function_args_as_tuple_t<void(test_class<int>:: *co
 
 //various checks
 static_assert(function_arg_count_v<void()> == 0);
-static_assert(std::is_same_v<function_arg_t<0, decltype([](std::string &&) {})>,
+
+namespace { auto test_lamba2 = [](std::string &&) {}; }
+static_assert(std::is_same_v<function_arg_t<0, decltype(test_lamba2)>,
                              std::string &&>);

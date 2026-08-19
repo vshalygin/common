@@ -109,7 +109,9 @@ TEST_F(Endpoint, TestMakeRequest)
                       return promise.get_future();
                   });
 
-    m_sut->make_request<proto::request_message, proto::response_message>(&proto::Service_Stub::Method, request);
+    m_sut->make_request<
+        proto::request_message, proto::response_message, decltype(&proto::Service_Stub::Method)>
+        (&proto::Service_Stub::Method, request);
 
     sync_event.wait();
 }

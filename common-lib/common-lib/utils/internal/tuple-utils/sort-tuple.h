@@ -34,13 +34,13 @@ namespace vshalygin::cl::internal {
                                  std::index_sequence<I...>)
         {
             using ret_t = std::tuple<tuple_element_ref<
-                decltype(forward_tuple_element<I>(std::forward<Tuple>(tuple))),
+                decltype(do_forward_tuple_element<I>(std::forward<Tuple>(tuple))),
                 tuple_element_t<Tuple, I>>...>;
 
             return ret_t{ tuple_element_ref<
-                                   decltype(forward_tuple_element<I>(std::forward<Tuple>(tuple))),
+                                   decltype(do_forward_tuple_element<I>(std::forward<Tuple>(tuple))),
                                    tuple_element_t<Tuple, I>>
-                                      (forward_tuple_element<I>(std::forward<Tuple>(tuple)))... };
+                                      (do_forward_tuple_element<I>(std::forward<Tuple>(tuple)))... };
         }
 
         template<typename Tuple>

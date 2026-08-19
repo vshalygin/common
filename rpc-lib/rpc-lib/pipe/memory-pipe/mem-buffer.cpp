@@ -102,7 +102,7 @@ namespace vshalygin::rpc {
         return m_read_promises->lock()->get<0>().size();
     }
 
-    pipe_op_res mem_buffer::write_impl(cl::buffer &&data, const auto &timeout_point)
+    pipe_op_res mem_buffer::write_impl(cl::buffer &&data, const std::chrono::steady_clock::time_point &timeout_point)
     {
         std::lock_guard guard(m_mtx);
 

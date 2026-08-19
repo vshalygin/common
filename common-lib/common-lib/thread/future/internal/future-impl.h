@@ -77,9 +77,9 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    template<typename U>
+    template<typename U, typename ControllerSp>
     std::shared_ptr<future_controller<ThreadPool, U>>
-        future<ThreadPool, T>::create_child_controller(auto controller)
+        future<ThreadPool, T>::create_child_controller(ControllerSp controller)
     {
         auto next_controller_temp = std::make_unique<future_controller<ThreadPool, U>>(m_thread_pool);
         auto next_controller_ptr = next_controller_temp.get();
@@ -139,9 +139,9 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    template<typename Func,
+    template<typename Func, typename ControllerSp,
              typename U, std::enable_if_t<!std::is_void_v<U>, int>>
-    void future<ThreadPool, T>::exec_then_on_success(auto controller,
+    void future<ThreadPool, T>::exec_then_on_success(ControllerSp controller,
                                                      Func &&task,
                                                      add_lvalue_ref_to_value_t<U> param)
     {
@@ -175,9 +175,9 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    template<typename Func,
+    template<typename Func, typename ControllerSp,
               typename Dummy, std::enable_if_t<std::is_void_v<Dummy>, int>>
-    void future<ThreadPool, T>::exec_then_on_success(auto controller,
+    void future<ThreadPool, T>::exec_then_on_success(ControllerSp controller,
                                                      Func &&task)
     {
         using ret_t = function_ret_t<Func>;

@@ -1,6 +1,7 @@
 #pragma once
 #include <utility>
 #include <type_traits>
+#include <new>
 
 namespace vshalygin::cl {
     template<typename Allocator, typename T>
@@ -136,7 +137,7 @@ namespace vshalygin::cl {
     {
         T *ptr = Allocator{}.template allocate<T>();
         try {
-            new (ptr) T(std::forward<Args>(args)...);
+            ::new (ptr) T(std::forward<Args>(args)...);
         } catch (...) {
             Allocator{}.deallocate(static_cast<void *>(ptr));
             throw;

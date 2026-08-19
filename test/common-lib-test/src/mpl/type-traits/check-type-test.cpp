@@ -3,6 +3,11 @@
 using namespace vshalygin::cl;
 
 static_assert(!is_const_v<int>);
+static_assert(!is_const_v<int &>);
+static_assert(!is_const_v<int &&>);
+static_assert(!is_const_v<volatile int>);
+static_assert(!is_const_v<volatile int &>);
+static_assert(!is_const_v<volatile int &&>);
 static_assert(is_const_v<const int>);
 static_assert(is_const_v<const int&>);
 static_assert(is_const_v<const int&&>);

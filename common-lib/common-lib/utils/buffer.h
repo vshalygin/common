@@ -96,7 +96,7 @@ namespace vshalygin::cl {
 
     public:
         using difference_type = std::ptrdiff_t;
-        using value_type = const std::byte;
+        using value_type = std::byte;
         using pointer = const std::byte *;
         using reference = const std::byte &;
         using iterator_category = std::random_access_iterator_tag;

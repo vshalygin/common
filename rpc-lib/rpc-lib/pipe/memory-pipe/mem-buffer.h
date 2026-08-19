@@ -49,7 +49,8 @@ namespace vshalygin::rpc {
         size_t get_pending_read_handlers_count() const;
 
     private:
-        pipe_op_res write_impl(cl::buffer &&data, const auto &timeout_point);
+
+        pipe_op_res write_impl(cl::buffer &&data, const std::chrono::steady_clock::time_point &timeout_point);
         void read_impl(read_promise promise,
                        const std::optional<std::chrono::milliseconds> &timeout,
                        bool started_while_valid);

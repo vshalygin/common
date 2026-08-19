@@ -160,8 +160,8 @@ namespace vshalygin::rpc {
             }, *timeout);
         }
 
-        auto &data = m_write_ops.emplace_front(
-            id, write_op::create(m_pipe, std::move(msg), m_thread_pool.get()), timer_id);
+        auto &data = m_write_ops.emplace_front(write_op_data{
+            id, write_op::create(m_pipe, std::move(msg), m_thread_pool.get()), timer_id });
         if(m_write_ops.size() == 1) {
             m_iocp_owner->write_async(data.op);
         }
@@ -194,7 +194,8 @@ namespace vshalygin::rpc {
                 s->cancel_read_op_by_timeout(id);
             }, *timeout);
         }
-        auto &data = m_read_ops.emplace_front(id, read_op::create(m_pipe, m_thread_pool.get()), timer_id);
+        auto &data = m_read_ops.emplace_front(read_op_data{
+            id, read_op::create(m_pipe, m_thread_pool.get()), timer_id });
         if(m_read_ops.size() == 1) {
             m_iocp_owner->read_async(m_read_ops.front().op);
         }

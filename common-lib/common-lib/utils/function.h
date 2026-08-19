@@ -2,6 +2,7 @@
 #include <common-lib/mpl/type-transform.h>
 
 #include <functional>
+#include <new>
 
 namespace vshalygin::cl {
     template<typename Signature>
@@ -31,8 +32,7 @@ namespace vshalygin::cl {
                          alignof(F) <= sbo_alignment &&
                          std::is_nothrow_move_constructible_v<F>)
             {
-                std::construct_at(reinterpret_cast<F *>(m_buffer),
-                                  std::forward<Func>(func));
+                ::new(reinterpret_cast<void *>(m_buffer)) F(std::forward<Func>(func));
 
                 call = [](const void *obj, Args...args) -> R {
                     return std::invoke(*const_cast<F *>(reinterpret_cast<const F *>(obj)),
@@ -43,7 +43,7 @@ namespace vshalygin::cl {
                 };
                 move = [](void *from, void *to) {
                     F *src = reinterpret_cast<F *>(from);
-                    std::construct_at(reinterpret_cast<F *>(to), std::move(*src));
+                    ::new(to) F(std::move(*src));
                     std::destroy_at(src);
                 };
 

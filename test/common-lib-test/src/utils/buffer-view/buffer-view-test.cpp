@@ -264,7 +264,7 @@ TEST(BufferViewIterator, SummarizeAnIteratorWithANumber)
 TEST(BufferViewConstIterator, HasIteratorTraits)
 {
     bool is_difference_type_same = std::is_same_v<buffer_view::const_iterator::difference_type, std::ptrdiff_t>;
-    bool is_value_type_type = std::is_same_v<buffer_view::const_iterator::value_type, const std::byte>;
+    bool is_value_type_type = std::is_same_v<buffer_view::const_iterator::value_type, std::byte>;
     bool is_pointer_type_same = std::is_same_v<buffer_view::const_iterator::pointer, const std::byte *>;
     bool is_reference_type_same = std::is_same_v<buffer_view::const_iterator::reference, const std::byte &>;
     bool is_iterator_category_same = std::is_same_v<buffer_view::const_iterator::iterator_category,

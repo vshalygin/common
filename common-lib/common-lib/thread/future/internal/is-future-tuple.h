@@ -8,7 +8,7 @@ namespace vshalygin::cl::internal {
     {};
 
     template<typename...Args>
-    struct is_future_tuple<future_tuple<Args...>>
+    struct is_future_tuple<ftuple<Args...>>
         : std::true_type
     {};
 

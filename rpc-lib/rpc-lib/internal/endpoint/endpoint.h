@@ -23,8 +23,8 @@ namespace vshalygin::rpc::internal {
         endpoint(const endpoint &) = delete;
         endpoint &operator=(const endpoint &) = delete;
 
-        template<typename Request, typename Response>
-        request_future<Response> make_request(auto stub_method,
+        template<typename Request, typename Response, typename StubMethod>
+        request_future<Response> make_request(StubMethod stub_method,
                                               const Request &req);
 
         void start();
@@ -49,9 +49,9 @@ namespace vshalygin::rpc::internal {
     {}
 
     template<typename GServiceStub>
-    template<typename Request, typename Response>
+    template<typename Request,typename Response, typename StubMethod>
     endpoint<GServiceStub>::request_future<Response>
-        endpoint<GServiceStub>::make_request(auto stub_method, const Request &req)
+        endpoint<GServiceStub>::make_request(StubMethod stub_method, const Request &req)
     {
         auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<Response> m) {
             return ftuple{ r, std::move(m) };

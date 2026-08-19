@@ -5,8 +5,7 @@ namespace vshalygin::cl {
     using defer_lock_t = internal::defer_lock_t;
     using adopt_lock_t = internal::adopt_lock_t;
 
-    template<typename...OrderedLockable>
-    using ordered_lock = internal::ordered_lock<OrderedLockable...>;
+    using internal::ordered_lock;
 
     template<typename...Lockables, typename...AddLockables>
     ordered_lock<Lockables..., AddLockables...> push_back

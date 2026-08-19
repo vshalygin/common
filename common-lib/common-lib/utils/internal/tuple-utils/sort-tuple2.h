@@ -48,7 +48,7 @@ namespace vshalygin::cl::internal {
         {
             using ret_t = std::tuple<typename tuple_element_t<IndexedTuple, I>::type...>;
 
-            return ret_t{ forward_tuple_element<tuple_element_t<IndexedTuple, I>::index>
+            return ret_t{ do_forward_tuple_element<tuple_element_t<IndexedTuple, I>::index>
                                (std::forward<InitTuple>(tuple))...};
         }
     }

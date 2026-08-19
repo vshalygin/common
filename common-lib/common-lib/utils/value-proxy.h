@@ -2,6 +2,7 @@
 #include <common-lib/mpl/type-transform.h>
 #include <algorithm>
 #include <memory>
+#include <new>
 
 namespace vshalygin::cl {
     struct value_proxy_owned_t
@@ -30,8 +31,8 @@ namespace vshalygin::cl {
         template<typename U>
         void own(U &&v)
         {
-            std::construct_at(reinterpret_cast<std::shared_ptr<type_t> *>(m_buffer),
-                              std::make_shared<type_t>(std::forward<U>(v)));
+            ::new(reinterpret_cast<void *>(m_buffer))
+                std::shared_ptr<type_t>(std::make_shared<type_t>(std::forward<U>(v)));
 
             destroy = [](void *obj) {
                 std::destroy_at(reinterpret_cast<std::shared_ptr<type_t> *>(obj));
@@ -40,14 +41,14 @@ namespace vshalygin::cl {
                 return std::forward<ref_t>(**reinterpret_cast<std::shared_ptr<type_t> *>(obj));
             };
             copy = [](void *from, void *to) {
-                std::shared_ptr<type_t> *target = reinterpret_cast<std::shared_ptr<type_t> *>(to);
+                void *target = reinterpret_cast<void *>(to);
                 std::shared_ptr<type_t> *src = reinterpret_cast<std::shared_ptr<type_t> *>(from);
-                std::construct_at(target, *src);
+                ::new(target) std::shared_ptr<type_t>(*src);
             };
             move = [](void *from, void *to) {
-                std::shared_ptr<type_t> *target = reinterpret_cast<std::shared_ptr<type_t> *>(to);
+                void *target = reinterpret_cast<void *>(to);
                 std::shared_ptr<type_t> *src = reinterpret_cast<std::shared_ptr<type_t> *>(from);
-                std::construct_at(target, std::move(*src));
+                ::new(target) std::shared_ptr<type_t>(std::move(*src));
                 std::destroy_at(src);
             };
         }
