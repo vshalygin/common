@@ -14,6 +14,7 @@ namespace vshalygin::rpc {
         send_failed,
         request_too_big,
         request_not_processed,
+        invalid_response,
         response_parse_error,
         no_connection,
         unknown_error
@@ -50,6 +51,8 @@ namespace vshalygin::rpc {
                 return "request_too_big";
             case request_result::request_not_processed:
                 return "request_not_processed";
+            case request_result::invalid_response:
+                return "invalid_response";
             case request_result::response_parse_error:
                 return "response_parse_error";
             case request_result::no_connection:

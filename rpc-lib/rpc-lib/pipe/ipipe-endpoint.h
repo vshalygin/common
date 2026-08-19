@@ -23,6 +23,8 @@ namespace vshalygin::rpc {
     //    must be invoked immediately.
     // 8) The object is created with an active connection. Reconnection is not supported.
     // 9) read_async may unexpectedly fail only on disconnect event.
+    // 10) read_async must read no more than MaxTransferMessageSize for one message.
+    //     Otherwise consider it as pipe_op_res::failed
 
     class ipipe_endpoint
     {

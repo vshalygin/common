@@ -8,6 +8,8 @@
 #include <google/protobuf/message.h>
 #pragma warning(pop)
 
+#include <string>
+
 namespace vshalygin::rpc::internal {
     channel::channel(std::unique_ptr<iconnection> &&connection)
         : m_connection(std::move(connection))
@@ -45,8 +47,21 @@ namespace vshalygin::rpc::internal {
 
             try {
                 if(is_success(rc)) {
-                    assert(get_transfer_msg_type(buffer) == transfer_msg_type::res);
-                    assert(get_msg_number_res(buffer) == req_id);
+                    if(!is_response_buffer_valid(buffer)) {
+                        request_controller->set_result(request_result::invalid_response);
+                        return;
+                    }
+
+                    if(get_transfer_msg_type(buffer) != transfer_msg_type::res) {
+                        throw std::runtime_error("unexpected transfer_msg_type: " +
+                                                 std::to_string(static_cast<int>(get_transfer_msg_type(buffer))));
+                    }
+
+                    if(get_msg_number_res(buffer) != req_id) {
+                        throw std::runtime_error("unexpected message number: " +
+                                                 std::to_string(get_msg_number_res(buffer)));
+                    }
+
                     response->Clear();
 
                     if(auto res_code = get_msg_response_code_res(buffer); is_fail(res_code)) {

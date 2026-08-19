@@ -31,7 +31,7 @@ namespace vshalygin::rpc::internal {
         static_assert(MaxTransferMessageSize > MaxRequestProtoSize + s_header_bytes_count + s_req_trailer_bytes_count);
         static_assert(MaxTransferMessageSize > MaxResponseProtoSize + s_header_bytes_count + s_res_trailer_bytes_count);
 
-        uint32_t to_uint32_t_big_endian(cl::cbuffer_view bytes)
+        uint32_t to_uint32_to_big_endian(cl::cbuffer_view bytes) noexcept
         {
             assert(bytes.size() == sizeof(uint32_t));
 
@@ -59,7 +59,7 @@ namespace vshalygin::rpc::internal {
             return ans;
         }
 
-        std::array<std::byte, sizeof(uint32_t)> from_uint32_t_big_endian(uint32_t number)
+        std::array<std::byte, sizeof(uint32_t)> from_uint32_to_big_endian(uint32_t number)
         {
             std::array<std::byte, sizeof(uint32_t)> ans;
 
@@ -87,11 +87,11 @@ namespace vshalygin::rpc::internal {
             return ans;
         }
 
-        uint32_t extract_message_size(cl::cbuffer_view message)
+        uint32_t extract_message_size(cl::cbuffer_view message) noexcept
         {
             const auto begin = message.data() + s_message_type_bytes_count;
 
-            return to_uint32_t_big_endian(
+            return to_uint32_to_big_endian(
                 cl::cbuffer_view{ begin, s_serialized_proto_message_size_bytes_count });
         }
 
@@ -104,7 +104,7 @@ namespace vshalygin::rpc::internal {
                                                 size_t &pos,
                                                 uint32_t serialized_message_size)
         {
-            auto serialized_message_size_bytes = from_uint32_t_big_endian(serialized_message_size);
+            auto serialized_message_size_bytes = from_uint32_to_big_endian(serialized_message_size);
             assert(serialized_message_size_bytes.size() == s_serialized_proto_message_size_bytes_count);
             for(int i = 0; i < serialized_message_size_bytes.size(); ++i) {
                 buff[pos++] = serialized_message_size_bytes[i];
@@ -142,7 +142,7 @@ namespace vshalygin::rpc::internal {
                                    size_t &pos,
                                    uint32_t method_idx)
         {
-            auto method_idx_bytes = from_uint32_t_big_endian(method_idx);
+            auto method_idx_bytes = from_uint32_to_big_endian(method_idx);
             assert(method_idx_bytes.size() == s_method_idx_bytes_count);
             for(int i = 0; i < method_idx_bytes.size(); ++i) {
                 buff[pos++] = method_idx_bytes[i];
@@ -155,23 +155,18 @@ namespace vshalygin::rpc::internal {
         {
             buff[pos++] = static_cast<std::byte>(rc);
         }
+    }
 
-        void assert_message_req([[maybe_unused]] const cl::cbuffer_view &message)
-        {
-            assert(message.data());
-            assert(message.size() >= s_header_bytes_count);
-            assert(s_header_bytes_count + extract_message_size(message) +
-                   s_req_trailer_bytes_count <= message.size());
-        }
+    bool is_request_buffer_valid(cl::cbuffer_view buff) noexcept
+    {
+        return buff.data() && buff.size() >= s_header_bytes_count + s_req_trailer_bytes_count &&
+               extract_message_size(buff) <= buff.size() - s_header_bytes_count - s_req_trailer_bytes_count;
+    }
 
-        void assert_message_res([[maybe_unused]] const cl::cbuffer_view &message)
-        {
-            assert(message.data());
-            assert(message.size() >= s_header_bytes_count);
-            assert(s_header_bytes_count +
-                   extract_message_size(message) +
-                   s_res_trailer_bytes_count <= message.size());
-        }
+    bool is_response_buffer_valid(cl::cbuffer_view buff) noexcept
+    {
+        return buff.data() && buff.size() >= s_header_bytes_count + s_res_trailer_bytes_count &&
+               extract_message_size(buff) <= buff.size() - s_header_bytes_count - s_res_trailer_bytes_count;
     }
 
     bool is_request_proto_too_big(const google::protobuf::Message *proto_message)
@@ -186,19 +181,23 @@ namespace vshalygin::rpc::internal {
         return (serialized_message_size > MaxResponseProtoSize);
     }
 
-    transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message) noexcept
+    transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message)
     {
-        assert(message.data());
-        assert(message.size() > 0);
+        if(!message.data() || message.size() == 0) {
+            throw std::runtime_error("invalid buffer");
+        }
 
         return static_cast<transfer_msg_type>(message[0]);
     }
 
     cl::cbuffer_view get_serialized_proto_message(cl::cbuffer_view message)
     {
-        assert(message.data());
-        assert(s_header_bytes_count <= message.size());
-        assert(s_header_bytes_count + extract_message_size(message) <= message.size());
+        if(!message.data() ||
+           s_header_bytes_count > message.size() ||
+           extract_message_size(message) > message.size() - s_header_bytes_count)
+        {
+            throw std::runtime_error("invalid buffer");
+        }
 
         auto begin = message.data() + s_header_bytes_count;
         return cl::cbuffer_view(begin, extract_message_size(message));
@@ -206,7 +205,9 @@ namespace vshalygin::rpc::internal {
 
     uint64_t get_msg_number_req(cl::cbuffer_view message)
     {
-        assert_message_req(message);
+        if(!is_request_buffer_valid(message)) {
+            throw std::runtime_error("invalid buffer");
+        }
 
         auto begin = message.data() + s_header_bytes_count + extract_message_size(message);
         return to_uint64_big_endian(cl::cbuffer_view{ begin, s_message_number_bytes_count });
@@ -214,18 +215,22 @@ namespace vshalygin::rpc::internal {
 
     uint32_t get_msg_method_idx_req(cl::cbuffer_view message)
     {
-        assert_message_req(message);
+        if(!is_request_buffer_valid(message)) {
+            throw std::runtime_error("invalid buffer");
+        }
 
         auto begin = message.data() + s_header_bytes_count +
                                       extract_message_size(message) +
                                       s_message_number_bytes_count;
 
-        return to_uint32_t_big_endian(cl::cbuffer_view{ begin, s_method_idx_bytes_count });
+        return to_uint32_to_big_endian(cl::cbuffer_view{ begin, s_method_idx_bytes_count });
     }
 
     uint64_t get_msg_number_res(cl::cbuffer_view message)
     {
-        assert_message_res(message);
+        if(!is_response_buffer_valid(message)) {
+            throw std::runtime_error("invalid buffer");
+        }
 
         auto begin = message.data() + s_header_bytes_count + extract_message_size(message);
         return to_uint64_big_endian({ begin, s_message_number_bytes_count });
@@ -233,7 +238,9 @@ namespace vshalygin::rpc::internal {
 
     response_result get_msg_response_code_res(cl::cbuffer_view message)
     {
-        assert_message_res(message);
+        if(!is_response_buffer_valid(message)) {
+            throw std::runtime_error("invalid buffer");
+        }
 
         auto iter = message.data() +
                     s_header_bytes_count +

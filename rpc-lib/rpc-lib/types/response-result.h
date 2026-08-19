@@ -10,6 +10,7 @@ namespace vshalygin::rpc {
         request_parse_error,
         response_too_big,
         not_implemented,
+        invalid_request,
         unknown_error
     };
 
@@ -36,6 +37,8 @@ namespace vshalygin::rpc {
                 return "response_too_big";
             case response_result::not_implemented:
                 return "not_implemented";
+            case response_result::invalid_request:
+                return "invalid_request";
             case response_result::unknown_error:
                 return "unknown_error";
             default:

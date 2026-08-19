@@ -58,7 +58,6 @@ namespace vshalygin::rpc::internal {
     template<typename Service>
     future<cl::buffer> service<Service>::process_request_async(cl::buffer &&request_message)
     {
-        assert(get_transfer_msg_type(request_message) == transfer_msg_type::req);
         auto promise = make_promise(m_thread_pool.get(), [](cl::buffer &&b) {
             return std::move(b);
         });
@@ -69,6 +68,15 @@ namespace vshalygin::rpc::internal {
                              req_msg = std::move(request_message),
                              promise = std::move(promise)]() mutable
         {
+            if(!is_request_buffer_valid(req_msg)) {
+                auto raw_response = create_transfer_msg_res(static_cast<uint64_t>(-1),
+                                                            response_result::invalid_request,
+                                                            nullptr);
+                promise.resolve(std::move(raw_response));
+                return;
+            }
+            assert(get_transfer_msg_type(req_msg) == transfer_msg_type::req);
+
             const auto message_number = get_msg_number_req(req_msg);
             const auto method_idx = get_msg_method_idx_req(req_msg);
             const auto serialized_req_message = get_serialized_proto_message(req_msg);
@@ -138,8 +146,7 @@ namespace vshalygin::rpc::internal {
                                                   uint32_t method_idx)
     {
         const auto res_desc = gservice->descriptor()->method(method_idx)->output_type();
-        std::unique_ptr<Message> res
-        (MessageFactory::generated_factory()->GetPrototype(res_desc)->New());
+        std::unique_ptr<Message> res(MessageFactory::generated_factory()->GetPrototype(res_desc)->New());
         return res;
     }
 

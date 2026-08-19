@@ -122,6 +122,7 @@ namespace vshalygin::rpc::internal {
             return req_result_future(m_thread_pool.get(), ftuple(request_result::failed, cl::buffer{}));
         }
 
+        assert(is_request_buffer_valid(message));
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 

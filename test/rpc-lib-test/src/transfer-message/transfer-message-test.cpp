@@ -24,6 +24,14 @@ namespace {
         return msg;
     }
 
+    void set_max_serialized_message_size(buffer &message)
+    {
+        message[1] = static_cast<std::byte>(0xFF);
+        message[2] = static_cast<std::byte>(0xFF);
+        message[3] = static_cast<std::byte>(0xFF);
+        message[4] = static_cast<std::byte>(0xFF);
+    }
+
     constexpr const uint64_t s_entry_number = 429193740634345; //0x18659747348E9
     const std::vector<std::byte> s_entry_number_bytes = { (std::byte)0x00,
                                                           (std::byte)0x01,
@@ -196,9 +204,68 @@ TEST(TransferMessageReq, CreatesTransferMessageWithNullptrMessage)
 TEST(TransferMessageReq, ThrowsExceptionOnCreateTransferMessageIsMessageTwoBig)
 {
     proto::some_message test_message;
-    test_message.set_string_data(std::string(8 * 1024 * 1024 + 1, 'a'));
+    test_message.set_string_data(std::string(1024 * 1024 + 1, 'a'));
 
     ASSERT_ANY_THROW(create_transfer_msg_req(1, 1, &test_message));
+}
+
+TEST(TransferMessageReq, GetTransferMsgTypeThrowsExceptionOnInvalidBuffer)
+{
+    ASSERT_ANY_THROW(get_transfer_msg_type(buffer{}));
+    ASSERT_ANY_THROW(get_transfer_msg_type(buffer{ 0 }));
+}
+
+TEST(TransferMessageReq, GetSerializedProtoMessageThrowsExceptionOnInvalidBuffer)
+{
+    ASSERT_ANY_THROW(get_serialized_proto_message(buffer{}));
+    ASSERT_ANY_THROW(get_serialized_proto_message(buffer{ 1 }));
+
+    proto::some_message test_message;
+    test_message.set_string_data(std::string(10, 'a'));
+    auto b = create_transfer_msg_req(1, 1, &test_message);
+    ASSERT_ANY_THROW(get_serialized_proto_message(cbuffer_view{ b.data(), b.size() - test_message.ByteSizeLong() - 1}));
+}
+
+TEST(TransferMessageReq, GetSerializedProtoMessageRejectsUint32MaxPayloadSize)
+{
+    auto b = create_transfer_msg_req(1, 1, nullptr);
+    set_max_serialized_message_size(b);
+
+    EXPECT_ANY_THROW(get_serialized_proto_message(b));
+}
+
+TEST(TransferMessageReq, GetMsgNumberReqThrowsExceptionOnInvalidBuffer)
+{
+    ASSERT_ANY_THROW(get_msg_number_req(buffer{}));
+    ASSERT_ANY_THROW(get_msg_number_req(buffer{ 1 }));
+}
+
+TEST(TransferMessageReq, GetMsgMethodIdxReqThrowsExceptionOnInvalidBuffer)
+{
+    ASSERT_ANY_THROW(get_msg_method_idx_req(buffer{}));
+    ASSERT_ANY_THROW(get_msg_method_idx_req(buffer{ 1 }));
+}
+
+TEST(TransferMessageReq, TestIsRequestBufferValid)
+{
+    buffer b1;
+    buffer b2(3);
+    buffer b3 = create_transfer_msg_req(1, 1, nullptr);
+
+    EXPECT_FALSE(is_request_buffer_valid(b1));
+    EXPECT_FALSE(is_request_buffer_valid(b2));
+    EXPECT_FALSE(is_request_buffer_valid(cbuffer_view(b3.data(), b3.size() - 1)));
+    EXPECT_TRUE(is_request_buffer_valid(b3));
+}
+
+TEST(TransferMessageReq, RejectsUint32MaxPayloadSize)
+{
+    auto b = create_transfer_msg_req(1, 1, nullptr);
+    set_max_serialized_message_size(b);
+
+    EXPECT_FALSE(is_request_buffer_valid(b));
+    EXPECT_ANY_THROW(get_msg_number_req(b));
+    EXPECT_ANY_THROW(get_msg_method_idx_req(b));
 }
 
 TEST(TransferMessageRes, ResolveMessageNumber)
@@ -257,4 +324,38 @@ TEST(TransferMessageRes, CreatesTransferMessageWithNullptrMessage)
                                          nullptr);
 
     ASSERT_EQ(get_serialized_proto_message(entry).size(), 0);
+}
+
+TEST(TransferMessageReq, TestIsResultBufferValid)
+{
+    buffer b1;
+    buffer b2(3);
+    buffer b3 = create_transfer_msg_res(34, response_result::not_implemented, nullptr);
+
+    EXPECT_FALSE(is_response_buffer_valid(b1));
+    EXPECT_FALSE(is_response_buffer_valid(b2));
+    EXPECT_FALSE(is_response_buffer_valid(cbuffer_view(b3.data(), b3.size() - 1)));
+    EXPECT_TRUE(is_response_buffer_valid(b3));
+}
+
+TEST(TransferMessageRes, RejectsUint32MaxPayloadSize)
+{
+    auto b = create_transfer_msg_res(1, response_result::ok, nullptr);
+    set_max_serialized_message_size(b);
+
+    EXPECT_FALSE(is_response_buffer_valid(b));
+    EXPECT_ANY_THROW(get_msg_number_res(b));
+    EXPECT_ANY_THROW(get_msg_response_code_res(b));
+}
+
+TEST(TransferMessageReq, GetMsgResponseCodeEesThrowsExceptionOnInvalidBuffer)
+{
+    ASSERT_ANY_THROW(get_msg_response_code_res(buffer{}));
+    ASSERT_ANY_THROW(get_msg_response_code_res(buffer{ 1 }));
+}
+
+TEST(TransferMessageReq, GetMsgNumberResThrowsExceptionOnInvalidBuffer)
+{
+    ASSERT_ANY_THROW(get_msg_number_res(buffer{}));
+    ASSERT_ANY_THROW(get_msg_number_res(buffer{ 1 }));
 }

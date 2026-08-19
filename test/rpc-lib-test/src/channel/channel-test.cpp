@@ -220,6 +220,69 @@ TEST_F(Channel, SetsControllerFailedIfParsingResponseFailed)
     sync_event->wait();
 }
 
+TEST_F(Channel, SetsControllerFailedIfResponseIsInvalid)
+{
+    auto sync_event = std::make_shared<event>();
+    EXPECT_CALL(m_request_callback, Call(request_result::invalid_response, _))
+        .Times(1)
+        .WillOnce([sync_event]() { sync_event->set(); });
+
+    auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return rpc::ftuple(r, std::move(b));
+    });
+
+    EXPECT_CALL(*m_connection_ptr, request_async)
+        .Times(1)
+        .WillOnce([&](auto &&) { return promise.get_future(); });
+
+    promise.resolve(request_result::ok, buffer{ 0 });
+    call_method();
+
+    sync_event->wait();
+}
+
+TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageType)
+{
+    auto sync_event = std::make_shared<event>();
+    EXPECT_CALL(m_request_callback, Call(request_result::unknown_error, _))
+        .Times(1)
+        .WillOnce([sync_event]() { sync_event->set(); });
+
+    auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return rpc::ftuple(r, std::move(b));
+    });
+
+    EXPECT_CALL(*m_connection_ptr, request_async)
+        .Times(1)
+        .WillOnce([&](auto &&) { return promise.get_future(); });
+
+    promise.resolve(request_result::ok, create_transfer_msg_req(0, 34, &m_some_message));
+    call_method();
+
+    sync_event->wait();
+}
+
+TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageNumber)
+{
+    auto sync_event = std::make_shared<event>();
+    EXPECT_CALL(m_request_callback, Call(request_result::unknown_error, _))
+        .Times(1)
+        .WillOnce([sync_event]() { sync_event->set(); });
+
+    auto promise = make_promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return rpc::ftuple(r, std::move(b));
+    });
+
+    EXPECT_CALL(*m_connection_ptr, request_async)
+        .Times(1)
+        .WillOnce([&](auto &&) { return promise.get_future(); });
+
+    promise.resolve(request_result::ok, create_transfer_msg_res(123334, response_result::ok, &m_some_message));
+    call_method();
+
+    sync_event->wait();
+}
+
 TEST_F(Channel, SetsControllerFailedWithRequestNotProcessedCodeIfResponseHasFailedCode)
 {
     auto sync_event = std::make_shared<event>();

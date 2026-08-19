@@ -19,9 +19,6 @@ namespace vshalygin::rpc::internal {
         transport(const transport &) = delete;
         transport &operator=(const transport &) = delete;
 
-        transport(transport &&) = default;
-        transport &operator=(transport &&) = default;
-
         ~transport();
 
         using send_future = future<pipe_op_res>;

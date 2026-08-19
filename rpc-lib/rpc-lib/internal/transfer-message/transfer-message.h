@@ -38,7 +38,10 @@ namespace vshalygin::rpc::internal {
     bool is_request_proto_too_big(const google::protobuf::Message *proto_message);
     bool is_response_proto_too_big(const google::protobuf::Message *proto_message);
 
-    transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message) noexcept;
+    bool is_request_buffer_valid(cl::cbuffer_view buff) noexcept;
+    bool is_response_buffer_valid(cl::cbuffer_view buff) noexcept;
+
+    transfer_msg_type get_transfer_msg_type(cl::cbuffer_view message);
     cl::cbuffer_view get_serialized_proto_message(cl::cbuffer_view message);
 
     uint64_t get_msg_number_req(cl::cbuffer_view message);

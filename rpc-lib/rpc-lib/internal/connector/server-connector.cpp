@@ -108,7 +108,13 @@ namespace vshalygin::rpc::internal {
 
     void server_connector::impl::stop()
     {
-        stop_impl(m_is_running_sp);
+        std::shared_ptr<bool> is_running_sp;
+        {
+            std::lock_guard g(m_mtx);
+            is_running_sp = m_is_running_sp;
+        }
+
+        stop_impl(std::move(is_running_sp));
     }
 
     bool server_connector::impl::is_active() const

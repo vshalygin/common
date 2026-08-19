@@ -165,6 +165,26 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNot
         .get();
 }
 
+TEST_F(Service, CallsResponseCallbackWithInvalidRequestErrorCode)
+{
+    service<ProtoServiceMock> sut(nullptr, m_thread_pool, 0);
+    m_response_message.Clear();
+    auto response_buf = create_transfer_msg_res(static_cast<uint64_t>(-1),
+                                                response_result::invalid_request,
+                                                &m_response_message);
+
+    MockFunction<void(buffer &&)> response_callback;
+    EXPECT_CALL(response_callback, Call)
+        .Times(1)
+        .WillOnce([&](auto &&buf) { EXPECT_EQ(response_buf, buf); });
+    EXPECT_CALL(*m_gservice, Method2)
+        .Times(0);
+
+    sut.process_request_async(buffer{})
+        .then(response_callback.AsStdFunction())
+        .get();
+}
+
 TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqualsToMethodsCount)
 {
     m_response_message.Clear();
