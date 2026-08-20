@@ -52,6 +52,9 @@
     <Filter Include="pipe\win-pipe\win-pipe-operations">
       <UniqueIdentifier>{24aec257-a6d6-4bb6-932c-eaad2ed44495}</UniqueIdentifier>
     </Filter>
+    <Filter Include="pipe\tcp-pipe">
+      <UniqueIdentifier>{dd3c963a-182b-4670-b8b1-1feeb92ab565}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp">
@@ -116,6 +119,15 @@
     </ClCompile>
     <ClCompile Include="rpc-lib\pipe\win-pipe\win-pipe-operations\win-pipe-open-operation.cpp">
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-client-env.cpp">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-endpoint.cpp">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClCompile>
+    <ClCompile Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-server-env.cpp">
+      <Filter>pipe\tcp-pipe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,5 +257,14 @@
       <Filter>pipe\win-pipe\win-pipe-operations</Filter>
     </ClInclude>
     <ClInclude Include="rpc-lib\consts.h" />
+    <ClInclude Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-client-env.h">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-endpoint.h">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-server-env.h">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
