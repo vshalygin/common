@@ -1,15 +1,26 @@
 #pragma once
 #include "../ipipe-endpoint.h"
 
+#include <common-lib/thread/thread-pool/thread-pool.h>
+
+#include <boost/asio/ip/tcp.hpp>
+
+#include <memory>
+
 namespace vshalygin::rpc {
     class tcp_pipe_endpoint
         : public ipipe_endpoint
     {
     public:
-        tcp_pipe_endpoint() = default;
+        using socket = boost::asio::ip::tcp::socket;
+
+        tcp_pipe_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
+                          socket &&socket);
 
         tcp_pipe_endpoint(const tcp_pipe_endpoint &) = delete;
         tcp_pipe_endpoint &operator=(const tcp_pipe_endpoint &) = delete;
+
+        ~tcp_pipe_endpoint();
 
         bool is_connected() const override;
         void set_disconnect_callback(cl::thread_pool_task<void()> &&callback) override;
@@ -20,5 +31,9 @@ namespace vshalygin::rpc {
         read_future read_async(std::chrono::milliseconds timeout) override;
 
         void invalidate() override;
+
+    private:
+        class impl;
+        std::shared_ptr<impl> m_impl;
     };
 }
