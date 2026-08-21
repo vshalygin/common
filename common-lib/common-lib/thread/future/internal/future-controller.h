@@ -42,9 +42,7 @@ namespace vshalygin::cl::internal {
         future_controller &operator=(const future_controller &) = delete;
 
         template<typename Func>
-        void set_on_success(Func &&func);
-
-        void set_on_fail(on_fail_t &&func);
+        void set_on_success_and_fail(Func &&success_func, on_fail_t &&fail_func);
 
         template<typename TT = T, std::enable_if_t<std::is_void_v<TT>, int> = 0>
         void set_value();
@@ -78,6 +76,11 @@ namespace vshalygin::cl::internal {
         using val_mtx = ordered_mutex<2>;
         using exception_mtx = ordered_mutex<3>;
         using outer_val_mtx_ref = ordered_mutex_ref<4>;
+
+        template<typename Func>
+        void set_on_success_unsafe(Func &&func);
+
+        void set_on_fail_unsafe(on_fail_t &&func);
 
         void set_success(outer_val_mtx_ref outer_mtx_ref, value_proxy value);
 
@@ -121,7 +124,16 @@ namespace vshalygin::cl::internal {
 
     template<typename ThreadPool, typename T>
     template<typename Func>
-    void future_controller<ThreadPool, T>::set_on_success(Func &&func)
+    void future_controller<ThreadPool, T>::set_on_success_and_fail(Func &&success_func, on_fail_t &&fail_func)
+    {
+        ordered_lock guard(m_on_success_mtx, m_on_fail_mtx);
+        set_on_success_unsafe(std::move(success_func));
+        set_on_fail_unsafe(std::move(fail_func));
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename Func>
+    void future_controller<ThreadPool, T>::set_on_success_unsafe(Func &&func)
     {
         static_assert(std::is_same_v<void, function_ret_t<Func>>,
                       "success callback return type is not void");
@@ -132,8 +144,6 @@ namespace vshalygin::cl::internal {
             static_assert(function_arg_count_v<Func> == 0,
                           "success callback arg count is not 0");
         }
-
-        ordered_lock guard(m_on_success_mtx);
 
         if constexpr(std::is_void_v<T>) {
             m_on_success_queue.push(std::forward<Func>(func));
@@ -148,10 +158,8 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_on_fail(on_fail_t &&func)
+    void future_controller<ThreadPool, T>::set_on_fail_unsafe(on_fail_t &&func)
     {
-        ordered_lock guard(m_on_fail_mtx);
-
         m_on_fail_queue.push(std::move(func));
 
         process_on_fail_async();

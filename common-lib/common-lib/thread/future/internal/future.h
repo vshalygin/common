@@ -63,6 +63,18 @@ namespace vshalygin::cl::internal {
         static void exec_then_on_success(ControllerSp controller,
                                          Func &&task);
 
+        template<typename Func, typename NewControllerWp>
+        auto get_on_success_for_catched_method(NewControllerWp new_controller_wp) const;
+
+        template<typename Func, typename NewControllerWp>
+        auto get_on_fail_for_catched_method(Func &&func, NewControllerWp new_controller_wp) const;
+
+        template<typename FuncSp, typename NewControllerWp>
+        auto get_on_success_for_finally_method(FuncSp func_sp, NewControllerWp new_controller_wp) const;
+
+        template<typename FuncSp, typename NewControllerWp>
+        auto get_on_fail_for_finally_method(FuncSp func_sp, NewControllerWp new_controller_wp) const;
+
         auto get_controller() const noexcept;
 
         template<typename Future, typename Controller>

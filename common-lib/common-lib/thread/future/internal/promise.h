@@ -76,28 +76,27 @@ namespace vshalygin::cl::internal {
                         return func(std::move(arg)...);
                     }, std::move(args));
 
+                    auto on_fail = [c = controller](std::exception_ptr e) mutable {
+                        c->set_exception(e);
+                    };
+
                     auto prev_controller = future.get_controller();
                     if constexpr(std::is_void_v<future_store>) {
-                        prev_controller->set_on_success([c = controller]() mutable {
+                        auto on_success = [c = controller]() mutable {
                             c->set_value();
-                        });
-                    }
-                    else {
-                        prev_controller->set_on_success([c = controller](future_store &&v) mutable {
+                        };
+                        prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
+                    } else {
+                        auto on_success = [c = controller](future_store &&v) mutable {
                             c->set_value(std::forward<future_store>(v));
-                        });
+                        };
+                        prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     }
-
-                    prev_controller->set_on_fail([c = controller](std::exception_ptr e) mutable {
-                        c->set_exception(e);
-                    });
-                }
-                catch(...) {
+                } catch(...) {
                     controller->set_exception(std::current_exception());
                 }
             });
-        }
-        else {
+        } else {
             m_thread_pool->post([controller = m_controller,
                                 func = std::move(m_function),
                                 args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
@@ -106,15 +105,13 @@ namespace vshalygin::cl::internal {
                         controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
                             return func(std::move(arg)...);
                         }, std::move(args)));
-                    }
-                    else {
+                    } else {
                         std::apply([&func](auto&&...arg) {
                             func(std::move(arg)...);
                         }, std::move(args));
                         controller->set_value();
                     }
-                }
-                catch(...) {
+                } catch(...) {
                     controller->set_exception(std::current_exception());
                 }
             });

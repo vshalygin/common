@@ -4,8 +4,10 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <type_traits>
 #include <atomic>
+#include <mutex>
 #include <utility>
 
 using namespace vshalygin::cl;
@@ -2340,6 +2342,45 @@ TEST_F(Future, TestFinallyMethod)
     ASSERT_ANY_THROW(f16_.get());
    
     ASSERT_EQ(beacon, 16);
+}
+
+TEST_F(Future, FinallyRegistrationDoesNotDeadlockWhenReadyCallbackWaitsForCallersMutex)
+{
+    constexpr size_t iteration_count = 32;
+    constexpr auto operation_timeout = std::chrono::seconds(10);
+
+    for(size_t i = 0; i < iteration_count; ++i) {
+        std::mutex callback_mtx;
+        std::atomic_uint32_t callback_count = 0;
+        event resolve_started;
+        event allow_resolve;
+
+        auto promise = make_promise(&m_pool, [&]() {
+            resolve_started.set();
+            allow_resolve.wait();
+            return 34;
+        });
+        auto source = promise.get_future();
+        promise.resolve();
+
+        ASSERT_TRUE(resolve_started.wait_for(operation_timeout));
+
+        future<thread_pool, int> result;
+        {
+            std::lock_guard guard(callback_mtx);
+            allow_resolve.set();
+            ASSERT_TRUE(source.wait_for(operation_timeout));
+
+            result = source.finally([&]() {
+                std::lock_guard callback_guard(callback_mtx);
+                callback_count.fetch_add(1, std::memory_order_relaxed);
+            });
+        }
+
+        ASSERT_TRUE(result.wait_for(operation_timeout));
+        result.get().apply([](int value) { EXPECT_EQ(value, 34); });
+        EXPECT_EQ(callback_count.load(std::memory_order_relaxed), 1u);
+    }
 }
 
 TEST_F(Future, TestFinallyMethodWhenCallbackReturnsFuture)
