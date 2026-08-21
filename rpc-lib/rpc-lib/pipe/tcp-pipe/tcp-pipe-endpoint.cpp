@@ -1,4 +1,5 @@
 #include "tcp-pipe-endpoint.h"
+#include <rpc-lib/consts.h>
 
 #include <common-lib/synchronization/ordered-lock.h>
 #include <common-lib/synchronization/ordered-mutex.h>
@@ -15,6 +16,7 @@ namespace vshalygin::rpc {
     using write_future = tcp_pipe_endpoint::write_future;
     using write_promise = promise<pipe_op_res, pipe_op_res>;
     using read_future = tcp_pipe_endpoint::read_future;
+    using read_promise = promise<ftuple<pipe_op_res, cl::buffer>, pipe_op_res, cl::buffer &&>;
 
     namespace {
         static constexpr size_t s_header_size = sizeof(uint32_t);
@@ -23,16 +25,16 @@ namespace vshalygin::rpc {
         {
         public:
             write_operation(cl::buffer &&message, write_promise &&promise)
-                : m_message(std::move(message))
-                , m_write_header_big_endian(boost::endian::native_to_big(static_cast<uint32_t>(m_message.size())))
-                , m_bytes_total(s_header_size + m_message.size())
+                : m_payload_buffer(std::move(message))
+                , m_write_header_big_endian(boost::endian::native_to_big(static_cast<uint32_t>(m_payload_buffer.size())))
+                , m_bytes_total(s_header_size + m_payload_buffer.size())
                 , m_promise(std::move(promise))
             {}
 
             write_operation(const write_operation &) = delete;
             write_operation &operator=(const write_operation &) = delete;
 
-            void add_transfered_bytes(size_t bytes) noexcept
+            void add_bytes(size_t bytes) noexcept
             {
                 m_bytes_transferred += bytes;
             }
@@ -60,15 +62,16 @@ namespace vshalygin::rpc {
 
                 const auto buffer_offset = m_bytes_transferred - s_header_size;
 
-                return boost::asio::buffer(m_message.data() + buffer_offset, m_message.size() - buffer_offset);
+                return boost::asio::buffer(m_payload_buffer.data() + buffer_offset,
+                                           m_payload_buffer.size() - buffer_offset);
             }
 
-            bool is_header_write_completed() const noexcept
+            bool is_header_completed() const noexcept
             {
                 return m_bytes_transferred >= s_header_size;
             }
 
-            bool is_payload_write_completed() const noexcept
+            bool is_payload_completed() const noexcept
             {
                 assert(m_bytes_transferred <= m_bytes_total);
 
@@ -76,13 +79,89 @@ namespace vshalygin::rpc {
             }
 
         private:
-            cl::buffer m_message;
+            cl::buffer m_payload_buffer;
             uint32_t m_write_header_big_endian = 0;
             size_t m_bytes_transferred = 0;
             size_t m_bytes_total = 0;
 
             bool m_is_promise_resolved = false;
             write_promise m_promise;
+        };
+
+        class read_operation
+        {
+        public:
+            read_operation(read_promise &&promise)
+                : m_promise(std::move(promise))
+            {}
+
+            read_operation(const read_operation &) = delete;
+            read_operation &operator=(const read_operation &) = delete;
+
+            void add_bytes(size_t bytes) noexcept
+            {
+                m_bytes_read += bytes;
+                if(!m_payload_buffer && m_bytes_read == s_header_size) {
+                    auto message_size = boost::endian::big_to_native(m_header);
+                    if(message_size != 0 && message_size <= MaxTransferMessageSize) {
+                        m_payload_buffer = cl::buffer(message_size);
+                    }
+                }
+            }
+
+            bool is_payload_buffer_valid() const noexcept
+            {
+                return static_cast<bool>(m_payload_buffer);
+            }
+
+            void resolve_promise_once(pipe_op_res r)
+            {
+                if(!m_is_promise_resolved) {
+                    m_is_promise_resolved = true;
+                    if(r == pipe_op_res::success) {
+                        m_promise.resolve(r, std::move(m_payload_buffer));
+                    } else {
+                        m_promise.resolve(r, {});
+                    }
+                }
+            }
+
+            auto get_buffer_for_unread_header() noexcept
+            {
+                assert(m_bytes_read <= s_header_size);
+                auto b = reinterpret_cast<std::byte *>(&m_header);
+                return boost::asio::buffer(b + m_bytes_read,
+                                           s_header_size - m_bytes_read);
+            }
+
+            auto get_buffer_for_unread_payload() noexcept
+            {
+                assert(m_bytes_read >= s_header_size);
+                assert(m_payload_buffer && m_bytes_read <= m_payload_buffer.size() + s_header_size);
+
+                const auto buffer_offset = m_bytes_read - s_header_size;
+
+                return boost::asio::buffer(m_payload_buffer.data() + buffer_offset,
+                                           m_payload_buffer.size() - buffer_offset);
+            }
+
+            bool is_header_completed() const noexcept
+            {
+                return m_bytes_read >= s_header_size;
+            }
+
+            bool is_payload_completed() const noexcept
+            {
+                return m_payload_buffer && m_bytes_read == m_payload_buffer.size() + s_header_size;
+            }
+
+        private:
+            uint32_t m_header = 0;
+            cl::buffer m_payload_buffer;
+            size_t m_bytes_read = 0;
+
+            bool m_is_promise_resolved = false;
+            read_promise m_promise;
         };
     }
 
@@ -112,10 +191,24 @@ namespace vshalygin::rpc {
         void start_write_header_async();
         void start_write_payload_async();
 
-        void on_write_header(const boost::system::error_code &ec,
-                             std::size_t bytes_transferred);
-        void on_write_payload(const boost::system::error_code &ec,
-                              std::size_t bytes_transferred);
+        void start_read_header_async();
+        void start_read_payload_async();
+
+        template<typename Operations, typename OrderedMutex, typename StartHeaderOpAsync, typename StartPayloadOpAsync>
+        void on_header_operation(const boost::system::error_code &ec,
+                                 std::size_t bytes,
+                                 Operations &operations,
+                                 OrderedMutex &op_mutex,
+                                 StartHeaderOpAsync start_header_op_async,
+                                 StartPayloadOpAsync start_payload_op_async);
+
+        template<typename Operations, typename OrderedMutex, typename StartHeaderOpAsync, typename StartPayloadOpAsync>
+        void on_payload_operation(const boost::system::error_code &ec,
+                                  std::size_t bytes,
+                                  Operations &operations,
+                                  OrderedMutex &op_mutex,
+                                  StartHeaderOpAsync start_header_op_async,
+                                  StartPayloadOpAsync start_payload_op_async);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
@@ -123,7 +216,10 @@ namespace vshalygin::rpc {
         mutable cl::ordered_mutex<1> m_write_mtx;
         std::list<write_operation> m_write_operations;
 
-        mutable cl::ordered_mutex<2> m_socket_mtx;
+        mutable cl::ordered_mutex<2> m_read_mtx;
+        std::list<read_operation> m_read_operations;
+
+        mutable cl::ordered_mutex<3> m_socket_mtx;
         socket m_socket;
         bool m_was_invalidated_by_fail = false;
         std::vector<cl::thread_pool_task<void()>> m_disconnect_callbacks;
@@ -158,14 +254,13 @@ namespace vshalygin::rpc {
     {
         assert(msg.size() != 0);
 
-        auto promise = make_promise(m_thread_pool.get(), [](pipe_op_res r) { return r; });
-        auto future = promise.get_future();
-
         cl::ordered_lock guard(m_write_mtx, m_socket_mtx);
         if(!m_socket.is_open()) {
-            promise.resolve(pipe_op_res::failed);
-            return future;
+            return write_future(m_thread_pool.get(), pipe_op_res::failed);
         }
+
+        auto promise = make_promise(m_thread_pool.get(), [](pipe_op_res r) { return r; });
+        auto future = promise.get_future();
 
         m_write_operations.emplace_front(std::move(msg), std::move(promise));
 
@@ -175,17 +270,50 @@ namespace vshalygin::rpc {
         return future;
     }
 
+    read_future tcp_pipe_endpoint::impl::read_async()
+    {
+        cl::ordered_lock guard(m_read_mtx, m_socket_mtx);
+        if(!m_socket.is_open()) {
+            return read_future(m_thread_pool.get(), ftuple(pipe_op_res::failed, cl::buffer{}));
+        }
+
+        auto promise = make_promise(m_thread_pool.get(),
+                                    [](pipe_op_res r, cl::buffer &&b) {
+                                        return ftuple(r, std::move(b));
+                                    });
+        auto future = promise.get_future();
+
+        m_read_operations.emplace_front(std::move(promise));
+
+        if(m_read_operations.size() == 1) {
+            start_read_header_async();
+        }
+        return future;
+    }
+
     void tcp_pipe_endpoint::impl::start_write_header_async()
     {
         assert(!m_write_operations.empty());
 
-        auto &op = m_write_operations.back();
+        if(!m_socket.is_open()) {
+            while(!m_write_operations.empty()) {
+                m_write_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                               pipe_op_res::failed :
+                                                               pipe_op_res::canceled);
+                m_write_operations.pop_back();
+            }
+            return;
+        }
 
-        auto self = shared_from_this();
-        m_socket.async_write_some(op.get_unwritten_header_buffer(),
-                                  [self](const boost::system::error_code &ec,
-                                  std::size_t bytes_transferred) mutable {
-                                      self->on_write_header(ec, bytes_transferred);
+        m_socket.async_write_some(m_write_operations.back().get_unwritten_header_buffer(),
+                                  [self = shared_from_this()](const boost::system::error_code &ec,
+                                                              std::size_t bytes_transferred) mutable {
+                                      self->on_header_operation(ec,
+                                                                bytes_transferred,
+                                                                self->m_write_operations,
+                                                                self->m_write_mtx,
+                                                                &tcp_pipe_endpoint::impl::start_write_header_async,
+                                                                &tcp_pipe_endpoint::impl::start_write_payload_async);
                                   });
     }
 
@@ -193,25 +321,105 @@ namespace vshalygin::rpc {
     {
         assert(!m_write_operations.empty());
 
-        auto &op = m_write_operations.back();
+        if(!m_socket.is_open()) {
+            while(!m_write_operations.empty()) {
+                m_write_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                               pipe_op_res::failed :
+                                                               pipe_op_res::canceled);
+                m_write_operations.pop_back();
+            }
+            return;
+        }
 
-        auto self = shared_from_this();
-        m_socket.async_write_some(op.get_unwritten_payload_buffer(),
-                                  [self](const boost::system::error_code &ec,
-                                  std::size_t bytes_transferred) mutable {
-                                      self->on_write_payload(ec, bytes_transferred);
+        m_socket.async_write_some(m_write_operations.back().get_unwritten_payload_buffer(),
+                                  [self = shared_from_this()](const boost::system::error_code &ec,
+                                                              std::size_t bytes_transferred) mutable {
+                                      self->on_payload_operation(ec,
+                                                                 bytes_transferred,
+                                                                 self->m_write_operations,
+                                                                 self->m_write_mtx,
+                                                                 &tcp_pipe_endpoint::impl::start_write_header_async,
+                                                                 &tcp_pipe_endpoint::impl::start_write_payload_async);
                                   });
     }
 
-    void tcp_pipe_endpoint::impl::on_write_header(const boost::system::error_code &ec,
-                                                  std::size_t bytes_transferred)
+    void tcp_pipe_endpoint::impl::start_read_header_async()
     {
-        cl::ordered_lock guard1(m_write_mtx);
+        assert(!m_read_operations.empty());
 
-        assert(!m_write_operations.empty());
+        if(!m_socket.is_open()) {
+            while(!m_read_operations.empty()) {
+                m_read_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                              pipe_op_res::failed :
+                                                              pipe_op_res::canceled);
+                m_read_operations.pop_back();
+            }
+            return;
+        }
 
-        auto &op = m_write_operations.back();
-        op.add_transfered_bytes(bytes_transferred);
+        m_socket.async_read_some(m_read_operations.back().get_buffer_for_unread_header(),
+                                 [self = shared_from_this()](const boost::system::error_code &ec,
+                                                             std::size_t bytes_transferred) mutable {
+                                     self->on_header_operation(ec,
+                                                                bytes_transferred,
+                                                                self->m_read_operations,
+                                                                self->m_read_mtx,
+                                                                &tcp_pipe_endpoint::impl::start_read_header_async,
+                                                                &tcp_pipe_endpoint::impl::start_read_payload_async);
+                                 });
+    }
+
+    void tcp_pipe_endpoint::impl::start_read_payload_async()
+    {
+        assert(!m_read_operations.empty());
+
+        if(!m_read_operations.back().is_payload_buffer_valid()) {
+            invalidate_unsafe(false);
+
+            while(!m_read_operations.empty()) {
+                m_read_operations.back().resolve_promise_once(pipe_op_res::failed);
+                m_read_operations.pop_back();
+            }
+            return;
+        }
+
+        if(!m_socket.is_open()) {
+            while(!m_read_operations.empty()) {
+                m_read_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                              pipe_op_res::failed :
+                                                              pipe_op_res::canceled);
+                m_read_operations.pop_back();
+            }
+            return;
+        }
+
+        m_socket.async_read_some(m_read_operations.back().get_buffer_for_unread_payload(),
+                                 [self = shared_from_this()](const boost::system::error_code &ec,
+                                                             std::size_t bytes_transferred) mutable {
+                                     self->on_payload_operation(ec,
+                                                                bytes_transferred,
+                                                                self->m_read_operations,
+                                                                self->m_read_mtx,
+                                                                &tcp_pipe_endpoint::impl::start_read_header_async,
+                                                                &tcp_pipe_endpoint::impl::start_read_payload_async);
+                                 });
+    }
+
+    template<typename Operations, typename OrderedMutex, typename StartHeaderOpAsync, typename StartPayloadOpAsync>
+    void tcp_pipe_endpoint::impl::on_header_operation(const boost::system::error_code &ec,
+                                                      std::size_t bytes,
+                                                      Operations &operations,
+                                                      OrderedMutex &op_mutex,
+                                                      StartHeaderOpAsync start_header_op_async,
+                                                      StartPayloadOpAsync start_payload_op_async)
+    {
+        cl::ordered_lock guard1(op_mutex);
+
+        assert(!operations.empty());
+
+        auto &op = operations.back();
+        op.add_bytes(bytes);
+
         if(ec) {
             if(ec == boost::asio::error::operation_aborted) {
                 cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
@@ -220,46 +428,51 @@ namespace vshalygin::rpc {
                                         m_was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled);
 
                 if(is_socket_open) {
-                    if(!op.is_header_write_completed()) {
-                        start_write_header_async();
+                    if(!op.is_header_completed()) {
+                        (this->*start_header_op_async)();
                     } else {
-                        start_write_payload_async();
+                        (this->*start_payload_op_async)();
                     }
                 } else {
-                    m_write_operations.pop_back();
-                    while(!m_write_operations.empty()) {
-                        m_write_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
-                                                                       pipe_op_res::failed :
-                                                                       pipe_op_res::canceled);
-                        m_write_operations.pop_back();
+                    operations.pop_back();
+                    while(!operations.empty()) {
+                        operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                               pipe_op_res::failed :
+                                                               pipe_op_res::canceled);
+                        operations.pop_back();
                     }
                 }
             } else {
                 cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
                 invalidate_unsafe(false);
 
-                while(!m_write_operations.empty()) {
-                    m_write_operations.back().resolve_promise_once(pipe_op_res::failed);
-                    m_write_operations.pop_back();
+                while(!operations.empty()) {
+                    operations.back().resolve_promise_once(pipe_op_res::failed);
+                    operations.pop_back();
                 }
             }
         } else {
             cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
-            if(!op.is_header_write_completed()) {
-                start_write_header_async();
+            if(!op.is_header_completed()) {
+                (this->*start_header_op_async)();
             } else {
-                start_write_payload_async();
+                (this->*start_payload_op_async)();
             }
         }
     }
 
-    void tcp_pipe_endpoint::impl::on_write_payload(const boost::system::error_code &ec,
-                                                   std::size_t bytes_transferred)
+    template<typename Operations, typename OrderedMutex, typename StartHeaderOpAsync, typename StartPayloadOpAsync>
+    void tcp_pipe_endpoint::impl::on_payload_operation(const boost::system::error_code &ec,
+                                                       std::size_t bytes,
+                                                       Operations &operations,
+                                                       OrderedMutex &op_mutex,
+                                                       StartHeaderOpAsync start_header_op_async,
+                                                       StartPayloadOpAsync start_payload_op_async)
     {
-        cl::ordered_lock guard1(m_write_mtx);
-        assert(!m_write_operations.empty());
-        auto &op = m_write_operations.back();
-        op.add_transfered_bytes(bytes_transferred);
+        cl::ordered_lock guard1(op_mutex);
+        assert(!operations.empty());
+        auto &op = operations.back();
+        op.add_bytes(bytes);
 
         if(ec) {
             if(ec == boost::asio::error::operation_aborted) {
@@ -269,21 +482,21 @@ namespace vshalygin::rpc {
                                         m_was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled);
 
                 if(is_socket_open) {
-                    if(!op.is_payload_write_completed()) {
-                        start_write_payload_async();
+                    if(!op.is_payload_completed()) {
+                        (this->*start_payload_op_async)();
                     } else {
-                        m_write_operations.pop_back();
-                        if(!m_write_operations.empty()) {
-                            start_write_header_async();
+                        operations.pop_back();
+                        if(!operations.empty()) {
+                            (this->*start_header_op_async)();
                         }
                     }
                 } else {
-                    m_write_operations.pop_back();
-                    while(!m_write_operations.empty()) {
-                        m_write_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
-                                                                       pipe_op_res::failed :
-                                                                       pipe_op_res::canceled);
-                        m_write_operations.pop_back();
+                    operations.pop_back();
+                    while(!operations.empty()) {
+                        operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                               pipe_op_res::failed :
+                                                               pipe_op_res::canceled);
+                        operations.pop_back();
                     }
                 }
 
@@ -291,30 +504,24 @@ namespace vshalygin::rpc {
                 cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
                 invalidate_unsafe(false);
 
-                while(!m_write_operations.empty()) {
-                    m_write_operations.back().resolve_promise_once(pipe_op_res::failed);
-                    m_write_operations.pop_back();
+                while(!operations.empty()) {
+                    operations.back().resolve_promise_once(pipe_op_res::failed);
+                    operations.pop_back();
                 }
             }
         } else {
             cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
-            if(!op.is_payload_write_completed()) {
-                start_write_payload_async();
+            if(!op.is_payload_completed()) {
+                (this->*start_payload_op_async)();
             } else {
                 op.resolve_promise_once(pipe_op_res::success);
 
-                m_write_operations.pop_back();
-                if(!m_write_operations.empty()) {
-                    start_write_header_async();
+                operations.pop_back();
+                if(!operations.empty()) {
+                    (this->*start_header_op_async)();
                 }
             }
         }
-    }
-
-    read_future tcp_pipe_endpoint::impl::read_async()
-    {
-        //TODO add implementaion
-        return {};
     }
 
     write_future tcp_pipe_endpoint::impl::write_async(cl::buffer && /*msg*/, std::chrono::milliseconds /*timeout*/)
