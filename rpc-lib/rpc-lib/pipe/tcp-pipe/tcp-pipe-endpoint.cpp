@@ -1,5 +1,8 @@
 #include "tcp-pipe-endpoint.h"
 
+#include <common-lib/synchronization/ordered-lock.h>
+#include <common-lib/synchronization/ordered-mutex.h>
+
 #include <boost/endian/conversion.hpp>
 #include <boost/asio/write.hpp>
 
@@ -15,7 +18,6 @@ namespace vshalygin::rpc {
 
     namespace {
         static constexpr size_t s_header_size = sizeof(uint32_t);
-
 
         class write_operation
         {
@@ -46,7 +48,8 @@ namespace vshalygin::rpc {
             auto get_unwritten_header_buffer() const noexcept
             {
                 assert(m_bytes_transferred <= s_header_size);
-                return boost::asio::buffer(reinterpret_cast<const std::byte *>(&m_write_header_big_endian) + m_bytes_transferred,
+                auto b = reinterpret_cast<const std::byte *>(&m_write_header_big_endian);
+                return boost::asio::buffer(b + m_bytes_transferred,
                                            s_header_size - m_bytes_transferred);
             }
 
@@ -117,13 +120,14 @@ namespace vshalygin::rpc {
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
 
-        mutable std::mutex m_socket_mtx;
+        mutable cl::ordered_mutex<1> m_write_mtx;
+        std::list<write_operation> m_write_operations;
+
+        mutable cl::ordered_mutex<2> m_socket_mtx;
         socket m_socket;
-        bool was_invalidated_by_fail = false;
+        bool m_was_invalidated_by_fail = false;
         std::vector<cl::thread_pool_task<void()>> m_disconnect_callbacks;
 
-        mutable std::mutex m_write_mtx;
-        std::list<write_operation> m_write_operations;
     };
 
     tcp_pipe_endpoint::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
@@ -136,13 +140,13 @@ namespace vshalygin::rpc {
 
     bool tcp_pipe_endpoint::impl::is_connected() const
     {
-        std::lock_guard guard(m_socket_mtx);
+        cl::ordered_lock guard(m_socket_mtx);
         return m_socket.is_open();
     }
 
     void tcp_pipe_endpoint::impl::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
     {
-        std::lock_guard guard(m_socket_mtx);
+        cl::ordered_lock guard(m_socket_mtx);
         if(m_socket.is_open()) {
             m_disconnect_callbacks.push_back(std::move(callback));
         } else {
@@ -157,13 +161,12 @@ namespace vshalygin::rpc {
         auto promise = make_promise(m_thread_pool.get(), [](pipe_op_res r) { return r; });
         auto future = promise.get_future();
 
-        std::lock_guard guard1(m_socket_mtx);
+        cl::ordered_lock guard(m_write_mtx, m_socket_mtx);
         if(!m_socket.is_open()) {
             promise.resolve(pipe_op_res::failed);
             return future;
         }
 
-        std::lock_guard guard2(m_write_mtx);
         m_write_operations.emplace_front(std::move(msg), std::move(promise));
 
         if(m_write_operations.size() == 1) {
@@ -203,16 +206,18 @@ namespace vshalygin::rpc {
     void tcp_pipe_endpoint::impl::on_write_header(const boost::system::error_code &ec,
                                                   std::size_t bytes_transferred)
     {
-        std::lock_guard guard1(m_socket_mtx);
-        std::lock_guard guard2(m_write_mtx);
+        cl::ordered_lock guard1(m_write_mtx);
+
         assert(!m_write_operations.empty());
+
         auto &op = m_write_operations.back();
         op.add_transfered_bytes(bytes_transferred);
         if(ec) {
             if(ec == boost::asio::error::operation_aborted) {
+                cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
                 bool is_socket_open = m_socket.is_open();
                 op.resolve_promise_once(is_socket_open ? pipe_op_res::timeout :
-                                        was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled);
+                                        m_was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled);
 
                 if(is_socket_open) {
                     if(!op.is_header_write_completed()) {
@@ -222,14 +227,24 @@ namespace vshalygin::rpc {
                     }
                 } else {
                     m_write_operations.pop_back();
+                    while(!m_write_operations.empty()) {
+                        m_write_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                                       pipe_op_res::failed :
+                                                                       pipe_op_res::canceled);
+                        m_write_operations.pop_back();
+                    }
                 }
             } else {
+                cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
                 invalidate_unsafe(false);
 
-                op.resolve_promise_once(pipe_op_res::failed);
-                m_write_operations.pop_back();
+                while(!m_write_operations.empty()) {
+                    m_write_operations.back().resolve_promise_once(pipe_op_res::failed);
+                    m_write_operations.pop_back();
+                }
             }
         } else {
+            cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
             if(!op.is_header_write_completed()) {
                 start_write_header_async();
             } else {
@@ -241,17 +256,17 @@ namespace vshalygin::rpc {
     void tcp_pipe_endpoint::impl::on_write_payload(const boost::system::error_code &ec,
                                                    std::size_t bytes_transferred)
     {
-        std::lock_guard guard1(m_socket_mtx);
-        std::lock_guard guard2(m_write_mtx);
+        cl::ordered_lock guard1(m_write_mtx);
         assert(!m_write_operations.empty());
         auto &op = m_write_operations.back();
         op.add_transfered_bytes(bytes_transferred);
 
         if(ec) {
             if(ec == boost::asio::error::operation_aborted) {
+                cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
                 bool is_socket_open = m_socket.is_open();
                 op.resolve_promise_once(is_socket_open ? pipe_op_res::timeout :
-                                        was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled);
+                                        m_was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled);
 
                 if(is_socket_open) {
                     if(!op.is_payload_write_completed()) {
@@ -264,15 +279,25 @@ namespace vshalygin::rpc {
                     }
                 } else {
                     m_write_operations.pop_back();
+                    while(!m_write_operations.empty()) {
+                        m_write_operations.back().resolve_promise_once(m_was_invalidated_by_fail ?
+                                                                       pipe_op_res::failed :
+                                                                       pipe_op_res::canceled);
+                        m_write_operations.pop_back();
+                    }
                 }
 
             } else {
+                cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
                 invalidate_unsafe(false);
 
-                op.resolve_promise_once(pipe_op_res::failed);
-                m_write_operations.pop_back();
+                while(!m_write_operations.empty()) {
+                    m_write_operations.back().resolve_promise_once(pipe_op_res::failed);
+                    m_write_operations.pop_back();
+                }
             }
         } else {
+            cl::ordered_lock guard2 = push_back(std::move(guard1), m_socket_mtx);
             if(!op.is_payload_write_completed()) {
                 start_write_payload_async();
             } else {
@@ -306,24 +331,18 @@ namespace vshalygin::rpc {
 
     void tcp_pipe_endpoint::impl::invalidate()
     {
-        std::lock_guard guard1(m_socket_mtx);
-        std::lock_guard guard2(m_write_mtx);
+        cl::ordered_lock guard(m_write_mtx, m_socket_mtx);
         invalidate_unsafe(true);
     }
 
     void tcp_pipe_endpoint::impl::invalidate_unsafe(bool by_cancel)
     {
         if(m_socket.is_open()) {
-            was_invalidated_by_fail = !by_cancel;
+            m_was_invalidated_by_fail = !by_cancel;
 
             boost::system::error_code ignored;
             m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored);
             m_socket.close(ignored);
-        }
-
-        while(m_write_operations.size() > 1) {
-            m_write_operations.front().resolve_promise_once(by_cancel ? pipe_op_res::canceled : pipe_op_res::failed);
-            m_write_operations.pop_front();
         }
 
         for(auto &cb : m_disconnect_callbacks) {
