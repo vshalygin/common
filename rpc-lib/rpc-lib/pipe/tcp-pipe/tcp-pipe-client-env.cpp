@@ -48,6 +48,13 @@ namespace vshalygin::rpc {
             {
                 using namespace boost::asio::ip;
 
+                std::lock_guard guard(m_socket_mtx);
+                if(m_was_canceled) {
+                    auto r = m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
+                    return pipe_endpoint_future(m_thread_pool.get(),
+                                                ftuple(r, std::shared_ptr<ipipe_endpoint>{}));
+                }
+
                 boost::system::error_code ec;
                 m_socket.open(tcp::v4(), ec);
                 if(ec) {
