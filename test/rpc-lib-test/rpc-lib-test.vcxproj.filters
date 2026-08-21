@@ -40,6 +40,9 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp">
       <Filter>pipe\memory-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\tcp-pipe\tcp-pipe-endpoint-test.cpp">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClCompile>
     <ClCompile Include="src\pipe\win-pipe\win-pipe-client-env-test.cpp">
       <Filter>pipe\win-pipe</Filter>
     </ClCompile>
@@ -127,6 +130,9 @@
     </Filter>
     <Filter Include="pipe\memory-pipe">
       <UniqueIdentifier>{2f646b38-8694-4fdd-ba50-bdd70dcee8bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipe\tcp-pipe">
+      <UniqueIdentifier>{a53a2323-538b-47d5-8889-1225212e8465}</UniqueIdentifier>
     </Filter>
     <Filter Include="pipe\win-pipe">
       <UniqueIdentifier>{30f67053-dff4-4c6b-aea4-3d6f582c9406}</UniqueIdentifier>
