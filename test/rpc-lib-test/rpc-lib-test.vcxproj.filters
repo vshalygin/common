@@ -43,6 +43,9 @@
     <ClCompile Include="src\pipe\tcp-pipe\tcp-pipe-endpoint-test.cpp">
       <Filter>pipe\tcp-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="src\pipe\tcp-pipe\tcp-pipe-client-env-test.cpp">
+      <Filter>pipe\tcp-pipe</Filter>
+    </ClCompile>
     <ClCompile Include="src\pipe\win-pipe\win-pipe-client-env-test.cpp">
       <Filter>pipe\win-pipe</Filter>
     </ClCompile>
