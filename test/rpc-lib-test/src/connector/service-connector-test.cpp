@@ -63,7 +63,9 @@ protected:
                                                   m_on_state_change.AsStdFunction(),
                                                   m_handshake_timeout,
                                                   m_send_timeout,
-                                                  m_recv_timeout);
+                                                  m_recv_timeout,
+                                                  std::chrono::seconds(10),
+                                                  std::chrono::seconds(10));
     }
 
 protected:

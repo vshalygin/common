@@ -43,7 +43,9 @@ namespace vshalygin::rpc {
                                  std::shared_ptr<GServerService> gservice,
                                  std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
                                  std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
-                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10));
+                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10),
+                                 std::chrono::milliseconds check_period = std::chrono::seconds(1),
+                                 std::chrono::milliseconds ping_timeout = std::chrono::seconds(10));
 
         server_endpoint(const server_endpoint &) = delete;
         server_endpoint &operator=(const server_endpoint &) = delete;
@@ -258,7 +260,9 @@ namespace vshalygin::rpc {
         std::shared_ptr<GServerService> gservice,
         std::chrono::milliseconds handshake_timeout,
         std::chrono::milliseconds send_timeout,
-        std::chrono::milliseconds recv_timeout)
+        std::chrono::milliseconds recv_timeout,
+        std::chrono::milliseconds check_period,
+        std::chrono::milliseconds ping_timeout)
         : m_impl(std::make_shared<impl>(thread_pool, std::move(on_connection_change)))
     {
         auto connector = std::make_unique<internal::server_connector>(
@@ -284,7 +288,9 @@ namespace vshalygin::rpc {
             },
             handshake_timeout,
             send_timeout,
-            recv_timeout);
+            recv_timeout,
+            check_period,
+            ping_timeout);
 
         m_impl->set_connector(std::move(connector));
     }

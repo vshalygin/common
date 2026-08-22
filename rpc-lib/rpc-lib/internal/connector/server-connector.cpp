@@ -33,7 +33,9 @@ namespace vshalygin::rpc::internal {
              on_change_state_t &&on_change_state,
              std::chrono::milliseconds handshake_timeout,
              std::chrono::milliseconds send_timeout,
-             std::chrono::milliseconds recv_timeout);
+             std::chrono::milliseconds recv_timeout,
+             std::chrono::milliseconds check_period,
+             std::chrono::milliseconds ping_timeout);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -76,6 +78,8 @@ namespace vshalygin::rpc::internal {
         const std::chrono::milliseconds m_handshake_timeout;
         const std::chrono::milliseconds m_send_timeout;
         const std::chrono::milliseconds m_recv_timeout;
+        const std::chrono::milliseconds m_check_period;
+        const std::chrono::milliseconds m_ping_timeout;
 
         cl::value_locker<std::unordered_map<uint64_t, connection_future>> m_connection_future_map;
     };
@@ -88,7 +92,9 @@ namespace vshalygin::rpc::internal {
                                  on_change_state_t &&on_change_state,
                                  std::chrono::milliseconds handshake_timeout,
                                  std::chrono::milliseconds send_timeout,
-                                 std::chrono::milliseconds recv_timeout)
+                                 std::chrono::milliseconds recv_timeout,
+                                 std::chrono::milliseconds check_period,
+                                 std::chrono::milliseconds ping_timeout)
         : m_thread_pool(std::move(thread_pool))
         , m_notify_strand(m_thread_pool->get_io_context())
         , m_authenticator(std::move(authenticator))
@@ -99,6 +105,8 @@ namespace vshalygin::rpc::internal {
         , m_handshake_timeout(handshake_timeout)
         , m_send_timeout(send_timeout)
         , m_recv_timeout(recv_timeout)
+        , m_check_period(check_period)
+        , m_ping_timeout(ping_timeout)
     {}
 
     void server_connector::impl::start()
@@ -202,7 +210,9 @@ namespace vshalygin::rpc::internal {
                                                                 std::move(pe),
                                                                 s->m_create_service(connection_id),
                                                                 s->m_send_timeout,
-                                                                s->m_recv_timeout);
+                                                                s->m_recv_timeout,
+                                                                s->m_check_period,
+                                                                s->m_ping_timeout);
 
                           s->notify_on_new_connection(connection_id, std::move(c), is_running_sp);
                       })
@@ -272,11 +282,13 @@ namespace vshalygin::rpc::internal {
                                        std::function<void(server_connector_state)> on_change_state,
                                        std::chrono::milliseconds handshake_timeout,
                                        std::chrono::milliseconds send_timeout,
-                                       std::chrono::milliseconds recv_timeout)
+                                       std::chrono::milliseconds recv_timeout,
+                                       std::chrono::milliseconds check_period,
+                                       std::chrono::milliseconds ping_timeout)
         : m_impl(std::make_shared<impl>(std::move(thread_pool), std::move(authenticator),
                                         std::move(pipe_env), std::move(create_service),
                                         std::move(on_new_connection), std::move(on_change_state),
-                                        handshake_timeout, send_timeout, recv_timeout))
+                                        handshake_timeout, send_timeout, recv_timeout, check_period, ping_timeout))
     {}
 
     server_connector::~server_connector()

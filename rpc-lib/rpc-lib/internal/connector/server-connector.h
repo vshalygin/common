@@ -31,7 +31,9 @@ namespace vshalygin::rpc::internal {
                          std::function<void(server_connector_state)> on_change_state,
                          std::chrono::milliseconds handshake_timeout,
                          std::chrono::milliseconds send_timeout,
-                         std::chrono::milliseconds recv_timeout);
+                         std::chrono::milliseconds recv_timeout,
+                         std::chrono::milliseconds check_period,
+                         std::chrono::milliseconds ping_timeout);
 
         server_connector(const server_connector &) = delete;
         server_connector &operator=(const server_connector &) = delete;

@@ -23,7 +23,9 @@ namespace vshalygin::rpc::internal {
                                   std::shared_ptr<iclient_pipe_env> pipe_env,
                                   std::chrono::milliseconds handshake_timeout,
                                   std::chrono::milliseconds send_timeout,
-                                  std::chrono::milliseconds recv_timeout);
+                                  std::chrono::milliseconds recv_timeout,
+                                  std::chrono::milliseconds check_period,
+                                  std::chrono::milliseconds ping_timeout);
 
         client_connector(client_connector &) = delete;
         client_connector &operator=(client_connector &) = delete;

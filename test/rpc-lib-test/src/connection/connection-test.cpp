@@ -211,12 +211,14 @@ protected:
                                             m_pipe_endpoint,
                                             m_service,
                                             req_timeout,
-                                            res_timeout);
+                                            res_timeout,
+                                            std::chrono::seconds(10),
+                                            std::chrono::seconds(10));
     }
 
     std::unique_ptr<connection> create_sut()
     {
-        return create_sut(std::chrono::milliseconds(10000), std::chrono::milliseconds(10000));
+        return create_sut(std::chrono::seconds(10), std::chrono::seconds(10));
     }
 
 protected:

@@ -23,8 +23,8 @@ namespace vshalygin::rpc::internal {
                    std::shared_ptr<iservice> service,
                    std::chrono::milliseconds send_timeout,
                    std::chrono::milliseconds recv_timeout,
-                   std::chrono::milliseconds check_period = std::chrono::seconds(1),
-                   std::chrono::milliseconds ping_timeout = std::chrono::seconds(10));
+                   std::chrono::milliseconds check_period,
+                   std::chrono::milliseconds ping_timeout);
 
         connection(const connection &) = delete;
         connection &operator=(const connection &) = delete;

@@ -53,7 +53,7 @@ protected:
     {
         return std::make_unique<client_connector>(m_thread_pool, m_authenticator,
                                                   m_pipe_env, handshake_timeout,
-                                                  send_timeout, recv_timeout);
+                                                  send_timeout, recv_timeout, 10s, 10s);
     }
 
     auto create_sut()
