@@ -115,6 +115,7 @@
     <ClCompile Include="src\pipe\memory-pipe\mem-pipe-endpoint-test.cpp" />
     <ClCompile Include="src\pipe\tcp-pipe\tcp-pipe-client-env-test.cpp" />
     <ClCompile Include="src\pipe\tcp-pipe\tcp-pipe-endpoint-test.cpp" />
+    <ClCompile Include="src\pipe\tcp-pipe\tcp-pipe-server-env-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-client-env-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-endpoint-test.cpp" />
     <ClCompile Include="src\pipe\win-pipe\win-pipe-iocp-owner-test.cpp" />
