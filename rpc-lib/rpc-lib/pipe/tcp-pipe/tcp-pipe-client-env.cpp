@@ -177,11 +177,13 @@ namespace vshalygin::rpc {
         auto id = m_next_id++;
         std::optional<uint64_t> timer_id;
         if(timeout) {
-            timer_id = m_timer.start([self = shared_from_this(), id]() {
-                std::lock_guard guard(self->m_mtx);
-                auto it = self->m_open_operations.find(id);
-                if(it != self->m_open_operations.end()) {
-                    it->second->cancel(true);
+            timer_id = m_timer.start([self = weak_from_this(), id]() {
+                if(auto s = self.lock()) {
+                    std::lock_guard guard(s->m_mtx);
+                    auto it = s->m_open_operations.find(id);
+                    if(it != s->m_open_operations.end()) {
+                        it->second->cancel(true);
+                    }
                 }
             }, *timeout);
         }
