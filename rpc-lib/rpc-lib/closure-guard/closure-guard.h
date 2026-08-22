@@ -1,8 +1,8 @@
 #pragma once
 
-namespace google::protobuf {
-    class Closure;
-}
+#pragma warning(push, 0)
+#include <google/protobuf/service.h>
+#pragma warning(pop)
 
 namespace vshalygin::rpc {
     class closure_guard final
