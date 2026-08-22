@@ -365,3 +365,19 @@ TEST(TransferMessageReq, GetMsgNumberResThrowsExceptionOnInvalidBuffer)
     ASSERT_ANY_THROW(get_msg_number_res(buffer{}));
     ASSERT_ANY_THROW(get_msg_number_res(buffer{ 1 }));
 }
+
+TEST(TransferMessage, TestCreateTransferMessagePing)
+{
+    auto msg = create_transfer_msg_ping();
+
+    ASSERT_EQ(msg.size(), 1u);
+    EXPECT_EQ(static_cast<transfer_msg_type>(msg[0]), transfer_msg_type::ping);
+}
+
+TEST(TransferMessage, TestCreateTransferMessagePong)
+{
+    auto msg = create_transfer_msg_pong();
+
+    ASSERT_EQ(msg.size(), 1u);
+    EXPECT_EQ(static_cast<transfer_msg_type>(msg[0]), transfer_msg_type::pong);
+}

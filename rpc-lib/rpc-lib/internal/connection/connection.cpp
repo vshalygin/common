@@ -1,4 +1,6 @@
 #include "connection.h"
+#include "connection-watcher.h"
+
 #include <rpc-lib/internal/transport/transport.h>
 #include <rpc-lib/internal/transfer-message/transfer-message.h>
 #include <rpc-lib/internal/service/iservice.h>
@@ -6,6 +8,7 @@
 
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/timer/multiple-timer.h>
+#include <common-lib/timer/periodic-timer.h>
 
 #include <vector>
 
@@ -24,8 +27,10 @@ namespace vshalygin::rpc::internal {
         impl(std::shared_ptr<cl::thread_pool> thread_pool,
              std::shared_ptr<ipipe_endpoint> pipe_endpoint,
              std::shared_ptr<iservice> service,
-             const std::chrono::milliseconds &send_timeout,
-             const std::chrono::milliseconds &recv_timeout);
+             std::chrono::milliseconds send_timeout,
+             std::chrono::milliseconds recv_timeout,
+             std::chrono::milliseconds check_period,
+             std::chrono::milliseconds ping_timeout);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -43,12 +48,18 @@ namespace vshalygin::rpc::internal {
         size_t get_active_timers_count() const;
 
     private:
+        void start_watching();
+
         void do_receive_async();
         void dispatch_receive_event(cl::buffer &&message) noexcept;
         void handle_received_request(cl::buffer &&message);
         void handle_received_response(cl::buffer &&message);
+        void handle_received_ping();
+        void handle_received_pong();
 
         void process_request_sent(uint64_t req_msg_number);
+
+        void process_watch_event();
 
         void complete_request(uint64_t req_msg_number,
                               request_result result,
@@ -60,10 +71,17 @@ namespace vshalygin::rpc::internal {
         void complete_receive_routine(pipe_op_res r);
 
     private:
-        mutable std::mutex m_is_running_mtx;
-        bool m_is_running = false;
+        mutable std::mutex m_mtx;
+        enum class state
+        {
+            never_started,
+            started,
+            deactivated
+        };
+        state m_state = state::never_started;
 
         const std::chrono::milliseconds m_recv_timeout;
+        const std::chrono::milliseconds m_check_period;
 
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<iservice> m_service;
@@ -71,7 +89,10 @@ namespace vshalygin::rpc::internal {
         cl::value_locker<request_map> m_request_map;
 
         cl::multiple_timer m_multiple_timer;
+        cl::periodic_timer m_watcher_timer;
+
         transport m_transport;
+        cl::value_locker<connection_watcher> m_watcher;
     };
 
     struct connection::impl::request_data
@@ -86,39 +107,47 @@ namespace vshalygin::rpc::internal {
     connection::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &send_timeout,
-                           const std::chrono::milliseconds &recv_timeout)
+                           std::chrono::milliseconds send_timeout,
+                           std::chrono::milliseconds recv_timeout,
+                           std::chrono::milliseconds check_period,
+                           std::chrono::milliseconds ping_timeout)
         : m_recv_timeout(recv_timeout)
+        , m_check_period(check_period)
         , m_thread_pool(std::move(thread_pool))
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
+        , m_watcher_timer(m_thread_pool->get_io_context())
         , m_transport(std::move(pipe_endpoint), send_timeout)
+        , m_watcher(ping_timeout)
     {}
 
     void connection::impl::start()
     {
-        std::lock_guard g(m_is_running_mtx);
-        if(!m_is_running) {
-            m_is_running = true;
-            do_receive_async();;
+        std::lock_guard g(m_mtx);
+        if(m_state == state::never_started) {
+            m_state = state::started;
+            start_watching();
+            do_receive_async();
         }
     }
 
     void connection::impl::deactivate()
     {
+        std::lock_guard g(m_mtx);
+        m_state = state::deactivated;
         m_transport.stop();
     }
 
     bool connection::impl::is_active() const
     {
-        std::lock_guard g(m_is_running_mtx);
-        return m_is_running && m_transport.is_running();
+        std::lock_guard g(m_mtx);
+        return m_state == state::started && m_transport.is_running();
     }
 
     connection::req_result_future connection::impl::request_async(cl::buffer &&message)
     {
-        std::lock_guard g(m_is_running_mtx);
-        if(!m_is_running || !m_transport.is_running()) {
+        std::lock_guard g(m_mtx);
+        if(m_state != state::started || !m_transport.is_running()) {
             return req_result_future(m_thread_pool.get(), ftuple(request_result::failed, cl::buffer{}));
         }
 
@@ -156,6 +185,18 @@ namespace vshalygin::rpc::internal {
         m_transport.set_stop_callback(std::move(callback));
     }
 
+    void connection::impl::start_watching()
+    {
+        m_watcher_timer.start([self = weak_from_this()]() {
+            if(auto s = self.lock()) {
+                s->process_watch_event();
+                return cl::periodic_timer::callback_ret::Continue;
+            }
+
+            return cl::periodic_timer::callback_ret::Abort;
+        }, m_check_period);
+    }
+
     void connection::impl::do_receive_async()
     {
         m_transport.recv_async()
@@ -172,15 +213,24 @@ namespace vshalygin::rpc::internal {
     void connection::impl::dispatch_receive_event(cl::buffer &&message) noexcept
     {
         try {
-            const auto message_type = get_transfer_msg_type(message);
-
-            if(transfer_msg_type::req == message_type) {
-                handle_received_request(std::move(message));
-            } else if(transfer_msg_type::res == message_type) {
-                handle_received_response(std::move(message));
-            } else {
-                assert(!"unknown type of received message");
+            switch (get_transfer_msg_type(message)) {
+                case transfer_msg_type::req:
+                    handle_received_request(std::move(message));
+                    break;
+                case transfer_msg_type::res:
+                    handle_received_response(std::move(message));
+                    break;
+                case transfer_msg_type::ping:
+                    handle_received_ping();
+                    break;
+                case transfer_msg_type::pong:
+                    handle_received_pong();
+                    break;
+                default:
+                    assert(!"unknown type of received message");
             }
+
+            m_watcher.lock()->set_activity_flag();
         } catch (...) {
         }
     }
@@ -205,6 +255,14 @@ namespace vshalygin::rpc::internal {
         complete_request(message_number, request_result::ok, std::move(message));
     }
 
+    void connection::impl::handle_received_ping()
+    {
+        m_transport.send_async(create_transfer_msg_pong());
+    }
+
+    void connection::impl::handle_received_pong()
+    {}
+
     void connection::impl::process_request_sent(uint64_t req_msg_number)
     {
         req_result_promise to_delete;
@@ -220,6 +278,17 @@ namespace vshalygin::rpc::internal {
                 to_delete = std::move(req_data.promise);
                 map->erase(it);
             }
+        }
+    }
+
+    void connection::impl::process_watch_event()
+    {
+        auto watcher = m_watcher.lock();
+        if(watcher->is_connection_not_responding()) {
+            deactivate();
+        } else if(!watcher->check_and_drop_activity_flag()) {
+            m_transport.send_async(create_transfer_msg_ping());
+            watcher->set_ping_waiting();
         }
     }
 
@@ -261,8 +330,7 @@ namespace vshalygin::rpc::internal {
 
     void connection::impl::complete_receive_routine(pipe_op_res r)
     {
-        std::lock_guard g(m_is_running_mtx);
-        m_is_running = false;
+        m_watcher_timer.stop_async({});
 
         assert(is_fail(r));
         assert(r != pipe_op_res::timeout);
@@ -302,13 +370,17 @@ namespace vshalygin::rpc::internal {
     connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
-                           const std::chrono::milliseconds &send_timeout,
-                           const std::chrono::milliseconds &recv_timeout)
+                           std::chrono::milliseconds send_timeout,
+                           std::chrono::milliseconds recv_timeout,
+                           std::chrono::milliseconds check_period,
+                           std::chrono::milliseconds ping_timeout)
         : m_impl(std::make_shared<impl>(std::move(thread_pool),
                                         std::move(pipe_endpoint),
                                         std::move(service),
                                         send_timeout,
-                                        recv_timeout))
+                                        recv_timeout,
+                                        check_period,
+                                        ping_timeout))
     {}
 
     connection::~connection()

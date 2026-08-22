@@ -10,6 +10,9 @@
     <ClCompile Include="src\connection\connection-test.cpp">
       <Filter>connection</Filter>
     </ClCompile>
+    <ClCompile Include="src\connection\connection-watcher-test.cpp">
+      <Filter>connection</Filter>
+    </ClCompile>
     <ClCompile Include="$(GOOGLETEST_ROOT)\googlemock\src\gmock-all.cc">
       <Filter>gtest</Filter>
     </ClCompile>

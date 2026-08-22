@@ -71,6 +71,102 @@ namespace {
         msg.set_val(val);
         return create_transfer_msg_res(number, response_result::ok, &msg);
     }
+
+    constexpr auto s_heartbeat_operation_timeout = std::chrono::seconds(5);
+
+    struct heartbeat_read_result
+    {
+        bool completed = false;
+        pipe_op_res result = pipe_op_res::failed;
+        buffer message;
+    };
+
+    heartbeat_read_result read_heartbeat_message(
+        const std::shared_ptr<ipipe_endpoint> &endpoint,
+        std::chrono::milliseconds timeout)
+    {
+        auto future = endpoint->read_async();
+        if(!future.wait_for(timeout)) {
+            return {};
+        }
+
+        heartbeat_read_result result;
+        result.completed = true;
+        future.get().apply([&result](pipe_op_res r, buffer &&message) {
+            result.result = r;
+            result.message = std::move(message);
+        });
+
+        return result;
+    }
+
+    heartbeat_read_result read_heartbeat_message(
+        const std::shared_ptr<ipipe_endpoint> &endpoint,
+        transfer_msg_type expected_type,
+        std::chrono::milliseconds timeout)
+    {
+        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        do {
+            const auto now = std::chrono::steady_clock::now();
+            auto result = read_heartbeat_message(
+                endpoint,
+                std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now));
+            if(!result.completed || result.result != pipe_op_res::success) {
+                return result;
+            }
+
+            if(get_transfer_msg_type(result.message) == expected_type) {
+                return result;
+            }
+        } while(std::chrono::steady_clock::now() < deadline);
+
+        return {};
+    }
+
+    bool write_heartbeat_message(const std::shared_ptr<ipipe_endpoint> &endpoint,
+                                 buffer &&message,
+                                 std::chrono::milliseconds timeout)
+    {
+        auto future = endpoint->write_async(std::move(message));
+        if(!future.wait_for(timeout)) {
+            return false;
+        }
+
+        auto result = pipe_op_res::failed;
+        future.get().apply([&result](pipe_op_res r) { result = r; });
+        return result == pipe_op_res::success;
+    }
+
+    bool wait_until_connection_is_inactive(connection &value,
+                                           std::chrono::milliseconds timeout)
+    {
+        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        do {
+            if(!value.is_active()) {
+                return true;
+            }
+
+            std::this_thread::yield();
+        } while(std::chrono::steady_clock::now() < deadline);
+
+        return !value.is_active();
+    }
+
+    std::unique_ptr<connection> create_heartbeat_connection(
+        const std::shared_ptr<thread_pool> &thread_pool,
+        const std::shared_ptr<ipipe_endpoint> &endpoint,
+        const std::shared_ptr<iservice> &service,
+        std::chrono::milliseconds check_period,
+        std::chrono::milliseconds ping_timeout)
+    {
+        return std::make_unique<connection>(thread_pool,
+                                            endpoint,
+                                            service,
+                                            std::chrono::seconds(10),
+                                            std::chrono::seconds(10),
+                                            check_period,
+                                            ping_timeout);
+    }
 }
 
 class Connection
@@ -421,4 +517,149 @@ TEST_F(Connection, CancelsActiveRequestOnConnectionLost)
 
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
+}
+
+TEST_F(Connection, SendsHeartbeatPingAfterInactivity)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::milliseconds(1),
+                                           std::chrono::hours(1));
+    sut->start();
+
+    auto read = read_heartbeat_message(m_other_pipe_enpoint, s_heartbeat_operation_timeout);
+
+    ASSERT_TRUE(read.completed);
+    ASSERT_EQ(read.result, pipe_op_res::success);
+    EXPECT_EQ(get_transfer_msg_type(read.message), transfer_msg_type::ping);
+}
+
+TEST_F(Connection, SendsRepeatedHeartbeatPingsWhileWaitingForActivity)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::milliseconds(1),
+                                           std::chrono::hours(1));
+    sut->start();
+
+    auto first = read_heartbeat_message(m_other_pipe_enpoint, s_heartbeat_operation_timeout);
+    ASSERT_TRUE(first.completed);
+    ASSERT_EQ(first.result, pipe_op_res::success);
+    EXPECT_EQ(get_transfer_msg_type(first.message), transfer_msg_type::ping);
+
+    auto second = read_heartbeat_message(m_other_pipe_enpoint, s_heartbeat_operation_timeout);
+    ASSERT_TRUE(second.completed);
+    ASSERT_EQ(second.result, pipe_op_res::success);
+    EXPECT_EQ(get_transfer_msg_type(second.message), transfer_msg_type::ping);
+}
+
+TEST_F(Connection, RepliesToHeartbeatPingWithPong)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::hours(1),
+                                           std::chrono::hours(1));
+    sut->start();
+
+    ASSERT_TRUE(write_heartbeat_message(m_other_pipe_enpoint,
+                                        create_transfer_msg_ping(),
+                                        s_heartbeat_operation_timeout));
+    auto read = read_heartbeat_message(m_other_pipe_enpoint, s_heartbeat_operation_timeout);
+
+    ASSERT_TRUE(read.completed);
+    ASSERT_EQ(read.result, pipe_op_res::success);
+    EXPECT_EQ(get_transfer_msg_type(read.message), transfer_msg_type::pong);
+}
+
+TEST_F(Connection, PongIsProcessedWhileWaitingForHeartbeatResponse)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::milliseconds(1),
+                                           std::chrono::hours(1));
+    sut->start();
+
+    auto read = read_heartbeat_message(m_other_pipe_enpoint, s_heartbeat_operation_timeout);
+    ASSERT_TRUE(read.completed);
+    ASSERT_EQ(read.result, pipe_op_res::success);
+    ASSERT_EQ(get_transfer_msg_type(read.message), transfer_msg_type::ping);
+
+    ASSERT_TRUE(write_heartbeat_message(m_other_pipe_enpoint,
+                                        create_transfer_msg_pong(),
+                                        s_heartbeat_operation_timeout));
+    ASSERT_TRUE(write_heartbeat_message(m_other_pipe_enpoint,
+                                        create_transfer_msg_ping(),
+                                        s_heartbeat_operation_timeout));
+
+    auto pong = read_heartbeat_message(m_other_pipe_enpoint,
+                                       transfer_msg_type::pong,
+                                       s_heartbeat_operation_timeout);
+
+    ASSERT_TRUE(pong.completed);
+    ASSERT_EQ(pong.result, pipe_op_res::success);
+    EXPECT_TRUE(sut->is_active());
+    EXPECT_TRUE(m_other_pipe_enpoint->is_connected());
+}
+
+TEST_F(Connection, DeactivatesIfHeartbeatResponseDoesNotArrive)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::milliseconds(0),
+                                           std::chrono::milliseconds(0));
+    sut->start();
+
+    ASSERT_TRUE(wait_until_connection_is_inactive(*sut, s_heartbeat_operation_timeout));
+
+    EXPECT_FALSE(sut->is_active());
+    EXPECT_FALSE(m_other_pipe_enpoint->is_connected());
+}
+
+TEST_F(Connection, SecondStartDoesNotThrowAndKeepsConnectionActive)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::hours(1),
+                                           std::chrono::hours(1));
+    sut->start();
+
+    EXPECT_NO_THROW(sut->start());
+    EXPECT_TRUE(sut->is_active());
+}
+
+TEST_F(Connection, StartAfterDeactivationDoesNothing)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::milliseconds(10),
+                                           std::chrono::milliseconds(80));
+
+    sut->deactivate();
+    EXPECT_NO_THROW(sut->start());
+
+    EXPECT_FALSE(sut->is_active());
+    EXPECT_FALSE(m_other_pipe_enpoint->is_connected());
+}
+
+TEST_F(Connection, DoesNotRestartHeartbeatAfterDeactivation)
+{
+    auto sut = create_heartbeat_connection(m_thread_pool,
+                                           m_pipe_endpoint,
+                                           m_service,
+                                           std::chrono::milliseconds(10),
+                                           std::chrono::milliseconds(80));
+    sut->start();
+    sut->deactivate();
+
+    EXPECT_NO_THROW(sut->start());
+
+    EXPECT_FALSE(sut->is_active());
+    EXPECT_FALSE(m_other_pipe_enpoint->is_connected());
 }

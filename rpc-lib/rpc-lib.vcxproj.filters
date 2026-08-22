@@ -129,6 +129,9 @@
     <ClCompile Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-server-env.cpp">
       <Filter>pipe\tcp-pipe</Filter>
     </ClCompile>
+    <ClCompile Include="rpc-lib\internal\connection\connection-watcher.cpp">
+      <Filter>internal\connection</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rpc-lib\types\request-result.h">
@@ -265,6 +268,9 @@
     </ClInclude>
     <ClInclude Include="rpc-lib\pipe\tcp-pipe\tcp-pipe-server-env.h">
       <Filter>pipe\tcp-pipe</Filter>
+    </ClInclude>
+    <ClInclude Include="rpc-lib\internal\connection\connection-watcher.h">
+      <Filter>internal\connection</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

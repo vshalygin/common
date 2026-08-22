@@ -102,6 +102,7 @@
     <ClCompile Include="src\channel\channel-test.cpp" />
     <ClCompile Include="src\client-endpoint-test.cpp" />
     <ClCompile Include="src\closure-guard\closure-guard-test.cpp" />
+    <ClCompile Include="src\connection\connection-watcher-test.cpp" />
     <ClCompile Include="src\connection\connection-test.cpp" />
     <ClCompile Include="src\connector\client-connector-test.cpp" />
     <ClCompile Include="src\connector\service-connector-test.cpp" />

@@ -313,4 +313,20 @@ namespace vshalygin::rpc::internal {
         assert(curr_pos == buf_size);
         return ans;
     }
+
+    cl::buffer create_transfer_msg_ping()
+    {
+        cl::buffer b(1);
+        b[0] = static_cast<std::byte>(transfer_msg_type::ping);
+
+        return b;
+    }
+
+    cl::buffer create_transfer_msg_pong()
+    {
+        cl::buffer b(1);
+        b[0] = static_cast<std::byte>(transfer_msg_type::pong);
+
+        return b;
+    }
 }

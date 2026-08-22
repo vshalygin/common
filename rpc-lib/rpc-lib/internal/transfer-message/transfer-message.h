@@ -9,19 +9,22 @@
 
 /*
     A transfer_msg is a single, logically complete message transmitted
-    between client and server. The structure consists of three parts: a header,
-    a serialized message, and a trailer.
-
+    between a client and a server.
     Each transfer_msg has its own type:
-    transfer_type::req - request sent from one endpoint to an another
-    transfer_type::res - response sent from one endpoint to an another as an answer to the request
+    transfer_type::req  - a request sent from one endpoint to another
+    transfer_type::res  - a response sent from one endpoint to another in reply to a request
+    transfer_type::ping - a special request sent to check connection validity
+    transfer_type::pong - a response to a ping
 
-    Structure of all types is the same header:
-    1 byte message type + 4 bytes serialized protobuf message size
+    The req and res types have the same header:
+    1 byte for the message type + 4 bytes for the serialized Protobuf message size
 
-    Every type has its own trailer:
-    req: 8 bytes message number + 4 bytes method idx
-    res: 8 bytes message number + 1 byte response result code
+    The req and res types have their own trailers:
+    req: 8 bytes for the message number + 4 bytes for the method index
+    res: 8 bytes for the message number + 1 byte for the response result code
+
+    Ping and pong messages have at least one byte at the beginning for the
+    message type; the remaining bytes are unspecified.
 */
 
 namespace google::protobuf {
@@ -32,7 +35,9 @@ namespace vshalygin::rpc::internal {
     enum class transfer_msg_type : unsigned char
     {
         req = 0,
-        res = 1
+        res = 1,
+        ping = 2,
+        pong = 3
     };
 
     bool is_request_proto_too_big(const google::protobuf::Message *proto_message);
@@ -57,4 +62,7 @@ namespace vshalygin::rpc::internal {
     cl::buffer create_transfer_msg_res(uint64_t message_number,
                                        response_result rc,
                                        google::protobuf::Message *proto_message);
+
+    cl::buffer create_transfer_msg_ping();
+    cl::buffer create_transfer_msg_pong();
 }

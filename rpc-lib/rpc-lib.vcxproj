@@ -14,6 +14,7 @@
     <ClCompile Include="rpc-lib\authenticator\simple-authenticator\simple-authenticator.cpp" />
     <ClCompile Include="rpc-lib\closure-guard\closure-guard.cpp" />
     <ClCompile Include="rpc-lib\internal\channel\channel.cpp" />
+    <ClCompile Include="rpc-lib\internal\connection\connection-watcher.cpp" />
     <ClCompile Include="rpc-lib\internal\connection\connection.cpp" />
     <ClCompile Include="rpc-lib\internal\connector\client-connector.cpp" />
     <ClCompile Include="rpc-lib\internal\connector\server-connector.cpp" />
@@ -44,6 +45,7 @@
     <ClInclude Include="rpc-lib\closure-guard\closure-guard.h" />
     <ClInclude Include="rpc-lib\consts.h" />
     <ClInclude Include="rpc-lib\internal\channel\channel.h" />
+    <ClInclude Include="rpc-lib\internal\connection\connection-watcher.h" />
     <ClInclude Include="rpc-lib\internal\connection\connection.h" />
     <ClInclude Include="rpc-lib\internal\connection\iconnection.h" />
     <ClInclude Include="rpc-lib\internal\connector\client-connector.h" />
