@@ -34,7 +34,17 @@ TEST_F(PeriodicTimer, DoesNothingOnAttemptToCancelNotActiveTimer)
 {
     periodic_timer sut(m_thread_pool->get_io_context());
 
-    sut.stop();
+    sut.stop_async({});
+}
+
+TEST_F(PeriodicTimer, CallsStopCallbackImmediatlyIfTimerIsNotActive)
+{
+    event sync_event;
+    periodic_timer sut(m_thread_pool->get_io_context());
+
+    sut.stop_async([sync_event]() mutable { sync_event.set(); });
+
+    ASSERT_TRUE(sync_event.wait_for(std::chrono::seconds(10)));
 }
 
 TEST_F(PeriodicTimer, CallsCallbackInSpecifiedTimes)
@@ -85,8 +95,10 @@ TEST_F(PeriodicTimer, StartsTimerAfterPreviousWasCanceled)
 {
     periodic_timer sut(m_thread_pool->get_io_context());
 
+    event sync_event;
     sut.start([]() { return callack_ret::Continue; }, std::chrono::seconds(10), 2);
-    sut.stop();
+    sut.stop_async([sync_event]() mutable { sync_event.set(); });
+    sync_event.wait();
 
     MockFunction<callack_ret()> callback;
     EXPECT_CALL(callback, Call)
@@ -173,8 +185,8 @@ TEST_F(PeriodicTimer, AllowsToCancelInTwoThreadSimultaneously)
     sut.start(callback.AsStdFunction(), std::chrono::milliseconds(1));
     sync_event1.wait();
 
-    m_thread_pool->post([&]() { sync_latch.count_down(); sut.stop(); });
-    m_thread_pool->post([&]() { sync_latch.count_down();  sut.stop(); });
+    m_thread_pool->post([&]() { sync_latch.count_down(); sut.stop_async([]() {}); });
+    m_thread_pool->post([&]() { sync_latch.count_down();  sut.stop_async([]() {}); });
     sync_latch.wait();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     sync_event2.set();
@@ -182,12 +194,24 @@ TEST_F(PeriodicTimer, AllowsToCancelInTwoThreadSimultaneously)
     m_thread_pool->stop();
 }
 
-TEST_F(PeriodicTimer, IsNotActiveAfterCancelCall)
+TEST_F(PeriodicTimer, IsNotActiveAfterStopCallbackCalled)
+{
+    periodic_timer sut(m_thread_pool->get_io_context());
+
+    event sync_event;
+    sut.start([]() { return callack_ret::Continue; }, std::chrono::minutes(10));
+    sut.stop_async([&sync_event]() { sync_event.set(); });
+    sync_event.wait();
+
+    ASSERT_FALSE(sut.is_active());
+}
+
+TEST_F(PeriodicTimer, DoNotCallEmptyStopCallback)
 {
     periodic_timer sut(m_thread_pool->get_io_context());
 
     sut.start([]() { return callack_ret::Continue; }, std::chrono::minutes(10));
-    sut.stop();
+    sut.stop_async({});
 
-    ASSERT_FALSE(sut.is_active());
+    while(sut.is_active());
 }
