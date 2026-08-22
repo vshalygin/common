@@ -159,13 +159,17 @@ namespace vshalygin::rpc::internal {
 
     bool is_request_buffer_valid(cl::cbuffer_view buff) noexcept
     {
-        return buff.data() && buff.size() >= s_header_bytes_count + s_req_trailer_bytes_count &&
+        return buff.data() &&
+               buff.size() >= s_header_bytes_count + s_req_trailer_bytes_count &&
+               static_cast<transfer_msg_type>(buff[0]) == transfer_msg_type::req &&
                extract_message_size(buff) <= buff.size() - s_header_bytes_count - s_req_trailer_bytes_count;
     }
 
     bool is_response_buffer_valid(cl::cbuffer_view buff) noexcept
     {
-        return buff.data() && buff.size() >= s_header_bytes_count + s_res_trailer_bytes_count &&
+        return buff.data() &&
+               buff.size() >= s_header_bytes_count + s_res_trailer_bytes_count &&
+               static_cast<transfer_msg_type>(buff[0]) == transfer_msg_type::res &&
                extract_message_size(buff) <= buff.size() - s_header_bytes_count - s_res_trailer_bytes_count;
     }
 

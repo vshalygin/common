@@ -244,7 +244,7 @@ TEST_F(Channel, SetsControllerFailedIfResponseIsInvalid)
 TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageType)
 {
     auto sync_event = std::make_shared<event>();
-    EXPECT_CALL(m_request_callback, Call(request_result::unknown_error, _))
+    EXPECT_CALL(m_request_callback, Call(request_result::invalid_response, _))
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 

@@ -248,14 +248,17 @@ TEST(TransferMessageReq, GetMsgMethodIdxReqThrowsExceptionOnInvalidBuffer)
 
 TEST(TransferMessageReq, TestIsRequestBufferValid)
 {
+    proto::some_message test_message; test_message.set_string_data(std::string(100, ' '));
     buffer b1;
     buffer b2(3);
-    buffer b3 = create_transfer_msg_req(1, 1, nullptr);
+    buffer b3 = create_transfer_msg_res(1, response_result::ok, &test_message);
+    buffer b4 = create_transfer_msg_req(1, 1, nullptr);
 
     EXPECT_FALSE(is_request_buffer_valid(b1));
     EXPECT_FALSE(is_request_buffer_valid(b2));
-    EXPECT_FALSE(is_request_buffer_valid(cbuffer_view(b3.data(), b3.size() - 1)));
-    EXPECT_TRUE(is_request_buffer_valid(b3));
+    EXPECT_FALSE(is_request_buffer_valid(b3));
+    EXPECT_FALSE(is_request_buffer_valid(cbuffer_view(b4.data(), b4.size() - 1)));
+    EXPECT_TRUE(is_request_buffer_valid(b4));
 }
 
 TEST(TransferMessageReq, RejectsUint32MaxPayloadSize)
@@ -328,14 +331,17 @@ TEST(TransferMessageRes, CreatesTransferMessageWithNullptrMessage)
 
 TEST(TransferMessageReq, TestIsResultBufferValid)
 {
+    proto::some_message test_message; test_message.set_string_data(std::string(100, ' '));
     buffer b1;
     buffer b2(3);
-    buffer b3 = create_transfer_msg_res(34, response_result::not_implemented, nullptr);
+    buffer b3 = create_transfer_msg_req(1, 1, &test_message);
+    buffer b4 = create_transfer_msg_res(34, response_result::not_implemented, nullptr);
 
     EXPECT_FALSE(is_response_buffer_valid(b1));
     EXPECT_FALSE(is_response_buffer_valid(b2));
-    EXPECT_FALSE(is_response_buffer_valid(cbuffer_view(b3.data(), b3.size() - 1)));
-    EXPECT_TRUE(is_response_buffer_valid(b3));
+    EXPECT_FALSE(is_response_buffer_valid(b3));
+    EXPECT_FALSE(is_response_buffer_valid(cbuffer_view(b4.data(), b4.size() - 1)));
+    EXPECT_TRUE(is_response_buffer_valid(b4));
 }
 
 TEST(TransferMessageRes, RejectsUint32MaxPayloadSize)
