@@ -1,5 +1,6 @@
 #pragma once
 #include <rpc-lib/types/future.h>
+#include <rpc-lib/types/config.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
@@ -21,11 +22,7 @@ namespace vshalygin::rpc::internal {
         explicit client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
                                   std::shared_ptr<iauthenticator> authenticator,
                                   std::shared_ptr<iclient_pipe_env> pipe_env,
-                                  std::chrono::milliseconds handshake_timeout,
-                                  std::chrono::milliseconds send_timeout,
-                                  std::chrono::milliseconds recv_timeout,
-                                  std::chrono::milliseconds check_period,
-                                  std::chrono::milliseconds ping_timeout);
+                                  const config &config);
 
         client_connector(client_connector &) = delete;
         client_connector &operator=(client_connector &) = delete;

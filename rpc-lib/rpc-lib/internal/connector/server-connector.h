@@ -1,4 +1,6 @@
 #pragma once
+#include <rpc-lib/types/config.h>
+
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
 #include <memory>
@@ -29,11 +31,7 @@ namespace vshalygin::rpc::internal {
                          std::function<std::unique_ptr<iservice>(uint64_t)> &&create_service,
                          std::function<void(uint64_t, std::unique_ptr<iconnection>)> &&on_new_connection,
                          std::function<void(server_connector_state)> on_change_state,
-                         std::chrono::milliseconds handshake_timeout,
-                         std::chrono::milliseconds send_timeout,
-                         std::chrono::milliseconds recv_timeout,
-                         std::chrono::milliseconds check_period,
-                         std::chrono::milliseconds ping_timeout);
+                         const config &config);
 
         server_connector(const server_connector &) = delete;
         server_connector &operator=(const server_connector &) = delete;

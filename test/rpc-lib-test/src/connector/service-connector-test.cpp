@@ -46,6 +46,12 @@ protected:
 
     auto create_sut()
     {
+        config config;
+        config.handshake_timeout = m_handshake_timeout;
+        config.send_timeout = m_send_timeout;
+        config.recv_timeout = m_recv_timeout;
+        config.check_connection_period = std::chrono::seconds(10);
+        config.ping_timeout = std::chrono::seconds(10);
         return std::make_unique<server_connector>(m_thread_pool,
                                                   m_authenticator,
                                                   m_mem_pipe_env,
@@ -61,11 +67,7 @@ protected:
                                                   },
                                                   m_on_new_connection.AsStdFunction(),
                                                   m_on_state_change.AsStdFunction(),
-                                                  m_handshake_timeout,
-                                                  m_send_timeout,
-                                                  m_recv_timeout,
-                                                  std::chrono::seconds(10),
-                                                  std::chrono::seconds(10));
+                                                  config);
     }
 
 protected:

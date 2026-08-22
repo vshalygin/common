@@ -272,5 +272,8 @@
     <ClInclude Include="rpc-lib\internal\connection\connection-watcher.h">
       <Filter>internal\connection</Filter>
     </ClInclude>
+    <ClInclude Include="rpc-lib\types\config.h">
+      <Filter>types</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

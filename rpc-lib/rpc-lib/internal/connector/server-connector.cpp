@@ -31,11 +31,7 @@ namespace vshalygin::rpc::internal {
              create_service_t &&create_service,
              on_new_connection_t &&on_new_connection,
              on_change_state_t &&on_change_state,
-             std::chrono::milliseconds handshake_timeout,
-             std::chrono::milliseconds send_timeout,
-             std::chrono::milliseconds recv_timeout,
-             std::chrono::milliseconds check_period,
-             std::chrono::milliseconds ping_timeout);
+             const config &config);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -75,11 +71,7 @@ namespace vshalygin::rpc::internal {
         const on_new_connection_t m_on_new_connection;
         const on_change_state_t m_on_change_state;
 
-        const std::chrono::milliseconds m_handshake_timeout;
-        const std::chrono::milliseconds m_send_timeout;
-        const std::chrono::milliseconds m_recv_timeout;
-        const std::chrono::milliseconds m_check_period;
-        const std::chrono::milliseconds m_ping_timeout;
+        const config m_config;
 
         cl::value_locker<std::unordered_map<uint64_t, connection_future>> m_connection_future_map;
     };
@@ -90,11 +82,7 @@ namespace vshalygin::rpc::internal {
                                  create_service_t &&create_service,
                                  on_new_connection_t &&on_new_connection,
                                  on_change_state_t &&on_change_state,
-                                 std::chrono::milliseconds handshake_timeout,
-                                 std::chrono::milliseconds send_timeout,
-                                 std::chrono::milliseconds recv_timeout,
-                                 std::chrono::milliseconds check_period,
-                                 std::chrono::milliseconds ping_timeout)
+                                 const config &config)
         : m_thread_pool(std::move(thread_pool))
         , m_notify_strand(m_thread_pool->get_io_context())
         , m_authenticator(std::move(authenticator))
@@ -102,11 +90,7 @@ namespace vshalygin::rpc::internal {
         , m_create_service(std::move(create_service))
         , m_on_new_connection(std::move(on_new_connection))
         , m_on_change_state(std::move(on_change_state))
-        , m_handshake_timeout(handshake_timeout)
-        , m_send_timeout(send_timeout)
-        , m_recv_timeout(recv_timeout)
-        , m_check_period(check_period)
-        , m_ping_timeout(ping_timeout)
+        , m_config(config)
     {}
 
     void server_connector::impl::start()
@@ -188,7 +172,7 @@ namespace vshalygin::rpc::internal {
                                     [self = weak_from_this(), connection_id, is_running_sp]
                                     (std::shared_ptr<ipipe_endpoint> pe) {
             std::shared_ptr s(self);
-            return pe->read_async(s->m_handshake_timeout)
+            return pe->read_async(s->m_config.handshake_timeout)
                 .then([pe, self](pipe_op_res r, cl::buffer &&b) {
                           if(is_fail(r)) {
                               throw std::runtime_error("read operation failed: " + to_string(r));
@@ -198,7 +182,7 @@ namespace vshalygin::rpc::internal {
                               throw std::runtime_error("autentication error");
                           }
                           return pe->write_async(s->m_authenticator->create_response(b),
-                                                 s->m_handshake_timeout);
+                                                 s->m_config.handshake_timeout);
                        })
                 .then([pe, self, connection_id, is_running_sp](pipe_op_res r) mutable {
                           if(is_fail(r)){
@@ -209,10 +193,10 @@ namespace vshalygin::rpc::internal {
                           auto c = std::make_unique<connection>(s->m_thread_pool,
                                                                 std::move(pe),
                                                                 s->m_create_service(connection_id),
-                                                                s->m_send_timeout,
-                                                                s->m_recv_timeout,
-                                                                s->m_check_period,
-                                                                s->m_ping_timeout);
+                                                                s->m_config.send_timeout,
+                                                                s->m_config.recv_timeout,
+                                                                s->m_config.check_connection_period,
+                                                                s->m_config.ping_timeout);
 
                           s->notify_on_new_connection(connection_id, std::move(c), is_running_sp);
                       })
@@ -280,15 +264,11 @@ namespace vshalygin::rpc::internal {
                                        std::function<std::unique_ptr<iservice>(uint64_t)> &&create_service,
                                        std::function<void(uint64_t, std::unique_ptr<iconnection>)> &&on_new_connection,
                                        std::function<void(server_connector_state)> on_change_state,
-                                       std::chrono::milliseconds handshake_timeout,
-                                       std::chrono::milliseconds send_timeout,
-                                       std::chrono::milliseconds recv_timeout,
-                                       std::chrono::milliseconds check_period,
-                                       std::chrono::milliseconds ping_timeout)
+                                       const config &config)
         : m_impl(std::make_shared<impl>(std::move(thread_pool), std::move(authenticator),
                                         std::move(pipe_env), std::move(create_service),
                                         std::move(on_new_connection), std::move(on_change_state),
-                                        handshake_timeout, send_timeout, recv_timeout, check_period, ping_timeout))
+                                        config))
     {}
 
     server_connector::~server_connector()

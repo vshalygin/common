@@ -27,11 +27,7 @@ namespace vshalygin::rpc {
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iclient_pipe_env> pipe_env,
                                  std::shared_ptr<GClientService> gservice,
-                                 std::chrono::milliseconds handshake_timeout = std::chrono::seconds(2),
-                                 std::chrono::milliseconds send_timeout = std::chrono::seconds(2),
-                                 std::chrono::milliseconds recv_timeout = std::chrono::seconds(10),
-                                 std::chrono::milliseconds check_period = std::chrono::seconds(1),
-                                 std::chrono::milliseconds ping_timeout = std::chrono::seconds(10));
+                                 const config & = config{});
 
         client_endpoint(const client_endpoint &) = delete;
         client_endpoint &operator=(const client_endpoint &) = delete;
@@ -58,11 +54,7 @@ namespace vshalygin::rpc {
                       std::shared_ptr<iauthenticator> authenticator,
                       std::shared_ptr<iclient_pipe_env> pipe_env,
                       std::shared_ptr<GClientService> gservice,
-                      std::chrono::milliseconds handshake_timeout,
-                      std::chrono::milliseconds send_timeout,
-                      std::chrono::milliseconds recv_timeout,
-                      std::chrono::milliseconds check_period,
-                      std::chrono::milliseconds ping_timeout);
+                      const config &config);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -93,16 +85,10 @@ namespace vshalygin::rpc {
                                                                     std::shared_ptr<iauthenticator> authenticator,
                                                                     std::shared_ptr<iclient_pipe_env> pipe_env,
                                                                     std::shared_ptr<GClientService> gservice,
-                                                                    std::chrono::milliseconds handshake_timeout,
-                                                                    std::chrono::milliseconds send_timeout,
-                                                                    std::chrono::milliseconds recv_timeout,
-                                                                    std::chrono::milliseconds check_period,
-                                                                    std::chrono::milliseconds ping_timeout)
+                                                                    const config &config)
         : m_thread_pool(std::move(thread_pool))
         , m_gservice(std::move(gservice))
-        , m_client_connector(m_thread_pool, authenticator, pipe_env,
-                             handshake_timeout, send_timeout, recv_timeout,
-                             check_period, ping_timeout)
+        , m_client_connector(m_thread_pool, authenticator, pipe_env, config)
     {}
 
     template<typename GServieServiceStub, typename GClientService>
@@ -179,14 +165,8 @@ namespace vshalygin::rpc {
                                                                          std::shared_ptr<iauthenticator> authenticator,
                                                                          std::shared_ptr<iclient_pipe_env> pipe_env,
                                                                          std::shared_ptr<GClientService> gservice,
-                                                                         std::chrono::milliseconds handshake_timeout,
-                                                                         std::chrono::milliseconds send_timeout,
-                                                                         std::chrono::milliseconds recv_timeout,
-                                                                         std::chrono::milliseconds check_period,
-                                                                         std::chrono::milliseconds ping_timeout)
-        : m_impl(std::make_shared<impl>(thread_pool, authenticator, pipe_env,
-                                        gservice, handshake_timeout, send_timeout, recv_timeout,
-                                        check_period, ping_timeout))
+                                                                         const config &config)
+        : m_impl(std::make_shared<impl>(thread_pool, authenticator, pipe_env, gservice, config))
     {}
 
     template<typename GServerServiceStub, typename GClientService>

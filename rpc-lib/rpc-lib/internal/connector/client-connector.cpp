@@ -14,11 +14,7 @@ namespace vshalygin::rpc::internal {
         explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
                       std::shared_ptr<iauthenticator> authenticator,
                       std::shared_ptr<iclient_pipe_env> pipe_env,
-                      std::chrono::milliseconds handshake_timeout,
-                      std::chrono::milliseconds send_timeout,
-                      std::chrono::milliseconds recv_timeout,
-                      std::chrono::milliseconds check_period,
-                      std::chrono::milliseconds ping_timeout);
+                      const config &config);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -35,26 +31,22 @@ namespace vshalygin::rpc::internal {
         const std::chrono::milliseconds m_handshake_timeout;
         const std::chrono::milliseconds m_send_timeout;
         const std::chrono::milliseconds m_recv_timeout;
-        const std::chrono::milliseconds m_check_period;
+        const std::chrono::milliseconds m_check_connection_period;
         const std::chrono::milliseconds m_ping_timeout;
     };
 
     client_connector::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iclient_pipe_env> pipe_env,
-                                 std::chrono::milliseconds handshake_timeout,
-                                 std::chrono::milliseconds send_timeout,
-                                 std::chrono::milliseconds recv_timeout,
-                                 std::chrono::milliseconds check_period,
-                                 std::chrono::milliseconds ping_timeout)
+                                 const config &config)
         : m_thread_pool(std::move(thread_pool))
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
-        , m_handshake_timeout(handshake_timeout)
-        , m_send_timeout(send_timeout)
-        , m_recv_timeout(recv_timeout)
-        , m_check_period(check_period)
-        , m_ping_timeout(ping_timeout)
+        , m_handshake_timeout(config.handshake_timeout)
+        , m_send_timeout(config.send_timeout)
+        , m_recv_timeout(config.recv_timeout)
+        , m_check_connection_period(config.check_connection_period)
+        , m_ping_timeout(config.ping_timeout)
     {}
     
     future<std::unique_ptr<iconnection>>
@@ -93,7 +85,7 @@ namespace vshalygin::rpc::internal {
                                                                         service,
                                                                         s->m_send_timeout,
                                                                         s->m_recv_timeout,
-                                                                        s->m_check_period,
+                                                                        s->m_check_connection_period,
                                                                         s->m_ping_timeout);
                                 });
                   });
@@ -111,14 +103,11 @@ namespace vshalygin::rpc::internal {
     client_connector::client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
                                        std::shared_ptr<iauthenticator> authenticator,
                                        std::shared_ptr<iclient_pipe_env> pipe_env,
-                                       std::chrono::milliseconds handshake_timeout,
-                                       std::chrono::milliseconds send_timeout,
-                                       std::chrono::milliseconds recv_timeout,
-                                       std::chrono::milliseconds check_period,
-                                       std::chrono::milliseconds ping_timeout)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool), std::move(authenticator),
+                                       const config &config)
+        : m_impl(std::make_shared<impl>(std::move(thread_pool),
+                                        std::move(authenticator),
                                         std::move(pipe_env),
-                                        handshake_timeout, send_timeout, recv_timeout, check_period, ping_timeout))
+                                        config))
     {}
 
     client_connector::~client_connector()
