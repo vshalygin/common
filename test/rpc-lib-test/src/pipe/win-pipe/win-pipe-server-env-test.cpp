@@ -188,7 +188,7 @@ protected:
 TEST_F(WinPipeServerEnv, CreatesConnectedEndpointWhenClientConnects)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto future = env.create_pipe(0);
 
     auto client = open_client(pipe_name);
@@ -211,7 +211,7 @@ TEST_F(WinPipeServerEnv, CreatesConnectedEndpointWhenClientConnects)
 TEST_F(WinPipeServerEnv, CreatedEndpointTransfersDataInBothDirections)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto create_future = env.create_pipe(0);
     auto client = open_client(pipe_name);
     if(client.empty()) {
@@ -252,7 +252,7 @@ TEST_F(WinPipeServerEnv, CreatedEndpointTransfersDataInBothDirections)
 TEST_F(WinPipeServerEnv, WaitsForClientConnection)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto future = env.create_pipe(0);
 
     EXPECT_FALSE(future.wait_for(pending_observation_timeout));
@@ -274,7 +274,7 @@ TEST_F(WinPipeServerEnv, WaitsForClientConnection)
 TEST_F(WinPipeServerEnv, TimedCreateSucceedsWhenClientConnects)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto future = env.create_pipe(0, operation_timeout);
 
     auto client = open_client(pipe_name);
@@ -293,7 +293,7 @@ TEST_F(WinPipeServerEnv, TimedCreateSucceedsWhenClientConnects)
 
 TEST_F(WinPipeServerEnv, TimesOutWithoutClientConnection)
 {
-    server_env env(make_pipe_name(), m_thread_pool);
+    server_env env(m_thread_pool, make_pipe_name());
 
     auto future = env.create_pipe(0, immediate_timeout);
     wait_for_result(future,
@@ -307,7 +307,7 @@ TEST_F(WinPipeServerEnv, TimesOutWithoutClientConnection)
 
 TEST_F(WinPipeServerEnv, CancelsAllPendingCreateOperations)
 {
-    server_env env(make_pipe_name(), m_thread_pool);
+    server_env env(m_thread_pool, make_pipe_name());
     auto first = env.create_pipe(0);
     auto second = env.create_pipe(0);
     auto third = env.create_pipe(0);
@@ -331,7 +331,7 @@ TEST_F(WinPipeServerEnv, CancelsAllPendingCreateOperations)
 TEST_F(WinPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto future = env.create_pipe(0);
     auto client = open_client(pipe_name);
     if(client.empty()) {
@@ -363,7 +363,7 @@ TEST_F(WinPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 
 TEST_F(WinPipeServerEnv, DestructorCancelsPendingCreate)
 {
-    auto env = std::make_unique<server_env>(make_pipe_name(), m_thread_pool);
+    auto env = std::make_unique<server_env>(m_thread_pool, make_pipe_name());
     auto future = env->create_pipe(0);
 
     env.reset();
@@ -377,7 +377,7 @@ TEST_F(WinPipeServerEnv, DestructorCancelsPendingCreate)
 TEST_F(WinPipeServerEnv, TimeoutOfOneCreateDoesNotCancelAnother)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto pending = env.create_pipe(0);
     auto timed = env.create_pipe(0, immediate_timeout);
 
@@ -404,7 +404,7 @@ TEST_F(WinPipeServerEnv, TimeoutOfOneCreateDoesNotCancelAnother)
 TEST_F(WinPipeServerEnv, SupportsMultipleConcurrentCreateOperations)
 {
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto first = env.create_pipe(0);
     auto second = env.create_pipe(0);
 
@@ -428,7 +428,7 @@ TEST_F(WinPipeServerEnv, SupportsMultipleConcurrentCreateOperations)
 
 TEST_F(WinPipeServerEnv, InvalidPipeNameFailsCreate)
 {
-    server_env env(std::wstring(512, L'x'), m_thread_pool);
+    server_env env(m_thread_pool, std::wstring(512, L'x'));
 
     auto future = env.create_pipe(0);
     wait_for_result(future,
@@ -445,7 +445,7 @@ TEST_F(WinPipeServerEnv, CancelsOnlyPendingCreateOperationsWithSpecifiedClientId
     constexpr auto canceled_client_id = 101u;
     constexpr auto remaining_client_id = 202u;
     auto pipe_name = make_pipe_name();
-    server_env env(pipe_name, m_thread_pool);
+    server_env env(m_thread_pool, pipe_name);
     auto first_canceled = env.create_pipe(canceled_client_id);
     auto second_canceled = env.create_pipe(canceled_client_id);
     auto remaining = env.create_pipe(remaining_client_id);
@@ -480,7 +480,7 @@ TEST_F(WinPipeServerEnv, CancelsOnlyPendingCreateOperationsWithSpecifiedClientId
 
 TEST_F(WinPipeServerEnv, CancelsAllPendingCreateOperationsWithDifferentClientIds)
 {
-    server_env env(make_pipe_name(), m_thread_pool);
+    server_env env(m_thread_pool, make_pipe_name());
     auto first = env.create_pipe(101);
     auto second = env.create_pipe(202);
     auto third = env.create_pipe(303);

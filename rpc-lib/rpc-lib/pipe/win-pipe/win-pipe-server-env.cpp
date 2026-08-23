@@ -130,8 +130,8 @@ namespace vshalygin::rpc {
         }
     }
 
-    win_pipe_server_env::win_pipe_server_env(const std::wstring &pipe_name,
-                                             std::shared_ptr<cl::thread_pool> thread_pool)
+    win_pipe_server_env::win_pipe_server_env(std::shared_ptr<cl::thread_pool> thread_pool,
+                                             const std::wstring &pipe_name)
         : m_impl(std::make_shared<impl>(pipe_name, std::move(thread_pool)))
     {}
 
