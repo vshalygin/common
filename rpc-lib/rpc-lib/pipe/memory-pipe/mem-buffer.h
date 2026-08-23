@@ -23,14 +23,14 @@ namespace vshalygin::rpc {
     class mem_buffer final
         : public std::enable_shared_from_this<mem_buffer>
     {
-        explicit mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool);
+        explicit mem_buffer(cl::thread_pool *thread_pool);
 
     public:
         using read_promise = promise<ftuple<pipe_op_res, cl::buffer>, pipe_op_res, cl::buffer>;
         using read_future = future<ftuple<pipe_op_res, cl::buffer>>;
         using write_future = future<pipe_op_res>;
 
-        static std::shared_ptr<mem_buffer> create(std::shared_ptr<cl::thread_pool> thread_pool);
+        static std::shared_ptr<mem_buffer> create(cl::thread_pool *thread_pool);
 
         mem_buffer(mem_buffer &) = delete;
         mem_buffer &operator=(mem_buffer &) = delete;
@@ -58,7 +58,7 @@ namespace vshalygin::rpc {
         void resolve_read_promise();
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         cl::strand m_read_strand;
         cl::strand m_write_strand;
 

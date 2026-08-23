@@ -25,21 +25,21 @@ namespace vshalygin::rpc {
         class create_operation
             : public std::enable_shared_from_this<create_operation>
         {
-            create_operation(std::shared_ptr<cl::thread_pool> thread_pool,
+            create_operation(cl::thread_pool *thread_pool,
                              tcp::acceptor &acceptor)
-                : m_thread_pool(std::move(thread_pool))
+                : m_thread_pool(thread_pool)
                 , m_acceptor(acceptor)
-                , m_promise(make_promise(m_thread_pool.get(),
+                , m_promise(make_promise(m_thread_pool,
                                          [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
                                              return ftuple(r, std::move(e));
                                          }))
             {}
 
         public:
-            inline static std::shared_ptr<create_operation> create(std::shared_ptr<cl::thread_pool> thread_pool,
+            inline static std::shared_ptr<create_operation> create(cl::thread_pool *thread_pool,
                                                                    tcp::acceptor &acceptor)
             {
-                return std::shared_ptr<create_operation>(new create_operation(std::move(thread_pool), acceptor));
+                return std::shared_ptr<create_operation>(new create_operation(thread_pool, acceptor));
             }
 
             create_operation(const create_operation &) = delete;
@@ -103,7 +103,7 @@ namespace vshalygin::rpc {
             }
 
         private:
-            std::shared_ptr<cl::thread_pool> m_thread_pool;
+            cl::thread_pool *m_thread_pool;
 
             std::mutex m_mtx;
             bool m_was_started = false;
@@ -119,7 +119,7 @@ namespace vshalygin::rpc {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(cl::thread_pool *thread_pool,
              const std::string &ip4_address,
              uint32_t port);
 
@@ -138,7 +138,7 @@ namespace vshalygin::rpc {
         void on_completed(uint64_t id);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         std::mutex m_mtx;
         uint64_t m_next_id = 0;
@@ -166,10 +166,10 @@ namespace vshalygin::rpc {
         cl::multiple_timer m_timer;
     };
 
-    tcp_pipe_server_env::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    tcp_pipe_server_env::impl::impl(cl::thread_pool *thread_pool,
                                     const std::string &ip4_address,
                                     uint32_t port)
-        : m_thread_pool(std::move(thread_pool))
+        : m_thread_pool(thread_pool)
         , m_acceptor(m_thread_pool->get_io_context())
         , m_timer(m_thread_pool->get_io_context())
     {
@@ -274,10 +274,10 @@ namespace vshalygin::rpc {
         }
     }
 
-    tcp_pipe_server_env::tcp_pipe_server_env(std::shared_ptr<cl::thread_pool> thread_pool,
+    tcp_pipe_server_env::tcp_pipe_server_env(cl::thread_pool *thread_pool,
                                              const std::string &ip4_address,
                                              uint32_t port)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool), ip4_address, port))
+        : m_impl(std::make_shared<impl>(thread_pool, ip4_address, port))
     {}
 
     tcp_pipe_server_env::~tcp_pipe_server_env()

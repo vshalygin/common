@@ -167,7 +167,7 @@ TEST_F(WinPipeClientEnv, OpensConnectedEndpointWhenServerExists)
     auto pipe_name = make_pipe_name();
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
 
     auto future = env.open_pipe(0);
     wait_for_result(future,
@@ -185,7 +185,7 @@ TEST_F(WinPipeClientEnv, OpenedEndpointTransfersDataInBothDirections)
     auto pipe_name = make_pipe_name();
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
     auto open_future = env.open_pipe(0);
     wait_for_result(open_future,
                     [&] { env.cancel_all_pending_client_endpoints(); },
@@ -220,7 +220,7 @@ TEST_F(WinPipeClientEnv, OpenedEndpointTransfersDataInBothDirections)
 TEST_F(WinPipeClientEnv, RetriesUntilServerAppears)
 {
     auto pipe_name = make_pipe_name();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
     auto future = env.open_pipe(0);
 
     EXPECT_FALSE(future.wait_for(retry_observation_timeout));
@@ -241,7 +241,7 @@ TEST_F(WinPipeClientEnv, TimedOpenSucceedsWhenServerExists)
     auto pipe_name = make_pipe_name();
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
 
     auto future = env.open_pipe(0, operation_timeout);
     wait_for_result(future,
@@ -255,7 +255,7 @@ TEST_F(WinPipeClientEnv, TimedOpenSucceedsWhenServerExists)
 
 TEST_F(WinPipeClientEnv, TimesOutWhenServerDoesNotExist)
 {
-    client_env env(m_thread_pool, make_pipe_name());
+    client_env env(m_thread_pool.get(), make_pipe_name());
 
     auto future = env.open_pipe(0, immediate_timeout);
     wait_for_result(future,
@@ -269,7 +269,7 @@ TEST_F(WinPipeClientEnv, TimesOutWhenServerDoesNotExist)
 
 TEST_F(WinPipeClientEnv, CancelsAllPendingOpenOperations)
 {
-    client_env env(m_thread_pool, make_pipe_name());
+    client_env env(m_thread_pool.get(), make_pipe_name());
     auto first = env.open_pipe(0);
     auto second = env.open_pipe(0);
     auto third = env.open_pipe(0);
@@ -295,7 +295,7 @@ TEST_F(WinPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
     auto pipe_name = make_pipe_name();
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
     auto future = env.open_pipe(0);
     wait_for_result(future,
                     [&] { env.cancel_all_pending_client_endpoints(); },
@@ -321,7 +321,7 @@ TEST_F(WinPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
 
 TEST_F(WinPipeClientEnv, DestructorCancelsPendingOpen)
 {
-    auto env = std::make_unique<client_env>(m_thread_pool, make_pipe_name());
+    auto env = std::make_unique<client_env>(m_thread_pool.get(), make_pipe_name());
     auto future = env->open_pipe(0);
 
     env.reset();
@@ -335,7 +335,7 @@ TEST_F(WinPipeClientEnv, DestructorCancelsPendingOpen)
 TEST_F(WinPipeClientEnv, TimeoutOfOneOpenDoesNotCancelAnother)
 {
     auto pipe_name = make_pipe_name();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
     auto pending = env.open_pipe(0);
     auto timed = env.open_pipe(0, immediate_timeout);
 
@@ -363,7 +363,7 @@ TEST_F(WinPipeClientEnv, SupportsMultipleConcurrentOpenOperations)
     auto second_server = create_server(pipe_name);
     ASSERT_FALSE(first_server.empty()) << "First CreateNamedPipeW failed, error=" << ::GetLastError();
     ASSERT_FALSE(second_server.empty()) << "Second CreateNamedPipeW failed, error=" << ::GetLastError();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
 
     auto first = env.open_pipe(0);
     auto second = env.open_pipe(0);
@@ -381,7 +381,7 @@ TEST_F(WinPipeClientEnv, SupportsMultipleConcurrentOpenOperations)
 
 TEST_F(WinPipeClientEnv, InvalidPipeNameFailsOpen)
 {
-    client_env env(m_thread_pool, std::wstring(512, L'x'));
+    client_env env(m_thread_pool.get(), std::wstring(512, L'x'));
 
     auto future = env.open_pipe(0);
     wait_for_result(future,
@@ -398,7 +398,7 @@ TEST_F(WinPipeClientEnv, CancelsOnlyPendingOpenOperationsWithSpecifiedClientId)
     constexpr auto canceled_client_id = 101u;
     constexpr auto remaining_client_id = 202u;
     auto pipe_name = make_pipe_name();
-    client_env env(m_thread_pool, pipe_name);
+    client_env env(m_thread_pool.get(), pipe_name);
     auto first_canceled = env.open_pipe(canceled_client_id);
     auto second_canceled = env.open_pipe(canceled_client_id);
     auto remaining = env.open_pipe(remaining_client_id);
@@ -430,7 +430,7 @@ TEST_F(WinPipeClientEnv, CancelsOnlyPendingOpenOperationsWithSpecifiedClientId)
 
 TEST_F(WinPipeClientEnv, CancelsAllPendingOpenOperationsWithDifferentClientIds)
 {
-    client_env env(m_thread_pool, make_pipe_name());
+    client_env env(m_thread_pool.get(), make_pipe_name());
     auto first = env.open_pipe(101);
     auto second = env.open_pipe(202);
     auto third = env.open_pipe(303);

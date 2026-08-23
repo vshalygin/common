@@ -148,29 +148,29 @@ protected:
 
 TEST_F(TcpPipeServerEnv, RejectsInvalidIpv4Address)
 {
-    EXPECT_THROW((void)server_env(m_thread_pool, "256.1.2.3", 12345), boost::system::system_error);
-    EXPECT_THROW((void)server_env(m_thread_pool, "::1", 12345), boost::system::system_error);
-    EXPECT_THROW((void)server_env(m_thread_pool, "localhost", 12345), boost::system::system_error);
+    EXPECT_THROW((void)server_env(m_thread_pool.get(), "256.1.2.3", 12345), boost::system::system_error);
+    EXPECT_THROW((void)server_env(m_thread_pool.get(), "::1", 12345), boost::system::system_error);
+    EXPECT_THROW((void)server_env(m_thread_pool.get(), "localhost", 12345), boost::system::system_error);
 }
 
 TEST_F(TcpPipeServerEnv, RejectsPortOutsideUint16Range)
 {
-    EXPECT_THROW((void)server_env(m_thread_pool, loopback_ip, 65536), std::invalid_argument);
+    EXPECT_THROW((void)server_env(m_thread_pool.get(), loopback_ip, 65536), std::invalid_argument);
 }
 
 TEST_F(TcpPipeServerEnv, RejectsAddressAlreadyUsedByAnotherServer)
 {
     const auto port = reserve_loopback_port();
-    server_env first(m_thread_pool, loopback_ip, port);
+    server_env first(m_thread_pool.get(), loopback_ip, port);
     static_cast<void>(first);
 
-    EXPECT_THROW((void)server_env(m_thread_pool, loopback_ip, port), boost::system::system_error);
+    EXPECT_THROW((void)server_env(m_thread_pool.get(), loopback_ip, port), boost::system::system_error);
 }
 
 TEST_F(TcpPipeServerEnv, CreatesConnectedEndpointOnLoopback)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto future = env.create_pipe(0);
 
     auto client = connect_loopback(port);
@@ -188,7 +188,7 @@ TEST_F(TcpPipeServerEnv, CreatesConnectedEndpointOnLoopback)
 TEST_F(TcpPipeServerEnv, WaitsUntilLoopbackClientConnects)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto future = env.create_pipe(0);
 
     EXPECT_FALSE(future.wait_for(pending_observation_timeout));
@@ -207,7 +207,7 @@ TEST_F(TcpPipeServerEnv, WaitsUntilLoopbackClientConnects)
 TEST_F(TcpPipeServerEnv, TimedCreateSucceedsBeforeDeadline)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto future = env.create_pipe(0, long_create_timeout);
 
     auto client = connect_loopback(port);
@@ -224,8 +224,8 @@ TEST_F(TcpPipeServerEnv, TimedCreateSucceedsBeforeDeadline)
 TEST_F(TcpPipeServerEnv, CreatedEndpointTransfersDataInBothDirections)
 {
     const auto port = reserve_loopback_port();
-    server_env server(m_thread_pool, loopback_ip, port);
-    client_env client(m_thread_pool, loopback_ip, port);
+    server_env server(m_thread_pool.get(), loopback_ip, port);
+    client_env client(m_thread_pool.get(), loopback_ip, port);
 
     auto server_future = server.create_pipe(0);
     auto client_future = client.open_pipe(0);
@@ -277,7 +277,7 @@ TEST_F(TcpPipeServerEnv, CreatedEndpointTransfersDataInBothDirections)
 TEST_F(TcpPipeServerEnv, TimeoutCancelsActiveAcceptWithoutClientConnection)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
 
     auto future = env.create_pipe(0, pending_create_timeout);
     ASSERT_TRUE(wait_for_result(future,
@@ -292,7 +292,7 @@ TEST_F(TcpPipeServerEnv, TimeoutCancelsActiveAcceptWithoutClientConnection)
 TEST_F(TcpPipeServerEnv, ExplicitCancellationCompletesActiveAccept)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto future = env.create_pipe(0);
     ASSERT_FALSE(future.wait_for(pending_observation_timeout));
 
@@ -312,7 +312,7 @@ TEST_F(TcpPipeServerEnv, ExplicitCancellationCompletesActiveAccept)
 TEST_F(TcpPipeServerEnv, QueuedCreateCanTimeOutWithoutCancelingActiveAccept)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto active = env.create_pipe(0);
     auto queued = env.create_pipe(0, pending_create_timeout);
 
@@ -337,7 +337,7 @@ TEST_F(TcpPipeServerEnv, QueuedCreateCanTimeOutWithoutCancelingActiveAccept)
 TEST_F(TcpPipeServerEnv, ActiveTimeoutStartsNextQueuedAccept)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto timed = env.create_pipe(0, pending_create_timeout);
     auto next = env.create_pipe(0);
 
@@ -361,7 +361,7 @@ TEST_F(TcpPipeServerEnv, ActiveTimeoutStartsNextQueuedAccept)
 TEST_F(TcpPipeServerEnv, CancelsActiveAndQueuedCreateOperations)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto first = env.create_pipe(0, long_create_timeout);
     auto second = env.create_pipe(0);
     auto third = env.create_pipe(0, long_create_timeout);
@@ -391,7 +391,7 @@ TEST_F(TcpPipeServerEnv, CancelsActiveAndQueuedCreateOperations)
 TEST_F(TcpPipeServerEnv, CancellationIsIdempotentAndServerRemainsReusable)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto canceled = env.create_pipe(0);
 
     env.cancel_all_pending_server_endpoints();
@@ -420,7 +420,7 @@ TEST_F(TcpPipeServerEnv, DestructorCancelsPendingActiveAccept)
     const auto port = reserve_loopback_port();
     endpoint_future future;
     {
-        auto env = std::make_unique<server_env>(m_thread_pool, loopback_ip, port);
+        auto env = std::make_unique<server_env>(m_thread_pool.get(), loopback_ip, port);
         future = env->create_pipe(0);
         EXPECT_FALSE(future.wait_for(pending_observation_timeout));
     }
@@ -436,7 +436,7 @@ TEST_F(TcpPipeServerEnv, DestructorCancelsPendingActiveAccept)
 TEST_F(TcpPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto future = env.create_pipe(0);
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
@@ -455,7 +455,7 @@ TEST_F(TcpPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 TEST_F(TcpPipeServerEnv, SupportsMultipleQueuedCreateOperations)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto first = env.create_pipe(0);
     auto second = env.create_pipe(0);
     auto third = env.create_pipe(0);
@@ -497,7 +497,7 @@ TEST_F(TcpPipeServerEnv, CancellationRacingWithAcceptReturnsOnlyUsableSuccessOrC
 {
     for(size_t i = 0; i < cancellation_race_iteration_count; ++i) {
         const auto port = reserve_loopback_port();
-        server_env env(m_thread_pool, loopback_ip, port);
+        server_env env(m_thread_pool.get(), loopback_ip, port);
         auto future = env.create_pipe(0);
         auto client = connect_loopback(port);
         ASSERT_TRUE(client);
@@ -524,7 +524,7 @@ TEST_F(TcpPipeServerEnv, CancelingQueuedClientIdDoesNotCancelActiveAcceptOfAnoth
     constexpr auto active_client_id = 101u;
     constexpr auto canceled_client_id = 202u;
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto active = env.create_pipe(active_client_id);
     auto canceled = env.create_pipe(canceled_client_id);
 
@@ -552,7 +552,7 @@ TEST_F(TcpPipeServerEnv, CancelsActiveAndQueuedAcceptsWithSpecifiedClientId)
     constexpr auto canceled_client_id = 101u;
     constexpr auto remaining_client_id = 202u;
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto active_canceled = env.create_pipe(canceled_client_id);
     auto queued_canceled = env.create_pipe(canceled_client_id);
     auto remaining = env.create_pipe(remaining_client_id);
@@ -585,7 +585,7 @@ TEST_F(TcpPipeServerEnv, CancelsActiveAndQueuedAcceptsWithSpecifiedClientId)
 TEST_F(TcpPipeServerEnv, CancelsAllPendingCreateOperationsWithDifferentClientIds)
 {
     const auto port = reserve_loopback_port();
-    server_env env(m_thread_pool, loopback_ip, port);
+    server_env env(m_thread_pool.get(), loopback_ip, port);
     auto first = env.create_pipe(101);
     auto second = env.create_pipe(202);
     auto third = env.create_pipe(303);

@@ -36,7 +36,7 @@ protected:
     void SetUp() override
     {
         m_thread_pool = std::make_shared<thread_pool>(2);
-        auto m_pipe_env = mem_pipe_env(m_thread_pool);
+        auto m_pipe_env = mem_pipe_env(m_thread_pool.get());
         auto f1 = m_pipe_env.create_pipe(0)
             .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
                       m_pipe_endpoint = std::move(p);

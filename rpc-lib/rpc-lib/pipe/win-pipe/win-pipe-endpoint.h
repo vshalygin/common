@@ -16,7 +16,7 @@ namespace vshalygin::rpc {
     public:
         explicit win_pipe_endpoint(win::pipe_handle &&handle,
                                    std::shared_ptr<internal::win_pipe_iocp_owner> iocp_owner,
-                                   std::shared_ptr<cl::thread_pool> thread_pool);
+                                   cl::thread_pool *thread_pool);
 
         win_pipe_endpoint(const win_pipe_endpoint &) = delete;
         win_pipe_endpoint &operator=(const win_pipe_endpoint &) = delete;

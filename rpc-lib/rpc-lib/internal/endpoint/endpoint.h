@@ -18,7 +18,7 @@ namespace vshalygin::rpc::internal {
         using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
 
         explicit endpoint(std::unique_ptr<iconnection> connection,
-                          std::shared_ptr<cl::thread_pool> thread_pool);
+                          cl::thread_pool *thread_pool);
 
         endpoint(const endpoint &) = delete;
         endpoint &operator=(const endpoint &) = delete;
@@ -34,7 +34,7 @@ namespace vshalygin::rpc::internal {
         void set_disconnect_callback(cl::thread_pool_task<void()> &&callback);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         channel m_channel;
         GServiceStub m_service_stub;
@@ -42,8 +42,8 @@ namespace vshalygin::rpc::internal {
 
     template<typename GServiceStub>
     endpoint<GServiceStub>::endpoint(std::unique_ptr<iconnection> connection,
-                                     std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_thread_pool(std::move(thread_pool))
+                                     cl::thread_pool *thread_pool)
+        : m_thread_pool(thread_pool)
         , m_channel(std::move(connection))
         , m_service_stub(&m_channel)
     {}
@@ -53,7 +53,7 @@ namespace vshalygin::rpc::internal {
     endpoint<GServiceStub>::request_future<Response>
         endpoint<GServiceStub>::make_request(StubMethod stub_method, const Request &req)
     {
-        auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<Response> m) {
+        auto promise = make_promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
             return ftuple{ r, std::move(m) };
         });
         auto future = promise.get_future();

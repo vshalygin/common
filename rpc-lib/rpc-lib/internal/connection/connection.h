@@ -18,7 +18,7 @@ namespace vshalygin::rpc::internal {
         : public iconnection
     {
     public:
-        connection(std::shared_ptr<cl::thread_pool> thread_pool,
+        connection(cl::thread_pool *thread_pool,
                    std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                    std::shared_ptr<iservice> service,
                    std::chrono::milliseconds send_timeout,

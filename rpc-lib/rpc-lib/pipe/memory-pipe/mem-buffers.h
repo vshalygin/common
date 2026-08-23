@@ -14,7 +14,7 @@ namespace vshalygin::rpc {
         using read_future = mem_buffer::read_future;
         using write_future = mem_buffer::write_future;
 
-        explicit mem_buffers(std::shared_ptr<cl::thread_pool> thread_pool);
+        explicit mem_buffers(cl::thread_pool *thread_pool);
 
         mem_buffers(const mem_buffers &) = delete;
         mem_buffers &operator=(const mem_buffers &) = delete;
@@ -40,7 +40,7 @@ namespace vshalygin::rpc {
         void invalidate_impl(bool cancel_server_side, bool cancel_client_side);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         std::shared_ptr<mem_buffer> m_client_to_server;
         std::shared_ptr<mem_buffer> m_server_to_client;

@@ -30,17 +30,17 @@ namespace vshalygin::rpc {
         class open_operation
             : public std::enable_shared_from_this<open_operation>
         {
-            open_operation(uint64_t client_id, std::shared_ptr<cl::thread_pool> thread_pool)
+            open_operation(uint64_t client_id, cl::thread_pool *thread_pool)
                 : m_client_id(client_id)
-                , m_thread_pool(std::move(thread_pool))
+                , m_thread_pool(thread_pool)
                 , m_socket(m_thread_pool->get_io_context())
             {}
 
         public:
             inline static std::shared_ptr<open_operation> create(uint64_t client_id,
-                                                                 std::shared_ptr<cl::thread_pool> thread_pool)
+                                                                 cl::thread_pool *thread_pool)
             {
-                return std::shared_ptr<open_operation>(new open_operation(client_id, std::move(thread_pool)));
+                return std::shared_ptr<open_operation>(new open_operation(client_id, thread_pool));
             }
 
             open_operation(const open_operation &) = delete;
@@ -53,29 +53,29 @@ namespace vshalygin::rpc {
                 std::lock_guard guard(m_socket_mtx);
                 if(m_was_canceled) {
                     auto r = m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
-                    return pipe_endpoint_future(m_thread_pool.get(),
+                    return pipe_endpoint_future(m_thread_pool,
                                                 ftuple(r, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
                 boost::system::error_code ec;
                 m_socket.open(tcp::v4(), ec);
                 if(ec) {
-                    return pipe_endpoint_future(m_thread_pool.get(),
+                    return pipe_endpoint_future(m_thread_pool,
                                                 ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
                 m_socket.set_option(tcp::no_delay(true), ec);
                 if(ec) {
-                    return pipe_endpoint_future(m_thread_pool.get(),
+                    return pipe_endpoint_future(m_thread_pool,
                                                 ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
                 m_socket.set_option(boost::asio::socket_base::keep_alive(true), ec);
                 if(ec) {
-                    return pipe_endpoint_future(m_thread_pool.get(),
+                    return pipe_endpoint_future(m_thread_pool,
                                                 ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
-                auto promise = make_promise(m_thread_pool.get(),
+                auto promise = make_promise(m_thread_pool,
                                             [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
                                                 return ftuple(r, std::move(e));
                                             });
@@ -122,7 +122,7 @@ namespace vshalygin::rpc {
 
         private:
             const uint64_t m_client_id;
-            std::shared_ptr<cl::thread_pool> m_thread_pool;
+            cl::thread_pool *m_thread_pool;
 
             std::mutex m_socket_mtx;
             bool m_is_socket_valid = true;
@@ -136,7 +136,7 @@ namespace vshalygin::rpc {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(cl::thread_pool *thread_pool,
              const std::string &ip4_address,
              uint32_t port);
 
@@ -152,7 +152,7 @@ namespace vshalygin::rpc {
         pipe_endpoint_future open_pipe(uint64_t client_id, const std::optional<std::chrono::milliseconds> &timeout);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         const std::string m_ip4_address;
         const uint32_t m_port;
 
@@ -163,10 +163,10 @@ namespace vshalygin::rpc {
         cl::multiple_timer m_timer;
     };
 
-    tcp_pipe_client_env::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    tcp_pipe_client_env::impl::impl(cl::thread_pool *thread_pool,
                                     const std::string &ip4_address,
                                     uint32_t port)
-        : m_thread_pool(std::move(thread_pool))
+        : m_thread_pool(thread_pool)
         , m_ip4_address(ip4_address)
         , m_port(port)
         , m_timer(m_thread_pool->get_io_context())
@@ -227,10 +227,10 @@ namespace vshalygin::rpc {
         }
     }
 
-    tcp_pipe_client_env::tcp_pipe_client_env(std::shared_ptr<cl::thread_pool> thread_pool,
+    tcp_pipe_client_env::tcp_pipe_client_env(cl::thread_pool *thread_pool,
                                              const std::string &ip4_address,
                                              uint32_t port)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool), ip4_address, port))
+        : m_impl(std::make_shared<impl>(thread_pool, ip4_address, port))
     {}
 
     tcp_pipe_client_env::~tcp_pipe_client_env()

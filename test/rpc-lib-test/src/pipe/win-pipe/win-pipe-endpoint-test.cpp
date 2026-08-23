@@ -153,11 +153,11 @@ protected:
         endpoint_pair result;
         if(!server.pipe.empty()) {
             result.server = std::make_unique<win_pipe_endpoint>(
-                std::move(server.pipe), m_iocp_owner, m_thread_pool);
+                std::move(server.pipe), m_iocp_owner, m_thread_pool.get());
         }
         if(!client.pipe.empty()) {
             result.client = std::make_unique<win_pipe_endpoint>(
-                std::move(client.pipe), m_iocp_owner, m_thread_pool);
+                std::move(client.pipe), m_iocp_owner, m_thread_pool.get());
         }
         return result;
     }

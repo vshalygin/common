@@ -159,7 +159,7 @@ namespace {
         std::chrono::milliseconds check_period,
         std::chrono::milliseconds ping_timeout)
     {
-        return std::make_unique<connection>(thread_pool,
+        return std::make_unique<connection>(thread_pool.get(),
                                             endpoint,
                                             service,
                                             std::chrono::seconds(10),
@@ -178,8 +178,8 @@ protected:
         m_data_holder_service = std::make_shared<DataHolderService>();
         m_thread_pool = std::make_shared<thread_pool>(2);
 
-        mem_pipe_env env(m_thread_pool);
-        auto m_pipe_env = mem_pipe_env(m_thread_pool);
+        mem_pipe_env env(m_thread_pool.get());
+        auto m_pipe_env = mem_pipe_env(m_thread_pool.get());
         auto f1 = m_pipe_env.create_pipe(0)
             .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
             m_pipe_endpoint = std::move(p);
@@ -191,7 +191,7 @@ protected:
 
         f1.get(); f2.get();
         m_service = std::make_shared<service<DataHolderService>>(m_data_holder_service,
-                                                                 m_thread_pool,
+                                                                 m_thread_pool.get(),
                                                                  0);
     }
 
@@ -207,7 +207,7 @@ protected:
     std::unique_ptr<connection> create_sut(const std::chrono::milliseconds &req_timeout,
                                            const std::chrono::milliseconds &res_timeout)
     {
-        return std::make_unique<connection>(m_thread_pool,
+        return std::make_unique<connection>(m_thread_pool.get(),
                                             m_pipe_endpoint,
                                             m_service,
                                             req_timeout,

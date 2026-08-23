@@ -79,9 +79,9 @@ protected:
     {
         m_thread_pool = std::make_shared<thread_pool>(2);
         m_authenticator = std::make_shared<simple_authenticator>();
-        m_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool);
+        m_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool.get());
         m_client_service = std::make_shared<Service>();
-        m_sut = std::make_unique<client_endpoint<proto::Service_Stub, proto::Service>>(m_thread_pool,
+        m_sut = std::make_unique<client_endpoint<proto::Service_Stub, proto::Service>>(m_thread_pool.get(),
                                                                                        m_authenticator,
                                                                                        m_pipe_env,
                                                                                        m_client_service);

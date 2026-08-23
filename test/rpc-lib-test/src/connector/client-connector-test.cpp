@@ -36,7 +36,7 @@ protected:
         m_authenticator = std::make_shared<authenticator_nice_mock>();
         ON_CALL(*m_authenticator, check_response)
             .WillByDefault(Return(true));
-        m_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool);
+        m_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool.get());
     }
 
     void TearDown() override
@@ -57,7 +57,7 @@ protected:
         config.recv_timeout = recv_timeout;
         config.check_connection_period = std::chrono::seconds(10);
         config.ping_timeout = std::chrono::seconds(10);
-        return std::make_unique<client_connector>(m_thread_pool, m_authenticator,
+        return std::make_unique<client_connector>(m_thread_pool.get(), m_authenticator,
                                                   m_pipe_env, config);
     }
 

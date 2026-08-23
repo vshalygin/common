@@ -15,7 +15,7 @@ protected:
     void SetUp() override
     {
         m_thread_pool = std::make_shared<thread_pool>(2);
-        m_sut = std::make_unique<mem_pipe_env>(m_thread_pool);
+        m_sut = std::make_unique<mem_pipe_env>(m_thread_pool.get());
     }
 
     void TearDown() override

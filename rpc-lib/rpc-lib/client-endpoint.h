@@ -23,7 +23,7 @@ namespace vshalygin::rpc {
         template<typename Response>
         using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
 
-        explicit client_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
+        explicit client_endpoint(cl::thread_pool *thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iclient_pipe_env> pipe_env,
                                  std::shared_ptr<GClientService> gservice,
@@ -50,7 +50,7 @@ namespace vshalygin::rpc {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        explicit impl(cl::thread_pool *thread_pool,
                       std::shared_ptr<iauthenticator> authenticator,
                       std::shared_ptr<iclient_pipe_env> pipe_env,
                       std::shared_ptr<GClientService> gservice,
@@ -71,7 +71,7 @@ namespace vshalygin::rpc {
         auto establish_endpoint(std::unique_ptr<internal::iconnection> &&connection);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         std::shared_ptr<GClientService> m_gservice;
 
         internal::client_connector m_client_connector;
@@ -81,12 +81,12 @@ namespace vshalygin::rpc {
     };
 
     template<typename GServieServiceStub, typename GClientService>
-    client_endpoint<GServieServiceStub, GClientService>::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    client_endpoint<GServieServiceStub, GClientService>::impl::impl(cl::thread_pool *thread_pool,
                                                                     std::shared_ptr<iauthenticator> authenticator,
                                                                     std::shared_ptr<iclient_pipe_env> pipe_env,
                                                                     std::shared_ptr<GClientService> gservice,
                                                                     const config &config)
-        : m_thread_pool(std::move(thread_pool))
+        : m_thread_pool(thread_pool)
         , m_gservice(std::move(gservice))
         , m_client_connector(m_thread_pool, authenticator, pipe_env, config)
     {}
@@ -99,7 +99,7 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         if(!m_endpoint || !m_endpoint->is_connected()) {
-            auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<Response> m) {
+            auto promise = make_promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
                 return ftuple{ r, std::move(m) };
             });
             promise.resolve(request_result::no_connection, {});
@@ -143,14 +143,14 @@ namespace vshalygin::rpc {
     auto client_endpoint<GServerServiceStub, GClientService>::impl::establish_endpoint(
         std::unique_ptr<internal::iconnection> &&c)
     {
-        auto disconnect_promise = make_promise(m_thread_pool.get(), []() {});
+        auto disconnect_promise = make_promise(m_thread_pool, []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);
         m_endpoint = std::make_unique<internal::endpoint<GServerServiceStub>>(std::move(c), m_thread_pool);
         m_endpoint->set_disconnect_callback(
             cl::thread_pool_task(
-                m_thread_pool.get(),
+                m_thread_pool,
                 [disconnect_promise = std::move(disconnect_promise)]() mutable {
                     disconnect_promise.resolve();
                 }));
@@ -161,7 +161,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServerServiceStub, typename GClientService>
-    client_endpoint<GServerServiceStub, GClientService>::client_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
+    client_endpoint<GServerServiceStub, GClientService>::client_endpoint(cl::thread_pool *thread_pool,
                                                                          std::shared_ptr<iauthenticator> authenticator,
                                                                          std::shared_ptr<iclient_pipe_env> pipe_env,
                                                                          std::shared_ptr<GClientService> gservice,

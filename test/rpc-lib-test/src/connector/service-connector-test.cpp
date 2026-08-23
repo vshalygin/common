@@ -30,7 +30,7 @@ protected:
             .WillByDefault([]() {});
 
         m_authenticator = std::make_shared<authenticator_nice_mock>();
-        m_mem_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool);
+        m_mem_pipe_env = std::make_shared<mem_pipe_env>(m_thread_pool.get());
         m_service = std::make_unique<service_nice_mock>();
         m_service2 = std::make_unique<service_nice_mock>();
 
@@ -52,7 +52,7 @@ protected:
         config.recv_timeout = m_recv_timeout;
         config.check_connection_period = std::chrono::seconds(10);
         config.ping_timeout = std::chrono::seconds(10);
-        return std::make_unique<server_connector>(m_thread_pool,
+        return std::make_unique<server_connector>(m_thread_pool.get(),
                                                   m_authenticator,
                                                   m_mem_pipe_env,
                                                   [this](uint64_t) {

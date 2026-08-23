@@ -37,7 +37,7 @@ namespace vshalygin::rpc {
     public:
         explicit impl(win::pipe_handle &&pipe,
                       std::shared_ptr<internal::win_pipe_iocp_owner> iocp_owner,
-                      std::shared_ptr<cl::thread_pool> thread_pool);
+                      cl::thread_pool *thread_pool);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -71,7 +71,7 @@ namespace vshalygin::rpc {
         std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
 
         std::shared_ptr<internal::win_pipe_iocp_owner> m_iocp_owner;
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         mutable std::mutex m_write_op_mtx;
         struct write_op_data
@@ -98,10 +98,10 @@ namespace vshalygin::rpc {
 
     win_pipe_endpoint::impl::impl(win::pipe_handle &&pipe,
                                   std::shared_ptr<internal::win_pipe_iocp_owner> iocp_owner,
-                                  std::shared_ptr<cl::thread_pool> thread_pool)
+                                  cl::thread_pool *thread_pool)
         : m_pipe(std::make_shared<cl::value_locker<win::pipe_handle>>(std::move(pipe)))
         , m_iocp_owner(std::move(iocp_owner))
-        , m_thread_pool(std::move(thread_pool))
+        , m_thread_pool(thread_pool)
         , m_timer(m_thread_pool->get_io_context())
     {
         assert(is_connected());
@@ -148,7 +148,7 @@ namespace vshalygin::rpc {
     {
         auto pipe = m_pipe->lock();
         if(pipe->empty()) {
-            return write_future(m_thread_pool.get(), pipe_op_res::failed);
+            return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
         std::lock_guard gg(m_write_op_mtx);
@@ -161,7 +161,7 @@ namespace vshalygin::rpc {
         }
 
         auto &data = m_write_ops.emplace_front(write_op_data{
-            id, write_op::create(m_pipe, std::move(msg), m_thread_pool.get()), timer_id });
+            id, write_op::create(m_pipe, std::move(msg), m_thread_pool), timer_id });
         if(m_write_ops.size() == 1) {
             m_iocp_owner->write_async(data.op);
         }
@@ -183,7 +183,7 @@ namespace vshalygin::rpc {
     {
         auto pipe = m_pipe->lock();
         if(pipe->empty()) {
-            return read_future(m_thread_pool.get(), ftuple(pipe_op_res::failed, cl::buffer{}));
+            return read_future(m_thread_pool, ftuple(pipe_op_res::failed, cl::buffer{}));
         }
 
         std::lock_guard gg(m_read_op_mtx);
@@ -195,7 +195,7 @@ namespace vshalygin::rpc {
             }, *timeout);
         }
         auto &data = m_read_ops.emplace_front(read_op_data{
-            id, read_op::create(m_pipe, m_thread_pool.get()), timer_id });
+            id, read_op::create(m_pipe, m_thread_pool), timer_id });
         if(m_read_ops.size() == 1) {
             m_iocp_owner->read_async(m_read_ops.front().op);
         }
@@ -316,8 +316,8 @@ namespace vshalygin::rpc {
 
     win_pipe_endpoint::win_pipe_endpoint(win::pipe_handle &&handle,
                                          std::shared_ptr<internal::win_pipe_iocp_owner> iocp_owner,
-                                         std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_impl(std::make_shared<impl>(std::move(handle), std::move(iocp_owner), std::move(thread_pool)))
+                                         cl::thread_pool *thread_pool)
+        : m_impl(std::make_shared<impl>(std::move(handle), std::move(iocp_owner), thread_pool))
     {}
 
     win_pipe_endpoint::~win_pipe_endpoint()

@@ -20,7 +20,7 @@ namespace vshalygin::rpc {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        explicit impl(std::shared_ptr<cl::thread_pool> thread_pool);
+        explicit impl(cl::thread_pool *thread_pool);
 
         impl(impl &) = delete;
         impl &operator=(impl &) = delete;
@@ -66,7 +66,7 @@ namespace vshalygin::rpc {
     private:
         uint64_t m_next_read_promise_id = 0;
 
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         cl::multiple_timer m_timer;
 
         mutable std::mutex m_mtx;
@@ -74,8 +74,8 @@ namespace vshalygin::rpc {
         promise_container m_server_side_pipe_promises;
     };
 
-    mem_pipe_env::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_thread_pool(std::move(thread_pool))
+    mem_pipe_env::impl::impl(cl::thread_pool *thread_pool)
+        : m_thread_pool(thread_pool)
         , m_timer(m_thread_pool->get_io_context())
     {}
 
@@ -134,7 +134,7 @@ namespace vshalygin::rpc {
                                                                  promise_container &other)
     {
         auto promise = make_promise(
-            m_thread_pool.get(),
+            m_thread_pool,
             [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
                 return ftuple{ r, std::move(p)};
             });
@@ -228,8 +228,8 @@ namespace vshalygin::rpc {
         return m_server_side_pipe_promises.size();
     }
 
-    mem_pipe_env::mem_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool)))
+    mem_pipe_env::mem_pipe_env(cl::thread_pool *thread_pool)
+        : m_impl(std::make_shared<impl>(thread_pool))
     {}
 
     mem_pipe_env::~mem_pipe_env()

@@ -55,14 +55,14 @@ protected:
 
 TEST_F(MemBuffers, IsValidAfterCreation)
 {
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(m_thread_pool.get());
 
     ASSERT_TRUE(sut.is_valid());
 }
 
 TEST_F(MemBuffers, IsNotValidAfterInvalidation)
 {
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(m_thread_pool.get());
     sut.invalidate(true);
 
     ASSERT_FALSE(sut.is_valid());
@@ -77,7 +77,7 @@ TEST_F(MemBuffers, WritesFromClientToServer)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(m_thread_pool.get());
     sut.write_async_to_server(data.copy(), std::nullopt);
     sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
@@ -94,7 +94,7 @@ TEST_F(MemBuffers, WritesFromServerToClient)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(m_thread_pool.get());
     sut.write_async_to_client(data.copy(), std::nullopt);
     sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
@@ -109,7 +109,7 @@ TEST_F(MemBuffers, SetFewInvalidateCallbacks)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(m_thread_pool.get());
     sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
     sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
     EXPECT_EQ(sut.get_invalidate_callbacks_count(), 2);
@@ -127,7 +127,7 @@ TEST_F(MemBuffers, SetExecuteInvalidateCallbacksImmediatelyIfInvalidated)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
-    mem_buffers sut(m_thread_pool);
+    mem_buffers sut(m_thread_pool.get());
     sut.invalidate(true);
 
     sut.set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
@@ -144,7 +144,7 @@ TEST_F(MemBuffers, ExecuteInvalidateCallbacksOnDestruction)
         .Times(2)
         .WillOnce(DoDefault())
         .WillOnce([&]() { sync_event.set(); });
-    auto sut = std::make_unique<mem_buffers>(m_thread_pool);
+    auto sut = std::make_unique<mem_buffers>(m_thread_pool.get());
     sut->set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
     sut->set_invalidate_callback(thread_pool_task(m_thread_pool.get(), m_invalidate_callback.AsStdFunction()));
 
@@ -162,7 +162,7 @@ TEST_F(MemBuffers, WritesFromClientToServerTimeout)
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.write_async_to_server(data.copy(), std::chrono::milliseconds(0))
         .then(write_callback.AsStdFunction());
 
@@ -182,7 +182,7 @@ TEST_F(MemBuffers, WritesFromServerToClientTimeout)
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.write_async_to_client(data.copy(), std::chrono::milliseconds(0))
         .then(write_callback.AsStdFunction());
 
@@ -201,7 +201,7 @@ TEST_F(MemBuffers, ReadsFromClientTimeout)
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.read_async_from_client(std::chrono::milliseconds(0))
         .then(read_callback.AsStdFunction());
 
@@ -220,7 +220,7 @@ TEST_F(MemBuffers, ReadsFromServerTimeout)
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.read_async_from_server(std::chrono::milliseconds(0))
         .then(read_callback.AsStdFunction());
 
@@ -239,7 +239,7 @@ TEST_F(MemBuffers, ReadsFromClientCanceled)
     EXPECT_CALL(read_callback, Call(pipe_op_res::canceled, _))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
     
@@ -259,7 +259,7 @@ TEST_F(MemBuffers, ReadsFromServerCanceled)
     EXPECT_CALL(read_callback, Call(pipe_op_res::canceled, _))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
 
@@ -279,7 +279,7 @@ TEST_F(MemBuffers, ReadsFromClientFailed)
     EXPECT_CALL(read_callback, Call(pipe_op_res::failed, _))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.read_async_from_client(std::nullopt)
         .then(read_callback.AsStdFunction());
 
@@ -299,7 +299,7 @@ TEST_F(MemBuffers, ReadsFromServerFailed)
     EXPECT_CALL(read_callback, Call(pipe_op_res::failed, _))
         .Times(1);
 
-    mem_buffers sut(pool);
+    mem_buffers sut(pool.get());
     auto f = sut.read_async_from_server(std::nullopt)
         .then(read_callback.AsStdFunction());
 

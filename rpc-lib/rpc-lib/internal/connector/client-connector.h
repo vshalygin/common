@@ -19,7 +19,7 @@ namespace vshalygin::rpc::internal {
     class client_connector
     {
     public:
-        explicit client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+        explicit client_connector(cl::thread_pool *thread_pool,
                                   std::shared_ptr<iauthenticator> authenticator,
                                   std::shared_ptr<iclient_pipe_env> pipe_env,
                                   const config &config);

@@ -20,7 +20,7 @@ namespace vshalygin::rpc::internal {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        explicit impl(cl::thread_pool *thread_pool,
                       std::shared_ptr<iauthenticator> authenticator,
                       std::shared_ptr<iclient_pipe_env> pipe_env,
                       const config &config);
@@ -36,7 +36,7 @@ namespace vshalygin::rpc::internal {
     private:
         const uint64_t m_id;
 
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         std::shared_ptr<iauthenticator> m_authenticator;
         std::shared_ptr<iclient_pipe_env> m_pipe_env;
         const std::chrono::milliseconds m_handshake_timeout;
@@ -46,12 +46,12 @@ namespace vshalygin::rpc::internal {
         const std::chrono::milliseconds m_ping_timeout;
     };
 
-    client_connector::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    client_connector::impl::impl(cl::thread_pool *thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iclient_pipe_env> pipe_env,
                                  const config &config)
         : m_id(generate_id())
-        , m_thread_pool(std::move(thread_pool))
+        , m_thread_pool(thread_pool)
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
         , m_handshake_timeout(config.handshake_timeout)
@@ -112,11 +112,11 @@ namespace vshalygin::rpc::internal {
     }
 
 
-    client_connector::client_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+    client_connector::client_connector(cl::thread_pool *thread_pool,
                                        std::shared_ptr<iauthenticator> authenticator,
                                        std::shared_ptr<iclient_pipe_env> pipe_env,
                                        const config &config)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool),
+        : m_impl(std::make_shared<impl>(thread_pool,
                                         std::move(authenticator),
                                         std::move(pipe_env),
                                         config))

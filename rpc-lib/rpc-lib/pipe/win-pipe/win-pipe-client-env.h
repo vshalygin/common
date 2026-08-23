@@ -10,7 +10,7 @@ namespace vshalygin::rpc {
     {
 
     public:
-        explicit win_pipe_client_env(std::shared_ptr<cl::thread_pool> thread_pool,
+        explicit win_pipe_client_env(cl::thread_pool *thread_pool,
                                      const std::wstring &pipe_name);
 
         win_pipe_client_env(const win_pipe_client_env &) = delete;

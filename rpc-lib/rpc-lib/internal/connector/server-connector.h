@@ -25,7 +25,7 @@ namespace vshalygin::rpc::internal {
     class server_connector
     {
     public:
-        server_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+        server_connector(cl::thread_pool *thread_pool,
                          std::shared_ptr<iauthenticator> authenticator,
                          std::shared_ptr<iserver_pipe_env> pipe_env,
                          std::function<std::unique_ptr<iservice>(uint64_t)> &&create_service,

@@ -21,7 +21,7 @@ namespace vshalygin::rpc {
     {
     public:
         explicit impl(const std::wstring &pipe_name,
-                      std::shared_ptr<cl::thread_pool> thread_pool);
+                      cl::thread_pool *thread_pool);
 
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
@@ -32,7 +32,7 @@ namespace vshalygin::rpc {
 
     private:
         const std::wstring m_pipe_name;
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         std::shared_ptr<internal::win_pipe_iocp_owner> m_iocp_owner;
 
         using create_operation = internal::win_pipe_create_operation;
@@ -51,9 +51,9 @@ namespace vshalygin::rpc {
     };
 
     win_pipe_server_env::impl::impl(const std::wstring &pipe_name,
-                                    std::shared_ptr<cl::thread_pool> thread_pool)
+                                    cl::thread_pool *thread_pool)
         : m_pipe_name(pipe_name)
-        , m_thread_pool(std::move(thread_pool))
+        , m_thread_pool(thread_pool)
         , m_iocp_owner(internal::win_pipe_iocp_owner::create())
         , m_pending_create_operations(std::make_shared<op_map>())
         , m_timer(m_thread_pool->get_io_context())
@@ -64,7 +64,7 @@ namespace vshalygin::rpc {
         auto id = m_next_id.fetch_add(1, std::memory_order_relaxed);
 
         auto pending_ops = m_pending_create_operations->lock();
-        auto op = create_operation::create(m_pipe_name, m_thread_pool.get());
+        auto op = create_operation::create(m_pipe_name, m_thread_pool);
         auto f = m_iocp_owner->create_pipe_async(op);
 
         pending_ops->insert({ id, create_operation_info{ std::move(op), client_id, std::nullopt } });
@@ -84,7 +84,7 @@ namespace vshalygin::rpc {
     pipe_endpoint_future win_pipe_server_env::impl::create_pipe(uint64_t client_id,
                                                                 std::chrono::milliseconds timeout)
     {
-        auto op = create_operation::create(m_pipe_name, m_thread_pool.get());
+        auto op = create_operation::create(m_pipe_name, m_thread_pool);
         auto f = m_iocp_owner->create_pipe_async(op);
         
         auto pending_ops = m_pending_create_operations->lock();
@@ -130,9 +130,9 @@ namespace vshalygin::rpc {
         }
     }
 
-    win_pipe_server_env::win_pipe_server_env(std::shared_ptr<cl::thread_pool> thread_pool,
+    win_pipe_server_env::win_pipe_server_env(cl::thread_pool *thread_pool,
                                              const std::wstring &pipe_name)
-        : m_impl(std::make_shared<impl>(pipe_name, std::move(thread_pool)))
+        : m_impl(std::make_shared<impl>(pipe_name, thread_pool))
     {}
 
     win_pipe_server_env::~win_pipe_server_env()

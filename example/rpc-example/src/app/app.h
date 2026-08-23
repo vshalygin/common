@@ -20,8 +20,6 @@ namespace vshalygin::example {
         app(const app &) = delete;
         app &operator=(const app &) = delete;
 
-        ~app();
-
         int run() noexcept;
 
     private:

@@ -51,14 +51,14 @@ protected:
 
 TEST_F(MemBuffer, IsValidJustAfterCreation)
 {
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
 
     ASSERT_TRUE(sut->is_valid());
 }
 
 TEST_F(MemBuffer, IsNotValidJustAfterInvalidation)
 {
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
 
     sut->invalidate(true);
 
@@ -71,7 +71,7 @@ TEST_F(MemBuffer, WritesDataToBufferIfNoPendingReadCallback)
     EXPECT_CALL(callback, Call(pipe_op_res::success))
         .Times(1);
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->write_async({}, std::nullopt)
         .then(callback.AsStdFunction())
         .get();
@@ -88,7 +88,7 @@ TEST_F(MemBuffer, ExecutePendingReadCallbackOnWrite)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction());
     sut->write_async(data.copy(), std::nullopt).get();
@@ -104,7 +104,7 @@ TEST_F(MemBuffer, DoesNotWriteIfInvalidated)
     EXPECT_CALL(callback, Call(pipe_op_res::failed))
         .Times(1);
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->invalidate(true);
     sut->write_async({}, std::nullopt)
         .then(callback.AsStdFunction())
@@ -117,7 +117,7 @@ TEST_F(MemBuffer, AddReadHandlerOnReadAsync)
 {
     event sync_event;
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     auto f = sut->read_async(std::nullopt)
         .then([&](pipe_op_res, buffer &&) { sync_event.set(); });
     sut->write_async(create_test_data(), std::nullopt).get();
@@ -131,7 +131,7 @@ TEST_F(MemBuffer, DoesNotReadAsyncIfInvalid)
     EXPECT_CALL(read_callback, Call(pipe_op_res::failed, _))
         .Times(1);
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->invalidate(true);
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction())
@@ -147,7 +147,7 @@ TEST_F(MemBuffer, ReadsWrittenData)
     EXPECT_CALL(read_callback, Call(pipe_op_res::success, BufferEq(data.data(), data.size())))
         .Times(1);
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->write_async(data.copy(), std::nullopt);
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction())
@@ -164,7 +164,7 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction());
     while(sut->get_pending_read_handlers_count() != 1) {}
@@ -183,7 +183,7 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation2)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction());
     while(sut->get_pending_read_handlers_count() != 1) {}
@@ -196,7 +196,7 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation2)
 
 TEST_F(MemBuffer, ClearsPendingMessagesOnInvalidation)
 {
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->write_async({}, std::nullopt).get();
     sut->invalidate(true);
 
@@ -212,7 +212,7 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnDestruction)
         .Times(1)
         .WillOnce([&]() { sync_event.set(); });
 
-    auto sut = mem_buffer::create(pool);
+    auto sut = mem_buffer::create(pool.get());
     sut->read_async(std::nullopt)
         .then(read_callback.AsStdFunction());
     while(sut->get_pending_read_handlers_count() != 1) {}
@@ -229,7 +229,7 @@ TEST_F(MemBuffer, CannotReadMoreBuffersThanWritten)
     EXPECT_CALL(read_callback, Call(pipe_op_res::success, BufferEq(data.data(), data.size())))
         .Times(1);
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->write_async(data.copy(), std::nullopt)
         .get();
     sut->write_async(data.copy(), std::nullopt)
@@ -252,7 +252,7 @@ TEST_F(MemBuffer, WritePromiseResolvesTimeout)
     EXPECT_CALL(write_callback, Call(pipe_op_res::timeout))
         .Times(1);
 
-    auto sut = mem_buffer::create(pool);
+    auto sut = mem_buffer::create(pool.get());
     auto f = sut->write_async(data.copy(), std::chrono::milliseconds(0))
         .then(write_callback.AsStdFunction());
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
@@ -269,7 +269,7 @@ TEST_F(MemBuffer, ReadPromiseResolvesTimeout)
     EXPECT_CALL(read_callback, Call(pipe_op_res::timeout, _))
         .Times(1);
 
-    auto sut = mem_buffer::create(m_thread_pool);
+    auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::chrono::milliseconds(1))
         .then(read_callback.AsStdFunction())
         .get();

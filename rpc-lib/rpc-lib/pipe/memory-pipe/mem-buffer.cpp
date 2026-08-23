@@ -3,13 +3,13 @@
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
 namespace vshalygin::rpc {
-    std::shared_ptr<mem_buffer> mem_buffer::create(std::shared_ptr<cl::thread_pool> thread_pool)
+    std::shared_ptr<mem_buffer> mem_buffer::create(cl::thread_pool *thread_pool)
     {
-        return std::shared_ptr<mem_buffer>(new mem_buffer(std::move(thread_pool)));
+        return std::shared_ptr<mem_buffer>(new mem_buffer(thread_pool));
     }
 
-    mem_buffer::mem_buffer(std::shared_ptr<cl::thread_pool> thread_pool)
-        : m_thread_pool(std::move(thread_pool))
+    mem_buffer::mem_buffer(cl::thread_pool *thread_pool)
+        : m_thread_pool(thread_pool)
         , m_read_strand(m_thread_pool->get_io_context())
         , m_write_strand(m_thread_pool->get_io_context())
         , m_read_promises(std::make_shared<cl::value_locker<read_promise_container>>())
@@ -26,10 +26,10 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         if(!m_is_valid) {
-            return write_future(m_thread_pool.get(), pipe_op_res::failed);
+            return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
-        auto promise = make_promise(m_thread_pool.get(),
+        auto promise = make_promise(m_thread_pool,
                                     [](pipe_op_res res) { return res; });
         auto future = promise.get_future();
 
@@ -49,7 +49,7 @@ namespace vshalygin::rpc {
     
     mem_buffer::read_future mem_buffer::read_async(const std::optional<std::chrono::milliseconds> &timeout)
     {
-        auto promise = make_promise(m_thread_pool.get(),
+        auto promise = make_promise(m_thread_pool,
                                     [](pipe_op_res res, cl::buffer b) { return ftuple(res, std::move(b)); });
         auto future = promise.get_future();
 

@@ -9,11 +9,11 @@ namespace vshalygin::example {
     class client
     {
     public:
-        client(std::shared_ptr<cl::thread_pool> thread_pool,
+        client(cl::thread_pool *thread_pool,
                std::shared_ptr<rpc::iauthenticator> authenticator,
                std::shared_ptr<rpc::iclient_pipe_env> pipe_env,
                uint64_t id)
-            : m_endpoint(std::move(thread_pool),
+            : m_endpoint(thread_pool,
                          std::move(authenticator),
                          std::move(pipe_env),
                          std::make_shared<client_service>(id))

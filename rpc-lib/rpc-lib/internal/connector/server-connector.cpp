@@ -33,7 +33,7 @@ namespace vshalygin::rpc::internal {
         using on_change_state_t = std::function<void(server_connector_state)>;
 
     public:
-        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(cl::thread_pool *thread_pool,
              std::shared_ptr<iauthenticator> authenticator,
              std::shared_ptr<iserver_pipe_env> pipe_env,
              create_service_t &&create_service,
@@ -71,7 +71,7 @@ namespace vshalygin::rpc::internal {
 
         connect_pipe_future m_connect_pipe_future;
 
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         cl::strand m_notify_strand;
 
         std::shared_ptr<iauthenticator> m_authenticator;
@@ -86,7 +86,7 @@ namespace vshalygin::rpc::internal {
         cl::value_locker<std::unordered_map<uint64_t, connection_future>> m_connection_future_map;
     };
 
-    server_connector::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    server_connector::impl::impl(cl::thread_pool *thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iserver_pipe_env> pipe_env,
                                  create_service_t &&create_service,
@@ -94,7 +94,7 @@ namespace vshalygin::rpc::internal {
                                  on_change_state_t &&on_change_state,
                                  const config &config)
         : m_id(generate_id())
-        , m_thread_pool(std::move(thread_pool))
+        , m_thread_pool(thread_pool)
         , m_notify_strand(m_thread_pool->get_io_context())
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
@@ -179,7 +179,7 @@ namespace vshalygin::rpc::internal {
                                           });
 
         auto connection_id = m_next_connection_id++;
-        auto promise = make_promise(m_thread_pool.get(),
+        auto promise = make_promise(m_thread_pool,
                                     [self = weak_from_this(), connection_id, is_running_sp]
                                     (std::shared_ptr<ipipe_endpoint> pe) {
             std::shared_ptr s(self);
@@ -270,14 +270,14 @@ namespace vshalygin::rpc::internal {
         map->clear();
     }
 
-    server_connector::server_connector(std::shared_ptr<cl::thread_pool> thread_pool,
+    server_connector::server_connector(cl::thread_pool *thread_pool,
                                        std::shared_ptr<iauthenticator> authenticator,
                                        std::shared_ptr<iserver_pipe_env> pipe_env,
                                        std::function<std::unique_ptr<iservice>(uint64_t)> &&create_service,
                                        std::function<void(uint64_t, std::unique_ptr<iconnection>)> &&on_new_connection,
                                        std::function<void(server_connector_state)> on_change_state,
                                        const config &config)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool), std::move(authenticator),
+        : m_impl(std::make_shared<impl>(thread_pool, std::move(authenticator),
                                         std::move(pipe_env), std::move(create_service),
                                         std::move(on_new_connection), std::move(on_change_state),
                                         config))

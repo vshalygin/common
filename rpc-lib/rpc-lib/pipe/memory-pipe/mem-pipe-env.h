@@ -16,7 +16,7 @@ namespace vshalygin::rpc {
         using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>,
                                       pipe_wait_res, std::shared_ptr<ipipe_endpoint>>;
 
-        explicit mem_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool);
+        explicit mem_pipe_env(cl::thread_pool *thread_pool);
 
         mem_pipe_env(mem_pipe_env &) = delete;
         mem_pipe_env &operator=(mem_pipe_env &) = delete;

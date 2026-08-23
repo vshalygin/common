@@ -185,9 +185,9 @@ protected:
     {
         auto sockets = create_connected_sockets();
         endpoint_pair result;
-        result.first = std::make_unique<tcp_pipe_endpoint>(m_thread_pool,
+        result.first = std::make_unique<tcp_pipe_endpoint>(m_thread_pool.get(),
                                                           std::move(sockets.first));
-        result.second = std::make_unique<tcp_pipe_endpoint>(m_thread_pool,
+        result.second = std::make_unique<tcp_pipe_endpoint>(m_thread_pool.get(),
                                                            std::move(sockets.second));
         return result;
     }
@@ -195,7 +195,7 @@ protected:
     raw_endpoint_pair create_raw_endpoint()
     {
         auto sockets = create_connected_sockets();
-        auto endpoint = std::make_unique<tcp_pipe_endpoint>(m_thread_pool,
+        auto endpoint = std::make_unique<tcp_pipe_endpoint>(m_thread_pool.get(),
                                                            std::move(sockets.first));
         return raw_endpoint_pair(std::move(endpoint), std::move(sockets.second));
     }
@@ -203,7 +203,7 @@ protected:
     raw_endpoint_pair create_constrained_raw_endpoint()
     {
         auto sockets = create_connected_sockets(true);
-        auto endpoint = std::make_unique<tcp_pipe_endpoint>(m_thread_pool,
+        auto endpoint = std::make_unique<tcp_pipe_endpoint>(m_thread_pool.get(),
                                                            std::move(sockets.first));
         return raw_endpoint_pair(std::move(endpoint), std::move(sockets.second));
     }
@@ -396,7 +396,7 @@ protected:
     {
         auto sockets = create_connected_sockets(true);
         const auto filler_size = fill_send_buffer(sockets.first);
-        auto endpoint = std::make_unique<tcp_pipe_endpoint>(m_thread_pool,
+        auto endpoint = std::make_unique<tcp_pipe_endpoint>(m_thread_pool.get(),
                                                            std::move(sockets.first));
         return blocked_raw_endpoint_pair(std::move(endpoint),
                                          std::move(sockets.second),

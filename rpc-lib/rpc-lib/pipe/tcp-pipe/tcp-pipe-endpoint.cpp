@@ -172,7 +172,7 @@ namespace vshalygin::rpc {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(cl::thread_pool *thread_pool,
              socket &&socket);
 
         impl(const tcp_pipe_endpoint &) = delete;
@@ -220,7 +220,7 @@ namespace vshalygin::rpc {
         void complete_all_operations_unsafe(pipe_op_res r, Operations &operations);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         mutable cl::ordered_mutex<1> m_write_mtx;
         uint64_t m_next_write_op_id = 0;
@@ -264,9 +264,9 @@ namespace vshalygin::rpc {
         cl::multiple_timer m_timer;
     };
 
-    tcp_pipe_endpoint::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    tcp_pipe_endpoint::impl::impl(cl::thread_pool *thread_pool,
                                   socket &&socket)
-        : m_thread_pool(std::move(thread_pool))
+        : m_thread_pool(thread_pool)
         , m_socket(std::move(socket))
         , m_timer(m_thread_pool->get_io_context())
     {
@@ -296,10 +296,10 @@ namespace vshalygin::rpc {
 
         cl::ordered_lock guard(m_write_mtx, m_socket_mtx);
         if(!m_socket.is_open()) {
-            return write_future(m_thread_pool.get(), pipe_op_res::failed);
+            return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
-        auto promise = make_promise(m_thread_pool.get(), [](pipe_op_res r) { return r; });
+        auto promise = make_promise(m_thread_pool, [](pipe_op_res r) { return r; });
         auto future = promise.get_future();
 
         const auto id = m_next_write_op_id++;
@@ -333,10 +333,10 @@ namespace vshalygin::rpc {
     {
         cl::ordered_lock guard(m_read_mtx, m_socket_mtx);
         if(!m_socket.is_open()) {
-            return read_future(m_thread_pool.get(), ftuple(pipe_op_res::failed, cl::buffer{}));
+            return read_future(m_thread_pool, ftuple(pipe_op_res::failed, cl::buffer{}));
         }
 
-        auto promise = make_promise(m_thread_pool.get(),
+        auto promise = make_promise(m_thread_pool,
                                     [](pipe_op_res r, cl::buffer &&b) {
                                         return ftuple(r, std::move(b));
                                     });
@@ -588,9 +588,9 @@ namespace vshalygin::rpc {
         m_disconnect_callbacks.clear();
     }
 
-    tcp_pipe_endpoint::tcp_pipe_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
+    tcp_pipe_endpoint::tcp_pipe_endpoint(cl::thread_pool *thread_pool,
                                          socket &&socket)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool), std::move(socket)))
+        : m_impl(std::make_shared<impl>(thread_pool, std::move(socket)))
     {}
 
     tcp_pipe_endpoint::~tcp_pipe_endpoint()

@@ -28,7 +28,7 @@ protected:
         auto connection_mock = std::make_unique<connection_nice_mock>();
         m_connection_mock = connection_mock.get();
 
-        m_sut = std::make_unique<endpoint<proto::Service_Stub>>(std::move(connection_mock), m_thread_pool);
+        m_sut = std::make_unique<endpoint<proto::Service_Stub>>(std::move(connection_mock), m_thread_pool.get());
     }
 
     void TearDown() override

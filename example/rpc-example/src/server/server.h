@@ -9,12 +9,12 @@ namespace vshalygin::example {
     class server
     {
     public:
-        server(std::shared_ptr<cl::thread_pool> thread_pool,
+        server(cl::thread_pool *thread_pool,
                std::shared_ptr<rpc::iauthenticator> authenticator,
                std::shared_ptr<rpc::iserver_pipe_env> pipe_env)
             : m_endpoint(&on_connection_change,
                          {},
-                         std::move(thread_pool),
+                         thread_pool,
                          std::move(authenticator),
                          pipe_env,
                          std::make_shared<server_service>())

@@ -237,17 +237,6 @@ namespace vshalygin::example {
         , m_authenticator(std::make_shared<rpc::simple_authenticator>())
     {}
 
-    app::~app()
-    {
-        m_clients.clear();
-        m_server.reset();
-        m_server_pipe_env.reset();
-        m_client_pipe_env.reset();
-        m_authenticator.reset();
-
-        m_thread_pool->stop();
-    }
-
     int app::run() noexcept
     {
         try {
@@ -265,20 +254,20 @@ namespace vshalygin::example {
             }
 
             if(transport == transport_type::memory_pipe) {
-                auto env = std::make_shared<rpc::mem_pipe_env>(m_thread_pool);
+                auto env = std::make_shared<rpc::mem_pipe_env>(m_thread_pool.get());
                 m_client_pipe_env = env;
                 m_server_pipe_env = env;
             } else if (transport == transport_type::win_pipe) {
-                m_client_pipe_env = std::make_shared<rpc::win_pipe_client_env>(m_thread_pool, L"47sdfrtgvczc849dsbdevdedb");
-                m_server_pipe_env = std::make_shared<rpc::win_pipe_server_env>(m_thread_pool, L"47sdfrtgvczc849dsbdevdedb");
+                m_client_pipe_env = std::make_shared<rpc::win_pipe_client_env>(m_thread_pool.get(), L"47sdfrtgvczc849dsbdevdedb");
+                m_server_pipe_env = std::make_shared<rpc::win_pipe_server_env>(m_thread_pool.get(), L"47sdfrtgvczc849dsbdevdedb");
             } else if (transport == transport_type::tcp) {
-                m_client_pipe_env = std::make_shared<rpc::tcp_pipe_client_env>(m_thread_pool, "127.0.0.1", 31078);
-                m_server_pipe_env = std::make_shared<rpc::tcp_pipe_server_env>(m_thread_pool, "127.0.0.1", 31078);
+                m_client_pipe_env = std::make_shared<rpc::tcp_pipe_client_env>(m_thread_pool.get(), "127.0.0.1", 31078);
+                m_server_pipe_env = std::make_shared<rpc::tcp_pipe_server_env>(m_thread_pool.get(), "127.0.0.1", 31078);
             } else {
                 throw std::runtime_error("unknown transport type");
             }
 
-            m_server = std::make_unique<server>(m_thread_pool, m_authenticator, m_server_pipe_env);
+            m_server = std::make_unique<server>(m_thread_pool.get(), m_authenticator, m_server_pipe_env);
 
             command_type command = command_type::unknown;
             do {
@@ -309,7 +298,7 @@ namespace vshalygin::example {
                         try {
                             m_clients.emplace(std::piecewise_construct,
                                               std::forward_as_tuple(id),
-                                              std::forward_as_tuple(m_thread_pool, m_authenticator, m_client_pipe_env, id));
+                                              std::forward_as_tuple(m_thread_pool.get(), m_authenticator, m_client_pipe_env, id));
                             write_to_console("Client with id " + std::to_string(id) + " created\n");
                         } catch (const std::exception &e) {
                             write_to_console("Failed to create client: " + std::string(e.what()) + "\n");

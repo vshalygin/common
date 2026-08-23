@@ -217,20 +217,20 @@ protected:
 
 TEST_F(TcpPipeClientEnv, RejectsInvalidIpv4Address)
 {
-    EXPECT_THROW((void)client_env(m_thread_pool, "256.1.2.3", 12345), std::invalid_argument);
-    EXPECT_THROW((void)client_env(m_thread_pool, "::1", 12345), std::invalid_argument);
-    EXPECT_THROW((void)client_env(m_thread_pool, "localhost", 12345), std::invalid_argument);
+    EXPECT_THROW((void)client_env(m_thread_pool.get(), "256.1.2.3", 12345), std::invalid_argument);
+    EXPECT_THROW((void)client_env(m_thread_pool.get(), "::1", 12345), std::invalid_argument);
+    EXPECT_THROW((void)client_env(m_thread_pool.get(), "localhost", 12345), std::invalid_argument);
 }
 
 TEST_F(TcpPipeClientEnv, RejectsPortOutsideUint16Range)
 {
-    EXPECT_THROW((void)client_env(m_thread_pool, "127.0.0.1", 65536), std::invalid_argument);
+    EXPECT_THROW((void)client_env(m_thread_pool.get(), "127.0.0.1", 65536), std::invalid_argument);
 }
 
 TEST_F(TcpPipeClientEnv, OpensConnectedEndpointOnLoopback)
 {
     auto acceptor = create_loopback_listener();
-    client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", acceptor.local_endpoint().port());
 
     auto future = env.open_pipe(0);
     tcp::socket peer(m_thread_pool->get_io_context());
@@ -248,7 +248,7 @@ TEST_F(TcpPipeClientEnv, OpensConnectedEndpointOnLoopback)
 TEST_F(TcpPipeClientEnv, TimedOpenSucceedsBeforeDeadline)
 {
     auto acceptor = create_loopback_listener();
-    client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", acceptor.local_endpoint().port());
 
     auto future = env.open_pipe(0, long_open_timeout);
     tcp::socket peer(m_thread_pool->get_io_context());
@@ -265,7 +265,7 @@ TEST_F(TcpPipeClientEnv, TimedOpenSucceedsBeforeDeadline)
 
 TEST_F(TcpPipeClientEnv, ReportsFailureWhenLoopbackPortHasNoListener)
 {
-    client_env env(m_thread_pool, "127.0.0.1", unavailable_loopback_port);
+    client_env env(m_thread_pool.get(), "127.0.0.1", unavailable_loopback_port);
 
     auto future = env.open_pipe(0);
     ASSERT_TRUE(wait_for_result(future,
@@ -279,7 +279,7 @@ TEST_F(TcpPipeClientEnv, ReportsFailureWhenLoopbackPortHasNoListener)
 
 TEST_F(TcpPipeClientEnv, TimedOpenReportsFailureBeforeDeadline)
 {
-    client_env env(m_thread_pool, "127.0.0.1", unavailable_loopback_port);
+    client_env env(m_thread_pool.get(), "127.0.0.1", unavailable_loopback_port);
 
     auto future = env.open_pipe(0, long_open_timeout);
     ASSERT_TRUE(wait_for_result(future,
@@ -295,7 +295,7 @@ TEST_F(TcpPipeClientEnv, TimesOutPendingLoopbackConnect)
 {
     auto listener = create_saturated_loopback_listener();
     ASSERT_TRUE(listener);
-    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", listener->acceptor.local_endpoint().port());
 
     auto future = env.open_pipe(0, pending_open_timeout);
     ASSERT_TRUE(wait_for_result(future,
@@ -311,7 +311,7 @@ TEST_F(TcpPipeClientEnv, CancelPendingOpenIsIdempotent)
 {
     auto listener = create_saturated_loopback_listener();
     ASSERT_TRUE(listener);
-    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", listener->acceptor.local_endpoint().port());
 
     auto future = env.open_pipe(0);
     EXPECT_FALSE(future.wait_for(pending_observation_timeout));
@@ -331,7 +331,7 @@ TEST_F(TcpPipeClientEnv, CancelsAllPendingOpenOperations)
 {
     auto listener = create_saturated_loopback_listener();
     ASSERT_TRUE(listener);
-    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", listener->acceptor.local_endpoint().port());
 
     auto first = env.open_pipe(0);
     auto second = env.open_pipe(0);
@@ -361,7 +361,7 @@ TEST_F(TcpPipeClientEnv, DestructorCancelsPendingOpen)
 
     endpoint_future future;
     {
-        auto env = std::make_unique<client_env>(m_thread_pool,
+        auto env = std::make_unique<client_env>(m_thread_pool.get(),
                                                 "127.0.0.1",
                                                 listener->acceptor.local_endpoint().port());
         future = env->open_pipe(0);
@@ -381,7 +381,7 @@ TEST_F(TcpPipeClientEnv, TimeoutOfOneOpenDoesNotCancelAnother)
 {
     auto listener = create_saturated_loopback_listener();
     ASSERT_TRUE(listener);
-    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", listener->acceptor.local_endpoint().port());
 
     auto pending = env.open_pipe(0);
     auto timed = env.open_pipe(0, pending_open_timeout);
@@ -407,7 +407,7 @@ TEST_F(TcpPipeClientEnv, TimeoutOfOneOpenDoesNotCancelAnother)
 TEST_F(TcpPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
 {
     auto acceptor = create_loopback_listener();
-    client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", acceptor.local_endpoint().port());
 
     auto future = env.open_pipe(0);
     tcp::socket peer(m_thread_pool->get_io_context());
@@ -427,7 +427,7 @@ TEST_F(TcpPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
 TEST_F(TcpPipeClientEnv, SupportsMultipleConcurrentOpenOperations)
 {
     auto acceptor = create_loopback_listener();
-    client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", acceptor.local_endpoint().port());
 
     auto first = env.open_pipe(0);
     auto second = env.open_pipe(0);
@@ -465,7 +465,7 @@ TEST_F(TcpPipeClientEnv, CancelRacingWithSuccessfulConnectNeverReturnsClosedSucc
 
     for(size_t i = 0; i < iteration_count; ++i) {
         auto acceptor = create_loopback_listener();
-        client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
+        client_env env(m_thread_pool.get(), "127.0.0.1", acceptor.local_endpoint().port());
 
         auto future = env.open_pipe(0);
         tcp::socket peer(m_thread_pool->get_io_context());
@@ -495,7 +495,7 @@ TEST_F(TcpPipeClientEnv, CancelsOnlyPendingOpenOperationsWithSpecifiedClientId)
     constexpr auto remaining_client_id = 202u;
     auto listener = create_saturated_loopback_listener();
     ASSERT_TRUE(listener);
-    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", listener->acceptor.local_endpoint().port());
 
     auto first_canceled = env.open_pipe(canceled_client_id);
     auto second_canceled = env.open_pipe(canceled_client_id);
@@ -540,7 +540,7 @@ TEST_F(TcpPipeClientEnv, CancelsAllPendingOpenOperationsWithDifferentClientIds)
 {
     auto listener = create_saturated_loopback_listener();
     ASSERT_TRUE(listener);
-    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+    client_env env(m_thread_pool.get(), "127.0.0.1", listener->acceptor.local_endpoint().port());
 
     auto first = env.open_pipe(101);
     auto second = env.open_pipe(202);

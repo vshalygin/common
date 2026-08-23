@@ -1,7 +1,7 @@
 #include "mem-buffers.h"
 
 namespace vshalygin::rpc {
-    mem_buffers::mem_buffers(std::shared_ptr<cl::thread_pool> thread_pool)
+    mem_buffers::mem_buffers(cl::thread_pool *thread_pool)
         : m_thread_pool(thread_pool)
         , m_client_to_server(mem_buffer::create(thread_pool))
         , m_server_to_client(mem_buffer::create(thread_pool))

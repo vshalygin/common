@@ -14,7 +14,7 @@ namespace vshalygin::rpc {
     public:
         using socket = boost::asio::ip::tcp::socket;
 
-        tcp_pipe_endpoint(std::shared_ptr<cl::thread_pool> thread_pool,
+        tcp_pipe_endpoint(cl::thread_pool *thread_pool,
                           socket &&socket);
 
         tcp_pipe_endpoint(const tcp_pipe_endpoint &) = delete;

@@ -45,7 +45,7 @@ protected:
         m_thread_pool = std::make_shared<thread_pool>(2);
         auto gservice = std::make_unique<ProtoServiceNiceMock>();
         m_gservice = gservice.get();
-        m_service = std::make_unique<service<ProtoServiceMock>>(std::move(gservice), m_thread_pool, m_connection_id);
+        m_service = std::make_unique<service<ProtoServiceMock>>(std::move(gservice), m_thread_pool.get(), m_connection_id);
 
         m_request_message.set_data(34);
         m_response_message.set_data(44);
@@ -145,7 +145,7 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
 
 TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNotSet)
 {
-    service<ProtoServiceMock> sut(nullptr, m_thread_pool, 0);
+    service<ProtoServiceMock> sut(nullptr, m_thread_pool.get(), 0);
     m_response_message.Clear();
     auto response_buf = create_transfer_msg_res(34,
                                                 response_result::not_implemented,
@@ -167,7 +167,7 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNot
 
 TEST_F(Service, CallsResponseCallbackWithInvalidRequestErrorCode)
 {
-    service<ProtoServiceMock> sut(nullptr, m_thread_pool, 0);
+    service<ProtoServiceMock> sut(nullptr, m_thread_pool.get(), 0);
     m_response_message.Clear();
     auto response_buf = create_transfer_msg_res(static_cast<uint64_t>(-1),
                                                 response_result::invalid_request,

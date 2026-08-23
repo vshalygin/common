@@ -11,7 +11,7 @@ namespace vshalygin::rpc {
         : public iclient_pipe_env
     {
     public:
-        tcp_pipe_client_env(std::shared_ptr<cl::thread_pool> thread_pool,
+        tcp_pipe_client_env(cl::thread_pool *thread_pool,
                             const std::string &ip4_address,
                             uint32_t port);
 

@@ -38,7 +38,7 @@ namespace vshalygin::rpc {
 
         explicit server_endpoint(on_connection_change_t  &&on_connection_change,
                                  on_change_state_t &&on_change_state,
-                                 std::shared_ptr<cl::thread_pool> thread_pool,
+                                 cl::thread_pool *thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iserver_pipe_env> pipe_env,
                                  std::shared_ptr<GServerService> gservice,
@@ -71,7 +71,7 @@ namespace vshalygin::rpc {
         : public std::enable_shared_from_this<impl>
     {
     public:
-        explicit impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        explicit impl(cl::thread_pool *thread_pool,
                       on_connection_change_t &&on_connection_change);
 
         impl(const impl &) = delete;
@@ -99,7 +99,7 @@ namespace vshalygin::rpc {
         void remove_endpoint_from_map(uint64_t id);
 
     private:
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         std::shared_ptr<on_connection_change_t> m_on_connection_change;
 
@@ -112,7 +112,7 @@ namespace vshalygin::rpc {
 
     template<typename GClientServiceStub, typename GServerService>
     server_endpoint<GClientServiceStub, GServerService>::impl::impl(
-        std::shared_ptr<cl::thread_pool> thread_pool,
+        cl::thread_pool *thread_pool,
         on_connection_change_t &&on_connection_change)
         : m_thread_pool(thread_pool)
         , m_on_connection_change(std::make_shared<on_connection_change_t>(std::move(on_connection_change)))
@@ -129,7 +129,7 @@ namespace vshalygin::rpc {
     void server_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
         uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
-        auto disconnect_promise = make_promise(m_thread_pool.get(), []() {});
+        auto disconnect_promise = make_promise(m_thread_pool, []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);
@@ -140,7 +140,7 @@ namespace vshalygin::rpc {
         auto ep = std::make_unique<internal::endpoint<GClientServiceStub>>(std::move(c), m_thread_pool);
         ep->set_disconnect_callback(
             cl::thread_pool_task(
-                m_thread_pool.get(),
+                m_thread_pool,
                 [disconnect_promise = std::move(disconnect_promise)]() mutable {
                     disconnect_promise.resolve();
                 }));
@@ -221,7 +221,7 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
         auto it = m_endpoints_map.find(connection_id);
         if(it == m_endpoints_map.end() || !it->second->is_connected()) {
-            auto promise = make_promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<Response> m) {
+            auto promise = make_promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
                 return ftuple{ r, std::move(m) };
             });
             promise.resolve(request_result::no_connection, {});
@@ -251,7 +251,7 @@ namespace vshalygin::rpc {
     server_endpoint<GClientServiceStub, GServerService>::server_endpoint(
         on_connection_change_t &&on_connection_change,
         on_change_state_t &&on_change_state,
-        std::shared_ptr<cl::thread_pool> thread_pool,
+        cl::thread_pool *thread_pool,
         std::shared_ptr<iauthenticator> authenticator,
         std::shared_ptr<iserver_pipe_env> pipe_env,
         std::shared_ptr<GServerService> gservice,

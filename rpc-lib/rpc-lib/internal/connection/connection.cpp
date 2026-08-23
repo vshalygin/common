@@ -24,7 +24,7 @@ namespace vshalygin::rpc::internal {
 
         using request_map = std::unordered_map<uint64_t, request_data>;
 
-        impl(std::shared_ptr<cl::thread_pool> thread_pool,
+        impl(cl::thread_pool *thread_pool,
              std::shared_ptr<ipipe_endpoint> pipe_endpoint,
              std::shared_ptr<iservice> service,
              std::chrono::milliseconds send_timeout,
@@ -83,7 +83,7 @@ namespace vshalygin::rpc::internal {
         const std::chrono::milliseconds m_recv_timeout;
         const std::chrono::milliseconds m_check_period;
 
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
         std::shared_ptr<iservice> m_service;
 
         cl::value_locker<request_map> m_request_map;
@@ -104,7 +104,7 @@ namespace vshalygin::rpc::internal {
         std::optional<request_result> fail_req_result;
     };
 
-    connection::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+    connection::impl::impl(cl::thread_pool *thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
                            std::chrono::milliseconds send_timeout,
@@ -113,7 +113,7 @@ namespace vshalygin::rpc::internal {
                            std::chrono::milliseconds ping_timeout)
         : m_recv_timeout(recv_timeout)
         , m_check_period(check_period)
-        , m_thread_pool(std::move(thread_pool))
+        , m_thread_pool(thread_pool)
         , m_service(std::move(service))
         , m_multiple_timer(m_thread_pool->get_io_context())
         , m_watcher_timer(m_thread_pool->get_io_context())
@@ -148,14 +148,14 @@ namespace vshalygin::rpc::internal {
     {
         std::lock_guard g(m_mtx);
         if(m_state != state::started || !m_transport.is_running()) {
-            return req_result_future(m_thread_pool.get(), ftuple(request_result::failed, cl::buffer{}));
+            return req_result_future(m_thread_pool, ftuple(request_result::failed, cl::buffer{}));
         }
 
         assert(is_request_buffer_valid(message));
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 
-        auto promise = make_promise(m_thread_pool.get(), [](request_result r, cl::buffer b) {
+        auto promise = make_promise(m_thread_pool, [](request_result r, cl::buffer b) {
             return ftuple(r, std::move(b));
         });
         auto future = promise.get_future();
@@ -367,14 +367,14 @@ namespace vshalygin::rpc::internal {
         return m_multiple_timer.get_active_timers_count();
     }
 
-    connection::connection(std::shared_ptr<cl::thread_pool> thread_pool,
+    connection::connection(cl::thread_pool *thread_pool,
                            std::shared_ptr<ipipe_endpoint> pipe_endpoint,
                            std::shared_ptr<iservice> service,
                            std::chrono::milliseconds send_timeout,
                            std::chrono::milliseconds recv_timeout,
                            std::chrono::milliseconds check_period,
                            std::chrono::milliseconds ping_timeout)
-        : m_impl(std::make_shared<impl>(std::move(thread_pool),
+        : m_impl(std::make_shared<impl>(thread_pool,
                                         std::move(pipe_endpoint),
                                         std::move(service),
                                         send_timeout,

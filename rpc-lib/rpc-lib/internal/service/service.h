@@ -20,7 +20,7 @@ namespace vshalygin::rpc::internal {
 
     public:
         explicit service(std::shared_ptr<Service> gservice,
-                         std::shared_ptr<cl::thread_pool> thread_pool,
+                         cl::thread_pool *thread_pool,
                          uint64_t connection_id);
 
         service(service &) = delete;
@@ -41,24 +41,24 @@ namespace vshalygin::rpc::internal {
 
     private:
         std::shared_ptr<Service> m_gservice;
-        std::shared_ptr<cl::thread_pool> m_thread_pool;
+        cl::thread_pool *m_thread_pool;
 
         const uint64_t m_connection_id;
     };
 
     template<typename Service>
     service<Service>::service(std::shared_ptr<Service> gservice,
-                              std::shared_ptr<cl::thread_pool> thread_pool,
+                              cl::thread_pool *thread_pool,
                               uint64_t connection_id)
         : m_gservice(std::move(gservice))
-        , m_thread_pool(std::move(thread_pool))
+        , m_thread_pool(thread_pool)
         , m_connection_id(connection_id)
     {}
 
     template<typename Service>
     future<cl::buffer> service<Service>::process_request_async(cl::buffer &&request_message)
     {
-        auto promise = make_promise(m_thread_pool.get(), [](cl::buffer &&b) {
+        auto promise = make_promise(m_thread_pool, [](cl::buffer &&b) {
             return std::move(b);
         });
         auto future = promise.get_future();
