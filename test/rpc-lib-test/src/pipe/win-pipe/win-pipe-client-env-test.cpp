@@ -42,7 +42,7 @@ class WinPipeClientEnv
     : public Test
 {
 protected:
-    using client_env = win_pipe_client_pipe_env;
+    using client_env = win_pipe_client_env;
     using endpoint_future = iclient_pipe_env::pipe_endpoint_future;
     using read_future = ipipe_endpoint::read_future;
     using write_future = ipipe_endpoint::write_future;

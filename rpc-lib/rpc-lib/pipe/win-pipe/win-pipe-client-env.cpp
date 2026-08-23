@@ -15,10 +15,10 @@
 
 
 namespace vshalygin::rpc {
-    using pipe_endpoint_future = win_pipe_client_pipe_env::pipe_endpoint_future;
+    using pipe_endpoint_future = win_pipe_client_env::pipe_endpoint_future;
     using op_res = internal::win_pipe_operation_res;
 
-    class win_pipe_client_pipe_env::impl
+    class win_pipe_client_env::impl
         : public std::enable_shared_from_this<impl>
     {
     public:
@@ -53,8 +53,8 @@ namespace vshalygin::rpc {
         cl::multiple_timer m_timer;
     };
 
-    win_pipe_client_pipe_env::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
-                                         const std::wstring &pipe_name)
+    win_pipe_client_env::impl::impl(std::shared_ptr<cl::thread_pool> thread_pool,
+                                    const std::wstring &pipe_name)
         : m_thread_pool(std::move(thread_pool))
         , m_pipe_name(pipe_name)
         , m_iocp_owner(internal::win_pipe_iocp_owner::create())
@@ -62,7 +62,7 @@ namespace vshalygin::rpc {
         , m_timer(m_thread_pool->get_io_context())
     {}
 
-    pipe_endpoint_future win_pipe_client_pipe_env::impl::open_pipe(uint64_t client_id)
+    pipe_endpoint_future win_pipe_client_env::impl::open_pipe(uint64_t client_id)
     {
         auto id = m_next_id.fetch_add(1, std::memory_order_relaxed);
 
@@ -84,8 +84,8 @@ namespace vshalygin::rpc {
                       });
     }
 
-    pipe_endpoint_future win_pipe_client_pipe_env::impl::open_pipe(uint64_t client_id,
-                                                                   std::chrono::milliseconds timeout)
+    pipe_endpoint_future win_pipe_client_env::impl::open_pipe(uint64_t client_id,
+                                                              std::chrono::milliseconds timeout)
     {
         auto op = std::make_unique<open_operation>(m_pipe_name, m_thread_pool.get());
         auto f = m_iocp_owner->open_pipe_async(op.get());
@@ -122,7 +122,7 @@ namespace vshalygin::rpc {
                       });
     }
 
-    void win_pipe_client_pipe_env::impl::cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id)
+    void win_pipe_client_env::impl::cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id)
     {
         auto pending_ops = m_pending_open_operations->lock();
 
@@ -133,33 +133,33 @@ namespace vshalygin::rpc {
         }
     }
 
-    win_pipe_client_pipe_env::win_pipe_client_pipe_env(std::shared_ptr<cl::thread_pool> thread_pool,
-                                                       const std::wstring &pipe_name)
+    win_pipe_client_env::win_pipe_client_env(std::shared_ptr<cl::thread_pool> thread_pool,
+                                             const std::wstring &pipe_name)
         : m_impl(std::make_shared<impl>(std::move(thread_pool), pipe_name))
     {}
 
-    win_pipe_client_pipe_env::~win_pipe_client_pipe_env()
+    win_pipe_client_env::~win_pipe_client_env()
     {
         cancel_all_pending_client_endpoints();
     }
 
-    pipe_endpoint_future win_pipe_client_pipe_env::open_pipe(uint64_t client_id)
+    pipe_endpoint_future win_pipe_client_env::open_pipe(uint64_t client_id)
     {
         return m_impl->open_pipe(client_id);
     }
 
-    pipe_endpoint_future win_pipe_client_pipe_env::open_pipe(uint64_t client_id,
-                                                             std::chrono::milliseconds timeout)
+    pipe_endpoint_future win_pipe_client_env::open_pipe(uint64_t client_id,
+                                                        std::chrono::milliseconds timeout)
     {
         return m_impl->open_pipe(client_id, timeout);
     }
 
-    void win_pipe_client_pipe_env::cancel_pending_client_endpoints(uint64_t client_id)
+    void win_pipe_client_env::cancel_pending_client_endpoints(uint64_t client_id)
     {
         m_impl->cancel_pending_client_endpoints(client_id);
     }
 
-    void win_pipe_client_pipe_env::cancel_all_pending_client_endpoints()
+    void win_pipe_client_env::cancel_all_pending_client_endpoints()
     {
         m_impl->cancel_pending_client_endpoints(std::nullopt);
     }
