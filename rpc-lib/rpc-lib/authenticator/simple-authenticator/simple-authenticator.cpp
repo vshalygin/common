@@ -3,12 +3,12 @@
 namespace vshalygin::rpc {
     cl::buffer simple_authenticator::create_request() const
     {
-        return {};
+        return cl::buffer{1};
     }
 
     cl::buffer simple_authenticator::create_response(cl::cbuffer_view) const
     {
-        return {};
+        return cl::buffer{1};
     }
 
     bool simple_authenticator::check_request(cl::cbuffer_view) const

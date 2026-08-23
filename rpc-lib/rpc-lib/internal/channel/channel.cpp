@@ -17,6 +17,8 @@ namespace vshalygin::rpc::internal {
         assert(m_connection);
     }
 
+    channel::~channel() = default;
+
     void channel::CallMethod(const MethodDescriptor *method,
                              RpcController *controller,
                              const Message *request,

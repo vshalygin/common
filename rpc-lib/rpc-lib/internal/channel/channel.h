@@ -25,6 +25,8 @@ namespace vshalygin::rpc::internal {
         channel(channel &) = delete;
         channel &operator=(channel &) = delete;
 
+        ~channel();
+
         void CallMethod(const MethodDescriptor *method,
                         RpcController *controller,
                         const Message *request,
