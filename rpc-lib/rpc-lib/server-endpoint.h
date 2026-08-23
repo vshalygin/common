@@ -34,9 +34,10 @@ namespace vshalygin::rpc {
         using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
 
         using on_connection_change_t = std::function<void(uint64_t, connection_state)>;
+        using on_change_state_t = std::function<void(server_endpoint_state)>;
 
         explicit server_endpoint(on_connection_change_t  &&on_connection_change,
-                                 std::function<void(server_endpoint_state)> &&on_change_state,
+                                 on_change_state_t &&on_change_state,
                                  std::shared_ptr<cl::thread_pool> thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iserver_pipe_env> pipe_env,
@@ -249,7 +250,7 @@ namespace vshalygin::rpc {
     template<typename GClientServiceStub, typename GServerService>
     server_endpoint<GClientServiceStub, GServerService>::server_endpoint(
         on_connection_change_t &&on_connection_change,
-        std::function<void(server_endpoint_state)> &&on_change_state,
+        on_change_state_t &&on_change_state,
         std::shared_ptr<cl::thread_pool> thread_pool,
         std::shared_ptr<iauthenticator> authenticator,
         std::shared_ptr<iserver_pipe_env> pipe_env,
@@ -271,9 +272,9 @@ namespace vshalygin::rpc {
             },
             [on_change_state = std::move(on_change_state)](internal::server_connector_state s) {
                 if(s == internal::server_connector_state::started){
-                    on_change_state(server_endpoint_state::start_listening);
+                    if(on_change_state) on_change_state(server_endpoint_state::start_listening);
                 } else if (s == internal::server_connector_state::stopped) {
-                    on_change_state(server_endpoint_state::stop_listening);
+                    if(on_change_state) on_change_state(server_endpoint_state::stop_listening);
                 } else {
                     assert(!"unknown server_connector_state");
                 }
