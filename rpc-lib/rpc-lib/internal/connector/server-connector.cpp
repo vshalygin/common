@@ -267,6 +267,7 @@ namespace vshalygin::rpc::internal {
         for(auto &el : *map) {
             to_delete.push_back(std::move(el.second));
         }
+        map->clear();
     }
 
     server_connector::server_connector(std::shared_ptr<cl::thread_pool> thread_pool,
