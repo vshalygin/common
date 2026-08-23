@@ -32,7 +32,7 @@ namespace vshalygin::rpc {
         client_endpoint(const client_endpoint &) = delete;
         client_endpoint &operator=(const client_endpoint &) = delete;
 
-        auto connect(std::chrono::milliseconds timeout);
+        auto connect_async(std::chrono::milliseconds timeout);
         bool is_connected() const;
         void disconnect();
 
@@ -59,7 +59,7 @@ namespace vshalygin::rpc {
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
 
-        auto connect(std::chrono::milliseconds timeout);
+        auto connect_async(std::chrono::milliseconds timeout);
         bool is_connected() const;
         void disconnect();
 
@@ -110,7 +110,7 @@ namespace vshalygin::rpc {
     }
 
     template<typename GServerServiceStub, typename GClientService>
-    auto client_endpoint<GServerServiceStub, GClientService>::impl::connect(std::chrono::milliseconds timeout)
+    auto client_endpoint<GServerServiceStub, GClientService>::impl::connect_async(std::chrono::milliseconds timeout)
     {
         auto f = m_client_connector.create_connection_async(
                                  std::make_shared<internal::service<GClientService>>(m_gservice, m_thread_pool, 0),
@@ -170,9 +170,9 @@ namespace vshalygin::rpc {
     {}
 
     template<typename GServerServiceStub, typename GClientService>
-    auto client_endpoint<GServerServiceStub, GClientService>::connect(std::chrono::milliseconds timeout)
+    auto client_endpoint<GServerServiceStub, GClientService>::connect_async(std::chrono::milliseconds timeout)
     {
-        return m_impl->connect(timeout);
+        return m_impl->connect_async(timeout);
     }
 
     template<typename GServerServiceStub, typename GClientService>

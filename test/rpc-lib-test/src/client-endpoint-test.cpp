@@ -124,7 +124,7 @@ TEST_F(ClientEndpoint, InitiallyIsNotConnected)
 
 TEST_F(ClientEndpoint, Connect)
 {
-    auto f = m_sut->connect(std::chrono::seconds(10));
+    auto f = m_sut->connect_async(std::chrono::seconds(10));
     create_and_init_other_pipe_endpoint();
 
     f.get();
@@ -133,7 +133,7 @@ TEST_F(ClientEndpoint, Connect)
 
 TEST_F(ClientEndpoint, ConnectTimeout)
 {
-    auto f = m_sut->connect(std::chrono::milliseconds(1));
+    auto f = m_sut->connect_async(std::chrono::milliseconds(1));
 
     ASSERT_ANY_THROW(f.get());
     ASSERT_FALSE(m_sut->is_connected());
@@ -162,7 +162,7 @@ TEST_F(ClientEndpoint, MakeRequest)
     auto req_message = create_transfer_msg_req(0, 0, &request);
     auto res_message = create_transfer_msg_res(0, response_result::ok, &response);
 
-    auto f = m_sut->connect(std::chrono::seconds(10));
+    auto f = m_sut->connect_async(std::chrono::seconds(10));
     create_and_init_other_pipe_endpoint();
     f.get();
 
@@ -189,7 +189,7 @@ TEST_F(ClientEndpoint, SetsDisconnectCallback)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto f = m_sut->connect(std::chrono::seconds(10));
+    auto f = m_sut->connect_async(std::chrono::seconds(10));
     create_and_init_other_pipe_endpoint();
 
     f.then([&](rpc::future<void> &f) { f.then(disconnect_callback.AsStdFunction()); }).get();
@@ -209,7 +209,7 @@ TEST_F(ClientEndpoint, ServiceProcessesReqeust)
     m_client_service->set_expected_request_message(request);
     m_client_service->set_response_message(response);
 
-    auto f = m_sut->connect(std::chrono::seconds(10));
+    auto f = m_sut->connect_async(std::chrono::seconds(10));
     create_and_init_other_pipe_endpoint();
     f.get();
 
