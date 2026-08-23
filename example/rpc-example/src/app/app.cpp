@@ -13,17 +13,19 @@
 #include <charconv>
 #include <sstream>
 #include <optional>
+#include <utility>
+#include <tuple>
 
 namespace vshalygin::example {
     namespace {
         const std::string s_help_command = "help";
         const std::string s_exit_command = "exit";
         const std::string s_info_command = "info";
-        const std::string s_add_client_command_begin = "add client";
+        const std::string s_add_client_command = "add client";
         const std::string s_remove_client_command_begin = "remove client";
         const std::string s_send_to_server_command_begin = "send to server";
         const std::string s_send_to_client_command_begin = "send to client";
-        const std::string s_send_to_all_clients_command_begin = "send to client";
+        const std::string s_send_to_all_clients_command_begin = "send to all clients";
 
         enum class command_type
         {
@@ -79,7 +81,7 @@ namespace vshalygin::example {
                 ans = command_type::exit;
             } else if (line == s_info_command) {
                 ans = command_type::info;
-            } else if (boost::algorithm::starts_with(line, s_add_client_command_begin)) {
+            } else if (line == s_add_client_command) {
                 ans = command_type::add_client;
             } else if (boost::algorithm::starts_with(line, s_remove_client_command_begin)) {
                 ans = command_type::remove_client;
@@ -216,7 +218,7 @@ namespace vshalygin::example {
             ss << "Available commands:\n"
                << "  " << s_help_command << " - show this help\n"
                << "  " << s_info_command << " - show clients and server connections\n"
-               << "  " << s_add_client_command_begin << " - create and connect a new client\n"
+               << "  " << s_add_client_command << " - create and connect a new client\n"
                << "  " << s_remove_client_command_begin << " <client-id> - remove a client\n"
                << "  " << s_send_to_server_command_begin
                << " <client-id> <message> - send a message from a client to the server\n"
@@ -226,7 +228,7 @@ namespace vshalygin::example {
                << " <message> - send a message from the server to all clients\n"
                << "  " << s_exit_command << " - finish the application";
 
-            write_to_console(ss.str());
+            write_to_console(ss.str() + "\n");
         }
     }
 
@@ -235,16 +237,31 @@ namespace vshalygin::example {
         , m_authenticator(std::make_shared<rpc::simple_authenticator>())
     {}
 
+    app::~app()
+    {
+        m_clients.clear();
+        m_server.reset();
+        m_server_pipe_env.reset();
+        m_client_pipe_env.reset();
+        m_authenticator.reset();
+
+        m_thread_pool->stop();
+    }
+
     int app::run() noexcept
     {
         try {
             transport_type transport = transport_type::unknown;
             while(transport == transport_type::unknown) {
-                write_to_console(create_choose_transport_prompt());
+                write_to_console(create_choose_transport_prompt() + "\n");
 
+                write_to_console(">");
                 auto line = read_line_from_console();
-                boost::algorithm::trim(line);
-                transport = parse_chosen_transport(line);
+                if(!line) {
+                    throw std::runtime_error("cannot read from console");
+                }
+                boost::algorithm::trim(*line);
+                transport = parse_chosen_transport(*line);
             }
 
             if(transport == transport_type::memory_pipe) {
@@ -252,11 +269,11 @@ namespace vshalygin::example {
                 m_client_pipe_env = env;
                 m_server_pipe_env = env;
             } else if (transport == transport_type::win_pipe) {
-                m_client_pipe_env = std::make_shared<rpc::win_pipe_client_env>(m_thread_pool);
-                m_server_pipe_env = std::make_shared<rpc::win_pipe_server_env>(m_thread_pool);
+                m_client_pipe_env = std::make_shared<rpc::win_pipe_client_env>(m_thread_pool, L"47sdfrtgvczc849dsbdevdedb");
+                m_server_pipe_env = std::make_shared<rpc::win_pipe_server_env>(m_thread_pool, L"47sdfrtgvczc849dsbdevdedb");
             } else if (transport == transport_type::tcp) {
-                m_client_pipe_env = std::make_shared<rpc::tcp_pipe_client_env>(m_thread_pool);
-                m_server_pipe_env = std::make_shared<rpc::tcp_pipe_server_env>(m_thread_pool);
+                m_client_pipe_env = std::make_shared<rpc::tcp_pipe_client_env>(m_thread_pool, "127.0.0.1", 31078);
+                m_server_pipe_env = std::make_shared<rpc::tcp_pipe_server_env>(m_thread_pool, "127.0.0.1", 31078);
             } else {
                 throw std::runtime_error("unknown transport type");
             }
@@ -265,13 +282,17 @@ namespace vshalygin::example {
 
             command_type command = command_type::unknown;
             do {
+                write_to_console(">");
                 auto line = read_line_from_console();
-                boost::algorithm::trim(line);
+                if(!line) {
+                    throw std::runtime_error("cannot read from console");
+                }
+                boost::algorithm::trim(*line);
 
-                command = parse_command(line);
+                command = parse_command(*line);
                 switch(command) {
                     case command_type::unknown:
-                        write_to_console("Unknown command. Print 'help' for information");
+                        write_to_console("Unknown command. Print 'help' for information\n");
                         break;
                     case command_type::help:
                         print_help();
@@ -280,74 +301,76 @@ namespace vshalygin::example {
                         print_info();
                         break;
                     case command_type::exit:
-                        write_to_console("Exit command entered. Finish application...");
+                        write_to_console("Exit command entered. Finish application...\n");
                         break;
                     case command_type::add_client:
                     {
                         auto id = m_next_client_id++;
-                        m_clients.emplace(id, m_thread_pool, m_authenticator, m_client_pipe_env, id);
-                        write_to_console("Client with id " + std::to_string(id) + " created");
+                        try {
+                            m_clients.emplace(std::piecewise_construct,
+                                              std::forward_as_tuple(id),
+                                              std::forward_as_tuple(m_thread_pool, m_authenticator, m_client_pipe_env, id));
+                            write_to_console("Client with id " + std::to_string(id) + " created\n");
+                        } catch (const std::exception &e) {
+                            write_to_console("Failed to create client: " + std::string(e.what()) + "\n");
+                        }
                         break;
                     }
                     case command_type::remove_client:
                     {
-                        auto id = extract_client_id_to_remove(line);
+                        auto id = extract_client_id_to_remove(*line);
                         if(!id) {
-                            write_to_console("Unable to extract client id to remove. Print 'help' for information");
+                            write_to_console("Unable to extract client id to remove. Print 'help' for information\n");
                         } else if (!m_clients.count(*id)) {
-                            write_to_console("No client with specified id");
+                            write_to_console("No client with specified id\n");
                         } else {
                             m_clients.erase(*id);
-                            write_to_console("Client with id " + std::to_string(*id) + " removed");
+                            write_to_console("Client with id " + std::to_string(*id) + " removed\n");
                         }
                         break;
                     }
                     case command_type::send_to_server:
                     {
-                        auto id = extract_client_id_to_send_from(line);
+                        auto id = extract_client_id_to_send_from(*line);
                         if(!id) {
-                            write_to_console("Unable to extract client id to send from. Print 'help' for information");
+                            write_to_console("Unable to extract client id to send from. Print 'help' for information\n");
                         } else if (!m_clients.count(*id)) {
-                            write_to_console("No client with specified id");
+                            write_to_console("No client with specified id\n");
                         } else {
-                            auto message = extract_message_to_send_from_client(line);
+                            auto message = extract_message_to_send_from_client(*line);
                             if(!message) {
-                                write_to_console("Unable to extract message to send from client. Print 'help' for information");
+                                write_to_console("Unable to extract message to send from client. Print 'help' for information\n");
                             } else {
-                                m_clients[*id].send(*message);
-                                write_to_console("Message from client with id " + std::to_string(*id) + " sent to server");
+                                m_clients.at(*id).send(*message);
                             }
                         }
                         break;
                     }
                     case command_type::send_to_client:
                     {
-                        auto connection_id = extract_number_after_command(line,
+                        auto connection_id = extract_number_after_command(*line,
                                                                           s_send_to_client_command_begin,
                                                                           false);
                         if(!connection_id) {
-                            write_to_console("Unable to extract connection id to send to. Print 'help' for information");
+                            write_to_console("Unable to extract connection id to send to. Print 'help' for information\n");
                         } else {
-                            auto message = extract_message_after_number(line, s_send_to_client_command_begin);
+                            auto message = extract_message_after_number(*line, s_send_to_client_command_begin);
                             if(!message) {
-                                write_to_console("Unable to extract message to send to client. Print 'help' for information");
+                                write_to_console("Unable to extract message to send to client. Print 'help' for information\n");
                             } else {
                                 m_server->send(*connection_id, *message);
-                                write_to_console("Message from server sent to client with connection id " +
-                                                 std::to_string(*connection_id));
                             }
                         }
                         break;
                     }
                     case command_type::send_to_all_clients:
                     {
-                        auto message = extract_message_after_command(line,
+                        auto message = extract_message_after_command(*line,
                                                                      s_send_to_all_clients_command_begin);
                         if(!message) {
-                            write_to_console("Unable to extract message to send to all clients. Print 'help' for information");
+                            write_to_console("Unable to extract message to send to all clients. Print 'help' for information\n");
                         } else {
                             m_server->send_all(*message);
-                            write_to_console("Message from server sent to all clients");
                         }
                         break;
                     }
@@ -358,7 +381,7 @@ namespace vshalygin::example {
 
             return 0;
         } catch (const std::exception &e) {
-            write_to_console(std::string("ERROR: ") + e.what());
+            write_to_console(std::string("ERROR: ") + e.what() + "\n");
         }
 
         return 1;
@@ -384,6 +407,6 @@ namespace vshalygin::example {
         }
 
         ss << '\n' << "Server connections count: " << m_server->get_connections_count();
-        write_to_console(ss.str());
+        write_to_console(ss.str() + "\n");
     }
 }

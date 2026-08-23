@@ -11,13 +11,15 @@ namespace vshalygin::example {
     void write_to_console(const std::string &msg)
     {
         std::lock_guard g(s_console_mtx);
-        std::cout << msg << std::endl;
+        std::cout << msg;
     }
 
-    std::string read_line_from_console()
+    std::optional<std::string> read_line_from_console()
     {
         std::string line;
-        std::getline(std::cin, line);
+        if(!std::getline(std::cin, line)) {
+            return std::nullopt;
+        }
 
         return line;
     }

@@ -28,7 +28,7 @@ namespace vshalygin::example {
             auto connection_id = rpc::to_response_controller(controller)->get_connection_id();
 
             write_to_console("server received: '" + request->data() + "' from connection " +
-                             std::to_string(connection_id));
+                             std::to_string(connection_id) + "\n");
         }
     };
 }

@@ -35,12 +35,12 @@ namespace vshalygin::example {
             m_endpoint.make_request<proto::message, proto::null_message, stub_method>(
                 &proto::server_service_Stub::accept_message, message)
                 .get()
-                .apply([this](rpc::request_result r, std::unique_ptr<proto::null_message>) {
+                .apply([this](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
                           if(is_success(r)) {
-                              write_to_console("client " + std::to_string(m_id) + " successfully sent a message");
+                              write_to_console("client " + std::to_string(m_id) + " successfully sent a message\n");
                           } else {
                               write_to_console("client " + std::to_string(m_id) + " failed to send a message: " +
-                                               to_string(r));
+                                               to_string(r) + "\n");
                           }
                        });
         }

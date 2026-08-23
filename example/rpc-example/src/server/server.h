@@ -18,7 +18,9 @@ namespace vshalygin::example {
                          std::move(authenticator),
                          pipe_env,
                          std::make_shared<server_service>())
-        {}
+        {
+            m_endpoint.start_listening();
+        }
 
         server(const server &) = delete;
         server &operator=(const server &) = delete;
@@ -33,13 +35,13 @@ namespace vshalygin::example {
             m_endpoint.make_request<proto::message, proto::null_message, stub_method>(
                 connection_id , &proto::client_service_Stub::accept_message, message)
                 .get()
-                .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::null_message>) {
+                .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
-                                                std::to_string(connection_id));
+                                                std::to_string(connection_id) + "\n");
                            } else {
                                write_to_console("server failed to send a message to client with connection id " +
-                                                std::to_string(connection_id) + ": " + to_string(r));
+                                                std::to_string(connection_id) + ": " + to_string(r) + "\n");
                            }
                        });
         }
@@ -58,13 +60,13 @@ namespace vshalygin::example {
                 auto connection_id = f.first;
                 f.second
                     .get()
-                    .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::null_message>) {
+                    .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
-                                                std::to_string(connection_id));
+                                                std::to_string(connection_id) + "\n");
                            } else {
                                write_to_console("server failed to send a message to client with connection id " +
-                                                std::to_string(connection_id) + ": " + to_string(r));
+                                                std::to_string(connection_id) + ": " + to_string(r) + "\n");
                            }
                        });
             }
@@ -79,9 +81,9 @@ namespace vshalygin::example {
         static void on_connection_change(uint64_t id, rpc::connection_state s)
         {
             if(s == rpc::connection_state::connected) {
-                write_to_console("new client connected to server with connection id: " + std::to_string(id));
+                write_to_console("new client connected to server with connection id: " + std::to_string(id) + "\n");
             } else if (s == rpc::connection_state::disconnected) {
-                write_to_console("client with connection id: " + std::to_string(id) + " disconnected from server");
+                write_to_console("client with connection id: " + std::to_string(id) + " disconnected from server\n");
             }
         }
 

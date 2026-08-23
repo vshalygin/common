@@ -26,7 +26,7 @@ namespace vshalygin::example {
         {
             rpc::closure_guard closure_guard(done);
 
-            write_to_console("client " + std::to_string(m_client_id) + " received: '" + request->data() + "'");
+            write_to_console("client " + std::to_string(m_client_id) + " received: '" + request->data() + "'\n");
         }
 
     private:
