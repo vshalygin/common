@@ -70,6 +70,11 @@ namespace vshalygin::example {
             }
         }
 
+        size_t get_connections_count() const
+        {
+            return m_endpoint.get_active_connections_count();
+        }
+
     private:
         static void on_connection_change(uint64_t id, rpc::connection_state s)
         {
