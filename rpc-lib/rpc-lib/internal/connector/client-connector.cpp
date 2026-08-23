@@ -5,8 +5,17 @@
 #include "rpc-lib/internal/connection/connection.h"
 
 #include <stdexcept>
+#include <atomic>
 
 namespace vshalygin::rpc::internal {
+    namespace {
+        uint64_t generate_id() noexcept
+        {
+            static std::atomic_uint64_t next_id{ 0 };
+            return next_id.fetch_add(1, std::memory_order_relaxed);
+        }
+    }
+
     class client_connector::impl
         : public std::enable_shared_from_this<impl>
     {
@@ -25,6 +34,8 @@ namespace vshalygin::rpc::internal {
         void cancel_connect_waiting();
 
     private:
+        const uint64_t m_id;
+
         std::shared_ptr<cl::thread_pool> m_thread_pool;
         std::shared_ptr<iauthenticator> m_authenticator;
         std::shared_ptr<iclient_pipe_env> m_pipe_env;
@@ -39,7 +50,8 @@ namespace vshalygin::rpc::internal {
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iclient_pipe_env> pipe_env,
                                  const config &config)
-        : m_thread_pool(std::move(thread_pool))
+        : m_id(generate_id())
+        , m_thread_pool(std::move(thread_pool))
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
         , m_handshake_timeout(config.handshake_timeout)
@@ -53,7 +65,7 @@ namespace vshalygin::rpc::internal {
         client_connector::impl::create_connection_async(std::shared_ptr<iservice> service,
                                                         std::chrono::milliseconds pipe_waiting_timeout)
     {
-        auto f = m_pipe_env->open_pipe(pipe_waiting_timeout)
+        auto f = m_pipe_env->open_pipe(m_id, pipe_waiting_timeout)
             .then([self = weak_from_this(), service]
                   (pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
                       if(is_fail(r)) {
@@ -96,7 +108,7 @@ namespace vshalygin::rpc::internal {
 
     void client_connector::impl::cancel_connect_waiting()
     {
-        m_pipe_env->cancel_pending_client_endpoints();
+        m_pipe_env->cancel_pending_client_endpoints(m_id);
     }
 
 

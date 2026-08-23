@@ -14,6 +14,14 @@
 #include <unordered_map>
 
 namespace vshalygin::rpc::internal {
+    namespace {
+        uint64_t generate_id() noexcept
+        {
+            static std::atomic_uint64_t next_id{ 0 };
+            return next_id.fetch_add(1, std::memory_order_relaxed);
+        }
+    }
+
     class server_connector::impl
         : public std::enable_shared_from_this<impl>
     {
@@ -54,6 +62,8 @@ namespace vshalygin::rpc::internal {
         void clear_connection_future_map();
 
     private:
+        const uint64_t m_id;
+
         uint64_t m_next_connection_id = 0;
 
         mutable std::mutex m_mtx;
@@ -83,7 +93,8 @@ namespace vshalygin::rpc::internal {
                                  on_new_connection_t &&on_new_connection,
                                  on_change_state_t &&on_change_state,
                                  const config &config)
-        : m_thread_pool(std::move(thread_pool))
+        : m_id(generate_id())
+        , m_thread_pool(std::move(thread_pool))
         , m_notify_strand(m_thread_pool->get_io_context())
         , m_authenticator(std::move(authenticator))
         , m_pipe_env(std::move(pipe_env))
@@ -159,7 +170,7 @@ namespace vshalygin::rpc::internal {
             return;
         }
 
-        m_connect_pipe_future = m_pipe_env->create_pipe()
+        m_connect_pipe_future = m_pipe_env->create_pipe(m_id)
                                     .then([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> ep) {
                                               if(is_fail(r)) {
                                                   throw std::runtime_error("pipe is not connected");
@@ -229,7 +240,7 @@ namespace vshalygin::rpc::internal {
         *is_running_sp = false;
         m_is_running_sp.reset();
 
-        m_pipe_env->cancel_pending_server_endpoints();
+        m_pipe_env->cancel_pending_server_endpoints(m_id);
         clear_connection_future_map();
         m_connect_pipe_future = {};
 

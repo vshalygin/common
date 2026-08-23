@@ -30,15 +30,17 @@ namespace vshalygin::rpc {
         class open_operation
             : public std::enable_shared_from_this<open_operation>
         {
-            open_operation(std::shared_ptr<cl::thread_pool> thread_pool)
-                : m_thread_pool(std::move(thread_pool))
+            open_operation(uint64_t client_id, std::shared_ptr<cl::thread_pool> thread_pool)
+                : m_client_id(client_id)
+                , m_thread_pool(std::move(thread_pool))
                 , m_socket(m_thread_pool->get_io_context())
             {}
 
         public:
-            inline static std::shared_ptr<open_operation> create(std::shared_ptr<cl::thread_pool> thread_pool)
+            inline static std::shared_ptr<open_operation> create(uint64_t client_id,
+                                                                 std::shared_ptr<cl::thread_pool> thread_pool)
             {
-                return std::shared_ptr<open_operation>(new open_operation(std::move(thread_pool)));
+                return std::shared_ptr<open_operation>(new open_operation(client_id, std::move(thread_pool)));
             }
 
             open_operation(const open_operation &) = delete;
@@ -113,7 +115,13 @@ namespace vshalygin::rpc {
                 }
             }
 
+            uint64_t get_client_id() const noexcept
+            {
+                return m_client_id;
+            }
+
         private:
+            const uint64_t m_client_id;
             std::shared_ptr<cl::thread_pool> m_thread_pool;
 
             std::mutex m_socket_mtx;
@@ -135,13 +143,13 @@ namespace vshalygin::rpc {
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
 
-        pipe_endpoint_future open_pipe();
-        pipe_endpoint_future open_pipe(std::chrono::milliseconds timeout);
+        pipe_endpoint_future open_pipe(uint64_t client_id);
+        pipe_endpoint_future open_pipe(uint64_t client_id, std::chrono::milliseconds timeout);
 
-        void cancel_pending_client_endpoints();
+        void cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id);
 
     private:
-        pipe_endpoint_future open_pipe(const std::optional<std::chrono::milliseconds> &timeout);
+        pipe_endpoint_future open_pipe(uint64_t client_id, const std::optional<std::chrono::milliseconds> &timeout);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
@@ -171,7 +179,8 @@ namespace vshalygin::rpc {
         }
     }
 
-    pipe_endpoint_future tcp_pipe_client_env::impl::open_pipe(const std::optional<std::chrono::milliseconds> &timeout)
+    pipe_endpoint_future tcp_pipe_client_env::impl::open_pipe(uint64_t client_id,
+                                                              const std::optional<std::chrono::milliseconds> &timeout)
     {
         std::lock_guard guard(m_mtx);
         auto id = m_next_id++;
@@ -187,7 +196,7 @@ namespace vshalygin::rpc {
                 }
             }, *timeout);
         }
-        auto &op = m_open_operations.emplace(id, open_operation::create(m_thread_pool)).first->second;
+        auto &op = m_open_operations.emplace(id, open_operation::create(client_id, m_thread_pool)).first->second;
 
         return op->start(m_ip4_address, m_port)
                    .finally([self = shared_from_this(), id, timer_id]() {
@@ -198,21 +207,23 @@ namespace vshalygin::rpc {
                             });
     }
 
-    pipe_endpoint_future tcp_pipe_client_env::impl::open_pipe()
+    pipe_endpoint_future tcp_pipe_client_env::impl::open_pipe(uint64_t client_id)
     {
-        return open_pipe(std::nullopt);
+        return open_pipe(client_id, std::nullopt);
     }
 
-    pipe_endpoint_future tcp_pipe_client_env::impl::open_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future tcp_pipe_client_env::impl::open_pipe(uint64_t client_id, std::chrono::milliseconds timeout)
     {
-        return open_pipe(std::optional(timeout));
+        return open_pipe(client_id, std::optional(timeout));
     }
 
-    void tcp_pipe_client_env::impl::cancel_pending_client_endpoints()
+    void tcp_pipe_client_env::impl::cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id)
     {
         std::lock_guard guard(m_mtx);
         for(auto &op : m_open_operations) {
-            op.second->cancel(false);
+            if(!client_id || op.second->get_client_id() == client_id) {
+                op.second->cancel(false);
+            }
         }
     }
 
@@ -224,21 +235,26 @@ namespace vshalygin::rpc {
 
     tcp_pipe_client_env::~tcp_pipe_client_env()
     {
-        cancel_pending_client_endpoints();
+        cancel_all_pending_client_endpoints();
     }
 
-    pipe_endpoint_future tcp_pipe_client_env::open_pipe()
+    pipe_endpoint_future tcp_pipe_client_env::open_pipe(uint64_t client_id)
     {
-        return m_impl->open_pipe();
+        return m_impl->open_pipe(client_id);
     }
 
-    pipe_endpoint_future tcp_pipe_client_env::open_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future tcp_pipe_client_env::open_pipe(uint64_t client_id, std::chrono::milliseconds timeout)
     {
-        return m_impl->open_pipe(timeout);
+        return m_impl->open_pipe(client_id, timeout);
     }
 
-    void tcp_pipe_client_env::cancel_pending_client_endpoints()
+    void tcp_pipe_client_env::cancel_pending_client_endpoints(uint64_t client_id)
     {
-        m_impl->cancel_pending_client_endpoints();
+        m_impl->cancel_pending_client_endpoints(client_id);
+    }
+
+    void tcp_pipe_client_env::cancel_all_pending_client_endpoints()
+    {
+        m_impl->cancel_pending_client_endpoints(std::nullopt);
     }
 }

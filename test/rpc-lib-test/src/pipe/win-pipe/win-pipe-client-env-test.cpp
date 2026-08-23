@@ -169,9 +169,9 @@ TEST_F(WinPipeClientEnv, OpensConnectedEndpointWhenServerExists)
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
     client_env env(m_thread_pool, pipe_name);
 
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     wait_for_result(future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The client endpoint open operation");
 
     auto result = get_endpoint_result(future);
@@ -186,9 +186,9 @@ TEST_F(WinPipeClientEnv, OpenedEndpointTransfersDataInBothDirections)
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
     client_env env(m_thread_pool, pipe_name);
-    auto open_future = env.open_pipe();
+    auto open_future = env.open_pipe(0);
     wait_for_result(open_future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The client endpoint open operation");
     auto open_result = get_endpoint_result(open_future);
     ASSERT_EQ(open_result.state, pipe_wait_res::success);
@@ -221,14 +221,14 @@ TEST_F(WinPipeClientEnv, RetriesUntilServerAppears)
 {
     auto pipe_name = make_pipe_name();
     client_env env(m_thread_pool, pipe_name);
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
 
     EXPECT_FALSE(future.wait_for(retry_observation_timeout));
 
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
     wait_for_result(future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The retried client endpoint open operation");
 
     auto result = get_endpoint_result(future);
@@ -243,9 +243,9 @@ TEST_F(WinPipeClientEnv, TimedOpenSucceedsWhenServerExists)
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
     client_env env(m_thread_pool, pipe_name);
 
-    auto future = env.open_pipe(operation_timeout);
+    auto future = env.open_pipe(0, operation_timeout);
     wait_for_result(future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The timed client endpoint open operation");
 
     auto result = get_endpoint_result(future);
@@ -257,9 +257,9 @@ TEST_F(WinPipeClientEnv, TimesOutWhenServerDoesNotExist)
 {
     client_env env(m_thread_pool, make_pipe_name());
 
-    auto future = env.open_pipe(immediate_timeout);
+    auto future = env.open_pipe(0, immediate_timeout);
     wait_for_result(future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The timed out client endpoint open operation");
 
     auto result = get_endpoint_result(future);
@@ -270,14 +270,14 @@ TEST_F(WinPipeClientEnv, TimesOutWhenServerDoesNotExist)
 TEST_F(WinPipeClientEnv, CancelsAllPendingOpenOperations)
 {
     client_env env(m_thread_pool, make_pipe_name());
-    auto first = env.open_pipe();
-    auto second = env.open_pipe();
-    auto third = env.open_pipe();
+    auto first = env.open_pipe(0);
+    auto second = env.open_pipe(0);
+    auto third = env.open_pipe(0);
 
-    env.cancel_pending_client_endpoints();
-    wait_for_result(first, [&] { env.cancel_pending_client_endpoints(); }, "The first canceled open");
-    wait_for_result(second, [&] { env.cancel_pending_client_endpoints(); }, "The second canceled open");
-    wait_for_result(third, [&] { env.cancel_pending_client_endpoints(); }, "The third canceled open");
+    env.cancel_all_pending_client_endpoints();
+    wait_for_result(first, [&] { env.cancel_all_pending_client_endpoints(); }, "The first canceled open");
+    wait_for_result(second, [&] { env.cancel_all_pending_client_endpoints(); }, "The second canceled open");
+    wait_for_result(third, [&] { env.cancel_all_pending_client_endpoints(); }, "The third canceled open");
 
     auto first_result = get_endpoint_result(first);
     auto second_result = get_endpoint_result(second);
@@ -296,15 +296,15 @@ TEST_F(WinPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
     client_env env(m_thread_pool, pipe_name);
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     wait_for_result(future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The completed client endpoint open operation");
     auto result = get_endpoint_result(future);
     ASSERT_EQ(result.state, pipe_wait_res::success);
     ASSERT_TRUE(result.endpoint);
 
-    env.cancel_pending_client_endpoints();
+    env.cancel_all_pending_client_endpoints();
 
     EXPECT_TRUE(result.endpoint->is_connected());
     auto message = make_message(127);
@@ -322,7 +322,7 @@ TEST_F(WinPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
 TEST_F(WinPipeClientEnv, DestructorCancelsPendingOpen)
 {
     auto env = std::make_unique<client_env>(m_thread_pool, make_pipe_name());
-    auto future = env->open_pipe();
+    auto future = env->open_pipe(0);
 
     env.reset();
     wait_for_result(future, [] {}, "The open canceled by client env destruction");
@@ -336,11 +336,11 @@ TEST_F(WinPipeClientEnv, TimeoutOfOneOpenDoesNotCancelAnother)
 {
     auto pipe_name = make_pipe_name();
     client_env env(m_thread_pool, pipe_name);
-    auto pending = env.open_pipe();
-    auto timed = env.open_pipe(immediate_timeout);
+    auto pending = env.open_pipe(0);
+    auto timed = env.open_pipe(0, immediate_timeout);
 
     wait_for_result(timed,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The independently timed out open");
     auto timed_result = get_endpoint_result(timed);
     ASSERT_EQ(timed_result.state, pipe_wait_res::timeout);
@@ -349,7 +349,7 @@ TEST_F(WinPipeClientEnv, TimeoutOfOneOpenDoesNotCancelAnother)
     auto server = create_server(pipe_name);
     ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
     wait_for_result(pending,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The open unaffected by another timeout");
     auto pending_result = get_endpoint_result(pending);
     EXPECT_EQ(pending_result.state, pipe_wait_res::success);
@@ -365,10 +365,10 @@ TEST_F(WinPipeClientEnv, SupportsMultipleConcurrentOpenOperations)
     ASSERT_FALSE(second_server.empty()) << "Second CreateNamedPipeW failed, error=" << ::GetLastError();
     client_env env(m_thread_pool, pipe_name);
 
-    auto first = env.open_pipe();
-    auto second = env.open_pipe();
-    wait_for_result(first, [&] { env.cancel_pending_client_endpoints(); }, "The first concurrent open");
-    wait_for_result(second, [&] { env.cancel_pending_client_endpoints(); }, "The second concurrent open");
+    auto first = env.open_pipe(0);
+    auto second = env.open_pipe(0);
+    wait_for_result(first, [&] { env.cancel_all_pending_client_endpoints(); }, "The first concurrent open");
+    wait_for_result(second, [&] { env.cancel_all_pending_client_endpoints(); }, "The second concurrent open");
 
     auto first_result = get_endpoint_result(first);
     auto second_result = get_endpoint_result(second);
@@ -383,13 +383,77 @@ TEST_F(WinPipeClientEnv, InvalidPipeNameFailsOpen)
 {
     client_env env(m_thread_pool, std::wstring(512, L'x'));
 
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     wait_for_result(future,
-                    [&] { env.cancel_pending_client_endpoints(); },
+                    [&] { env.cancel_all_pending_client_endpoints(); },
                     "The invalid-name client endpoint open operation");
 
     auto result = get_endpoint_result(future);
     EXPECT_EQ(result.state, pipe_wait_res::failed);
     EXPECT_FALSE(result.endpoint);
+}
+
+TEST_F(WinPipeClientEnv, CancelsOnlyPendingOpenOperationsWithSpecifiedClientId)
+{
+    constexpr auto canceled_client_id = 101u;
+    constexpr auto remaining_client_id = 202u;
+    auto pipe_name = make_pipe_name();
+    client_env env(m_thread_pool, pipe_name);
+    auto first_canceled = env.open_pipe(canceled_client_id);
+    auto second_canceled = env.open_pipe(canceled_client_id);
+    auto remaining = env.open_pipe(remaining_client_id);
+
+    env.cancel_pending_client_endpoints(canceled_client_id);
+
+    wait_for_result(first_canceled,
+                    [&] { env.cancel_all_pending_client_endpoints(); },
+                    "The first open canceled by client id");
+    wait_for_result(second_canceled,
+                    [&] { env.cancel_all_pending_client_endpoints(); },
+                    "The second open canceled by client id");
+    auto first_result = get_endpoint_result(first_canceled);
+    auto second_result = get_endpoint_result(second_canceled);
+    ASSERT_EQ(first_result.state, pipe_wait_res::canceled);
+    ASSERT_EQ(second_result.state, pipe_wait_res::canceled);
+    ASSERT_FALSE(first_result.endpoint);
+    ASSERT_FALSE(second_result.endpoint);
+
+    auto server = create_server(pipe_name);
+    ASSERT_FALSE(server.empty()) << "CreateNamedPipeW failed, error=" << ::GetLastError();
+    wait_for_result(remaining,
+                    [&] { env.cancel_all_pending_client_endpoints(); },
+                    "The open belonging to another client id");
+    auto remaining_result = get_endpoint_result(remaining);
+    EXPECT_EQ(remaining_result.state, pipe_wait_res::success);
+    EXPECT_TRUE(remaining_result.endpoint);
+}
+
+TEST_F(WinPipeClientEnv, CancelsAllPendingOpenOperationsWithDifferentClientIds)
+{
+    client_env env(m_thread_pool, make_pipe_name());
+    auto first = env.open_pipe(101);
+    auto second = env.open_pipe(202);
+    auto third = env.open_pipe(303);
+
+    env.cancel_all_pending_client_endpoints();
+
+    wait_for_result(first,
+                    [&] { env.cancel_all_pending_client_endpoints(); },
+                    "The first open canceled without filtering");
+    wait_for_result(second,
+                    [&] { env.cancel_all_pending_client_endpoints(); },
+                    "The second open canceled without filtering");
+    wait_for_result(third,
+                    [&] { env.cancel_all_pending_client_endpoints(); },
+                    "The third open canceled without filtering");
+    auto first_result = get_endpoint_result(first);
+    auto second_result = get_endpoint_result(second);
+    auto third_result = get_endpoint_result(third);
+    EXPECT_EQ(first_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(second_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(third_result.state, pipe_wait_res::canceled);
+    EXPECT_FALSE(first_result.endpoint);
+    EXPECT_FALSE(second_result.endpoint);
+    EXPECT_FALSE(third_result.endpoint);
 }
 #endif

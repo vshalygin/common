@@ -159,13 +159,13 @@ TEST_F(ServiceConnector, CreatesTwoConnections)
 
     std::shared_ptr<ipipe_endpoint> pe1;
     std::shared_ptr<ipipe_endpoint> pe2;
-    m_mem_pipe_env->open_pipe()
+    m_mem_pipe_env->open_pipe(0)
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
                   pe->write_async({});
                   pe->read_async();
                   pe1 = pe;
               });
-    m_mem_pipe_env->open_pipe()
+    m_mem_pipe_env->open_pipe(0)
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
                   pe->write_async({});
                   pe->read_async();
@@ -188,7 +188,7 @@ TEST_F(ServiceConnector, StopsIfPipeConnectionFailed)
     sut->start();
 
     while(m_mem_pipe_env->get_pending_server_endpoints_count() == 0) {}
-    m_mem_pipe_env->cancel_pending_server_endpoints();
+    m_mem_pipe_env->cancel_all_pending_server_endpoints();
 
     sync_event->wait();
     ASSERT_FALSE(sut->is_active());
@@ -204,9 +204,9 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfHandshakeReadFailed)
     auto sut = create_sut();
     sut->start();
 
-    m_mem_pipe_env->open_pipe();
+    m_mem_pipe_env->open_pipe(0);
 
-    m_mem_pipe_env->open_pipe().get();
+    m_mem_pipe_env->open_pipe(0).get();
 }
 
 TEST_F(ServiceConnector, DoesNotCreateConnectionIfAuthenticationFailed)
@@ -221,12 +221,12 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfAuthenticationFailed)
     auto sut = create_sut();
     sut->start();
 
-    auto f = m_mem_pipe_env->open_pipe();
+    auto f = m_mem_pipe_env->open_pipe(0);
     f.get().apply([](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
         pe->write_async({});
     });
 
-    m_mem_pipe_env->open_pipe().get();
+    m_mem_pipe_env->open_pipe(0).get();
     sync_event->wait();
 }
 
@@ -244,12 +244,12 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfWriteFailed)
     auto sut = create_sut();
     sut->start();
 
-    auto f = m_mem_pipe_env->open_pipe();
+    auto f = m_mem_pipe_env->open_pipe(0);
     f.get().apply([](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
         pe->write_async({});
     });
 
-    m_mem_pipe_env->open_pipe().get();
+    m_mem_pipe_env->open_pipe(0).get();
     sync_event->wait();
 }
 
@@ -279,7 +279,7 @@ TEST_F(ServiceConnector, MayStartAfterStop)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
     std::shared_ptr<ipipe_endpoint> pe1;
-    m_mem_pipe_env->open_pipe()
+    m_mem_pipe_env->open_pipe(0)
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
                   pe->write_async({});
                   pe->read_async();
@@ -297,7 +297,7 @@ TEST_F(ServiceConnector, MayStartAfterStop)
 
     sut->start();
     std::shared_ptr<ipipe_endpoint> pe2;
-    m_mem_pipe_env->open_pipe()
+    m_mem_pipe_env->open_pipe(0)
         .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
                   pe->write_async({});
                   pe->read_async();

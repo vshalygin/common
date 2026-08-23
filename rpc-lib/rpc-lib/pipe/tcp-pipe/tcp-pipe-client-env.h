@@ -20,10 +20,11 @@ namespace vshalygin::rpc {
 
         ~tcp_pipe_client_env();
 
-        pipe_endpoint_future open_pipe() override;
-        pipe_endpoint_future open_pipe(std::chrono::milliseconds timeout) override;
+        pipe_endpoint_future open_pipe(uint64_t client_id) override;
+        pipe_endpoint_future open_pipe(uint64_t client_id, std::chrono::milliseconds timeout) override;
 
-        void cancel_pending_client_endpoints() override;
+        void cancel_pending_client_endpoints(uint64_t client_id) override;
+        void cancel_all_pending_client_endpoints() override;
 
     private:
         class impl;

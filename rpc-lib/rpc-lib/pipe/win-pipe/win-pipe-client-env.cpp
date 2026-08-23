@@ -28,10 +28,10 @@ namespace vshalygin::rpc {
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
 
-        pipe_endpoint_future open_pipe();
-        pipe_endpoint_future open_pipe(std::chrono::milliseconds timeout);
+        pipe_endpoint_future open_pipe(uint64_t client_id);
+        pipe_endpoint_future open_pipe(uint64_t client_id, std::chrono::milliseconds timeout);
 
-        void cancel_pending_client_endpoints();
+        void cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id);
 
     private:
         std::shared_ptr<cl::thread_pool> m_thread_pool;
@@ -42,6 +42,7 @@ namespace vshalygin::rpc {
         struct open_operation_info
         {
             std::unique_ptr<open_operation> op;
+            uint64_t client_id;
             std::optional<uint64_t> timer_id;
         };
 
@@ -61,7 +62,7 @@ namespace vshalygin::rpc {
         , m_timer(m_thread_pool->get_io_context())
     {}
 
-    pipe_endpoint_future win_pipe_client_pipe_env::impl::open_pipe()
+    pipe_endpoint_future win_pipe_client_pipe_env::impl::open_pipe(uint64_t client_id)
     {
         auto id = m_next_id.fetch_add(1, std::memory_order_relaxed);
 
@@ -69,7 +70,7 @@ namespace vshalygin::rpc {
         auto op = std::make_unique<open_operation>(m_pipe_name, m_thread_pool.get());
         auto f = m_iocp_owner->open_pipe_async(op.get());
 
-        pending_ops->insert({ id, open_operation_info{ std::move(op), std::nullopt } });
+        pending_ops->insert({ id, open_operation_info{ std::move(op), client_id, std::nullopt } });
 
         return f.finally([id, self = shared_from_this()]{ self->m_pending_open_operations->lock()->erase(id); })
                 .then([self = shared_from_this()]
@@ -83,7 +84,8 @@ namespace vshalygin::rpc {
                       });
     }
 
-    pipe_endpoint_future win_pipe_client_pipe_env::impl::open_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future win_pipe_client_pipe_env::impl::open_pipe(uint64_t client_id,
+                                                                   std::chrono::milliseconds timeout)
     {
         auto op = std::make_unique<open_operation>(m_pipe_name, m_thread_pool.get());
         auto f = m_iocp_owner->open_pipe_async(op.get());
@@ -100,7 +102,7 @@ namespace vshalygin::rpc {
             }
         }, timeout);
 
-        pending_ops->insert({ id, open_operation_info{ std::move(op), timer_id } });
+        pending_ops->insert({ id, open_operation_info{ std::move(op), client_id, timer_id } });
         
         return f.finally([id, self = shared_from_this()]() {
                              auto ops = self->m_pending_open_operations->lock();
@@ -120,12 +122,14 @@ namespace vshalygin::rpc {
                       });
     }
 
-    void win_pipe_client_pipe_env::impl::cancel_pending_client_endpoints()
+    void win_pipe_client_pipe_env::impl::cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id)
     {
         auto pending_ops = m_pending_open_operations->lock();
 
         for(auto &op : *pending_ops) {
-            op.second.op->cancel(false);
+            if(!client_id || op.second.client_id == *client_id) {
+                op.second.op->cancel(false);
+            }
         }
     }
 
@@ -136,22 +140,28 @@ namespace vshalygin::rpc {
 
     win_pipe_client_pipe_env::~win_pipe_client_pipe_env()
     {
-        cancel_pending_client_endpoints();
+        cancel_all_pending_client_endpoints();
     }
 
-    pipe_endpoint_future win_pipe_client_pipe_env::open_pipe()
+    pipe_endpoint_future win_pipe_client_pipe_env::open_pipe(uint64_t client_id)
     {
-        return m_impl->open_pipe();
+        return m_impl->open_pipe(client_id);
     }
 
-    pipe_endpoint_future win_pipe_client_pipe_env::open_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future win_pipe_client_pipe_env::open_pipe(uint64_t client_id,
+                                                             std::chrono::milliseconds timeout)
     {
-        return m_impl->open_pipe(timeout);
+        return m_impl->open_pipe(client_id, timeout);
     }
 
-    void win_pipe_client_pipe_env::cancel_pending_client_endpoints()
+    void win_pipe_client_pipe_env::cancel_pending_client_endpoints(uint64_t client_id)
     {
-        m_impl->cancel_pending_client_endpoints();
+        m_impl->cancel_pending_client_endpoints(client_id);
+    }
+
+    void win_pipe_client_pipe_env::cancel_all_pending_client_endpoints()
+    {
+        m_impl->cancel_pending_client_endpoints(std::nullopt);
     }
 }
 

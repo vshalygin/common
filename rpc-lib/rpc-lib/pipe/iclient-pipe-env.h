@@ -16,9 +16,10 @@ namespace vshalygin::rpc {
 
         virtual ~iclient_pipe_env() = default;
 
-        virtual pipe_endpoint_future open_pipe() = 0;
-        virtual pipe_endpoint_future open_pipe(std::chrono::milliseconds timeout) = 0;
+        virtual pipe_endpoint_future open_pipe(uint64_t client_id) = 0;
+        virtual pipe_endpoint_future open_pipe(uint64_t client_id, std::chrono::milliseconds timeout) = 0;
 
-        virtual void cancel_pending_client_endpoints() = 0;
+        virtual void cancel_pending_client_endpoints(uint64_t client_id) = 0;
+        virtual void cancel_all_pending_client_endpoints() = 0;
     };
 }

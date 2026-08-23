@@ -14,6 +14,8 @@
 #include <optional>
 
 namespace vshalygin::rpc {
+    using pipe_endpoint_future = mem_pipe_env::pipe_endpoint_future;
+
     class mem_pipe_env::impl final
         : public std::enable_shared_from_this<impl>
     {
@@ -23,14 +25,14 @@ namespace vshalygin::rpc {
         impl(impl &) = delete;
         impl &operator=(impl &) = delete;
 
-        pipe_endpoint_future create_pipe();
-        pipe_endpoint_future create_pipe(std::chrono::milliseconds timeout);
+        pipe_endpoint_future create_pipe(uint64_t client_id);
+        pipe_endpoint_future create_pipe(uint64_t client_id, std::chrono::milliseconds timeout);
 
-        pipe_endpoint_future open_pipe();
-        pipe_endpoint_future open_pipe(std::chrono::milliseconds timeout);
+        pipe_endpoint_future open_pipe(uint64_t client_id);
+        pipe_endpoint_future open_pipe(uint64_t client_id, std::chrono::milliseconds timeout);
 
-        void cancel_pending_client_endpoints();
-        void cancel_pending_server_endpoints();
+        void cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id);
+        void cancel_pending_server_endpoints(const std::optional<uint64_t> &client_id);
 
         size_t get_pending_client_endpoints_count() const;
         size_t get_pending_server_endpoints_count() const;
@@ -39,6 +41,7 @@ namespace vshalygin::rpc {
         struct promise_data
         {
             uint64_t id;
+            uint64_t client_id;
             std::optional<uint64_t> timer_id;
             pipe_endpoint_promise promise;
         };
@@ -51,11 +54,13 @@ namespace vshalygin::rpc {
             boost::multi_index::member<promise_data, uint64_t, &promise_data::id>>>>;
 
     private:
-        pipe_endpoint_future create_new_pipe_end(
-            bool is_server, std::optional<std::chrono::milliseconds> timeout,
-            promise_container &own, promise_container &other);
+        pipe_endpoint_future create_new_pipe_end(uint64_t client_id,
+                                                 bool is_server,
+                                                 std::optional<std::chrono::milliseconds> timeout,
+                                                 promise_container &own,
+                                                 promise_container &other);
 
-        void cancel_pending_endpoints(promise_container &container);
+        void cancel_pending_endpoints(const std::optional<uint64_t> &client_id, promise_container &container);
         void remove_promise_by_timeout(promise_container &container, uint64_t id);
 
     private:
@@ -74,51 +79,59 @@ namespace vshalygin::rpc {
         , m_timer(m_thread_pool->get_io_context())
     {}
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::impl::create_pipe()
+    pipe_endpoint_future mem_pipe_env::impl::create_pipe(uint64_t client_id)
     {
-        return create_new_pipe_end(true,
+        return create_new_pipe_end(client_id,
+                                   true,
                                    std::nullopt,
                                    m_server_side_pipe_promises,
                                    m_client_side_pipe_promises);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::impl::create_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future mem_pipe_env::impl::create_pipe(uint64_t client_id,
+                                                         std::chrono::milliseconds timeout)
     {
-        return create_new_pipe_end(true,
+        return create_new_pipe_end(client_id,
+                                   true,
                                    timeout,
                                    m_server_side_pipe_promises,
                                    m_client_side_pipe_promises);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::impl::open_pipe()
+    pipe_endpoint_future mem_pipe_env::impl::open_pipe(uint64_t client_id)
     {
-        return create_new_pipe_end(false,
+        return create_new_pipe_end(client_id,
+                                   false,
                                    std::nullopt,
                                    m_client_side_pipe_promises,
                                    m_server_side_pipe_promises);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::impl::open_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future mem_pipe_env::impl::open_pipe(uint64_t client_id,
+                                                       std::chrono::milliseconds timeout)
     {
-        return create_new_pipe_end(false,
+        return create_new_pipe_end(client_id,
+                                   false,
                                    timeout, 
                                    m_client_side_pipe_promises,
                                    m_server_side_pipe_promises);
     }
 
-    void mem_pipe_env::impl::cancel_pending_client_endpoints()
+    void mem_pipe_env::impl::cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id)
     {
-        cancel_pending_endpoints(m_client_side_pipe_promises);
+        cancel_pending_endpoints(client_id, m_client_side_pipe_promises);
     }
 
-    void mem_pipe_env::impl::cancel_pending_server_endpoints()
+    void mem_pipe_env::impl::cancel_pending_server_endpoints(const std::optional<uint64_t> &client_id)
     {
-        cancel_pending_endpoints(m_server_side_pipe_promises);
+        cancel_pending_endpoints(client_id, m_server_side_pipe_promises);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::impl::create_new_pipe_end(
-            bool is_server, std::optional<std::chrono::milliseconds> timeout,
-            promise_container &own, promise_container &other)
+    pipe_endpoint_future mem_pipe_env::impl::create_new_pipe_end(uint64_t client_id,
+                                                                 bool is_server,
+                                                                 std::optional<std::chrono::milliseconds> timeout,
+                                                                 promise_container &own,
+                                                                 promise_container &other)
     {
         auto promise = make_promise(
             m_thread_pool.get(),
@@ -150,34 +163,40 @@ namespace vshalygin::rpc {
 
             std::optional<uint64_t> timer_id;
             if(timeout) {
-                timer_id = m_timer.start([self = weak_from_this(), promise_id, &own]() {
+                timer_id = m_timer.start([self = weak_from_this(), promise_id, client_id, &own]() {
                     if(auto s = self.lock()) {
                         s->remove_promise_by_timeout(own, promise_id);
                     }
                 }, *timeout);
             }
             
-            own.push_back(promise_data{ promise_id, timer_id, std::move(promise) });
+            own.push_back(promise_data{ promise_id , client_id, timer_id, std::move(promise) });
         }
 
         return future;
     }
 
-    void mem_pipe_env::impl::cancel_pending_endpoints(promise_container &container)
+    void mem_pipe_env::impl::cancel_pending_endpoints(const std::optional<uint64_t> &client_id,
+                                                      promise_container &container)
     {
         std::vector<pipe_endpoint_promise> promises_to_destroy;
 
         std::lock_guard guard(m_mtx);
         auto &q = container.get<0>();
-        while(!q.empty()) {
-            q.modify(q.begin(), [&](promise_data &el) mutable {
-                if(el.timer_id) {
-                    m_timer.cancel(*el.timer_id);
-                }
-                el.promise.resolve(pipe_wait_res::canceled, {});
-                promises_to_destroy.push_back((std::move(el.promise)));
-            });
-            q.pop_front();
+        auto it = q.begin();
+        while(it != q.end()) {
+            if(!client_id || it->client_id == *client_id) {
+                q.modify(it, [&](promise_data &el) mutable {
+                    if(el.timer_id) {
+                        m_timer.cancel(*el.timer_id);
+                    }
+                    el.promise.resolve(pipe_wait_res::canceled, {});
+                    promises_to_destroy.push_back((std::move(el.promise)));
+                });
+                it = q.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
 
@@ -215,38 +234,48 @@ namespace vshalygin::rpc {
 
     mem_pipe_env::~mem_pipe_env()
     {
-        cancel_pending_client_endpoints();
-        cancel_pending_server_endpoints();
+        cancel_all_pending_client_endpoints();
+        cancel_all_pending_server_endpoints();
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::create_pipe()
+    pipe_endpoint_future mem_pipe_env::create_pipe(uint64_t client_id)
     {
-        return m_impl->create_pipe();
+        return m_impl->create_pipe(client_id);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::create_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future mem_pipe_env::create_pipe(uint64_t client_id, std::chrono::milliseconds timeout)
     {
-        return m_impl->create_pipe(timeout);
+        return m_impl->create_pipe(client_id, timeout);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::open_pipe()
+    pipe_endpoint_future mem_pipe_env::open_pipe(uint64_t client_id)
     {
-        return m_impl->open_pipe();
+        return m_impl->open_pipe(client_id);
     }
 
-    mem_pipe_env::pipe_endpoint_future mem_pipe_env::open_pipe(std::chrono::milliseconds timeout)
+    pipe_endpoint_future mem_pipe_env::open_pipe(uint64_t client_id, std::chrono::milliseconds timeout)
     {
-        return m_impl->open_pipe(timeout);
+        return m_impl->open_pipe(client_id, timeout);
     }
 
-    void mem_pipe_env::cancel_pending_client_endpoints()
+    void mem_pipe_env::cancel_pending_client_endpoints(uint64_t client_id)
     {
-        m_impl->cancel_pending_client_endpoints();
+        m_impl->cancel_pending_client_endpoints(client_id);
     }
 
-    void mem_pipe_env::cancel_pending_server_endpoints()
+    void mem_pipe_env::cancel_pending_server_endpoints(uint64_t client_id)
     {
-        m_impl->cancel_pending_server_endpoints();
+        m_impl->cancel_pending_server_endpoints(client_id);
+    }
+
+    void mem_pipe_env::cancel_all_pending_client_endpoints()
+    {
+        m_impl->cancel_pending_client_endpoints(std::nullopt);
+    }
+
+    void mem_pipe_env::cancel_all_pending_server_endpoints()
+    {
+        m_impl->cancel_pending_server_endpoints(std::nullopt);
     }
 
     size_t mem_pipe_env::get_pending_client_endpoints_count() const

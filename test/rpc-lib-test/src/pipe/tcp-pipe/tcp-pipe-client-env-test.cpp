@@ -232,11 +232,11 @@ TEST_F(TcpPipeClientEnv, OpensConnectedEndpointOnLoopback)
     auto acceptor = create_loopback_listener();
     client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
 
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     tcp::socket peer(m_thread_pool->get_io_context());
     ASSERT_TRUE(accept_one(acceptor, peer));
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The loopback client endpoint open operation"));
 
     auto result = get_endpoint_result(future);
@@ -250,11 +250,11 @@ TEST_F(TcpPipeClientEnv, TimedOpenSucceedsBeforeDeadline)
     auto acceptor = create_loopback_listener();
     client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
 
-    auto future = env.open_pipe(long_open_timeout);
+    auto future = env.open_pipe(0, long_open_timeout);
     tcp::socket peer(m_thread_pool->get_io_context());
     ASSERT_TRUE(accept_one(acceptor, peer));
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The timed loopback client endpoint open operation"));
 
     auto result = get_endpoint_result(future);
@@ -267,9 +267,9 @@ TEST_F(TcpPipeClientEnv, ReportsFailureWhenLoopbackPortHasNoListener)
 {
     client_env env(m_thread_pool, "127.0.0.1", unavailable_loopback_port);
 
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The refused loopback connect"));
 
     auto result = get_endpoint_result(future);
@@ -281,9 +281,9 @@ TEST_F(TcpPipeClientEnv, TimedOpenReportsFailureBeforeDeadline)
 {
     client_env env(m_thread_pool, "127.0.0.1", unavailable_loopback_port);
 
-    auto future = env.open_pipe(long_open_timeout);
+    auto future = env.open_pipe(0, long_open_timeout);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The timed refused loopback connect"));
 
     auto result = get_endpoint_result(future);
@@ -297,9 +297,9 @@ TEST_F(TcpPipeClientEnv, TimesOutPendingLoopbackConnect)
     ASSERT_TRUE(listener);
     client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
 
-    auto future = env.open_pipe(pending_open_timeout);
+    auto future = env.open_pipe(0, pending_open_timeout);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The timed out loopback connect"));
 
     auto result = get_endpoint_result(future);
@@ -313,13 +313,13 @@ TEST_F(TcpPipeClientEnv, CancelPendingOpenIsIdempotent)
     ASSERT_TRUE(listener);
     client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
 
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     EXPECT_FALSE(future.wait_for(pending_observation_timeout));
 
-    env.cancel_pending_client_endpoints();
-    env.cancel_pending_client_endpoints();
+    env.cancel_all_pending_client_endpoints();
+    env.cancel_all_pending_client_endpoints();
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The canceled loopback connect"));
 
     auto result = get_endpoint_result(future);
@@ -333,14 +333,14 @@ TEST_F(TcpPipeClientEnv, CancelsAllPendingOpenOperations)
     ASSERT_TRUE(listener);
     client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
 
-    auto first = env.open_pipe();
-    auto second = env.open_pipe();
-    auto third = env.open_pipe();
-    env.cancel_pending_client_endpoints();
+    auto first = env.open_pipe(0);
+    auto second = env.open_pipe(0);
+    auto third = env.open_pipe(0);
+    env.cancel_all_pending_client_endpoints();
 
-    ASSERT_TRUE(wait_for_result(first, [&] { env.cancel_pending_client_endpoints(); }, "The first canceled connect"));
-    ASSERT_TRUE(wait_for_result(second, [&] { env.cancel_pending_client_endpoints(); }, "The second canceled connect"));
-    ASSERT_TRUE(wait_for_result(third, [&] { env.cancel_pending_client_endpoints(); }, "The third canceled connect"));
+    ASSERT_TRUE(wait_for_result(first, [&] { env.cancel_all_pending_client_endpoints(); }, "The first canceled connect"));
+    ASSERT_TRUE(wait_for_result(second, [&] { env.cancel_all_pending_client_endpoints(); }, "The second canceled connect"));
+    ASSERT_TRUE(wait_for_result(third, [&] { env.cancel_all_pending_client_endpoints(); }, "The third canceled connect"));
 
     auto first_result = get_endpoint_result(first);
     auto second_result = get_endpoint_result(second);
@@ -364,7 +364,7 @@ TEST_F(TcpPipeClientEnv, DestructorCancelsPendingOpen)
         auto env = std::make_unique<client_env>(m_thread_pool,
                                                 "127.0.0.1",
                                                 listener->acceptor.local_endpoint().port());
-        future = env->open_pipe();
+        future = env->open_pipe(0);
         EXPECT_FALSE(future.wait_for(pending_observation_timeout));
     }
 
@@ -383,20 +383,20 @@ TEST_F(TcpPipeClientEnv, TimeoutOfOneOpenDoesNotCancelAnother)
     ASSERT_TRUE(listener);
     client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
 
-    auto pending = env.open_pipe();
-    auto timed = env.open_pipe(pending_open_timeout);
+    auto pending = env.open_pipe(0);
+    auto timed = env.open_pipe(0, pending_open_timeout);
 
     ASSERT_TRUE(wait_for_result(timed,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The independently timed out loopback connect"));
     auto timed_result = get_endpoint_result(timed);
     ASSERT_EQ(timed_result.state, pipe_wait_res::timeout);
     ASSERT_FALSE(timed_result.endpoint);
 
     EXPECT_FALSE(pending.wait_for(pending_observation_timeout));
-    env.cancel_pending_client_endpoints();
+    env.cancel_all_pending_client_endpoints();
     ASSERT_TRUE(wait_for_result(pending,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The connect unaffected by another timeout"));
 
     auto pending_result = get_endpoint_result(pending);
@@ -409,17 +409,17 @@ TEST_F(TcpPipeClientEnv, CancelDoesNotAffectCompletedEndpoint)
     auto acceptor = create_loopback_listener();
     client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
 
-    auto future = env.open_pipe();
+    auto future = env.open_pipe(0);
     tcp::socket peer(m_thread_pool->get_io_context());
     ASSERT_TRUE(accept_one(acceptor, peer));
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_client_endpoints(); },
+                                [&] { env.cancel_all_pending_client_endpoints(); },
                                 "The completed loopback connect"));
     auto result = get_endpoint_result(future);
     ASSERT_EQ(result.state, pipe_wait_res::success);
     ASSERT_TRUE(result.endpoint);
 
-    env.cancel_pending_client_endpoints();
+    env.cancel_all_pending_client_endpoints();
 
     EXPECT_TRUE(result.endpoint->is_connected());
 }
@@ -429,9 +429,9 @@ TEST_F(TcpPipeClientEnv, SupportsMultipleConcurrentOpenOperations)
     auto acceptor = create_loopback_listener();
     client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
 
-    auto first = env.open_pipe();
-    auto second = env.open_pipe();
-    auto third = env.open_pipe();
+    auto first = env.open_pipe(0);
+    auto second = env.open_pipe(0);
+    auto third = env.open_pipe(0);
 
     tcp::socket first_peer(m_thread_pool->get_io_context());
     tcp::socket second_peer(m_thread_pool->get_io_context());
@@ -440,9 +440,9 @@ TEST_F(TcpPipeClientEnv, SupportsMultipleConcurrentOpenOperations)
     ASSERT_TRUE(accept_one(acceptor, second_peer));
     ASSERT_TRUE(accept_one(acceptor, third_peer));
 
-    ASSERT_TRUE(wait_for_result(first, [&] { env.cancel_pending_client_endpoints(); }, "The first loopback connect"));
-    ASSERT_TRUE(wait_for_result(second, [&] { env.cancel_pending_client_endpoints(); }, "The second loopback connect"));
-    ASSERT_TRUE(wait_for_result(third, [&] { env.cancel_pending_client_endpoints(); }, "The third loopback connect"));
+    ASSERT_TRUE(wait_for_result(first, [&] { env.cancel_all_pending_client_endpoints(); }, "The first loopback connect"));
+    ASSERT_TRUE(wait_for_result(second, [&] { env.cancel_all_pending_client_endpoints(); }, "The second loopback connect"));
+    ASSERT_TRUE(wait_for_result(third, [&] { env.cancel_all_pending_client_endpoints(); }, "The third loopback connect"));
 
     auto first_result = get_endpoint_result(first);
     auto second_result = get_endpoint_result(second);
@@ -467,13 +467,13 @@ TEST_F(TcpPipeClientEnv, CancelRacingWithSuccessfulConnectNeverReturnsClosedSucc
         auto acceptor = create_loopback_listener();
         client_env env(m_thread_pool, "127.0.0.1", acceptor.local_endpoint().port());
 
-        auto future = env.open_pipe();
+        auto future = env.open_pipe(0);
         tcp::socket peer(m_thread_pool->get_io_context());
         ASSERT_TRUE(accept_one(acceptor, peer));
 
-        env.cancel_pending_client_endpoints();
+        env.cancel_all_pending_client_endpoints();
         ASSERT_TRUE(wait_for_result(future,
-                                    [&] { env.cancel_pending_client_endpoints(); },
+                                    [&] { env.cancel_all_pending_client_endpoints(); },
                                     "The connect racing with cancellation"));
 
         auto result = get_endpoint_result(future);
@@ -487,4 +487,83 @@ TEST_F(TcpPipeClientEnv, CancelRacingWithSuccessfulConnectNeverReturnsClosedSucc
             EXPECT_FALSE(result.endpoint);
         }
     }
+}
+
+TEST_F(TcpPipeClientEnv, CancelsOnlyPendingOpenOperationsWithSpecifiedClientId)
+{
+    constexpr auto canceled_client_id = 101u;
+    constexpr auto remaining_client_id = 202u;
+    auto listener = create_saturated_loopback_listener();
+    ASSERT_TRUE(listener);
+    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+
+    auto first_canceled = env.open_pipe(canceled_client_id);
+    auto second_canceled = env.open_pipe(canceled_client_id);
+    auto remaining = env.open_pipe(remaining_client_id);
+    ASSERT_FALSE(remaining.wait_for(pending_observation_timeout));
+
+    env.cancel_pending_client_endpoints(canceled_client_id);
+
+    ASSERT_TRUE(wait_for_result(first_canceled,
+                                [&] { env.cancel_all_pending_client_endpoints(); },
+                                "The first connect canceled by client id"));
+    ASSERT_TRUE(wait_for_result(second_canceled,
+                                [&] { env.cancel_all_pending_client_endpoints(); },
+                                "The second connect canceled by client id"));
+    auto first_result = get_endpoint_result(first_canceled);
+    auto second_result = get_endpoint_result(second_canceled);
+    ASSERT_EQ(first_result.state, pipe_wait_res::canceled);
+    ASSERT_EQ(second_result.state, pipe_wait_res::canceled);
+    ASSERT_FALSE(first_result.endpoint);
+    ASSERT_FALSE(second_result.endpoint);
+
+    std::vector<std::unique_ptr<tcp::socket>> accepted_peers;
+    for(size_t i = 0;
+        i < max_backlog_fill_attempts + 3 &&
+        !remaining.wait_for(std::chrono::milliseconds(0));
+        ++i) {
+        auto peer = std::make_unique<tcp::socket>(m_thread_pool->get_io_context());
+        ASSERT_TRUE(accept_one(listener->acceptor, *peer));
+        accepted_peers.push_back(std::move(peer));
+    }
+
+    ASSERT_TRUE(wait_for_result(remaining,
+                                [&] { env.cancel_all_pending_client_endpoints(); },
+                                "The connect belonging to another client id"));
+    auto remaining_result = get_endpoint_result(remaining);
+    EXPECT_EQ(remaining_result.state, pipe_wait_res::success);
+    ASSERT_TRUE(remaining_result.endpoint);
+    EXPECT_TRUE(remaining_result.endpoint->is_connected());
+}
+
+TEST_F(TcpPipeClientEnv, CancelsAllPendingOpenOperationsWithDifferentClientIds)
+{
+    auto listener = create_saturated_loopback_listener();
+    ASSERT_TRUE(listener);
+    client_env env(m_thread_pool, "127.0.0.1", listener->acceptor.local_endpoint().port());
+
+    auto first = env.open_pipe(101);
+    auto second = env.open_pipe(202);
+    auto third = env.open_pipe(303);
+
+    env.cancel_all_pending_client_endpoints();
+
+    ASSERT_TRUE(wait_for_result(first,
+                                [&] { env.cancel_all_pending_client_endpoints(); },
+                                "The first connect canceled without filtering"));
+    ASSERT_TRUE(wait_for_result(second,
+                                [&] { env.cancel_all_pending_client_endpoints(); },
+                                "The second connect canceled without filtering"));
+    ASSERT_TRUE(wait_for_result(third,
+                                [&] { env.cancel_all_pending_client_endpoints(); },
+                                "The third connect canceled without filtering"));
+    auto first_result = get_endpoint_result(first);
+    auto second_result = get_endpoint_result(second);
+    auto third_result = get_endpoint_result(third);
+    EXPECT_EQ(first_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(second_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(third_result.state, pipe_wait_res::canceled);
+    EXPECT_FALSE(first_result.endpoint);
+    EXPECT_FALSE(second_result.endpoint);
+    EXPECT_FALSE(third_result.endpoint);
 }

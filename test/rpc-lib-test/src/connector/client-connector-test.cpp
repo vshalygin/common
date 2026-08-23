@@ -68,7 +68,7 @@ protected:
 
     void create_server_pipe_end()
     {
-        m_pipe_env->create_pipe()
+        m_pipe_env->create_pipe(0)
             .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
                       m_server_endpoint = std::move(p);
                   })

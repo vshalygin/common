@@ -189,15 +189,15 @@ TEST_F(WinPipeServerEnv, CreatesConnectedEndpointWhenClientConnects)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
 
     auto client = open_client(pipe_name);
     if(client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect to the server pipe";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
     wait_for_result(future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The server endpoint create operation");
 
     auto result = get_endpoint_result(future);
@@ -212,14 +212,14 @@ TEST_F(WinPipeServerEnv, CreatedEndpointTransfersDataInBothDirections)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto create_future = env.create_pipe();
+    auto create_future = env.create_pipe(0);
     auto client = open_client(pipe_name);
     if(client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect to the server pipe";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
     wait_for_result(create_future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The server endpoint create operation");
     auto create_result = get_endpoint_result(create_future);
     ASSERT_EQ(create_result.state, pipe_wait_res::success);
@@ -253,17 +253,17 @@ TEST_F(WinPipeServerEnv, WaitsForClientConnection)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
 
     EXPECT_FALSE(future.wait_for(pending_observation_timeout));
 
     auto client = open_client(pipe_name);
     if(client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect to the waiting server pipe";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
     wait_for_result(future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The waiting server endpoint create operation");
 
     auto result = get_endpoint_result(future);
@@ -275,15 +275,15 @@ TEST_F(WinPipeServerEnv, TimedCreateSucceedsWhenClientConnects)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto future = env.create_pipe(operation_timeout);
+    auto future = env.create_pipe(0, operation_timeout);
 
     auto client = open_client(pipe_name);
     if(client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect to the timed server pipe";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
     wait_for_result(future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The timed server endpoint create operation");
 
     auto result = get_endpoint_result(future);
@@ -295,9 +295,9 @@ TEST_F(WinPipeServerEnv, TimesOutWithoutClientConnection)
 {
     server_env env(make_pipe_name(), m_thread_pool);
 
-    auto future = env.create_pipe(immediate_timeout);
+    auto future = env.create_pipe(0, immediate_timeout);
     wait_for_result(future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The timed out server endpoint create operation");
 
     auto result = get_endpoint_result(future);
@@ -308,14 +308,14 @@ TEST_F(WinPipeServerEnv, TimesOutWithoutClientConnection)
 TEST_F(WinPipeServerEnv, CancelsAllPendingCreateOperations)
 {
     server_env env(make_pipe_name(), m_thread_pool);
-    auto first = env.create_pipe();
-    auto second = env.create_pipe();
-    auto third = env.create_pipe();
+    auto first = env.create_pipe(0);
+    auto second = env.create_pipe(0);
+    auto third = env.create_pipe(0);
 
-    env.cancel_pending_server_endpoints();
-    wait_for_result(first, [&] { env.cancel_pending_server_endpoints(); }, "The first canceled create");
-    wait_for_result(second, [&] { env.cancel_pending_server_endpoints(); }, "The second canceled create");
-    wait_for_result(third, [&] { env.cancel_pending_server_endpoints(); }, "The third canceled create");
+    env.cancel_all_pending_server_endpoints();
+    wait_for_result(first, [&] { env.cancel_all_pending_server_endpoints(); }, "The first canceled create");
+    wait_for_result(second, [&] { env.cancel_all_pending_server_endpoints(); }, "The second canceled create");
+    wait_for_result(third, [&] { env.cancel_all_pending_server_endpoints(); }, "The third canceled create");
 
     auto first_result = get_endpoint_result(first);
     auto second_result = get_endpoint_result(second);
@@ -332,21 +332,21 @@ TEST_F(WinPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
     auto client = open_client(pipe_name);
     if(client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect to the server pipe";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
     wait_for_result(future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The completed server endpoint create operation");
     auto result = get_endpoint_result(future);
     ASSERT_EQ(result.state, pipe_wait_res::success);
     ASSERT_TRUE(result.endpoint);
     ASSERT_FALSE(client.empty());
 
-    env.cancel_pending_server_endpoints();
+    env.cancel_all_pending_server_endpoints();
 
     EXPECT_TRUE(result.endpoint->is_connected());
     auto message = make_message(131);
@@ -364,7 +364,7 @@ TEST_F(WinPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 TEST_F(WinPipeServerEnv, DestructorCancelsPendingCreate)
 {
     auto env = std::make_unique<server_env>(make_pipe_name(), m_thread_pool);
-    auto future = env->create_pipe();
+    auto future = env->create_pipe(0);
 
     env.reset();
     wait_for_result(future, [] {}, "The create canceled by server env destruction");
@@ -378,11 +378,11 @@ TEST_F(WinPipeServerEnv, TimeoutOfOneCreateDoesNotCancelAnother)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto pending = env.create_pipe();
-    auto timed = env.create_pipe(immediate_timeout);
+    auto pending = env.create_pipe(0);
+    auto timed = env.create_pipe(0, immediate_timeout);
 
     wait_for_result(timed,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The independently timed out create");
     auto timed_result = get_endpoint_result(timed);
     ASSERT_EQ(timed_result.state, pipe_wait_res::timeout);
@@ -391,10 +391,10 @@ TEST_F(WinPipeServerEnv, TimeoutOfOneCreateDoesNotCancelAnother)
     auto client = open_client(pipe_name);
     if(client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect to the remaining server pipe";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
     wait_for_result(pending,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The create unaffected by another timeout");
     auto pending_result = get_endpoint_result(pending);
     EXPECT_EQ(pending_result.state, pipe_wait_res::success);
@@ -405,17 +405,17 @@ TEST_F(WinPipeServerEnv, SupportsMultipleConcurrentCreateOperations)
 {
     auto pipe_name = make_pipe_name();
     server_env env(pipe_name, m_thread_pool);
-    auto first = env.create_pipe();
-    auto second = env.create_pipe();
+    auto first = env.create_pipe(0);
+    auto second = env.create_pipe(0);
 
     auto first_client = open_client(pipe_name);
     auto second_client = open_client(pipe_name);
     if(first_client.empty() || second_client.empty()) {
         ADD_FAILURE() << "CreateFileW did not connect both client handles";
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
     }
-    wait_for_result(first, [&] { env.cancel_pending_server_endpoints(); }, "The first concurrent create");
-    wait_for_result(second, [&] { env.cancel_pending_server_endpoints(); }, "The second concurrent create");
+    wait_for_result(first, [&] { env.cancel_all_pending_server_endpoints(); }, "The first concurrent create");
+    wait_for_result(second, [&] { env.cancel_all_pending_server_endpoints(); }, "The second concurrent create");
 
     auto first_result = get_endpoint_result(first);
     auto second_result = get_endpoint_result(second);
@@ -430,13 +430,80 @@ TEST_F(WinPipeServerEnv, InvalidPipeNameFailsCreate)
 {
     server_env env(std::wstring(512, L'x'), m_thread_pool);
 
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
     wait_for_result(future,
-                    [&] { env.cancel_pending_server_endpoints(); },
+                    [&] { env.cancel_all_pending_server_endpoints(); },
                     "The invalid-name server endpoint create operation");
 
     auto result = get_endpoint_result(future);
     EXPECT_EQ(result.state, pipe_wait_res::failed);
     EXPECT_FALSE(result.endpoint);
+}
+
+TEST_F(WinPipeServerEnv, CancelsOnlyPendingCreateOperationsWithSpecifiedClientId)
+{
+    constexpr auto canceled_client_id = 101u;
+    constexpr auto remaining_client_id = 202u;
+    auto pipe_name = make_pipe_name();
+    server_env env(pipe_name, m_thread_pool);
+    auto first_canceled = env.create_pipe(canceled_client_id);
+    auto second_canceled = env.create_pipe(canceled_client_id);
+    auto remaining = env.create_pipe(remaining_client_id);
+
+    env.cancel_pending_server_endpoints(canceled_client_id);
+
+    wait_for_result(first_canceled,
+                    [&] { env.cancel_all_pending_server_endpoints(); },
+                    "The first create canceled by client id");
+    wait_for_result(second_canceled,
+                    [&] { env.cancel_all_pending_server_endpoints(); },
+                    "The second create canceled by client id");
+    auto first_result = get_endpoint_result(first_canceled);
+    auto second_result = get_endpoint_result(second_canceled);
+    ASSERT_EQ(first_result.state, pipe_wait_res::canceled);
+    ASSERT_EQ(second_result.state, pipe_wait_res::canceled);
+    ASSERT_FALSE(first_result.endpoint);
+    ASSERT_FALSE(second_result.endpoint);
+
+    auto client = open_client(pipe_name);
+    if(client.empty()) {
+        ADD_FAILURE() << "CreateFileW did not connect to the remaining server pipe";
+        env.cancel_all_pending_server_endpoints();
+    }
+    wait_for_result(remaining,
+                    [&] { env.cancel_all_pending_server_endpoints(); },
+                    "The create belonging to another client id");
+    auto remaining_result = get_endpoint_result(remaining);
+    EXPECT_EQ(remaining_result.state, pipe_wait_res::success);
+    EXPECT_TRUE(remaining_result.endpoint);
+}
+
+TEST_F(WinPipeServerEnv, CancelsAllPendingCreateOperationsWithDifferentClientIds)
+{
+    server_env env(make_pipe_name(), m_thread_pool);
+    auto first = env.create_pipe(101);
+    auto second = env.create_pipe(202);
+    auto third = env.create_pipe(303);
+
+    env.cancel_all_pending_server_endpoints();
+
+    wait_for_result(first,
+                    [&] { env.cancel_all_pending_server_endpoints(); },
+                    "The first create canceled without filtering");
+    wait_for_result(second,
+                    [&] { env.cancel_all_pending_server_endpoints(); },
+                    "The second create canceled without filtering");
+    wait_for_result(third,
+                    [&] { env.cancel_all_pending_server_endpoints(); },
+                    "The third create canceled without filtering");
+    auto first_result = get_endpoint_result(first);
+    auto second_result = get_endpoint_result(second);
+    auto third_result = get_endpoint_result(third);
+    EXPECT_EQ(first_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(second_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(third_result.state, pipe_wait_res::canceled);
+    EXPECT_FALSE(first_result.endpoint);
+    EXPECT_FALSE(second_result.endpoint);
+    EXPECT_FALSE(third_result.endpoint);
 }
 #endif

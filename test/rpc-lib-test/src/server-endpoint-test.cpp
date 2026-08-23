@@ -106,7 +106,7 @@ protected:
 
     void create_and_init_other_endpoint()
     {
-        m_pipe_env->open_pipe().get().apply([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+        m_pipe_env->open_pipe(0).get().apply([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
             m_other = pe;
         });
 

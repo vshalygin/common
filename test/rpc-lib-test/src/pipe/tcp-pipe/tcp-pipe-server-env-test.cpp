@@ -171,12 +171,12 @@ TEST_F(TcpPipeServerEnv, CreatesConnectedEndpointOnLoopback)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
 
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The loopback server endpoint create operation"));
 
     auto result = get_endpoint_result(future);
@@ -189,14 +189,14 @@ TEST_F(TcpPipeServerEnv, WaitsUntilLoopbackClientConnects)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
 
     EXPECT_FALSE(future.wait_for(pending_observation_timeout));
 
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The waiting loopback accept"));
 
     auto result = get_endpoint_result(future);
@@ -208,12 +208,12 @@ TEST_F(TcpPipeServerEnv, TimedCreateSucceedsBeforeDeadline)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto future = env.create_pipe(long_create_timeout);
+    auto future = env.create_pipe(0, long_create_timeout);
 
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The timed loopback accept"));
 
     auto result = get_endpoint_result(future);
@@ -227,13 +227,13 @@ TEST_F(TcpPipeServerEnv, CreatedEndpointTransfersDataInBothDirections)
     server_env server(m_thread_pool, loopback_ip, port);
     client_env client(m_thread_pool, loopback_ip, port);
 
-    auto server_future = server.create_pipe();
-    auto client_future = client.open_pipe();
+    auto server_future = server.create_pipe(0);
+    auto client_future = client.open_pipe(0);
     ASSERT_TRUE(wait_for_result(server_future,
-                                [&] { server.cancel_pending_server_endpoints(); },
+                                [&] { server.cancel_all_pending_server_endpoints(); },
                                 "The server side of the loopback endpoint pair"));
     ASSERT_TRUE(wait_for_result(client_future,
-                                [&] { client.cancel_pending_client_endpoints(); },
+                                [&] { client.cancel_all_pending_client_endpoints(); },
                                 "The client side of the loopback endpoint pair"));
 
     auto server_result = get_endpoint_result(server_future);
@@ -279,9 +279,9 @@ TEST_F(TcpPipeServerEnv, TimeoutCancelsActiveAcceptWithoutClientConnection)
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
 
-    auto future = env.create_pipe(pending_create_timeout);
+    auto future = env.create_pipe(0, pending_create_timeout);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The timed out active loopback accept"));
 
     auto result = get_endpoint_result(future);
@@ -293,15 +293,15 @@ TEST_F(TcpPipeServerEnv, ExplicitCancellationCompletesActiveAccept)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
     ASSERT_FALSE(future.wait_for(pending_observation_timeout));
 
     // This exercises cancellation of a real outstanding async_accept. On a
     // Windows target where Boost.Asio cannot cancel that operation, this test
     // fails by the bounded wait below instead of silently accepting the gap.
-    env.cancel_pending_server_endpoints();
+    env.cancel_all_pending_server_endpoints();
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The explicitly canceled active loopback accept"));
 
     auto result = get_endpoint_result(future);
@@ -313,11 +313,11 @@ TEST_F(TcpPipeServerEnv, QueuedCreateCanTimeOutWithoutCancelingActiveAccept)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto active = env.create_pipe();
-    auto queued = env.create_pipe(pending_create_timeout);
+    auto active = env.create_pipe(0);
+    auto queued = env.create_pipe(0, pending_create_timeout);
 
     ASSERT_TRUE(wait_for_result(queued,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The timed out queued loopback accept"));
     auto queued_result = get_endpoint_result(queued);
     ASSERT_EQ(queued_result.state, pipe_wait_res::timeout);
@@ -327,7 +327,7 @@ TEST_F(TcpPipeServerEnv, QueuedCreateCanTimeOutWithoutCancelingActiveAccept)
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(active,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The active accept unaffected by a queued timeout"));
     auto active_result = get_endpoint_result(active);
     EXPECT_EQ(active_result.state, pipe_wait_res::success);
@@ -338,11 +338,11 @@ TEST_F(TcpPipeServerEnv, ActiveTimeoutStartsNextQueuedAccept)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto timed = env.create_pipe(pending_create_timeout);
-    auto next = env.create_pipe();
+    auto timed = env.create_pipe(0, pending_create_timeout);
+    auto next = env.create_pipe(0);
 
     ASSERT_TRUE(wait_for_result(timed,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The active accept that must time out"));
     auto timed_result = get_endpoint_result(timed);
     ASSERT_EQ(timed_result.state, pipe_wait_res::timeout);
@@ -351,7 +351,7 @@ TEST_F(TcpPipeServerEnv, ActiveTimeoutStartsNextQueuedAccept)
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(next,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The queued accept started after an active timeout"));
     auto next_result = get_endpoint_result(next);
     EXPECT_EQ(next_result.state, pipe_wait_res::success);
@@ -362,19 +362,19 @@ TEST_F(TcpPipeServerEnv, CancelsActiveAndQueuedCreateOperations)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto first = env.create_pipe(long_create_timeout);
-    auto second = env.create_pipe();
-    auto third = env.create_pipe(long_create_timeout);
+    auto first = env.create_pipe(0, long_create_timeout);
+    auto second = env.create_pipe(0);
+    auto third = env.create_pipe(0, long_create_timeout);
 
-    env.cancel_pending_server_endpoints();
+    env.cancel_all_pending_server_endpoints();
     ASSERT_TRUE(wait_for_result(first,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The canceled active accept"));
     ASSERT_TRUE(wait_for_result(second,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The canceled queued accept without a timer"));
     ASSERT_TRUE(wait_for_result(third,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The canceled queued accept with a timer"));
 
     auto first_result = get_endpoint_result(first);
@@ -392,23 +392,23 @@ TEST_F(TcpPipeServerEnv, CancellationIsIdempotentAndServerRemainsReusable)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto canceled = env.create_pipe();
+    auto canceled = env.create_pipe(0);
 
-    env.cancel_pending_server_endpoints();
-    env.cancel_pending_server_endpoints();
+    env.cancel_all_pending_server_endpoints();
+    env.cancel_all_pending_server_endpoints();
     ASSERT_TRUE(wait_for_result(canceled,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The repeatedly canceled active accept"));
     auto canceled_result = get_endpoint_result(canceled);
     ASSERT_EQ(canceled_result.state, pipe_wait_res::canceled);
     ASSERT_FALSE(canceled_result.endpoint);
 
-    env.cancel_pending_server_endpoints();
-    auto next = env.create_pipe();
+    env.cancel_all_pending_server_endpoints();
+    auto next = env.create_pipe(0);
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(next,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The accept created after cancellation"));
     auto next_result = get_endpoint_result(next);
     EXPECT_EQ(next_result.state, pipe_wait_res::success);
@@ -421,7 +421,7 @@ TEST_F(TcpPipeServerEnv, DestructorCancelsPendingActiveAccept)
     endpoint_future future;
     {
         auto env = std::make_unique<server_env>(m_thread_pool, loopback_ip, port);
-        future = env->create_pipe();
+        future = env->create_pipe(0);
         EXPECT_FALSE(future.wait_for(pending_observation_timeout));
     }
 
@@ -437,17 +437,17 @@ TEST_F(TcpPipeServerEnv, CancelDoesNotAffectCompletedEndpoint)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto future = env.create_pipe();
+    auto future = env.create_pipe(0);
     auto client = connect_loopback(port);
     ASSERT_TRUE(client);
     ASSERT_TRUE(wait_for_result(future,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The completed accept"));
     auto result = get_endpoint_result(future);
     ASSERT_EQ(result.state, pipe_wait_res::success);
     ASSERT_TRUE(result.endpoint);
 
-    env.cancel_pending_server_endpoints();
+    env.cancel_all_pending_server_endpoints();
 
     EXPECT_TRUE(result.endpoint->is_connected());
 }
@@ -456,27 +456,27 @@ TEST_F(TcpPipeServerEnv, SupportsMultipleQueuedCreateOperations)
 {
     const auto port = reserve_loopback_port();
     server_env env(m_thread_pool, loopback_ip, port);
-    auto first = env.create_pipe();
-    auto second = env.create_pipe();
-    auto third = env.create_pipe();
+    auto first = env.create_pipe(0);
+    auto second = env.create_pipe(0);
+    auto third = env.create_pipe(0);
 
     std::vector<std::unique_ptr<tcp::socket>> clients;
     clients.push_back(connect_loopback(port));
     ASSERT_TRUE(clients.back());
     ASSERT_TRUE(wait_for_result(first,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The first queued loopback accept"));
 
     clients.push_back(connect_loopback(port));
     ASSERT_TRUE(clients.back());
     ASSERT_TRUE(wait_for_result(second,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The second queued loopback accept"));
 
     clients.push_back(connect_loopback(port));
     ASSERT_TRUE(clients.back());
     ASSERT_TRUE(wait_for_result(third,
-                                [&] { env.cancel_pending_server_endpoints(); },
+                                [&] { env.cancel_all_pending_server_endpoints(); },
                                 "The third queued loopback accept"));
 
     auto first_result = get_endpoint_result(first);
@@ -498,13 +498,13 @@ TEST_F(TcpPipeServerEnv, CancellationRacingWithAcceptReturnsOnlyUsableSuccessOrC
     for(size_t i = 0; i < cancellation_race_iteration_count; ++i) {
         const auto port = reserve_loopback_port();
         server_env env(m_thread_pool, loopback_ip, port);
-        auto future = env.create_pipe();
+        auto future = env.create_pipe(0);
         auto client = connect_loopback(port);
         ASSERT_TRUE(client);
 
-        env.cancel_pending_server_endpoints();
+        env.cancel_all_pending_server_endpoints();
         ASSERT_TRUE(wait_for_result(future,
-                                    [&] { env.cancel_pending_server_endpoints(); },
+                                    [&] { env.cancel_all_pending_server_endpoints(); },
                                     "The accept racing with explicit cancellation"));
         auto result = get_endpoint_result(future);
         ASSERT_TRUE(result.state == pipe_wait_res::success ||
@@ -517,4 +517,97 @@ TEST_F(TcpPipeServerEnv, CancellationRacingWithAcceptReturnsOnlyUsableSuccessOrC
             EXPECT_FALSE(result.endpoint);
         }
     }
+}
+
+TEST_F(TcpPipeServerEnv, CancelingQueuedClientIdDoesNotCancelActiveAcceptOfAnotherClientId)
+{
+    constexpr auto active_client_id = 101u;
+    constexpr auto canceled_client_id = 202u;
+    const auto port = reserve_loopback_port();
+    server_env env(m_thread_pool, loopback_ip, port);
+    auto active = env.create_pipe(active_client_id);
+    auto canceled = env.create_pipe(canceled_client_id);
+
+    env.cancel_pending_server_endpoints(canceled_client_id);
+
+    ASSERT_TRUE(wait_for_result(canceled,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The queued accept canceled by client id"));
+    auto canceled_result = get_endpoint_result(canceled);
+    ASSERT_EQ(canceled_result.state, pipe_wait_res::canceled);
+    ASSERT_FALSE(canceled_result.endpoint);
+
+    auto client = connect_loopback(port);
+    ASSERT_TRUE(client);
+    ASSERT_TRUE(wait_for_result(active,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The active accept belonging to another client id"));
+    auto active_result = get_endpoint_result(active);
+    EXPECT_EQ(active_result.state, pipe_wait_res::success);
+    EXPECT_TRUE(active_result.endpoint);
+}
+
+TEST_F(TcpPipeServerEnv, CancelsActiveAndQueuedAcceptsWithSpecifiedClientId)
+{
+    constexpr auto canceled_client_id = 101u;
+    constexpr auto remaining_client_id = 202u;
+    const auto port = reserve_loopback_port();
+    server_env env(m_thread_pool, loopback_ip, port);
+    auto active_canceled = env.create_pipe(canceled_client_id);
+    auto queued_canceled = env.create_pipe(canceled_client_id);
+    auto remaining = env.create_pipe(remaining_client_id);
+
+    env.cancel_pending_server_endpoints(canceled_client_id);
+
+    ASSERT_TRUE(wait_for_result(active_canceled,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The active accept canceled by client id"));
+    ASSERT_TRUE(wait_for_result(queued_canceled,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The queued accept canceled by client id"));
+    auto active_result = get_endpoint_result(active_canceled);
+    auto queued_result = get_endpoint_result(queued_canceled);
+    ASSERT_EQ(active_result.state, pipe_wait_res::canceled);
+    ASSERT_EQ(queued_result.state, pipe_wait_res::canceled);
+    ASSERT_FALSE(active_result.endpoint);
+    ASSERT_FALSE(queued_result.endpoint);
+
+    auto client = connect_loopback(port);
+    ASSERT_TRUE(client);
+    ASSERT_TRUE(wait_for_result(remaining,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The queued accept belonging to another client id"));
+    auto remaining_result = get_endpoint_result(remaining);
+    EXPECT_EQ(remaining_result.state, pipe_wait_res::success);
+    EXPECT_TRUE(remaining_result.endpoint);
+}
+
+TEST_F(TcpPipeServerEnv, CancelsAllPendingCreateOperationsWithDifferentClientIds)
+{
+    const auto port = reserve_loopback_port();
+    server_env env(m_thread_pool, loopback_ip, port);
+    auto first = env.create_pipe(101);
+    auto second = env.create_pipe(202);
+    auto third = env.create_pipe(303);
+
+    env.cancel_all_pending_server_endpoints();
+
+    ASSERT_TRUE(wait_for_result(first,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The first accept canceled without filtering"));
+    ASSERT_TRUE(wait_for_result(second,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The second accept canceled without filtering"));
+    ASSERT_TRUE(wait_for_result(third,
+                                [&] { env.cancel_all_pending_server_endpoints(); },
+                                "The third accept canceled without filtering"));
+    auto first_result = get_endpoint_result(first);
+    auto second_result = get_endpoint_result(second);
+    auto third_result = get_endpoint_result(third);
+    EXPECT_EQ(first_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(second_result.state, pipe_wait_res::canceled);
+    EXPECT_EQ(third_result.state, pipe_wait_res::canceled);
+    EXPECT_FALSE(first_result.endpoint);
+    EXPECT_FALSE(second_result.endpoint);
+    EXPECT_FALSE(third_result.endpoint);
 }
