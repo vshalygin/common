@@ -31,7 +31,7 @@ namespace vshalygin::cl::internal {
         assert(m_thread_pool);
         m_controller->set_self_shared_ptr(m_controller);
 
-        m_controller->set_value(std::forward<T>(val));
+        m_controller->set_value(std::forward<U>(val));
     }
 
     template<typename ThreadPool, typename T>

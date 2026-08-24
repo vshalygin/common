@@ -90,4 +90,10 @@ namespace vshalygin::cl::internal {
         ThreadPool *m_thread_pool = nullptr;
         std::shared_ptr<future_controller<ThreadPool, T>> m_controller;
     };
+
+    template<typename ThreadPool, typename T>
+    future(ThreadPool *thread_pool, T &&val) -> future<ThreadPool, remove_type_qualifiers_t<T>>;
+
+    template<typename ThreadPool>
+    future(ThreadPool *thread_pool) -> future<ThreadPool, void>;
 }

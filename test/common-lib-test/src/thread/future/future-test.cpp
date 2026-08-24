@@ -2807,14 +2807,14 @@ TEST_F(Future, FinallyExecutesAfterCatchedIfNoException)
 
 TEST_F(Future, FutureMayBeCreatedAlreadyWithSetValue)
 {
-    auto f1 = make_ready_future(&m_pool, 9);
+    future f1(&m_pool, 9);
     f1.then([](int i) { EXPECT_EQ(i, 9); return 4; })
       .then([](int i) { EXPECT_EQ(i, 4); return 34; })
       .get().apply([](int i) { ASSERT_EQ(i, 34); });
     f1.get().apply([](int i) { ASSERT_EQ(i, 9); });
 
     int flag = 0;
-    auto f2 = make_ready_future(&m_pool);
+    future f2(&m_pool);
     f2.then([&]() { flag = 1; return 34; })
       .get().apply([](int i) { ASSERT_EQ(i, 34); });
     f2.wait();
@@ -2914,4 +2914,41 @@ TEST_F(Future, MethodFinallyThrowsExceptionOnInvalidFuture)
 {
     future<thread_pool, int> f;
     ASSERT_ANY_THROW(f.finally([]() {}));
+}
+
+TEST_F(Future, T)
+{
+    int i1 = 0;
+    const int i2 = 0;
+    volatile int i3 = 0;
+    const volatile int i4 = 0;
+    future f0(&m_pool);
+    future f1(&m_pool, i1);
+    future f2(&m_pool, std::move(i1));
+    future f3(&m_pool, i2);
+    future f4(&m_pool, std::move(i2));
+    future f5(&m_pool, i3);
+    future f6(&m_pool, std::move(i3));
+    future f7(&m_pool, i4);
+    future f8(&m_pool, std::move(i4));
+
+    static_assert(std::is_same_v<decltype(f0), future<thread_pool, void>>);
+    static_assert(std::is_same_v<decltype(f1), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f2), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f3), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f4), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f5), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f6), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f7), future<thread_pool, int>>);
+    static_assert(std::is_same_v<decltype(f8), future<thread_pool, int>>);
+
+    f0.get();
+    f1.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f2.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f3.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f4.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f5.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f6.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f7.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f8.get().apply([](int i) { ASSERT_EQ(i, 0); });
 }

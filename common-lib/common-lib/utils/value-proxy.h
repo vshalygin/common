@@ -56,16 +56,11 @@ namespace vshalygin::cl {
     public:
         value_proxy() = default;
 
-        template<typename Tag, std::enable_if_t<std::is_same_v<Tag, value_proxy_owned_t>, int> = 0>
-        explicit value_proxy(const type_t &v, Tag)
+        template<typename U, typename Tag,
+                 std::enable_if_t<std::is_same_v<Tag, value_proxy_owned_t> && std::is_constructible_v<type_t, U &&>, int> = 0>
+        explicit value_proxy(U &&v, Tag)
         {
-            own(v);
-        }
-
-        template<typename Tag, std::enable_if_t<std::is_same_v<Tag, value_proxy_owned_t>, int> = 0>
-        explicit value_proxy(type_t &&v, Tag)
-        {
-            own(std::move(v));
+            own(std::forward<U>(v));
         }
 
         template<typename Tag, std::enable_if_t<std::is_same_v<Tag, value_proxy_external_t>, int> = 0>

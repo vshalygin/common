@@ -342,9 +342,6 @@
     <ClInclude Include="common-lib\utils\utils.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="common-lib\thread\future\internal\make-future.h">
-      <Filter>thread\future\internal</Filter>
-    </ClInclude>
     <ClInclude Include="common-lib\thread\thread.h">
       <Filter>thread</Filter>
     </ClInclude>
