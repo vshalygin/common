@@ -206,6 +206,10 @@ namespace vshalygin::cl::internal {
     {
         using ret_t = function_ret_t<Func>;
 
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
+
         if constexpr(!is_future_v<ret_t>) {
             auto new_controller = create_child_controller<ret_t>(m_controller);
             auto new_controller_wp = std::weak_ptr(new_controller);
@@ -282,6 +286,10 @@ namespace vshalygin::cl::internal {
                       std::is_void_v<ret_t>,
                       "fail callback argument must return future storing type or void");
 
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
+
         auto new_controller = create_child_controller<future_store_type_or_self_t<ret_t>>(m_controller);
         auto new_controller_wp = std::weak_ptr(new_controller);
 
@@ -304,6 +312,10 @@ namespace vshalygin::cl::internal {
                       "finally callback must have no argument");
         static_assert(std::is_same_v<ret_t, void> || std::is_same_v<ret_t, future<ThreadPool, void>>,
                       "finally callback must return void or future storing void type");
+
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
 
         auto new_controller = create_child_controller<T>(m_controller);
         auto new_controller_wp = std::weak_ptr(new_controller);

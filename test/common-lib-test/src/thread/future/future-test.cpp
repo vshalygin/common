@@ -2898,3 +2898,20 @@ TEST_F(Future, TestHasException)
     ASSERT_ANY_THROW(f3.has_exception());
 }
 
+TEST_F(Future, MethodThenThrowsExceptionOnInvalidFuture)
+{
+    future<thread_pool, int> f;
+    ASSERT_ANY_THROW(f.then([](int) {}));
+}
+
+TEST_F(Future, MethodCatchedThrowsExceptionOnInvalidFuture)
+{
+    future<thread_pool, int> f;
+    ASSERT_ANY_THROW(f.catched([](std::exception_ptr) {}));
+}
+
+TEST_F(Future, MethodFinallyThrowsExceptionOnInvalidFuture)
+{
+    future<thread_pool, int> f;
+    ASSERT_ANY_THROW(f.finally([]() {}));
+}
