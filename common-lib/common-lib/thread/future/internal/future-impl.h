@@ -317,6 +317,26 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
+    bool future<ThreadPool, T>::has_value() const
+    {
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
+
+        return m_controller->has_value();
+    }
+
+    template<typename ThreadPool, typename T>
+    bool future<ThreadPool, T>::has_exception() const
+    {
+        if(!m_controller) {
+            throw std::logic_error("future is invalid");
+        }
+
+        return m_controller->has_exception();
+    }
+
+    template<typename ThreadPool, typename T>
     bool future<ThreadPool, T>::is_valid() const noexcept
     {
         return m_controller != nullptr;

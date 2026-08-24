@@ -41,6 +41,9 @@ namespace vshalygin::cl::internal {
         future_controller(const future_controller &) = delete;
         future_controller &operator=(const future_controller &) = delete;
 
+        bool has_value() const;
+        bool has_exception() const;
+
         template<typename Func>
         void set_on_success_and_fail(Func &&success_func, on_fail_t &&fail_func);
 
@@ -120,6 +123,20 @@ namespace vshalygin::cl::internal {
         : m_thread_pool(thread_pool)
     {
         assert(m_thread_pool);
+    }
+
+    template<typename ThreadPool, typename T>
+    bool future_controller<ThreadPool, T>::has_value() const
+    {
+        ordered_lock guard(m_val_mtx);
+        return m_val.has_value();
+    }
+
+    template<typename ThreadPool, typename T>
+    bool future_controller<ThreadPool, T>::has_exception() const
+    {
+        ordered_lock guard(m_exception_mtx);
+        return m_exception.has_value();
     }
 
     template<typename ThreadPool, typename T>

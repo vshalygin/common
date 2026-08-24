@@ -2837,3 +2837,64 @@ TEST_F(Future, ExceptionPropagateAfterFinally)
     EXPECT_TRUE(finally_called);
     EXPECT_TRUE(catched_called);
 }
+
+TEST_F(Future, TestHasValue)
+{
+    auto p1 = make_promise(&m_pool, []() { return 1; });
+    auto f1 = p1.get_future();
+    EXPECT_FALSE(f1.has_value());
+
+    p1.resolve();
+    f1.wait();
+    EXPECT_TRUE(f1.has_value());
+
+    auto p2 = make_promise(&m_pool, []() -> int { throw 0; });
+    auto f2 = p2.get_future();
+    EXPECT_FALSE(f2.has_value());
+
+    p2.resolve();
+    f2.wait();
+    EXPECT_FALSE(f2.has_value());
+
+    auto p3 = make_promise(&m_pool, []() { });
+    auto f3 = p3.get_future();
+    EXPECT_FALSE(f3.has_value());
+
+    p3.resolve();
+    f3.wait();
+    EXPECT_TRUE(f3.has_value());
+
+    auto p4 = make_promise(&m_pool, []() { throw 0; });
+    auto f4 = p4.get_future();
+    EXPECT_FALSE(f4.has_value());
+
+    p4.resolve();
+    f4.wait();
+    EXPECT_FALSE(f4.has_value());
+
+    future<thread_pool, int> f5;
+    ASSERT_ANY_THROW(f5.has_value());
+}
+
+TEST_F(Future, TestHasException)
+{
+    auto p1 = make_promise(&m_pool, []() { throw 1; });
+    auto f1 = p1.get_future();
+    EXPECT_FALSE(f1.has_exception());
+
+    p1.resolve();
+    f1.wait();
+    EXPECT_TRUE(f1.has_exception());
+
+    auto p2 = make_promise(&m_pool, []() { return 1; });
+    auto f2 = p2.get_future();
+    EXPECT_FALSE(f2.has_exception());
+
+    p2.resolve();
+    f2.wait();
+    EXPECT_FALSE(f2.has_exception());
+
+    future<thread_pool, int> f3;
+    ASSERT_ANY_THROW(f3.has_exception());
+}
+
