@@ -3,15 +3,19 @@
 #include "future-store-type-or-self.h"
 #include "is-future.h"
 
+#include <common-lib/mpl/function-traits.h>
 #include <common-lib/utils/function.h>
 
 #include <memory>
 
 namespace vshalygin::cl::internal {
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
-    class promise
+    template<typename ThreadPool, typename Signature>
+    class promise;
+
+    template<typename ThreadPool, typename R, typename...Args>
+    class promise<ThreadPool, R(Args...)>
     {
-        template<typename, typename, typename...>
+        template<typename, typename>
         friend class promise;
 
     public:
@@ -27,7 +31,7 @@ namespace vshalygin::cl::internal {
         promise(promise &&) = default;
         promise &operator=(promise &&) = default;
 
-        void resolve(ResolveArgs...args);
+        void resolve(Args...args);
 
         auto get_future();
 
@@ -36,41 +40,45 @@ namespace vshalygin::cl::internal {
     private:
         ThreadPool *m_thread_pool = nullptr;
 
-        function<T(ResolveArgs...)> m_function;
+        function<R(Args...)> m_function;
 
-        std::shared_ptr<future_controller<ThreadPool, future_store_type_or_self_t<T>>> m_controller;
-        future<ThreadPool, future_store_type_or_self_t<T>> m_future;
+        std::shared_ptr<future_controller<ThreadPool, future_store_type_or_self_t<R>>> m_controller;
+        future<ThreadPool, future_store_type_or_self_t<R>> m_future;
     };
 
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
+    template<typename ThreadPool, typename Function>
+    promise(ThreadPool *thread_pool, Function &&function)
+        -> promise<ThreadPool, function_signature_t<Function>>;
+
+    template<typename ThreadPool, typename R, typename...Args>
     template<typename Function>
-    promise<ThreadPool, T, ResolveArgs...>::promise(ThreadPool *thread_pool,
-                                                    Function &&function)
+    promise<ThreadPool, R(Args...)>::promise(ThreadPool *thread_pool,
+                                             Function &&function)
         : m_thread_pool(thread_pool)
         , m_function(std::forward<Function>(function))
-        , m_controller(std::make_shared<future_controller<ThreadPool, future_store_type_or_self_t<T>>>(thread_pool))
+        , m_controller(std::make_shared<future_controller<ThreadPool, future_store_type_or_self_t<R>>>(thread_pool))
         , m_future(thread_pool, m_controller)
     {
         assert(m_thread_pool);
         m_controller->set_self_shared_ptr(m_controller);
     }
 
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
-    void promise<ThreadPool, T, ResolveArgs...>::resolve(ResolveArgs...args)
+    template<typename ThreadPool, typename R, typename...Args>
+    void promise<ThreadPool, R(Args...)>::resolve(Args...args)
     {
         if(!m_function) {
             throw std::logic_error("no resolve function");
         }
 
-        if constexpr(is_future_v<T>) {
-            static_assert(is_value_v<T>);
+        if constexpr(is_future_v<R>) {
+            static_assert(is_value_v<R>);
 
-            using future_t = T;
+            using future_t = R;
             using future_store = future_store_type_or_self_t<future_t>;
 
             m_thread_pool->post([controller = m_controller,
                                 func = std::move(m_function),
-                                args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
+                                args = std::tuple{ std::forward<Args>(args)... }]() mutable {
                 try {
                     auto future = std::apply([&func](auto&&...arg) -> decltype(auto) {
                         return func(std::move(arg)...);
@@ -99,9 +107,9 @@ namespace vshalygin::cl::internal {
         } else {
             m_thread_pool->post([controller = m_controller,
                                 func = std::move(m_function),
-                                args = std::tuple{ std::forward<ResolveArgs>(args)... }]() mutable {
+                                args = std::tuple{ std::forward<Args>(args)... }]() mutable {
                 try {
-                    if constexpr(!std::is_void_v<T>) {
+                    if constexpr(!std::is_void_v<R>) {
                         controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
                             return func(std::move(arg)...);
                         }, std::move(args)));
@@ -118,8 +126,8 @@ namespace vshalygin::cl::internal {
         }
     }
 
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
-    auto promise<ThreadPool, T, ResolveArgs...>::get_future()
+    template<typename ThreadPool, typename R, typename...Args>
+    auto promise<ThreadPool, R(Args...)>::get_future()
     {
         if(!m_future.is_valid()) {
             throw std::logic_error("no future");
@@ -128,8 +136,8 @@ namespace vshalygin::cl::internal {
         return std::move(m_future);
     }
 
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
-    bool promise<ThreadPool, T, ResolveArgs...>::is_valid() const
+    template<typename ThreadPool, typename R, typename...Args>
+    bool promise<ThreadPool, R(Args...)>::is_valid() const
     {
         return m_controller != nullptr;
     }

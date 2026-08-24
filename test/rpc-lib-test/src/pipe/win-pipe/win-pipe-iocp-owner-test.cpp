@@ -12,6 +12,8 @@
 #include <string>
 #include <utility>
 
+namespace rpc = vshalygin::rpc;
+
 using namespace vshalygin::cl;
 using namespace vshalygin::rpc;
 using namespace vshalygin::rpc::internal;
@@ -50,9 +52,9 @@ protected:
     using open_operation = win_pipe_open_operation;
     using read_operation = win_pipe_read_operation;
     using write_operation = win_pipe_write_operation;
-    using pipe_future = vshalygin::rpc::future<ftuple<pipe_wait_res, pipe_handle>>;
-    using read_future = vshalygin::rpc::future<ftuple<win_pipe_operation_res, buffer>>;
-    using write_future = vshalygin::rpc::future<win_pipe_operation_res>;
+    using pipe_future = rpc::future<ftuple<pipe_wait_res, pipe_handle>>;
+    using read_future = rpc::future<ftuple<win_pipe_operation_res, buffer>>;
+    using write_future = rpc::future<win_pipe_operation_res>;
 
     void SetUp() override
     {

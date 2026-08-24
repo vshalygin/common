@@ -5,13 +5,13 @@
 #include <common-lib/utils/function.h>
 
 namespace vshalygin::cl::internal {
-    template<typename ThreadPool, typename T, typename...ResolveArgs>
+    template<typename ThreadPool, typename Signature>
     class promise;
 
     template<typename ThreadPool, typename T>
     class future
     {
-        template<typename, typename, typename...>
+        template<typename, typename>
         friend class promise;
 
         template<typename, typename>

@@ -99,11 +99,11 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         if(!m_endpoint || !m_endpoint->is_connected()) {
-            auto promise = make_promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
+            promise p(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
                 return ftuple{ r, std::move(m) };
             });
-            promise.resolve(request_result::no_connection, {});
-            return promise.get_future();
+            p.resolve(request_result::no_connection, {});
+            return p.get_future();
         }
 
         return m_endpoint->template make_request<Request, Response, StubMethod>(stub_method, req);
@@ -143,7 +143,7 @@ namespace vshalygin::rpc {
     auto client_endpoint<GServerServiceStub, GClientService>::impl::establish_endpoint(
         std::unique_ptr<internal::iconnection> &&c)
     {
-        auto disconnect_promise = make_promise(m_thread_pool, []() {});
+        promise disconnect_promise(m_thread_pool, []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);

@@ -9,14 +9,19 @@ namespace vshalygin::rpc {
     template<typename T>
     using future = cl::future<cl::thread_pool, T>;
 
-    template<typename T, typename...ResolveArgs>
-    using promise = cl::promise<cl::thread_pool, T, ResolveArgs...>;
-
-    template<typename Func>
-    auto make_promise(cl::thread_pool *thread_pool, Func &&func)
+    template<typename Signature>
+    class promise
+        : public cl::promise<cl::thread_pool, Signature>
     {
-        return cl::make_promise(thread_pool, std::forward<Func>(func));
-    }
+        using base = cl::promise<cl::thread_pool, Signature>;
+
+    public:
+        using base::base;
+    };
+
+    template<typename Function>
+    promise(cl::thread_pool *thread_pool, Function &&function)
+        -> promise<cl::function_signature_t<Function>>;
 
     using cl::ftuple;
 }

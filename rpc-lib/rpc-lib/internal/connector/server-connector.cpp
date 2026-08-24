@@ -179,9 +179,8 @@ namespace vshalygin::rpc::internal {
                                           });
 
         auto connection_id = m_next_connection_id++;
-        auto promise = make_promise(m_thread_pool,
-                                    [self = weak_from_this(), connection_id, is_running_sp]
-                                    (std::shared_ptr<ipipe_endpoint> pe) {
+        promise promise(m_thread_pool,
+                       [self = weak_from_this(), connection_id, is_running_sp](std::shared_ptr<ipipe_endpoint> pe) {
             std::shared_ptr s(self);
             return pe->read_async(s->m_config.handshake_timeout)
                 .then([pe, self](pipe_op_res r, cl::buffer &&b) {

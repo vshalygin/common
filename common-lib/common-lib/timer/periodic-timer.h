@@ -1,5 +1,4 @@
 #pragma once
-#include <common-lib/synchronization/value-locker.h>
 #include <common-lib/utils/function.h>
 
 #include <boost/asio/io_context.hpp>

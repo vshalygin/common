@@ -20,7 +20,7 @@ TEST(RequestController, ExecutesCallbackOnDone)
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     bool is_called = false;
-    auto promise = make_promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
                                            is_called = true;
                                            return rpc::ftuple(r, std::move(m));
                                        });
@@ -40,7 +40,7 @@ TEST(RequestController, ExecutesCallbackWithRequestResultCode)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
-    auto promise = make_promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
         EXPECT_EQ(request_result::response_parse_error, r);
         return rpc::ftuple(r, std::move(m));
     });
@@ -58,7 +58,7 @@ TEST(RequestController, ExecutesCallbackWithResponseMessage)
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     auto response_ptr = response.get();
-    auto promise = make_promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
         EXPECT_EQ(response_ptr, m.get());
         return rpc::ftuple(r, std::move(m));
     });
@@ -75,7 +75,7 @@ TEST(RequestController, RpcControllerIsCastableToIRequestController)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
-    auto promise = make_promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
         EXPECT_EQ(request_result::send_canceled, r);
         return rpc::ftuple(r, std::move(m));
     });

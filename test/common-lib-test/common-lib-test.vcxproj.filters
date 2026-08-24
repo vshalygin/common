@@ -46,6 +46,9 @@
     <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp">
       <Filter>mpl\function-traits</Filter>
     </ClCompile>
+    <ClCompile Include="src\mpl\function-traits\function-signature-test.cpp">
+      <Filter>mpl\function-traits</Filter>
+    </ClCompile>
     <ClCompile Include="src\mpl\type-transform\add-const-test.cpp">
       <Filter>mpl\type-transform</Filter>
     </ClCompile>

@@ -133,7 +133,7 @@ namespace vshalygin::rpc {
                                                                  promise_container &own,
                                                                  promise_container &other)
     {
-        auto promise = make_promise(
+        promise promise(
             m_thread_pool,
             [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
                 return ftuple{ r, std::move(p)};

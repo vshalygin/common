@@ -45,7 +45,7 @@ namespace vshalygin::rpc::internal {
         std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
         cl::buffer m_buffer;
 
-        promise<win_pipe_operation_res, win_pipe_operation_res> m_promise;
+        promise<win_pipe_operation_res(win_pipe_operation_res)> m_promise;
 
         std::atomic<win_pipe_operation_res> m_res{ win_pipe_operation_res::unknown };
     };

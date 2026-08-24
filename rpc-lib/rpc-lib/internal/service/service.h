@@ -58,7 +58,7 @@ namespace vshalygin::rpc::internal {
     template<typename Service>
     future<cl::buffer> service<Service>::process_request_async(cl::buffer &&request_message)
     {
-        auto promise = make_promise(m_thread_pool, [](cl::buffer &&b) {
+        promise promise(m_thread_pool, [](cl::buffer &&b) {
             return std::move(b);
         });
         auto future = promise.get_future();

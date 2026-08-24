@@ -13,8 +13,8 @@ namespace vshalygin::rpc {
     {
     public:
         using pipe_endpoint_future = iclient_pipe_env::pipe_endpoint_future;
-        using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>,
-                                      pipe_wait_res, std::shared_ptr<ipipe_endpoint>>;
+        using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
+                                      pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
 
         explicit mem_pipe_env(cl::thread_pool *thread_pool);
 

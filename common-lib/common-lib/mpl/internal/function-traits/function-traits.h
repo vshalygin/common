@@ -17,6 +17,7 @@ namespace vshalygin::cl::internal {
     {
         using ret = R;
         using class_t = C;
+        using signature = R(Args...);
 
         static constexpr const size_t arg_count = sizeof...(Args);
 
@@ -30,6 +31,7 @@ namespace vshalygin::cl::internal {
     struct function_traits_base<R(Args...)>
     {
         using ret = R;
+        using signature = R(Args...);
 
         static constexpr const size_t arg_count = sizeof...(Args);
 
@@ -44,6 +46,7 @@ namespace vshalygin::cl::internal {
     {
         using ret = R;
         using class_t = std::function<R(Args...)>;
+        using signature = R(Args...);
 
         static constexpr const size_t arg_count = sizeof...(Args);
 

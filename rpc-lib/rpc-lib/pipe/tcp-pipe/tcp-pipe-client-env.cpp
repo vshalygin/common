@@ -16,8 +16,8 @@ namespace vshalygin::rpc {
     using socket = boost::asio::ip::tcp::socket;
 
     using pipe_endpoint_future = tcp_pipe_client_env::pipe_endpoint_future;
-    using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>,
-                                          pipe_wait_res, std::shared_ptr<ipipe_endpoint>>;
+    using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
+                                          pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
 
     namespace {
         bool is_valid_ipv4(const std::string &value)
@@ -75,10 +75,10 @@ namespace vshalygin::rpc {
                                                 ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
-                auto promise = make_promise(m_thread_pool,
-                                            [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
-                                                return ftuple(r, std::move(e));
-                                            });
+                promise promise(m_thread_pool,
+                                [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
+                                    return ftuple(r, std::move(e));
+                                });
                 auto future = promise.get_future();
 
                 m_socket.async_connect(

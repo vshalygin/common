@@ -15,6 +15,7 @@
     <ClCompile Include="src\memory\enable-shared-from-this-manual-set-test.cpp" />
     <ClCompile Include="src\memory\unique-ptr2-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\function-traits-test.cpp" />
+    <ClCompile Include="src\mpl\function-traits\function-signature-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-function-pointer-test.cpp" />
     <ClCompile Include="src\mpl\function-traits\is-std-function-test.cpp" />
     <ClCompile Include="src\mpl\function-transform\make-function-type-test.cpp" />

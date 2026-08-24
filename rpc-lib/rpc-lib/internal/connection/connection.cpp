@@ -20,7 +20,7 @@ namespace vshalygin::rpc::internal {
 
     public:
         using req_result_future = future<ftuple<request_result, cl::buffer>>;
-        using req_result_promise = promise<ftuple<request_result, cl::buffer>, request_result, cl::buffer>;
+        using req_result_promise = promise<ftuple<request_result, cl::buffer>(request_result, cl::buffer)>;
 
         using request_map = std::unordered_map<uint64_t, request_data>;
 
@@ -155,7 +155,7 @@ namespace vshalygin::rpc::internal {
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 
-        auto promise = make_promise(m_thread_pool, [](request_result r, cl::buffer b) {
+        promise promise(m_thread_pool, [](request_result r, cl::buffer b) {
             return ftuple(r, std::move(b));
         });
         auto future = promise.get_future();

@@ -53,7 +53,7 @@ namespace vshalygin::rpc::internal {
     endpoint<GServiceStub>::request_future<Response>
         endpoint<GServiceStub>::make_request(StubMethod stub_method, const Request &req)
     {
-        auto promise = make_promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
+        promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
             return ftuple{ r, std::move(m) };
         });
         auto future = promise.get_future();

@@ -8,10 +8,10 @@ using namespace vshalygin::cl;
 using namespace testing;
 
 //promise is move only
-static_assert(!std::is_copy_constructible_v<promise<thread_pool, int>>);
-static_assert(!std::is_copy_assignable_v<promise<thread_pool, int>>);
-static_assert(std::is_move_constructible_v<promise<thread_pool, int>>);
-static_assert(std::is_move_assignable_v<promise<thread_pool, int>>);
+static_assert(!std::is_copy_constructible_v<promise<thread_pool, int()>>);
+static_assert(!std::is_copy_assignable_v<promise<thread_pool, int()>>);
+static_assert(std::is_move_constructible_v<promise<thread_pool, int()>>);
+static_assert(std::is_move_assignable_v<promise<thread_pool, int()>>);
 
 namespace {
     class test_type
@@ -75,16 +75,29 @@ protected:
     thread_pool m_thread_pool{ 2 };
 };
 
+TEST_F(Promise, DeducesFunctionSignature)
+{
+    auto void_promise = promise(&m_thread_pool, []() {});
+    auto value_promise = promise(
+        &m_thread_pool,
+        [](int, const double &) -> long { return 0; });
+
+    static_assert(std::is_same_v<decltype(void_promise),
+                                 promise<thread_pool, void()>>);
+    static_assert(std::is_same_v<decltype(value_promise),
+                                 promise<thread_pool, long(int, const double &)>>);
+}
+
 TEST_F(Promise, IsValidAfterCreation)
 {
-    auto sut = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, []() {});
 
     ASSERT_TRUE(sut.is_valid());
 }
 
 TEST_F(Promise, IsNotValidAfterMove)
 {
-    auto sut = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, []() {});
     auto sut2(std::move(sut));
 
     ASSERT_TRUE(sut2.is_valid());
@@ -93,8 +106,8 @@ TEST_F(Promise, IsNotValidAfterMove)
 
 TEST_F(Promise, IsNotValidAfterMoveAssign)
 {
-    auto sut = make_promise(&m_thread_pool, []() {});
-    auto sut2 = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, []() {});
+    auto sut2 = promise(&m_thread_pool, []() {});
     sut2 = std::move(sut);
 
     ASSERT_TRUE(sut2.is_valid());
@@ -105,7 +118,7 @@ TEST_F(Promise, MoveActuallyDoesMove)
 {
     event sync_event;
     int i = 0;
-    auto sut = make_promise(&m_thread_pool, [&]() { i = 1; sync_event.set(); });
+    auto sut = promise(&m_thread_pool, [&]() { i = 1; sync_event.set(); });
     auto sut2(std::move(sut));
     sut2.resolve();
     
@@ -117,8 +130,8 @@ TEST_F(Promise, MoveAssignActuallyDoesMove)
 {
     event sync_event;
     int i = 0;
-    auto sut = make_promise(&m_thread_pool, [&]() { i = 1; sync_event.set(); });
-    auto sut2 = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, [&]() { i = 1; sync_event.set(); });
+    auto sut2 = promise(&m_thread_pool, []() {});
     sut2 = std::move(sut);
 
     sut2.resolve();
@@ -129,7 +142,7 @@ TEST_F(Promise, MoveAssignActuallyDoesMove)
 
 TEST_F(Promise, GetFutureReturnsValidFuture)
 {
-    auto sut = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, []() {});
     
     auto f = sut.get_future();
     
@@ -138,7 +151,7 @@ TEST_F(Promise, GetFutureReturnsValidFuture)
 
 TEST_F(Promise, ThrowsExceptionOnAttempltToCallGetFutureTwice)
 {
-    auto sut = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, []() {});
 
     sut.get_future();
     ASSERT_ANY_THROW(sut.get_future());
@@ -149,7 +162,7 @@ TEST_F(Promise, ResolveFunctionStartesFunctionExecutionInAnotherThread)
     const auto master_thread_id = std::this_thread::get_id();
     event sync_event;
 
-    auto sut = make_promise(&m_thread_pool, [&]() {
+    auto sut = promise(&m_thread_pool, [&]() {
         ASSERT_NE(master_thread_id, std::this_thread::get_id());
         sync_event.set();
     });
@@ -161,7 +174,7 @@ TEST_F(Promise, ResolveFunctionStartesFunctionExecutionInAnotherThread)
 
 TEST_F(Promise, ThrowsExceptionOnAttemptToCallResolveTwice)
 {
-    auto sut = make_promise(&m_thread_pool, []() {});
+    auto sut = promise(&m_thread_pool, []() {});
 
     sut.resolve();
     ASSERT_ANY_THROW(sut.resolve());
@@ -170,7 +183,7 @@ TEST_F(Promise, ThrowsExceptionOnAttemptToCallResolveTwice)
 TEST_F(Promise, ResolveMayBeCalledWithVariousParameters)
 {
     event sync_event;
-    auto sut = make_promise(&m_thread_pool, [&](int i, double d, char c) {
+    auto sut = promise(&m_thread_pool, [&](int i, double d, char c) {
         EXPECT_EQ(i, 5);
         EXPECT_EQ(d, 10.0);
         EXPECT_EQ(c, 'v');
@@ -186,7 +199,7 @@ TEST_F(Promise, MoveParametersIntoResolveFunction)
 {
     event sync_event;
     test_type param;
-    auto sut = make_promise(&m_thread_pool, [&](test_type &&) {
+    auto sut = promise(&m_thread_pool, [&](test_type &&) {
         sync_event.set();
         return 0;
     });
@@ -205,7 +218,7 @@ TEST_F(Promise, CopyResolveFunctionParameterOnlyOnce)
 {
     event sync_event;
     test_type param;
-    auto sut = make_promise(&m_thread_pool, [&](const test_type &) {
+    auto sut = promise(&m_thread_pool, [&](const test_type &) {
         sync_event.set();
         return 0;
     });
@@ -224,7 +237,7 @@ TEST_F(Promise, MoveParametersIntoResolveFunctionIfFunctionReturnsVoid)
 {
     event sync_event;
     test_type param;
-    auto sut = make_promise(&m_thread_pool, [&](test_type &&) {
+    auto sut = promise(&m_thread_pool, [&](test_type &&) {
         sync_event.set();
     });
 
@@ -242,7 +255,7 @@ TEST_F(Promise, CopyResolveFunctionParameterOnlyOnceIfFunctionReturnsVoid)
 {
     event sync_event;
     test_type param;
-    auto sut = make_promise(&m_thread_pool, [&](const test_type &) {
+    auto sut = promise(&m_thread_pool, [&](const test_type &) {
         sync_event.set();
     });
 
@@ -259,7 +272,7 @@ TEST_F(Promise, CopyResolveFunctionParameterOnlyOnceIfFunctionReturnsVoid)
 TEST_F(Promise, FunctionMayReturnVoidType)
 {
     event sync_event;
-    auto sut = make_promise(&m_thread_pool, [&]() {
+    auto sut = promise(&m_thread_pool, [&]() {
         sync_event.set();
     });
 
@@ -273,40 +286,40 @@ TEST_F(Promise, FunctionMayReturnTypeWithAnyQualifiers)
     int i = 0;
     volatile int ii = 0;
 
-    auto sut1 = make_promise(&m_thread_pool, [&]() -> int {
+    auto sut1 = promise(&m_thread_pool, [&]() -> int {
         return 1;
     }); sut1.resolve();
-    auto sut2 = make_promise(&m_thread_pool, [&]() -> int & {
+    auto sut2 = promise(&m_thread_pool, [&]() -> int & {
         return i;
     }); sut2.resolve();
-    auto sut3 = make_promise(&m_thread_pool, [&]() -> int && {
+    auto sut3 = promise(&m_thread_pool, [&]() -> int && {
         return std::move(i);
     }); sut3.resolve();
-    auto sut4 = make_promise(&m_thread_pool, [&]() -> const int {
+    auto sut4 = promise(&m_thread_pool, [&]() -> const int {
         return 1;
     }); sut4.resolve();
-    auto sut5 = make_promise(&m_thread_pool, [&]() -> const int & {
+    auto sut5 = promise(&m_thread_pool, [&]() -> const int & {
         return i;
     }); sut5.resolve();
-    auto sut6 = make_promise(&m_thread_pool, [&]() -> const int && {
+    auto sut6 = promise(&m_thread_pool, [&]() -> const int && {
         return std::move(i);
     }); sut6.resolve();
-    auto sut7 = make_promise(&m_thread_pool, [&]() -> volatile int {
+    auto sut7 = promise(&m_thread_pool, [&]() -> volatile int {
         return 1;
     }); sut7.resolve();
-    auto sut8 = make_promise(&m_thread_pool, [&]() -> volatile int & {
+    auto sut8 = promise(&m_thread_pool, [&]() -> volatile int & {
         return ii;
     }); sut8.resolve();
-    auto sut9 = make_promise(&m_thread_pool, [&]() -> volatile int && {
+    auto sut9 = promise(&m_thread_pool, [&]() -> volatile int && {
         return std::move(ii);
     }); sut9.resolve();
-    auto sut10 = make_promise(&m_thread_pool, [&]() -> const volatile int {
+    auto sut10 = promise(&m_thread_pool, [&]() -> const volatile int {
         return 1;
     }); sut10.resolve();
-    auto sut11 = make_promise(&m_thread_pool, [&]() -> const volatile int & {
+    auto sut11 = promise(&m_thread_pool, [&]() -> const volatile int & {
         return ii;
     }); sut11.resolve();
-    auto sut12 = make_promise(&m_thread_pool, [&]() -> const volatile int && {
+    auto sut12 = promise(&m_thread_pool, [&]() -> const volatile int && {
         return std::move(ii);
     }); sut12.resolve();
 }
@@ -316,25 +329,25 @@ TEST_F(Promise, FunctionMayParameterTypeWithAnyQualifierExceptNonConstLValueRefe
     int i = 0;
     volatile int ii = 0;
 
-    auto sut1 = make_promise(&m_thread_pool, [&](int) { }); sut1.resolve(i);
-    //auto sut2 = make_promise(&m_thread_pool, [&](int &) { }); sut2.resolve(i);
-    auto sut3 = make_promise(&m_thread_pool, [&](int &&) { }); sut3.resolve(std::move(i));
-    auto sut4 = make_promise(&m_thread_pool, [&](const int) { }); sut4.resolve(i);
-    auto sut5 = make_promise(&m_thread_pool, [&](const int &) { }); sut5.resolve(i);
-    auto sut6 = make_promise(&m_thread_pool, [&](const int &&) { }); sut6.resolve(std::move(i));
-    auto sut7 = make_promise(&m_thread_pool, [&](volatile int) { }); sut7.resolve(ii);
-    //auto sut8 = make_promise(&m_thread_pool, [&](volatile int &) { }); sut8.resolve(ii);
-    auto sut9 = make_promise(&m_thread_pool, [&](volatile int &&) { }); sut9.resolve(std::move(ii));
-    auto sut10 = make_promise(&m_thread_pool, [&](const volatile int) { }); sut10.resolve(ii);
-    //auto sut11 = make_promise(&m_thread_pool, [&](const volatile int &) { }); sut11.resolve(ii); ???
-    auto sut12 = make_promise(&m_thread_pool, [&](const volatile int &&) { }); sut12.resolve(std::move(ii));
+    auto sut1 = promise(&m_thread_pool, [&](int) { }); sut1.resolve(i);
+    //auto sut2 = promise(&m_thread_pool, [&](int &) { }); sut2.resolve(i);
+    auto sut3 = promise(&m_thread_pool, [&](int &&) { }); sut3.resolve(std::move(i));
+    auto sut4 = promise(&m_thread_pool, [&](const int) { }); sut4.resolve(i);
+    auto sut5 = promise(&m_thread_pool, [&](const int &) { }); sut5.resolve(i);
+    auto sut6 = promise(&m_thread_pool, [&](const int &&) { }); sut6.resolve(std::move(i));
+    auto sut7 = promise(&m_thread_pool, [&](volatile int) { }); sut7.resolve(ii);
+    //auto sut8 = promise(&m_thread_pool, [&](volatile int &) { }); sut8.resolve(ii);
+    auto sut9 = promise(&m_thread_pool, [&](volatile int &&) { }); sut9.resolve(std::move(ii));
+    auto sut10 = promise(&m_thread_pool, [&](const volatile int) { }); sut10.resolve(ii);
+    //auto sut11 = promise(&m_thread_pool, [&](const volatile int &) { }); sut11.resolve(ii); ???
+    auto sut12 = promise(&m_thread_pool, [&](const volatile int &&) { }); sut12.resolve(std::move(ii));
 }
 
 TEST_F(Promise, FunctionMovesToPromise)
 {
     event sync_event;
     auto f = std::make_unique<std::function<void()>>([t = test_type{}, &sync_event]() { sync_event.set(); });
-    auto sut = make_promise(&m_thread_pool, std::move(*f));
+    auto sut = promise(&m_thread_pool, std::move(*f));
 
     f.reset();
     sut.resolve();
@@ -350,7 +363,7 @@ TEST_F(Promise, FunctionCopiesToPromiseOnlyOnce)
 {
     event sync_event;
     auto f = std::make_unique<std::function<void()>>([t = test_type{}, &sync_event]() { sync_event.set(); });
-    auto sut = make_promise(&m_thread_pool, *f);
+    auto sut = promise(&m_thread_pool, *f);
 
     f.reset();
     sut.resolve();
@@ -366,7 +379,7 @@ TEST_F(Promise, FunctionExecutesCorrectlyEvenAfterPromise)
 {
     event sync_event1;
     event sync_event2;
-    auto sut = std::make_unique<promise<thread_pool, void>>(make_promise(&m_thread_pool, [&]() {
+    auto sut = std::make_unique<promise<thread_pool, void()>>(promise(&m_thread_pool, [&]() {
         sync_event1.wait();
         sync_event2.set();
     }));

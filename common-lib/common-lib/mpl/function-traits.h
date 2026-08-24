@@ -17,6 +17,10 @@ namespace vshalygin::cl {
         typename internal::function_traits<F>::class_t;
 
     template<typename F>
+    using function_signature_t =
+        typename internal::function_traits<F>::signature;
+
+    template<typename F>
     using function_args_as_tuple_t =
         typename internal::function_traits<F>::arg_as_tuple;
 

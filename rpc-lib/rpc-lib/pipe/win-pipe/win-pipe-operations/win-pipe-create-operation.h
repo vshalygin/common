@@ -22,8 +22,8 @@ namespace vshalygin::rpc::internal {
 
     public:
         using future = future<ftuple<win_pipe_operation_res, win::pipe_handle>>;
-        using promise = promise<ftuple<win_pipe_operation_res, win::pipe_handle>,
-                                win_pipe_operation_res, win::pipe_handle &&>;
+        using promise = promise<ftuple<win_pipe_operation_res, win::pipe_handle>(
+                                win_pipe_operation_res, win::pipe_handle &&)>;
 
         static std::shared_ptr<win_pipe_create_operation> create(const std::wstring &pipe_name,
                                                                  cl::thread_pool *thread_pool);

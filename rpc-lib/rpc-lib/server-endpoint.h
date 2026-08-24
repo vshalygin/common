@@ -129,7 +129,7 @@ namespace vshalygin::rpc {
     void server_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
         uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
-        auto disconnect_promise = make_promise(m_thread_pool, []() {});
+        promise disconnect_promise(m_thread_pool, []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);
@@ -221,7 +221,7 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
         auto it = m_endpoints_map.find(connection_id);
         if(it == m_endpoints_map.end() || !it->second->is_connected()) {
-            auto promise = make_promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
+            promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
                 return ftuple{ r, std::move(m) };
             });
             promise.resolve(request_result::no_connection, {});

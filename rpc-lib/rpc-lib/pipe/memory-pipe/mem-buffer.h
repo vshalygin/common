@@ -26,7 +26,7 @@ namespace vshalygin::rpc {
         explicit mem_buffer(cl::thread_pool *thread_pool);
 
     public:
-        using read_promise = promise<ftuple<pipe_op_res, cl::buffer>, pipe_op_res, cl::buffer>;
+        using read_promise = promise<ftuple<pipe_op_res, cl::buffer>(pipe_op_res, cl::buffer)>;
         using read_future = future<ftuple<pipe_op_res, cl::buffer>>;
         using write_future = future<pipe_op_res>;
 

@@ -18,8 +18,8 @@ namespace vshalygin::rpc::internal {
     {
     public:
         using future = future<ftuple<win_pipe_operation_res, win::pipe_handle>>;
-        using promise = promise<ftuple<win_pipe_operation_res, win::pipe_handle>,
-                                win_pipe_operation_res, win::pipe_handle &&>;
+        using promise = promise<ftuple<win_pipe_operation_res, win::pipe_handle>(
+                                win_pipe_operation_res, win::pipe_handle &&)>;
 
         explicit win_pipe_open_operation(const std::wstring &pipe_name,
                                          cl::thread_pool *thread_pool);

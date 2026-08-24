@@ -17,9 +17,9 @@
 
 namespace vshalygin::rpc {
     using write_future = tcp_pipe_endpoint::write_future;
-    using write_promise = promise<pipe_op_res, pipe_op_res>;
+    using write_promise = promise<pipe_op_res(pipe_op_res)>;
     using read_future = tcp_pipe_endpoint::read_future;
-    using read_promise = promise<ftuple<pipe_op_res, cl::buffer>, pipe_op_res, cl::buffer &&>;
+    using read_promise = promise<ftuple<pipe_op_res, cl::buffer>(pipe_op_res, cl::buffer &&)>;
 
     namespace {
         static constexpr size_t s_header_size = sizeof(uint32_t);
@@ -299,7 +299,7 @@ namespace vshalygin::rpc {
             return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
-        auto promise = make_promise(m_thread_pool, [](pipe_op_res r) { return r; });
+        promise promise(m_thread_pool, [](pipe_op_res r) { return r; });
         auto future = promise.get_future();
 
         const auto id = m_next_write_op_id++;
@@ -336,10 +336,10 @@ namespace vshalygin::rpc {
             return read_future(m_thread_pool, ftuple(pipe_op_res::failed, cl::buffer{}));
         }
 
-        auto promise = make_promise(m_thread_pool,
-                                    [](pipe_op_res r, cl::buffer &&b) {
-                                        return ftuple(r, std::move(b));
-                                    });
+        promise promise(m_thread_pool,
+                        [](pipe_op_res r, cl::buffer &&b) {
+                            return ftuple(r, std::move(b));
+                        });
         auto future = promise.get_future();
 
         const auto id = m_next_read_op_id++;

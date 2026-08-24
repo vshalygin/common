@@ -50,7 +50,7 @@ namespace vshalygin::rpc::internal {
         std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
         std::vector<cl::buffer> m_buffers;
 
-        promise<ftuple<win_pipe_operation_res, cl::buffer>, win_pipe_operation_res, cl::buffer> m_promise;
+        promise<ftuple<win_pipe_operation_res, cl::buffer>(win_pipe_operation_res, cl::buffer)> m_promise;
 
         std::atomic<DWORD> m_read_bytes = 0;
 

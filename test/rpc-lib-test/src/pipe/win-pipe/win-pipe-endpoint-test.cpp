@@ -14,6 +14,8 @@
 #include <string>
 #include <utility>
 
+namespace rpc = vshalygin::rpc;
+
 using namespace vshalygin::cl;
 using namespace vshalygin::rpc;
 using namespace vshalygin::rpc::internal;
@@ -49,7 +51,7 @@ class WinPipeEndpoint
 protected:
     using create_operation = win_pipe_create_operation;
     using open_operation = win_pipe_open_operation;
-    using pipe_future = vshalygin::rpc::future<ftuple<pipe_wait_res, pipe_handle>>;
+    using pipe_future = rpc::future<ftuple<pipe_wait_res, pipe_handle>>;
     using read_future = ipipe_endpoint::read_future;
     using write_future = ipipe_endpoint::write_future;
 

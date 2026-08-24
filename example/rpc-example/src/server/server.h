@@ -35,7 +35,7 @@ namespace vshalygin::example {
             m_endpoint.make_request<proto::message, proto::null_message, stub_method>(
                 connection_id , &proto::client_service_Stub::accept_message, message)
                 .get()
-                .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
+                .apply([connection_id](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
                                                 std::to_string(connection_id) + "\n");
