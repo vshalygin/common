@@ -345,6 +345,9 @@
     <ClInclude Include="common-lib\thread\future\internal\make-future.h">
       <Filter>thread\future\internal</Filter>
     </ClInclude>
+    <ClInclude Include="common-lib\thread\thread.h">
+      <Filter>thread</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="common-lib\thread\thread-pool\strand.cpp">
