@@ -140,19 +140,15 @@ TEST_F(Channel, MakesRequestWithCorrectRequestMessage)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
         .WillOnce([&](auto &&buf) {
                       EXPECT_EQ(create_transfer_msg_req(0, 0, &m_request_message), buf);
-                      return promise.get_future();
+                      return future(
+                          m_thread_pool.get(),
+                          ftuple(request_result::ok,
+                                 create_transfer_msg_res(0, response_result::ok, m_response_message_ptr)));
                   });
-    
-    promise.resolve(request_result::ok,
-                    create_transfer_msg_res(0, response_result::ok, m_response_message_ptr));
 
     call_method();
 
@@ -184,15 +180,11 @@ TEST_F(Channel, SetsControllerFailedIfCallbackCalledWithErrorCode)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
-
-    promise.resolve(request_result::timeout, {});
+        .WillOnce([&](auto &&) {
+            return future(m_thread_pool.get(), ftuple(request_result::timeout, buffer{}));
+        });
 
     call_method();
 
@@ -206,15 +198,15 @@ TEST_F(Channel, SetsControllerFailedIfParsingResponseFailed)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
+        .WillOnce([&](auto &&) {
+            return future(
+                m_thread_pool.get(),
+                ftuple(request_result::ok,
+                       create_transfer_msg_res(0, response_result::ok, &m_some_message)));
+        });
 
-    promise.resolve(request_result::ok, create_transfer_msg_res(0, response_result::ok, &m_some_message));
     call_method();
 
     sync_event->wait();
@@ -227,15 +219,12 @@ TEST_F(Channel, SetsControllerFailedIfResponseIsInvalid)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
+        .WillOnce([&](auto &&) {
+            return future(m_thread_pool.get(), ftuple(request_result::ok, buffer{ 0 }));
+        });
 
-    promise.resolve(request_result::ok, buffer{ 0 });
     call_method();
 
     sync_event->wait();
@@ -248,15 +237,14 @@ TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageType)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
+        .WillOnce([&](auto &&) {
+            return future(
+                m_thread_pool.get(),
+                ftuple(request_result::ok, create_transfer_msg_req(0, 34, &m_some_message)));
+        });
 
-    promise.resolve(request_result::ok, create_transfer_msg_req(0, 34, &m_some_message));
     call_method();
 
     sync_event->wait();
@@ -269,15 +257,15 @@ TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageNumber)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
+        .WillOnce([&](auto &&) {
+            return future(
+                m_thread_pool.get(),
+                ftuple(request_result::ok,
+                       create_transfer_msg_res(123334, response_result::ok, &m_some_message)));
+        });
 
-    promise.resolve(request_result::ok, create_transfer_msg_res(123334, response_result::ok, &m_some_message));
     call_method();
 
     sync_event->wait();
@@ -290,19 +278,17 @@ TEST_F(Channel, SetsControllerFailedWithRequestNotProcessedCodeIfResponseHasFail
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
-    EXPECT_CALL(*m_connection_ptr, request_async)
-        .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
-
     proto::response_message response_message;
     response_message.set_data(34);
 
-    promise.resolve(request_result::ok,
-                    create_transfer_msg_res(0, response_result::unknown_error, &response_message));
+    EXPECT_CALL(*m_connection_ptr, request_async)
+        .Times(1)
+        .WillOnce([&](auto &&) {
+            return future(
+                m_thread_pool.get(),
+                ftuple(request_result::ok,
+                       create_transfer_msg_res(0, response_result::unknown_error, &response_message)));
+        });
 
     call_method();
 
@@ -319,15 +305,14 @@ TEST_F(Channel, ParsesResponse)
         .Times(1)
         .WillOnce([&output_response, sync_event](request_result, auto ans) { output_response = *ans;  sync_event->set(); });
 
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(1)
-        .WillOnce([&](auto &&) { return promise.get_future(); });
-
-    promise.resolve(request_result::ok, create_transfer_msg_res(0, response_result::ok, m_response_message_ptr));
+        .WillOnce([&](auto &&) {
+            return future(
+                m_thread_pool.get(),
+                ftuple(request_result::ok,
+                       create_transfer_msg_res(0, response_result::ok, m_response_message_ptr)));
+        });
 
     call_method();
 

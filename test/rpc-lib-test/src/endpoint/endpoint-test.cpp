@@ -86,10 +86,6 @@ TEST_F(Endpoint, TestSetDisconnectHandler)
 
 TEST_F(Endpoint, TestMakeRequest)
 {
-    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-
     proto::request_message request;
     request.set_data(34);
 
@@ -104,9 +100,11 @@ TEST_F(Endpoint, TestMakeRequest)
         .Times(1)
         .WillOnce([&](buffer &&b) {
                       EXPECT_TRUE(b == expected_req_message);
-                      promise.resolve(request_result::ok, std::move(response_message));
+                      auto result = future(
+                          m_thread_pool.get(),
+                          ftuple(request_result::ok, std::move(response_message)));
                       sync_event.set();
-                      return promise.get_future();
+                      return result;
                   });
 
     m_sut->make_request<

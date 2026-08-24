@@ -133,21 +133,12 @@ namespace vshalygin::rpc {
                                                                  promise_container &own,
                                                                  promise_container &other)
     {
-        cl::promise promise(
-            m_thread_pool,
-            [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
-                return cl::ftuple{ r, std::move(p)};
-            });
-        auto future = promise.get_future();
-
         pipe_endpoint_promise promise_to_destroy;
         std::lock_guard guard(m_mtx);
         if(!other.empty()) {
             auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
-            std::shared_ptr<mem_pipe_endpoint> ans(new mem_pipe_endpoint(is_server, buffers));
+            std::shared_ptr<ipipe_endpoint> ans(new mem_pipe_endpoint(is_server, buffers));
             std::shared_ptr<mem_pipe_endpoint> other_pipe(new mem_pipe_endpoint(!is_server, buffers));
-
-            promise.resolve(pipe_wait_res::success, std::move(ans));
 
             other.modify(other.begin(), [&](promise_data &el) mutable {
                 el.promise.resolve(pipe_wait_res::success, std::move(other_pipe));
@@ -158,20 +149,31 @@ namespace vshalygin::rpc {
             });
 
             other.pop_front();
-        } else {
-            const auto promise_id = m_next_read_promise_id++;
 
-            std::optional<uint64_t> timer_id;
-            if(timeout) {
-                timer_id = m_timer.start([self = weak_from_this(), promise_id, client_id, &own]() {
-                    if(auto s = self.lock()) {
-                        s->remove_promise_by_timeout(own, promise_id);
-                    }
-                }, *timeout);
-            }
-            
-            own.push_back(promise_data{ promise_id , client_id, timer_id, std::move(promise) });
+            return pipe_endpoint_future(
+                m_thread_pool,
+                cl::ftuple(pipe_wait_res::success, std::move(ans)));
         }
+
+        cl::promise promise(
+            m_thread_pool,
+            [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
+                return cl::ftuple{ r, std::move(p)};
+            });
+        auto future = promise.get_future();
+
+        const auto promise_id = m_next_read_promise_id++;
+
+        std::optional<uint64_t> timer_id;
+        if(timeout) {
+            timer_id = m_timer.start([self = weak_from_this(), promise_id, client_id, &own]() {
+                if(auto s = self.lock()) {
+                    s->remove_promise_by_timeout(own, promise_id);
+                }
+            }, *timeout);
+        }
+
+        own.push_back(promise_data{ promise_id , client_id, timer_id, std::move(promise) });
 
         return future;
     }

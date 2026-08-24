@@ -61,7 +61,7 @@ namespace vshalygin::example {
                 auto connection_id = f.first;
                 f.second
                     .get()
-                    .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
+                    .apply([connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
                                                 std::to_string(connection_id) + ", " +
