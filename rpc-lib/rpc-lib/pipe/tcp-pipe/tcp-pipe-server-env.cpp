@@ -18,7 +18,7 @@ using namespace boost::asio::ip;
 
 namespace vshalygin::rpc {
     using pipe_endpoint_future = tcp_pipe_server_env::pipe_endpoint_future;
-    using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
+    using pipe_endpoint_promise = cl::promise<cl::thread_pool, cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
                                           pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
 
     namespace {
@@ -31,7 +31,7 @@ namespace vshalygin::rpc {
                 , m_acceptor(acceptor)
                 , m_promise(m_thread_pool,
                             [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
-                                return ftuple(r, std::move(e));
+                                return cl::ftuple(r, std::move(e));
                             })
             {}
 

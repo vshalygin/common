@@ -12,7 +12,7 @@ namespace vshalygin::rpc::internal {
                                                          cl::thread_pool *thread_pool)
         : win_pipe_overlapped(win_pipe_operation_kind::create)
         , m_full_pipe_name(L"\\\\.\\pipe\\" + pipe_name)
-        , m_promise(thread_pool, [](win_pipe_operation_res r, win::pipe_handle &&p) { return ftuple(r, std::move(p)); })
+        , m_promise(thread_pool, [](win_pipe_operation_res r, win::pipe_handle &&p) { return cl::ftuple(r, std::move(p)); })
     {}
 
     bool win_pipe_create_operation::create_pipe()

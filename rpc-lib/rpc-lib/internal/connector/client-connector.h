@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/types/future.h>
+#include <common-lib/thread/thread.h>
 #include <rpc-lib/types/config.h>
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
@@ -29,7 +29,7 @@ namespace vshalygin::rpc::internal {
 
         ~client_connector();
 
-        future<std::unique_ptr<iconnection>>
+        cl::future<cl::thread_pool, std::unique_ptr<iconnection>>
             create_connection_async(std::shared_ptr<iservice> service, std::chrono::milliseconds pipe_waiting_timeout);
 
     private:

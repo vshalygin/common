@@ -16,8 +16,8 @@ namespace vshalygin::rpc {
     using socket = boost::asio::ip::tcp::socket;
 
     using pipe_endpoint_future = tcp_pipe_client_env::pipe_endpoint_future;
-    using pipe_endpoint_promise = promise<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
-                                          pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
+    using pipe_endpoint_promise = cl::promise<cl::thread_pool, cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
+                                                                               pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
 
     namespace {
         bool is_valid_ipv4(const std::string &value)
@@ -54,31 +54,31 @@ namespace vshalygin::rpc {
                 if(m_was_canceled) {
                     auto r = m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
                     return pipe_endpoint_future(m_thread_pool,
-                                                ftuple(r, std::shared_ptr<ipipe_endpoint>{}));
+                                                cl::ftuple(r, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
                 boost::system::error_code ec;
                 m_socket.open(tcp::v4(), ec);
                 if(ec) {
                     return pipe_endpoint_future(m_thread_pool,
-                                                ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
+                                                cl::ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
                 m_socket.set_option(tcp::no_delay(true), ec);
                 if(ec) {
                     return pipe_endpoint_future(m_thread_pool,
-                                                ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
+                                                cl::ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
                 m_socket.set_option(boost::asio::socket_base::keep_alive(true), ec);
                 if(ec) {
                     return pipe_endpoint_future(m_thread_pool,
-                                                ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
+                                                cl::ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
-                promise promise(m_thread_pool,
-                                [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
-                                    return ftuple(r, std::move(e));
-                                });
+                cl::promise promise(m_thread_pool,
+                                    [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
+                                        return cl::ftuple(r, std::move(e));
+                                    });
                 auto future = promise.get_future();
 
                 m_socket.async_connect(

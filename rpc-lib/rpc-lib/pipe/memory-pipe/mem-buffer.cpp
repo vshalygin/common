@@ -29,7 +29,7 @@ namespace vshalygin::rpc {
             return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
-        promise promise(m_thread_pool, [](pipe_op_res res) { return res; });
+        cl::promise promise(m_thread_pool, [](pipe_op_res res) { return res; });
         auto future = promise.get_future();
 
         auto timeout_point = timeout ? std::chrono::steady_clock::now() + *timeout
@@ -48,7 +48,7 @@ namespace vshalygin::rpc {
     
     mem_buffer::read_future mem_buffer::read_async(const std::optional<std::chrono::milliseconds> &timeout)
     {
-        promise promise(m_thread_pool, [](pipe_op_res res, cl::buffer b) { return ftuple(res, std::move(b)); });
+        cl::promise promise(m_thread_pool, [](pipe_op_res res, cl::buffer b) { return cl::ftuple(res, std::move(b)); });
         auto future = promise.get_future();
 
         std::lock_guard guard(m_mtx);

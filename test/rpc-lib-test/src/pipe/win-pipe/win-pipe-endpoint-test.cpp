@@ -3,6 +3,7 @@
 #include <rpc-lib/consts.h>
 
 #include <common-lib/synchronization/event.h>
+#include <common-lib/thread/thread.h>
 
 #include <gtest/gtest.h>
 
@@ -13,8 +14,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-
-namespace rpc = vshalygin::rpc;
 
 using namespace vshalygin::cl;
 using namespace vshalygin::rpc;
@@ -51,7 +50,7 @@ class WinPipeEndpoint
 protected:
     using create_operation = win_pipe_create_operation;
     using open_operation = win_pipe_open_operation;
-    using pipe_future = rpc::future<ftuple<pipe_wait_res, pipe_handle>>;
+    using pipe_future = future<thread_pool, ftuple<pipe_wait_res, pipe_handle>>;
     using read_future = ipipe_endpoint::read_future;
     using write_future = ipipe_endpoint::write_future;
 

@@ -1,8 +1,6 @@
 #pragma once
 #ifdef _WIN32
-#include <rpc-lib/types/future.h>
-
-#include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread.h>
 #include <common-lib/utils/buffer.h>
 #include <common-lib/synchronization/value-locker.h>
 
@@ -37,7 +35,7 @@ namespace vshalygin::rpc::internal {
 
         void resolve();
 
-        future<ftuple<win_pipe_operation_res, cl::buffer>> get_future();
+        cl::future<cl::thread_pool, cl::ftuple<win_pipe_operation_res, cl::buffer>> get_future();
 
         win_pipe_operation_res get_result() const noexcept;
 
@@ -50,7 +48,7 @@ namespace vshalygin::rpc::internal {
         std::shared_ptr<cl::value_locker<win::pipe_handle>> m_pipe;
         std::vector<cl::buffer> m_buffers;
 
-        promise<ftuple<win_pipe_operation_res, cl::buffer>(win_pipe_operation_res, cl::buffer)> m_promise;
+        cl::promise<cl::thread_pool, cl::ftuple<win_pipe_operation_res, cl::buffer>(win_pipe_operation_res, cl::buffer)> m_promise;
 
         std::atomic<DWORD> m_read_bytes = 0;
 

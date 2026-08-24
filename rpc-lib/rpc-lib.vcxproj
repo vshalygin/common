@@ -86,7 +86,6 @@
     <ClInclude Include="rpc-lib\server-endpoint.h" />
     <ClInclude Include="rpc-lib\types.h" />
     <ClInclude Include="rpc-lib\types\config.h" />
-    <ClInclude Include="rpc-lib\types\future.h" />
     <ClInclude Include="rpc-lib\types\request-result.h" />
     <ClInclude Include="rpc-lib\types\response-result.h" />
   </ItemGroup>

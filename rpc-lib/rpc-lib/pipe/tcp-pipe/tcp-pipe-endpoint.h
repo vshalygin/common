@@ -1,7 +1,7 @@
 #pragma once
 #include "../ipipe-endpoint.h"
 
-#include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread.h>
 
 #include <boost/asio/ip/tcp.hpp>
 

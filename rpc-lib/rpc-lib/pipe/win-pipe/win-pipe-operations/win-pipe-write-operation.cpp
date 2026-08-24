@@ -49,7 +49,7 @@ namespace vshalygin::rpc::internal {
         m_promise.resolve(res);
     }
 
-    future<win_pipe_operation_res> win_pipe_write_operation::get_future()
+    cl::future<cl::thread_pool, win_pipe_operation_res> win_pipe_write_operation::get_future()
     {
         return m_promise.get_future();
     }

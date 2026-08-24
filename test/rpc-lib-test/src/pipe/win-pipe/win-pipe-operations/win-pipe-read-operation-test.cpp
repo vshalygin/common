@@ -251,7 +251,7 @@ protected:
         }
     }
 
-    static read_operation_result get_result(rpc::future<rpc::ftuple<win_pipe_operation_res, buffer>> &future)
+    static read_operation_result get_result(future<thread_pool, ftuple<win_pipe_operation_res, buffer>> &future)
     {
         read_operation_result result;
         future.get().apply([&](win_pipe_operation_res state, buffer &&data) {

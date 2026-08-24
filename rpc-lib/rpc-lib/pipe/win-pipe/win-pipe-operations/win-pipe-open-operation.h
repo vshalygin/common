@@ -1,8 +1,6 @@
 #pragma once
 #ifdef _WIN32
-#include <rpc-lib/types/future.h>
-
-#include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread.h>
 
 #include <thread>
 #include <string>
@@ -17,8 +15,8 @@ namespace vshalygin::rpc::internal {
     class win_pipe_open_operation
     {
     public:
-        using future = future<ftuple<win_pipe_operation_res, win::pipe_handle>>;
-        using promise = promise<ftuple<win_pipe_operation_res, win::pipe_handle>(
+        using future = cl::future<cl::thread_pool, cl::ftuple<win_pipe_operation_res, win::pipe_handle>>;
+        using promise = cl::promise<cl::thread_pool, cl::ftuple<win_pipe_operation_res, win::pipe_handle>(
                                 win_pipe_operation_res, win::pipe_handle &&)>;
 
         explicit win_pipe_open_operation(const std::wstring &pipe_name,

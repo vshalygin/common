@@ -19,8 +19,9 @@ namespace vshalygin::rpc::internal {
         struct request_data;
 
     public:
-        using req_result_future = future<ftuple<request_result, cl::buffer>>;
-        using req_result_promise = promise<ftuple<request_result, cl::buffer>(request_result, cl::buffer)>;
+        using req_result_future = cl::future<cl::thread_pool, cl::ftuple<request_result, cl::buffer>>;
+        using req_result_promise = cl::promise<cl::thread_pool, cl::ftuple<request_result, cl::buffer>(
+                                                                                     request_result, cl::buffer)>;
 
         using request_map = std::unordered_map<uint64_t, request_data>;
 
@@ -148,15 +149,15 @@ namespace vshalygin::rpc::internal {
     {
         std::lock_guard g(m_mtx);
         if(m_state != state::started || !m_transport.is_running()) {
-            return req_result_future(m_thread_pool, ftuple(request_result::failed, cl::buffer{}));
+            return req_result_future(m_thread_pool, cl::ftuple(request_result::failed, cl::buffer{}));
         }
 
         assert(is_request_buffer_valid(message));
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 
-        promise promise(m_thread_pool, [](request_result r, cl::buffer b) {
-            return ftuple(r, std::move(b));
+        cl::promise promise(m_thread_pool, [](request_result r, cl::buffer b) {
+            return cl::ftuple(r, std::move(b));
         });
         auto future = promise.get_future();
 

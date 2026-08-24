@@ -80,7 +80,7 @@ namespace vshalygin::rpc {
                                                                     self->m_iocp_owner,
                                                                     self->m_thread_pool)
                               : std::shared_ptr<win_pipe_endpoint>{};
-                          return ftuple(r, std::move(endpoint));
+                          return cl::ftuple(r, std::move(endpoint));
                       });
     }
 
@@ -118,7 +118,7 @@ namespace vshalygin::rpc {
                                                                     self->m_iocp_owner,
                                                                     self->m_thread_pool)
                               : std::shared_ptr<win_pipe_endpoint>{};
-                          return ftuple(r, std::move(endpoint));
+                          return cl::ftuple(r, std::move(endpoint));
                       });
     }
 

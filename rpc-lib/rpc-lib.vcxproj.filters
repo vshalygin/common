@@ -173,9 +173,6 @@
     <ClInclude Include="rpc-lib\pipe\memory-pipe\mem-pipe-env.h">
       <Filter>pipe\memory-pipe</Filter>
     </ClInclude>
-    <ClInclude Include="rpc-lib\types\future.h">
-      <Filter>types</Filter>
-    </ClInclude>
     <ClInclude Include="rpc-lib\pipe\iclient-pipe-env.h">
       <Filter>pipe</Filter>
     </ClInclude>

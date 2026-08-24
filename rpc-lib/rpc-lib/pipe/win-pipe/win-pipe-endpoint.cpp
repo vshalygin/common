@@ -183,7 +183,7 @@ namespace vshalygin::rpc {
     {
         auto pipe = m_pipe->lock();
         if(pipe->empty()) {
-            return read_future(m_thread_pool, ftuple(pipe_op_res::failed, cl::buffer{}));
+            return read_future(m_thread_pool, cl::ftuple(pipe_op_res::failed, cl::buffer{}));
         }
 
         std::lock_guard gg(m_read_op_mtx);
@@ -208,7 +208,7 @@ namespace vshalygin::rpc {
 
                       self->complete_read_op(id, timer_id);
 
-                      return ftuple(to_pipe_op_res(r), std::move(b));
+                      return cl::ftuple(to_pipe_op_res(r), std::move(b));
                   });
     }
 

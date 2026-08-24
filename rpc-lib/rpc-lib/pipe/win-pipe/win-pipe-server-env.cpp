@@ -4,7 +4,7 @@
 #include "win-pipe-endpoint.h"
 #include "win-pipe-operations/win-pipe-create-operation.h"
 
-#include <rpc-lib/types/future.h>
+#include <common-lib/thread/thread.h>
 
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/timer/multiple-timer.h>
@@ -77,7 +77,7 @@ namespace vshalygin::rpc {
                                                                     self->m_iocp_owner,
                                                                     self->m_thread_pool)
                               : std::shared_ptr<win_pipe_endpoint>{};
-                          return ftuple(r, std::move(endpoint));
+                          return cl::ftuple(r, std::move(endpoint));
                       });
     }
 
@@ -115,7 +115,7 @@ namespace vshalygin::rpc {
                                                                     self->m_iocp_owner,
                                                                     self->m_thread_pool)
                               : std::shared_ptr<win_pipe_endpoint>{};
-                          return ftuple(r, std::move(endpoint));
+                          return cl::ftuple(r, std::move(endpoint));
                       });
     }
 

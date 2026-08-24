@@ -1,7 +1,7 @@
 #pragma once
 #include "../pipe-op-res.h"
 
-#include <rpc-lib/types/future.h>
+#include <common-lib/thread/thread.h>
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/timer/multiple-timer.h>
@@ -26,9 +26,9 @@ namespace vshalygin::rpc {
         explicit mem_buffer(cl::thread_pool *thread_pool);
 
     public:
-        using read_promise = promise<ftuple<pipe_op_res, cl::buffer>(pipe_op_res, cl::buffer)>;
-        using read_future = future<ftuple<pipe_op_res, cl::buffer>>;
-        using write_future = future<pipe_op_res>;
+        using read_promise = cl::promise<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>(pipe_op_res, cl::buffer)>;
+        using read_future = cl::future<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>>;
+        using write_future = cl::future<cl::thread_pool, pipe_op_res>;
 
         static std::shared_ptr<mem_buffer> create(cl::thread_pool *thread_pool);
 
@@ -37,9 +37,9 @@ namespace vshalygin::rpc {
 
         ~mem_buffer();
 
-        future<pipe_op_res> write_async(cl::buffer &&data,
-                                        const std::optional<std::chrono::milliseconds> &timeout);
-        future<ftuple<pipe_op_res, cl::buffer>>
+        cl::future<cl::thread_pool, pipe_op_res> write_async(cl::buffer &&data,
+                                                             const std::optional<std::chrono::milliseconds> &timeout);
+        cl::future<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>>
             read_async(const std::optional<std::chrono::milliseconds> &timeout);
 
         void invalidate(bool cancel_read);

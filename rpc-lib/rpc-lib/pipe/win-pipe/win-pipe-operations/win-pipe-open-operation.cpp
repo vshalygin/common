@@ -6,7 +6,7 @@ namespace vshalygin::rpc::internal {
                                                      cl::thread_pool *thread_pool)
         : m_full_pipe_name(L"\\\\.\\pipe\\" + pipe_name)
         , m_promise(thread_pool,
-                    [](win_pipe_operation_res r, win::pipe_handle &&p) { return ftuple(r, std::move(p)); })
+                    [](win_pipe_operation_res r, win::pipe_handle &&p) { return cl::ftuple(r, std::move(p)); })
     {}
 
     win_pipe_open_operation::~win_pipe_open_operation()
@@ -38,7 +38,7 @@ namespace vshalygin::rpc::internal {
         m_cancel_cv.notify_all();
     }
 
-    future<ftuple<win_pipe_operation_res, win::pipe_handle>> win_pipe_open_operation::get_future()
+    cl::future<cl::thread_pool, cl::ftuple<win_pipe_operation_res, win::pipe_handle>> win_pipe_open_operation::get_future()
     {
         return m_promise.get_future();
     }

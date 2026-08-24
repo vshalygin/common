@@ -1,7 +1,7 @@
 #pragma once
 #include "pipe-op-res.h"
 
-#include <rpc-lib/types/future.h>
+#include <common-lib/thread/thread.h>
 
 #include <common-lib/utils/buffer.h>
 #include <common-lib/thread/thread-pool/thread-pool-task.h>
@@ -29,8 +29,8 @@ namespace vshalygin::rpc {
     class ipipe_endpoint
     {
     public:
-        using read_future = future<ftuple<pipe_op_res, cl::buffer>>;
-        using write_future = future<pipe_op_res>;
+        using read_future = cl::future<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>>;
+        using write_future = cl::future<cl::thread_pool, pipe_op_res>;
 
         virtual ~ipipe_endpoint() = default;
 

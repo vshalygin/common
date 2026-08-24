@@ -1,15 +1,14 @@
 #pragma once
-#include <rpc-lib/types/future.h>
 #include <rpc-lib/types/request-result.h>
 
 #include <common-lib/utils/buffer.h>
-#include <common-lib/thread/thread-pool/thread-pool-task.h>
+#include <common-lib/thread/thread.h>
 
 namespace vshalygin::rpc::internal {
     class iconnection
     {
     public:
-        using req_result_future = future<ftuple<request_result, cl::buffer>>;
+        using req_result_future = cl::future<cl::thread_pool, cl::ftuple<request_result, cl::buffer>>;
 
         virtual ~iconnection() = default;
 

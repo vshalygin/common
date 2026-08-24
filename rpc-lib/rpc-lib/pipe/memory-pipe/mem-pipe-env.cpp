@@ -133,10 +133,10 @@ namespace vshalygin::rpc {
                                                                  promise_container &own,
                                                                  promise_container &other)
     {
-        promise promise(
+        cl::promise promise(
             m_thread_pool,
             [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
-                return ftuple{ r, std::move(p)};
+                return cl::ftuple{ r, std::move(p)};
             });
         auto future = promise.get_future();
 

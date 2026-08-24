@@ -1,9 +1,8 @@
 #pragma once
 #include <rpc-lib/pipe/pipe-op-res.h>
-#include <rpc-lib/types/future.h>
 
 #include <common-lib/utils/buffer.h>
-#include <common-lib/thread/thread-pool/thread-pool-task.h>
+#include <common-lib/thread/thread.h>
 
 namespace vshalygin::rpc {
     class ipipe_endpoint;
@@ -21,8 +20,8 @@ namespace vshalygin::rpc::internal {
 
         ~transport();
 
-        using send_future = future<pipe_op_res>;
-        using recv_future = future<ftuple<pipe_op_res, cl::buffer>>;
+        using send_future = cl::future<cl::thread_pool, pipe_op_res>;
+        using recv_future = cl::future<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>>;
 
         send_future send_async(cl::buffer &&message);
         recv_future recv_async();

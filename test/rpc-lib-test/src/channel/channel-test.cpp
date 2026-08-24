@@ -69,8 +69,8 @@ protected:
 
     void call_method()
     {
-        auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
-            return rpc::ftuple(r, std::move(m));
+        promise promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
+            return ftuple(r, std::move(m));
         });
         promise.get_future()
             .then(m_request_callback.AsStdFunction());
@@ -95,8 +95,8 @@ protected:
         auto response_message2 = std::make_unique<proto::response_message>();
         m_response_message_ptr2 = response_message2.get();
         m_response_message_ptr2->set_data2(35);
-        auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
-            return rpc::ftuple(r, std::move(m));
+        promise promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
+            return ftuple(r, std::move(m));
         });
         promise.get_future()
             .then(m_request_callback.AsStdFunction());
@@ -140,8 +140,8 @@ TEST_F(Channel, MakesRequestWithCorrectRequestMessage)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -161,11 +161,11 @@ TEST_F(Channel, MakesRequestWithCorrectRequestMessage)
 
 TEST_F(Channel, IncrementsMessageNumberOnEveryRequest)
 {
-    auto promise1 = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise1(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
-    auto promise2 = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise2(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -184,8 +184,8 @@ TEST_F(Channel, SetsControllerFailedIfCallbackCalledWithErrorCode)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -206,8 +206,8 @@ TEST_F(Channel, SetsControllerFailedIfParsingResponseFailed)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -227,8 +227,8 @@ TEST_F(Channel, SetsControllerFailedIfResponseIsInvalid)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -248,8 +248,8 @@ TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageType)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -269,8 +269,8 @@ TEST_F(Channel, SetsControllerFailedIfResponseHadWrongMessageNumber)
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -290,8 +290,8 @@ TEST_F(Channel, SetsControllerFailedWithRequestNotProcessedCodeIfResponseHasFail
         .Times(1)
         .WillOnce([sync_event]() { sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)
@@ -319,8 +319,8 @@ TEST_F(Channel, ParsesResponse)
         .Times(1)
         .WillOnce([&output_response, sync_event](request_result, auto ans) { output_response = *ans;  sync_event->set(); });
 
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     EXPECT_CALL(*m_connection_ptr, request_async)

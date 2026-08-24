@@ -34,12 +34,13 @@ namespace vshalygin::rpc::internal {
 
         ~win_pipe_iocp_owner();
 
-        future<ftuple<pipe_wait_res, win::pipe_handle>> create_pipe_async(
+        cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>> create_pipe_async(
             std::shared_ptr<win_pipe_create_operation> overlapped);
         void cancel_create(
             std::shared_ptr<win_pipe_create_operation> overlapped, bool by_timeout);
 
-        future<ftuple<pipe_wait_res, win::pipe_handle>> open_pipe_async(win_pipe_open_operation *op);
+        cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>> open_pipe_async(
+            win_pipe_open_operation *op);
 
         void read_async(std::shared_ptr<win_pipe_read_operation> overlapped);
         void cancel_read(std::shared_ptr<win_pipe_read_operation> overlapped);

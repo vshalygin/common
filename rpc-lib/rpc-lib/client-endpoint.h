@@ -4,7 +4,7 @@
 #include <rpc-lib/internal/connector/client-connector.h>
 #include <rpc-lib/internal/service/service.h>
 
-#include <common-lib/thread/thread-pool/thread-pool.h>
+#include <common-lib/thread/thread.h>
 
 #include <memory>
 #include <mutex>
@@ -17,11 +17,11 @@ namespace vshalygin::rpc {
     class client_endpoint
     {
     public:
-        using disconnect_future = future<void>;
-        using connect_future = future<ftuple<disconnect_future>>;
+        using disconnect_future = cl::future<cl::thread_pool, void>;
+        using connect_future = cl::future<cl::thread_pool, cl::ftuple<disconnect_future>>;
 
         template<typename Response>
-        using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
+        using request_future = cl::future<cl::thread_pool, cl::ftuple<request_result, std::unique_ptr<Response>>>;
 
         explicit client_endpoint(cl::thread_pool *thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
@@ -99,11 +99,7 @@ namespace vshalygin::rpc {
     {
         std::lock_guard guard(m_mtx);
         if(!m_endpoint || !m_endpoint->is_connected()) {
-            promise p(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
-                return ftuple{ r, std::move(m) };
-            });
-            p.resolve(request_result::no_connection, {});
-            return p.get_future();
+            return cl::future(m_thread_pool, cl::ftuple(request_result::no_connection, std::unique_ptr<Response>{}));
         }
 
         return m_endpoint->template make_request<Request, Response, StubMethod>(stub_method, req);
@@ -118,7 +114,7 @@ namespace vshalygin::rpc {
 
         return f.then([self = this->weak_from_this()](std::unique_ptr<internal::iconnection> &&connection) {
             std::shared_ptr s(self);
-            return ftuple(s->establish_endpoint(std::move(connection)));
+            return cl::ftuple(s->establish_endpoint(std::move(connection)));
         });
     }
 
@@ -143,7 +139,7 @@ namespace vshalygin::rpc {
     auto client_endpoint<GServerServiceStub, GClientService>::impl::establish_endpoint(
         std::unique_ptr<internal::iconnection> &&c)
     {
-        promise disconnect_promise(m_thread_pool, []() {});
+        cl::promise disconnect_promise(m_thread_pool, []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);

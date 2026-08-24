@@ -30,7 +30,7 @@ namespace vshalygin::rpc::internal {
         : win_pipe_overlapped(win_pipe_operation_kind::read)
         , m_pipe(std::move(pipe))
         , m_promise(thread_pool,
-                    [](win_pipe_operation_res r, cl::buffer b) { return ftuple(r, std::move(b)); })
+                    [](win_pipe_operation_res r, cl::buffer b) { return cl::ftuple(r, std::move(b)); })
     {
         m_buffers.push_back(cl::buffer(8192));
     }
@@ -99,7 +99,7 @@ namespace vshalygin::rpc::internal {
         }
     }
 
-    future<ftuple<win_pipe_operation_res, cl::buffer>> win_pipe_read_operation::get_future()
+    cl::future<cl::thread_pool, cl::ftuple<win_pipe_operation_res, cl::buffer>> win_pipe_read_operation::get_future()
     {
         return m_promise.get_future();
     }

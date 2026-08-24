@@ -20,10 +20,10 @@ TEST(RequestController, ExecutesCallbackOnDone)
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     bool is_called = false;
-    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
-                                           is_called = true;
-                                           return rpc::ftuple(r, std::move(m));
-                                       });
+    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+                               is_called = true;
+                               return ftuple(r, std::move(m));
+                           });
     auto future = promise.get_future();
 
     {
@@ -40,9 +40,9 @@ TEST(RequestController, ExecutesCallbackWithRequestResultCode)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
-    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
         EXPECT_EQ(request_result::response_parse_error, r);
-        return rpc::ftuple(r, std::move(m));
+        return ftuple(r, std::move(m));
     });
     auto future = promise.get_future();
 
@@ -58,9 +58,9 @@ TEST(RequestController, ExecutesCallbackWithResponseMessage)
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     auto response_ptr = response.get();
-    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
         EXPECT_EQ(response_ptr, m.get());
-        return rpc::ftuple(r, std::move(m));
+        return ftuple(r, std::move(m));
     });
     auto future = promise.get_future();
 
@@ -75,9 +75,9 @@ TEST(RequestController, RpcControllerIsCastableToIRequestController)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
-    auto promise = rpc::promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
+    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
         EXPECT_EQ(request_result::send_canceled, r);
-        return rpc::ftuple(r, std::move(m));
+        return ftuple(r, std::move(m));
     });
     auto future = promise.get_future();
 

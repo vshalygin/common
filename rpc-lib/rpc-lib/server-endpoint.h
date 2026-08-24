@@ -31,7 +31,7 @@ namespace vshalygin::rpc {
     {
     public:
         template<typename Response>
-        using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
+        using request_future = cl::future<cl::thread_pool, cl::ftuple<request_result, std::unique_ptr<Response>>>;
 
         using on_connection_change_t = std::function<void(uint64_t, connection_state)>;
         using on_change_state_t = std::function<void(server_endpoint_state)>;
@@ -129,7 +129,7 @@ namespace vshalygin::rpc {
     void server_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
         uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
-        promise disconnect_promise(m_thread_pool, []() {});
+        cl::promise disconnect_promise(m_thread_pool, []() {});
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);
@@ -221,11 +221,7 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
         auto it = m_endpoints_map.find(connection_id);
         if(it == m_endpoints_map.end() || !it->second->is_connected()) {
-            promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
-                return ftuple{ r, std::move(m) };
-            });
-            promise.resolve(request_result::no_connection, {});
-            return promise.get_future();
+            return cl::future(m_thread_pool, cl::ftuple(request_result::no_connection, std::unique_ptr<Response>{}));
         }
 
         return it->second->template make_request<Request, Response, StubMethod>(stub_method, req);

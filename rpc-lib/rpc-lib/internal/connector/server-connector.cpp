@@ -2,13 +2,13 @@
 
 #include <rpc-lib/pipe/iserver-pipe-env.h>
 #include <rpc-lib/pipe/ipipe-endpoint.h>
-#include <rpc-lib/types/future.h>
 #include <rpc-lib/authenticator/iauthenticator.h>
 #include <rpc-lib/internal/connection/connection.h>
 #include <rpc-lib/internal/service/iservice.h>
 
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/thread/thread-pool/strand.h>
+#include <common-lib/thread/thread.h>
 
 #include <mutex>
 #include <unordered_map>
@@ -25,8 +25,8 @@ namespace vshalygin::rpc::internal {
     class server_connector::impl
         : public std::enable_shared_from_this<impl>
     {
-        using connect_pipe_future = future<std::shared_ptr<ipipe_endpoint>>;
-        using connection_future = future<void>;
+        using connect_pipe_future = cl::future<cl::thread_pool, std::shared_ptr<ipipe_endpoint>>;
+        using connection_future = cl::future<cl::thread_pool, void>;
 
         using create_service_t = std::function<std::unique_ptr<iservice>(uint64_t)>;
         using on_new_connection_t = std::function<void(uint64_t, std::unique_ptr<iconnection>)>;
@@ -179,8 +179,8 @@ namespace vshalygin::rpc::internal {
                                           });
 
         auto connection_id = m_next_connection_id++;
-        promise promise(m_thread_pool,
-                       [self = weak_from_this(), connection_id, is_running_sp](std::shared_ptr<ipipe_endpoint> pe) {
+        cl::promise promise(m_thread_pool,
+                           [self = weak_from_this(), connection_id, is_running_sp](std::shared_ptr<ipipe_endpoint> pe) {
             std::shared_ptr s(self);
             return pe->read_async(s->m_config.handshake_timeout)
                 .then([pe, self](pipe_op_res r, cl::buffer &&b) {

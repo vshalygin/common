@@ -11,8 +11,6 @@
 #include <string>
 #include <system_error>
 
-namespace rpc = vshalygin::rpc;
-
 using namespace vshalygin::cl;
 using namespace vshalygin::rpc;
 using namespace vshalygin::rpc::internal;
@@ -223,7 +221,7 @@ protected:
     }
 
     static win_pipe_operation_res get_result(
-        rpc::future<win_pipe_operation_res> &future)
+        future<thread_pool, win_pipe_operation_res> &future)
     {
         auto result = win_pipe_operation_res::unknown;
         future.get().apply([&](win_pipe_operation_res state) { result = state; });

@@ -1,7 +1,7 @@
 #pragma once
 #include "pipe-wait-res.h"
 
-#include <rpc-lib/types/future.h>
+#include <common-lib/thread/thread.h>
 
 #include <memory>
 #include <chrono>
@@ -12,7 +12,7 @@ namespace vshalygin::rpc {
     class iserver_pipe_env
     {
     public:
-        using pipe_endpoint_future = future<ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>>;
+        using pipe_endpoint_future = cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>>;
 
         virtual ~iserver_pipe_env() = default;
 

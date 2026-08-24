@@ -28,8 +28,8 @@ namespace vshalygin::rpc::internal {
         impl(const impl &) = delete;
         impl &operator=(const impl &) = delete;
 
-        future<std::unique_ptr<iconnection>> create_connection_async(std::shared_ptr<iservice> service,
-                                                                     std::chrono::milliseconds pipe_waiting_timeout);
+        cl::future<cl::thread_pool, std::unique_ptr<iconnection>>
+            create_connection_async(std::shared_ptr<iservice> service, std::chrono::milliseconds pipe_waiting_timeout);
 
         void cancel_connect_waiting();
 
@@ -61,7 +61,7 @@ namespace vshalygin::rpc::internal {
         , m_ping_timeout(config.ping_timeout)
     {}
     
-    future<std::unique_ptr<iconnection>>
+    cl::future<cl::thread_pool, std::unique_ptr<iconnection>>
         client_connector::impl::create_connection_async(std::shared_ptr<iservice> service,
                                                         std::chrono::milliseconds pipe_waiting_timeout)
     {
@@ -127,7 +127,7 @@ namespace vshalygin::rpc::internal {
         m_impl->cancel_connect_waiting();
     }
 
-    future<std::unique_ptr<iconnection>>
+    cl::future<cl::thread_pool, std::unique_ptr<iconnection>>
         client_connector::create_connection_async(std::shared_ptr<iservice> service,
                                                   std::chrono::milliseconds pipe_waiting_timeout)
     {

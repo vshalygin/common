@@ -49,7 +49,7 @@ namespace vshalygin::rpc::internal {
         m_write_iocp_thread.stop();
     }
     
-    future<ftuple<pipe_wait_res, win::pipe_handle>> win_pipe_iocp_owner::create_pipe_async(
+    cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>> win_pipe_iocp_owner::create_pipe_async(
         std::shared_ptr<win_pipe_create_operation> overlapped)
     {
         auto f = overlapped->get_future();
@@ -80,11 +80,12 @@ namespace vshalygin::rpc::internal {
         });
 
         return f.then([](win_pipe_operation_res r, win::pipe_handle &&p) mutable {
-                          return ftuple(to_pipe_wait_res(r), std::move(p));
+                          return cl::ftuple(to_pipe_wait_res(r), std::move(p));
                       });
     }
 
-    future<ftuple<pipe_wait_res, win::pipe_handle>> win_pipe_iocp_owner::open_pipe_async(win_pipe_open_operation *op)
+    cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>>
+        win_pipe_iocp_owner::open_pipe_async(win_pipe_open_operation *op)
     {
         auto f = op->get_future();
         op->start();
@@ -95,7 +96,7 @@ namespace vshalygin::rpc::internal {
                                   p.get(),
                                   static_cast<ULONG_PTR>(win_pipe_iocp_key::process_operation));
                           }
-                          return ftuple(to_pipe_wait_res(r), std::move(p));
+                          return cl::ftuple(to_pipe_wait_res(r), std::move(p));
                       });
     }
 

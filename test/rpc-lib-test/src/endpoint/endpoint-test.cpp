@@ -86,8 +86,8 @@ TEST_F(Endpoint, TestSetDisconnectHandler)
 
 TEST_F(Endpoint, TestMakeRequest)
 {
-    auto promise = rpc::promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return rpc::ftuple(r, std::move(b));
+    promise promise(m_thread_pool.get(), [](request_result r, buffer &&b) {
+        return ftuple(r, std::move(b));
     });
 
     proto::request_message request;

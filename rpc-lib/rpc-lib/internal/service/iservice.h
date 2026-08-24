@@ -1,5 +1,5 @@
 #pragma once
-#include <rpc-lib/types/future.h>
+#include <common-lib/thread/thread.h>
 
 #include <common-lib/utils/buffer.h>
 
@@ -9,6 +9,6 @@ namespace vshalygin::rpc::internal {
     public:
         virtual ~iservice() = default;
 
-        virtual future<cl::buffer> process_request_async(cl::buffer &&request_message) = 0;
+        virtual cl::future<cl::thread_pool, cl::buffer> process_request_async(cl::buffer &&request_message) = 0;
     };
 }

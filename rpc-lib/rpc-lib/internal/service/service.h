@@ -4,6 +4,8 @@
 #include <rpc-lib/internal/controller/response-controller.h>
 #include <rpc-lib/internal/transfer-message/transfer-message.h>
 
+#include <common-lib/thread/thread.h>
+
 #pragma warning(push, 0)
 #include <google/protobuf/message.h>
 #pragma warning(pop)
@@ -26,7 +28,7 @@ namespace vshalygin::rpc::internal {
         service(service &) = delete;
         service &operator=(service &) = delete;
 
-        future<cl::buffer> process_request_async(cl::buffer &&request_message) override;
+        cl::future<cl::thread_pool, cl::buffer> process_request_async(cl::buffer &&request_message) override;
 
     private:
         static bool parse_proto_message(std::shared_ptr<Message> msg, cl::cbuffer_view buffer);
@@ -56,9 +58,9 @@ namespace vshalygin::rpc::internal {
     {}
 
     template<typename Service>
-    future<cl::buffer> service<Service>::process_request_async(cl::buffer &&request_message)
+    cl::future<cl::thread_pool, cl::buffer> service<Service>::process_request_async(cl::buffer &&request_message)
     {
-        promise promise(m_thread_pool, [](cl::buffer &&b) { return std::move(b); });
+        cl::promise promise(m_thread_pool, [](cl::buffer &&b) { return std::move(b); });
         auto future = promise.get_future();
 
         m_thread_pool->post([gservice = m_gservice,

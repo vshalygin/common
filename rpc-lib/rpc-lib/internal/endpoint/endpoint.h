@@ -1,11 +1,9 @@
 #pragma once
-#include <rpc-lib/types/future.h>
 #include <rpc-lib/internal/connection/iconnection.h>
 #include <rpc-lib/internal/channel/channel.h>
 #include <rpc-lib/internal/controller/request-controller.h>
 
-#include <common-lib/thread/thread-pool/thread-pool.h>
-#include <common-lib/thread/thread-pool/thread-pool-task.h>
+#include <common-lib/thread/thread.h>
 
 #include <memory>
 
@@ -15,7 +13,7 @@ namespace vshalygin::rpc::internal {
     {
     public:
         template<typename Response>
-        using request_future = future<ftuple<request_result, std::unique_ptr<Response>>>;
+        using request_future = cl::future<cl::thread_pool, cl::ftuple<request_result, std::unique_ptr<Response>>>;
 
         explicit endpoint(std::unique_ptr<iconnection> connection,
                           cl::thread_pool *thread_pool);
@@ -53,8 +51,8 @@ namespace vshalygin::rpc::internal {
     endpoint<GServiceStub>::request_future<Response>
         endpoint<GServiceStub>::make_request(StubMethod stub_method, const Request &req)
     {
-        promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
-            return ftuple{ r, std::move(m) };
+        cl::promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
+            return cl::ftuple{ r, std::move(m) };
         });
         auto future = promise.get_future();
 
