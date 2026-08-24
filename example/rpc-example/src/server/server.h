@@ -32,13 +32,14 @@ namespace vshalygin::example {
             proto::message message;
             message.set_data(msg);
 
-            m_endpoint.make_request<proto::message, proto::null_message, stub_method>(
+            m_endpoint.make_request<proto::message, proto::message, stub_method>(
                 connection_id , &proto::client_service_Stub::accept_message, message)
                 .get()
-                .apply([connection_id](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
+                .apply([connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
-                                                std::to_string(connection_id) + "\n");
+                                                std::to_string(connection_id) + ", " +
+                                                "client answer: '" + m->data() + "'\n");
                            } else {
                                write_to_console("server failed to send a message to client with connection id " +
                                                 std::to_string(connection_id) + ": " + to_string(r) + "\n");
@@ -53,17 +54,18 @@ namespace vshalygin::example {
             proto::message message;
             message.set_data(msg);
 
-            auto futures = m_endpoint.make_request_all<proto::message, proto::null_message, stub_method>(
+            auto futures = m_endpoint.make_request_all<proto::message, proto::message, stub_method>(
                 &proto::client_service_Stub::accept_message, message);
 
             for(auto &f : futures) {
                 auto connection_id = f.first;
                 f.second
                     .get()
-                    .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::null_message> &&) {
+                    .apply([this, connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
-                                                std::to_string(connection_id) + "\n");
+                                                std::to_string(connection_id) + ", " +
+                                                "client answer: '" + m->data() + "'\n");
                            } else {
                                write_to_console("server failed to send a message to client with connection id " +
                                                 std::to_string(connection_id) + ": " + to_string(r) + "\n");

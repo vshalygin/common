@@ -8,13 +8,10 @@ message message {
     string data = 1;
 }
 
-message null_message {
-}
-
 service client_service {
-    rpc accept_message (message) returns (null_message);
+    rpc accept_message (message) returns (message);
 }
 
 service server_service {
-    rpc accept_message (message) returns (null_message);
+    rpc accept_message (message) returns (message);
 }

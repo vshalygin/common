@@ -21,12 +21,13 @@ namespace vshalygin::example {
 
         void accept_message(::google::protobuf::RpcController * /*controller*/,
                             const proto::message *request,
-                            proto::null_message * /*response*/,
+                            proto::message *response,
                             ::google::protobuf::Closure *done) override
         {
             rpc::closure_guard closure_guard(done);
 
             write_to_console("client " + std::to_string(m_client_id) + " received: '" + request->data() + "'\n");
+            response->set_data("client " + std::to_string(m_client_id) + " processed message");
         }
 
     private:

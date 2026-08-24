@@ -20,7 +20,7 @@ namespace vshalygin::example {
 
         void accept_message(::google::protobuf::RpcController *controller,
                             const proto::message *request,
-                            proto::null_message * /*response*/,
+                            proto::message *response,
                             ::google::protobuf::Closure *done) override
         {
             rpc::closure_guard closure_guard(done);
@@ -29,6 +29,7 @@ namespace vshalygin::example {
 
             write_to_console("server received: '" + request->data() + "' from connection " +
                              std::to_string(connection_id) + "\n");
+            response->set_data("server processed message");
         }
     };
 }
