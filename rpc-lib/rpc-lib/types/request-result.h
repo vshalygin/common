@@ -5,7 +5,8 @@
 namespace vshalygin::rpc {
     enum class request_result : unsigned char
     {
-        ok = 0,
+        ok,
+        unknown_error,
         timeout,
         canceled,
         failed,
@@ -16,8 +17,7 @@ namespace vshalygin::rpc {
         request_not_processed,
         invalid_response,
         response_parse_error,
-        no_connection,
-        unknown_error
+        no_connection
     };
 
     inline bool is_success(request_result rc)
