@@ -30,12 +30,7 @@ add_protobuf_sources(
     rpc-example
     "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/services.proto"
 )
-configure_msvc_target(rpc-example CONSOLE)
-
-set_source_files_properties(
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/services.pb.cc"
-    PROPERTIES COMPILE_OPTIONS /WX-
-)
+configure_target(rpc-example CONSOLE)
 
 set_target_properties(rpc-example PROPERTIES
     FOLDER "Examples"

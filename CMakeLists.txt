@@ -4,17 +4,17 @@ project(common
     LANGUAGES CXX
 )
 
-if(NOT WIN32)
-    message(FATAL_ERROR "The current CMake build supports Windows only.")
+if(NOT MSVC AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR
+        "The current CMake build supports MSVC and GCC only."
+    )
 endif()
 
-if(NOT MSVC)
-    message(FATAL_ERROR "The current CMake build supports the MSVC compiler only.")
+if(CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING
+        "Supported build configurations" FORCE
+    )
 endif()
-
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING
-    "Supported build configurations" FORCE
-)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,12 +30,16 @@ include(cmake/ProjectOptions.cmake)
 include(cmake/ExternalDependencies.cmake)
 
 add_subdirectory(common-lib)
-add_subdirectory(win-lib)
+if(WIN32)
+    add_subdirectory(win-lib)
+endif()
 add_subdirectory(rpc-lib)
 
 if(BUILD_TESTS)
     add_subdirectory(test/common-lib-test)
-    add_subdirectory(test/win-lib-test)
+    if(WIN32)
+        add_subdirectory(test/win-lib-test)
+    endif()
     add_subdirectory(test/rpc-lib-test)
 endif()
 

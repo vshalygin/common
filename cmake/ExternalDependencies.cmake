@@ -1,57 +1,73 @@
-set(EXTERNAL_SDK "$ENV{EXTERNAL_SDK}" CACHE PATH
-    "Root of the prebuilt external SDK"
-)
+find_package(Threads REQUIRED)
 
-if(EXTERNAL_SDK STREQUAL "")
-    message(FATAL_ERROR
-        "EXTERNAL_SDK is not set. Set the environment variable or pass "
-        "-DEXTERNAL_SDK=<path>."
-    )
-endif()
-set(BOOST_ROOT
-    "${EXTERNAL_SDK}/Boost/boost_1_86_0_s"
-    CACHE PATH "Root of the prebuilt Boost 1.86 SDK"
-)
-set(PROTOBUF_ROOT
-    "${EXTERNAL_SDK}/Protobuf/protobuf-33.0"
-    CACHE PATH "Root of the prebuilt Protobuf 33.0 SDK"
-)
-set(ABSL_ROOT
-    "${EXTERNAL_SDK}/absl"
-    CACHE PATH "Root of the prebuilt Abseil SDK"
-)
-set(PROTOC_EXECUTABLE
-    "${PROTOBUF_ROOT}/protoc.exe"
-    CACHE FILEPATH "Path to the protoc executable"
-)
 set(GOOGLETEST_ROOT
     "${PROJECT_SOURCE_DIR}/submodules/googletest"
     CACHE PATH "Root of the GoogleTest source tree"
 )
 
-set(_required_sdk_paths
-    "${BOOST_ROOT}/include"
-    "${BOOST_ROOT}/x64"
-    "${PROTOBUF_ROOT}/src"
-    "${PROTOBUF_ROOT}/lib"
-    "${PROTOBUF_ROOT}/lib/libutf8_debug"
-    "${PROTOBUF_ROOT}/lib/libutf8_release"
-    "${ABSL_ROOT}/src"
-    "${ABSL_ROOT}/lib/debug"
-    "${ABSL_ROOT}/lib/release"
-    "${PROTOC_EXECUTABLE}"
+set(_required_common_paths
     "${GOOGLETEST_ROOT}/googlemock/src/gmock-all.cc"
     "${GOOGLETEST_ROOT}/googletest/src/gtest-all.cc"
 )
 
-foreach(required_path IN LISTS _required_sdk_paths)
+foreach(required_path IN LISTS _required_common_paths)
     if(NOT EXISTS "${required_path}")
         message(FATAL_ERROR
             "Required dependency path does not exist: ${required_path}\n"
-            "Set EXTERNAL_SDK or the corresponding dependency cache variable."
+            "Initialize the corresponding submodule or set its cache variable."
         )
     endif()
 endforeach()
+
+if(MSVC)
+    set(EXTERNAL_SDK "$ENV{EXTERNAL_SDK}" CACHE PATH
+        "Root of the prebuilt external SDK"
+    )
+
+    if(EXTERNAL_SDK STREQUAL "")
+        message(FATAL_ERROR
+            "EXTERNAL_SDK is not set. Set the environment variable or pass "
+            "-DEXTERNAL_SDK=<path>."
+        )
+    endif()
+    set(BOOST_ROOT
+        "${EXTERNAL_SDK}/Boost/boost_1_86_0_s"
+        CACHE PATH "Root of the prebuilt Boost 1.86 SDK"
+    )
+    set(PROTOBUF_ROOT
+        "${EXTERNAL_SDK}/Protobuf/protobuf-33.0"
+        CACHE PATH "Root of the prebuilt Protobuf 33.0 SDK"
+    )
+    set(ABSL_ROOT
+        "${EXTERNAL_SDK}/absl"
+        CACHE PATH "Root of the prebuilt Abseil SDK"
+    )
+    set(PROTOC_EXECUTABLE
+        "${PROTOBUF_ROOT}/protoc.exe"
+        CACHE FILEPATH "Path to the protoc executable"
+    )
+
+    set(_required_sdk_paths
+        "${BOOST_ROOT}/include"
+        "${BOOST_ROOT}/x64"
+        "${PROTOBUF_ROOT}/src"
+        "${PROTOBUF_ROOT}/lib"
+        "${PROTOBUF_ROOT}/lib/libutf8_debug"
+        "${PROTOBUF_ROOT}/lib/libutf8_release"
+        "${ABSL_ROOT}/src"
+        "${ABSL_ROOT}/lib/debug"
+        "${ABSL_ROOT}/lib/release"
+        "${PROTOC_EXECUTABLE}"
+    )
+
+    foreach(required_path IN LISTS _required_sdk_paths)
+        if(NOT EXISTS "${required_path}")
+            message(FATAL_ERROR
+                "Required dependency path does not exist: ${required_path}\n"
+                "Set EXTERNAL_SDK or the corresponding dependency cache variable."
+            )
+        endif()
+    endforeach()
 
 add_library(sdk-boost INTERFACE)
 add_library(sdk::boost ALIAS sdk-boost)
@@ -183,6 +199,40 @@ target_link_libraries(sdk-absl INTERFACE
     ${_absl_libraries}
 )
 
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    find_package(Boost 1.74 REQUIRED COMPONENTS thread)
+    find_package(Protobuf REQUIRED)
+
+    if(NOT Protobuf_PROTOC_EXECUTABLE)
+        message(FATAL_ERROR
+            "The protobuf compiler was not found. Install protobuf-compiler."
+        )
+    endif()
+
+    set(PROTOC_EXECUTABLE
+        "${Protobuf_PROTOC_EXECUTABLE}"
+        CACHE FILEPATH "Path to the protoc executable" FORCE
+    )
+
+    add_library(sdk-boost INTERFACE)
+    add_library(sdk::boost ALIAS sdk-boost)
+    if(TARGET Boost::headers)
+        target_link_libraries(sdk-boost INTERFACE Boost::headers)
+    else()
+        target_link_libraries(sdk-boost INTERFACE Boost::boost)
+    endif()
+    target_link_libraries(sdk-boost INTERFACE Boost::thread)
+
+    add_library(sdk-protobuf INTERFACE)
+    add_library(sdk::protobuf ALIAS sdk-protobuf)
+    target_link_libraries(sdk-protobuf INTERFACE protobuf::libprotobuf)
+
+    # New Protobuf releases use Abseil and expose it transitively through
+    # protobuf::libprotobuf. Older distro releases do not require it.
+    add_library(sdk-absl INTERFACE)
+    add_library(sdk::absl ALIAS sdk-absl)
+endif()
+
 function(add_googletest_sources target)
     set(googletest_sources
         "${GOOGLETEST_ROOT}/googlemock/src/gmock-all.cc"
@@ -190,12 +240,18 @@ function(add_googletest_sources target)
     )
 
     target_sources("${target}" PRIVATE ${googletest_sources})
-    target_include_directories("${target}" PRIVATE
+    target_include_directories("${target}" SYSTEM PRIVATE
         "${GOOGLETEST_ROOT}/googletest"
         "${GOOGLETEST_ROOT}/googlemock"
         "${GOOGLETEST_ROOT}/googletest/include"
         "${GOOGLETEST_ROOT}/googlemock/include"
     )
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set_source_files_properties(
+            ${googletest_sources}
+            PROPERTIES COMPILE_OPTIONS -w
+        )
+    endif()
 endfunction()
 
 function(add_protobuf_sources target proto_file)
@@ -231,5 +287,10 @@ function(add_protobuf_sources target proto_file)
         "${proto_file}"
         "${generated_source}"
         "${generated_header}"
+    )
+    set_source_files_properties(
+        "${generated_source}"
+        PROPERTIES COMPILE_OPTIONS
+            "$<$<CXX_COMPILER_ID:MSVC>:/W0>;$<$<CXX_COMPILER_ID:GNU>:-w>"
     )
 endfunction()

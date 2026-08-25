@@ -68,13 +68,15 @@ target_link_libraries(common-lib-test PRIVATE
 )
 
 add_googletest_sources(common-lib-test)
-configure_msvc_target(common-lib-test CONSOLE)
+configure_target(common-lib-test CONSOLE)
 enable_release_link_optimizations(common-lib-test)
 
-set_source_files_properties(
-    src/thread/future/future-test.cpp
-    PROPERTIES COMPILE_OPTIONS /bigobj
-)
+if(MSVC)
+    set_source_files_properties(
+        src/thread/future/future-test.cpp
+        PROPERTIES COMPILE_OPTIONS /bigobj
+    )
+endif()
 
 set_target_properties(common-lib-test PROPERTIES
     FOLDER "Tests"

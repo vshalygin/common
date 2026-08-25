@@ -19,7 +19,7 @@ target_include_directories(win-lib PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-configure_msvc_target(win-lib LIBRARY)
+configure_target(win-lib LIBRARY)
 
 set_target_properties(win-lib PROPERTIES
     FOLDER "Libraries"

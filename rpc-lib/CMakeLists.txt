@@ -16,15 +16,20 @@ set(rpc_lib_sources
     rpc-lib/pipe/tcp-pipe/tcp-pipe-client-env.cpp
     rpc-lib/pipe/tcp-pipe/tcp-pipe-endpoint.cpp
     rpc-lib/pipe/tcp-pipe/tcp-pipe-server-env.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-iocp-owner.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-endpoint.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-create-operation.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-open-operation.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-read-operation.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-write-operation.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-server-env.cpp
-    rpc-lib/pipe/win-pipe/win-pipe-client-env.cpp
 )
+
+if(WIN32)
+    list(APPEND rpc_lib_sources
+        rpc-lib/pipe/win-pipe/win-pipe-iocp-owner.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-endpoint.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-create-operation.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-open-operation.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-read-operation.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-write-operation.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-server-env.cpp
+        rpc-lib/pipe/win-pipe/win-pipe-client-env.cpp
+    )
+endif()
 
 set(rpc_lib_headers
     rpc-lib/authenticator/iauthenticator.h
@@ -63,21 +68,26 @@ set(rpc_lib_headers
     rpc-lib/pipe/tcp-pipe/tcp-pipe-endpoint.h
     rpc-lib/pipe/tcp-pipe/tcp-pipe-server-env.h
     rpc-lib/pipe/tcp-pipe/tcp-pipe-client-env.h
-    rpc-lib/pipe/win-pipe/win-pipe-iocp-owner.h
-    rpc-lib/pipe/win-pipe/win-pipe-client-env.h
-    rpc-lib/pipe/win-pipe/win-pipe-endpoint.h
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-create-operation.h
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-open-operation.h
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-operation.h
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-read-operation.h
-    rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-write-operation.h
-    rpc-lib/pipe/win-pipe/win-pipe-server-env.h
     rpc-lib/server-endpoint.h
     rpc-lib/types.h
     rpc-lib/types/config.h
     rpc-lib/types/request-result.h
     rpc-lib/types/response-result.h
 )
+
+if(WIN32)
+    list(APPEND rpc_lib_headers
+        rpc-lib/pipe/win-pipe/win-pipe-iocp-owner.h
+        rpc-lib/pipe/win-pipe/win-pipe-client-env.h
+        rpc-lib/pipe/win-pipe/win-pipe-endpoint.h
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-create-operation.h
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-open-operation.h
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-operation.h
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-read-operation.h
+        rpc-lib/pipe/win-pipe/win-pipe-operations/win-pipe-write-operation.h
+        rpc-lib/pipe/win-pipe/win-pipe-server-env.h
+    )
+endif()
 
 add_library(rpc-lib STATIC
     ${rpc_lib_sources}
@@ -90,13 +100,16 @@ target_include_directories(rpc-lib PUBLIC
 )
 target_link_libraries(rpc-lib PUBLIC
     common-lib
-    win-lib
     sdk::boost
     sdk::protobuf
     sdk::absl
 )
 
-configure_msvc_target(rpc-lib LIBRARY)
+if(WIN32)
+    target_link_libraries(rpc-lib PUBLIC win-lib)
+endif()
+
+configure_target(rpc-lib LIBRARY)
 
 set_target_properties(rpc-lib PROPERTIES
     FOLDER "Libraries"

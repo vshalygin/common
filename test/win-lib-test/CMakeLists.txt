@@ -15,7 +15,7 @@ target_link_libraries(win-lib-test PRIVATE
 )
 
 add_googletest_sources(win-lib-test)
-configure_msvc_target(win-lib-test CONSOLE)
+configure_target(win-lib-test CONSOLE)
 
 set_target_properties(win-lib-test PROPERTIES
     FOLDER "Tests"

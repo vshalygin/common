@@ -110,9 +110,10 @@ target_include_directories(common-lib PUBLIC
 )
 target_link_libraries(common-lib PUBLIC
     sdk::boost
+    Threads::Threads
 )
 
-configure_msvc_target(common-lib LIBRARY)
+configure_target(common-lib LIBRARY)
 
 set_target_properties(common-lib PROPERTIES
     FOLDER "Libraries"

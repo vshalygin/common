@@ -17,14 +17,6 @@ set(rpc_lib_test_sources
     src/pipe/tcp-pipe/tcp-pipe-client-env-test.cpp
     src/pipe/tcp-pipe/tcp-pipe-endpoint-test.cpp
     src/pipe/tcp-pipe/tcp-pipe-server-env-test.cpp
-    src/pipe/win-pipe/win-pipe-client-env-test.cpp
-    src/pipe/win-pipe/win-pipe-endpoint-test.cpp
-    src/pipe/win-pipe/win-pipe-iocp-owner-test.cpp
-    src/pipe/win-pipe/win-pipe-server-env-test.cpp
-    src/pipe/win-pipe/win-pipe-operations/win-pipe-create-operation-test.cpp
-    src/pipe/win-pipe/win-pipe-operations/win-pipe-open-operation-test.cpp
-    src/pipe/win-pipe/win-pipe-operations/win-pipe-read-operation-test.cpp
-    src/pipe/win-pipe/win-pipe-operations/win-pipe-write-operation-test.cpp
     src/server-endpoint-test.cpp
     src/service/service-test.cpp
     src/transfer-message/transfer-message-test.cpp
@@ -32,6 +24,19 @@ set(rpc_lib_test_sources
     src/types/request-result-test.cpp
     src/types/response-result-test.cpp
 )
+
+if(WIN32)
+    list(APPEND rpc_lib_test_sources
+        src/pipe/win-pipe/win-pipe-client-env-test.cpp
+        src/pipe/win-pipe/win-pipe-endpoint-test.cpp
+        src/pipe/win-pipe/win-pipe-iocp-owner-test.cpp
+        src/pipe/win-pipe/win-pipe-server-env-test.cpp
+        src/pipe/win-pipe/win-pipe-operations/win-pipe-create-operation-test.cpp
+        src/pipe/win-pipe/win-pipe-operations/win-pipe-open-operation-test.cpp
+        src/pipe/win-pipe/win-pipe-operations/win-pipe-read-operation-test.cpp
+        src/pipe/win-pipe/win-pipe-operations/win-pipe-write-operation-test.cpp
+    )
+endif()
 
 set(rpc_lib_test_headers
     src/mocks/authenticator-mock.h
@@ -60,15 +65,12 @@ add_protobuf_sources(
     "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/test-messages.proto"
 )
 add_googletest_sources(rpc-lib-test)
-configure_msvc_target(rpc-lib-test CONSOLE)
+configure_target(rpc-lib-test CONSOLE)
 enable_release_link_optimizations(rpc-lib-test)
 
-target_compile_options(rpc-lib-test PRIVATE /MP)
-
-set_source_files_properties(
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/test-messages.pb.cc"
-    PROPERTIES COMPILE_OPTIONS /W0
-)
+if(MSVC)
+    target_compile_options(rpc-lib-test PRIVATE /MP)
+endif()
 
 set_target_properties(rpc-lib-test PROPERTIES
     FOLDER "Tests"
