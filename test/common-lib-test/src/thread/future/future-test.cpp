@@ -795,7 +795,7 @@ TEST_F(Future, DoesNotCopyMovableObjectInInnerStorage)
     p.resolve();
     auto f = p.get_future()
         .then([](counter &&c) { return std::move(c); })
-        .then([](counter &&c) { return c; });
+        .then([](counter &&c) { return std::move(c); });
 
     counter acceptor;
     f.get().apply([&acceptor](counter &&c) { acceptor = std::move(c); });
@@ -2287,7 +2287,7 @@ TEST_F(Future, SavePrevValueReferenceInCatchFutureChain)
 
 TEST_F(Future, CatchedFlattensReturnedFutureType)
 {
-    std::atomic_uint64_t beacon;
+    std::atomic_uint64_t beacon{ 0 };
 
     auto promise = cl::promise(&m_pool, []() -> int { throw std::runtime_error(""); });
     promise.resolve();
@@ -2336,7 +2336,7 @@ TEST_F(Future, CatchedFlattensReturnedFutureType)
 
 TEST_F(Future, TestFinallyMethod)
 {
-    std::atomic_uint64_t beacon;
+    std::atomic_uint64_t beacon{ 0 };
 
     auto p1 = promise(&m_pool, []() -> int { return 0; });
     auto p2 = promise(&m_pool, []() {});
@@ -2428,7 +2428,7 @@ TEST_F(Future, FinallyRegistrationDoesNotDeadlockWhenReadyCallbackWaitsForCaller
 
 TEST_F(Future, TestFinallyMethodWhenCallbackReturnsFuture)
 {
-    std::atomic_uint64_t beacon;
+    std::atomic_uint64_t beacon{ 0 };
 
     auto p1 = promise(&m_pool, []() {}); p1.resolve();
     auto p2 = promise(&m_pool, []() {}); p2.resolve();
@@ -2489,7 +2489,7 @@ TEST_F(Future, TestFinallyMethodWhenCallbackReturnsFuture)
 
 TEST_F(Future, FinallyMaySetSeveralTimes)
 {
-    std::atomic_uint64_t beacon;
+    std::atomic_uint64_t beacon{ 0 };
 
     auto p = promise(&m_pool, []() {}); p.resolve();
     auto f = p.get_future();
@@ -2502,7 +2502,7 @@ TEST_F(Future, FinallyMaySetSeveralTimes)
 
 TEST_F(Future, FinallyIsTransparentInCallbackChain)
 {
-    std::atomic_uint64_t beacon;
+    std::atomic_uint64_t beacon{ 0 };
 
     auto p1 = promise(&m_pool, []() { return std::make_unique<int>(34); });
     p1.resolve();
@@ -2835,7 +2835,7 @@ TEST_F(Future, TestWaitFor)
 
 TEST_F(Future, FinallyExecutesAfterCatchedIfNoException)
 {
-    std::atomic_uint64_t beacon;
+    std::atomic_uint64_t beacon{ 0 };
 
     auto p1 = promise(&m_pool, []() {});
     p1.resolve();

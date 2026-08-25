@@ -125,7 +125,9 @@ namespace {
         test_base(const test_base &) = default;
         test_base &operator=(const test_base &) = default;
 
-        test_base(test_base &&){}
+        test_base(test_base &&other)
+            : life_cycle_tracker(std::move(other))
+        {}
         test_base &operator=(test_base &&)
         {
             return *this;

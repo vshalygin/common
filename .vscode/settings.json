@@ -3,6 +3,8 @@
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.buildBeforeRun": true,
 
+    "terminal.integrated.scrollback": 100000,
+
     "files.exclude": {
         "**/.git": true,
         "**/.vs": true,
