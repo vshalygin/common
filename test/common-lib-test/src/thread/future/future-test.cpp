@@ -1936,6 +1936,7 @@ TEST_F(Future, SetPromiseFailIfErrorHandlerThrowsException)
                      } catch (...) {
                          declare_fail();
                      }
+                     return 0;
                   })
         .then([&](int i) { is_second_then_called1 = true; return i * 2; })
         .catched([&](std::exception_ptr ep) {
