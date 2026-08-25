@@ -11,7 +11,7 @@ public:
 
     void OnTestEnd(const testing::TestInfo &info) override
     {
-        _CrtMemState after, diff;
+        _CrtMemState after, diff; after; diff;
 
         _CrtMemCheckpoint(&after);
 

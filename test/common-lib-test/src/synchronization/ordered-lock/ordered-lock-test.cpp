@@ -9,11 +9,16 @@ namespace {
     std::unique_ptr<std::vector<size_t>> lock_order;
     std::unique_ptr<std::vector<size_t>> unlock_order;
 
-    template<size_t Order, bool ThrowsOnConstruct = false>
+    template<size_t Order>
     class test
     {
     public:
         static constexpr size_t order = Order;
+
+        explicit test(bool throws_on_lock = false)
+            : m_throws_on_lock(throws_on_lock)
+        {
+        }
 
         void lock()
         {
@@ -21,7 +26,7 @@ namespace {
                 throw std::runtime_error("");
             }
 
-            if(ThrowsOnConstruct) {
+            if(m_throws_on_lock) {
                 throw std::runtime_error("");
             }
 
@@ -46,6 +51,7 @@ namespace {
 
     private:
         bool m_is_locked = false;
+        bool m_throws_on_lock = false;
     };
 }
 
@@ -295,7 +301,7 @@ TEST_F(OrderedLock, DoSafeLock)
 {
     test<0> t1;
     test<1> t2;
-    test<2, true> t3;
+    test<2> t3(true);
 
     auto lock = ordered_lock(defer_lock_t{}, t1, t2, t3);
     ASSERT_ANY_THROW(lock.lock());
@@ -310,7 +316,7 @@ TEST_F(OrderedLock, DoSafeLockOnConstruct)
 {
     test<0> t1;
     test<1> t2;
-    test<2, true> t3;
+    test<2> t3(true);
 
     ASSERT_ANY_THROW(ordered_lock(t1, t2, t3));
 
