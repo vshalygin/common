@@ -106,7 +106,7 @@ namespace vshalygin::rpc::internal {
         {
             auto serialized_message_size_bytes = from_uint32_to_big_endian(serialized_message_size);
             assert(serialized_message_size_bytes.size() == s_serialized_proto_message_size_bytes_count);
-            for(int i = 0; i < serialized_message_size_bytes.size(); ++i) {
+            for(size_t i = 0; i < serialized_message_size_bytes.size(); ++i) {
                 buff[pos++] = serialized_message_size_bytes[i];
             }
         }
@@ -133,7 +133,7 @@ namespace vshalygin::rpc::internal {
         {
             auto message_number_bytes = from_uint64_big_endian(message_number);
             assert(message_number_bytes.size() == s_message_number_bytes_count);
-            for(int i = 0; i < message_number_bytes.size(); ++i) {
+            for(size_t i = 0; i < message_number_bytes.size(); ++i) {
                 buff[pos++] = message_number_bytes[i];
             }
         }
@@ -144,7 +144,7 @@ namespace vshalygin::rpc::internal {
         {
             auto method_idx_bytes = from_uint32_to_big_endian(method_idx);
             assert(method_idx_bytes.size() == s_method_idx_bytes_count);
-            for(int i = 0; i < method_idx_bytes.size(); ++i) {
+            for(size_t i = 0; i < method_idx_bytes.size(); ++i) {
                 buff[pos++] = method_idx_bytes[i];
             }
         }

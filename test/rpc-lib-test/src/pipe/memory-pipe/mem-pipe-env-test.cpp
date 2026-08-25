@@ -31,7 +31,7 @@ protected:
 
 TEST_F(MemPipeEnv, CreatePipeFuture)
 {
-    auto f = m_sut->create_pipe(0); f;
+    auto f = m_sut->create_pipe(0); (void)f;
 
     EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
     EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 1u);
@@ -39,7 +39,7 @@ TEST_F(MemPipeEnv, CreatePipeFuture)
 
 TEST_F(MemPipeEnv, OpenPipeFuture)
 {
-    auto f = m_sut->open_pipe(0); f;
+    auto f = m_sut->open_pipe(0); (void)f;
 
     EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 1u);
     EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 0u);

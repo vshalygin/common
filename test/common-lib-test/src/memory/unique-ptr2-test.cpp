@@ -62,6 +62,7 @@ namespace {
         life_cycle_tracker &operator=(const life_cycle_tracker &)
         {
             ++copy_assign_called;
+            return *this;
         }
 
         life_cycle_tracker(life_cycle_tracker &&)
@@ -72,6 +73,7 @@ namespace {
         life_cycle_tracker &operator=(life_cycle_tracker &&)
         {
             ++move_assign_called;
+            return *this;
         }
 
         inline static int ctor_called = 0;
@@ -123,8 +125,11 @@ namespace {
         test_base(const test_base &) = default;
         test_base &operator=(const test_base &) = default;
 
-        test_base(test_base &&) = default;
-        test_base &operator=(test_base &&) = default;
+        test_base(test_base &&){}
+        test_base &operator=(test_base &&)
+        {
+            return *this;
+        }
 
         void set_test_base(int val) const
         {

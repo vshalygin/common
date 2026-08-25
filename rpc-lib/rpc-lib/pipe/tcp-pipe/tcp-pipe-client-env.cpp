@@ -82,7 +82,7 @@ namespace vshalygin::rpc {
                 auto future = promise.get_future();
 
                 m_socket.async_connect(
-                    tcp::endpoint(make_address(ip4_address), static_cast<boost::asio::ip::port_type>(port)),
+                    tcp::endpoint(make_address(ip4_address), static_cast<uint16_t>(port)),
                     [promise = std::move(promise), self = shared_from_this()](const boost::system::error_code &ec) mutable {
                         std::lock_guard guard(self->m_socket_mtx);
                         if(self->m_was_canceled) {

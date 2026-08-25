@@ -270,7 +270,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() &
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const &>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const &)() &>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const  &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() volatile &>, void>);
@@ -279,7 +279,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() v
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() volatile &>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile volatile &)() &>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() const volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() const volatile &>, void>);
@@ -288,7 +288,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() c
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const volatile &>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const volatile &)() &>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const volatile &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() & noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() & noexcept>, void>);
@@ -306,7 +306,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() &
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const & noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const & noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const &noexcept>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const &)() & noexcept>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const & noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() volatile &noexcept>, void>);
@@ -315,7 +315,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() v
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() volatile &noexcept>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile volatile &)() & noexcept>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() volatile & noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() const volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() const volatile &noexcept>, void>);
@@ -324,7 +324,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() c
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const volatile &noexcept>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const volatile &)() & noexcept>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const volatile & noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const volatile &noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() &&>, void>);
@@ -342,7 +342,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() &
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const &&>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const &&)() &>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const &>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() volatile &&>, void>);
@@ -351,7 +351,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() v
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() volatile &&>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile volatile &)() &&>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() const volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() const volatile &&>, void>);
@@ -360,7 +360,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() c
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const volatile &&>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const volatile &)() &&>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const volatile &&>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() && noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() && noexcept>, void>);
@@ -378,7 +378,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() &
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const &&noexcept>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const &)() && noexcept>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const && noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() volatile &&noexcept>, void>);
@@ -387,7 +387,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() v
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() volatile &&noexcept>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile volatile &)() && noexcept>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() volatile && noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *)() const volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *&)() const volatile &&noexcept>, void>);
@@ -396,7 +396,7 @@ static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &)() c
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const &&)() const volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &)() const volatile &&noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *volatile &&)() const volatile &&noexcept>, void>);
-static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile const volatile &)() && noexcept>, void>);
+static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &)() const volatile && noexcept>, void>);
 static_assert(std::is_same_v<function_ret_t<void(test_class<int>:: *const volatile &&)() const volatile &&noexcept>, void>);
 
 static_assert(function_arg_count_v<void(int)> == 1);

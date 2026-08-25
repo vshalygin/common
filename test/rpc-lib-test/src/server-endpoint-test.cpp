@@ -285,7 +285,7 @@ TEST_F(ServerEndpoint, MakeRequest)
     event sync_event;
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::connected))
         .Times(1)
-        .WillOnce([&](auto i, auto state) { id = i; sync_event.set(); });
+        .WillOnce([&](auto i, auto) { id = i; sync_event.set(); });
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::disconnected))
         .Times(1);
     m_sut->start_listening();
@@ -324,7 +324,7 @@ TEST_F(ServerEndpoint, MakeRequestAll)
     event sync_event;
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::connected))
         .Times(1)
-        .WillOnce([&](auto i, auto state) { id = i; sync_event.set(); });
+        .WillOnce([&](auto i, auto) { id = i; sync_event.set(); });
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::disconnected))
         .Times(1);
     m_sut->start_listening();
@@ -359,7 +359,7 @@ TEST_F(ServerEndpoint, ServiceProcessesRequest)
     event sync_event;
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::connected))
         .Times(1)
-        .WillOnce([&](auto i, auto state) { id = i; sync_event.set(); });
+        .WillOnce([&](auto i, auto) { id = i; sync_event.set(); });
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::disconnected))
         .Times(1);
     m_sut->start_listening();

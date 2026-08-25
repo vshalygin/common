@@ -16,15 +16,24 @@ namespace vshalygin::rpc::internal {
     class connection::impl final
         : public std::enable_shared_from_this<impl>
     {
-        struct request_data;
-
     public:
         using req_result_future = cl::future<cl::thread_pool, cl::ftuple<request_result, cl::buffer>>;
         using req_result_promise = cl::promise<cl::thread_pool, cl::ftuple<request_result, cl::buffer>(
-                                                                                     request_result, cl::buffer)>;
+                                                                                      request_result, cl::buffer)>;
+
+    private:
+        struct request_data
+        {
+            req_result_promise promise;
+            uint64_t timer_id;
+
+            bool is_req_sent;
+            std::optional<request_result> fail_req_result;
+        };
 
         using request_map = std::unordered_map<uint64_t, request_data>;
 
+    public:
         impl(cl::thread_pool *thread_pool,
              std::shared_ptr<ipipe_endpoint> pipe_endpoint,
              std::shared_ptr<iservice> service,
@@ -94,15 +103,6 @@ namespace vshalygin::rpc::internal {
 
         transport m_transport;
         cl::value_locker<connection_watcher> m_watcher;
-    };
-
-    struct connection::impl::request_data
-    {
-        req_result_promise promise;
-        uint64_t timer_id;
-
-        bool is_req_sent;
-        std::optional<request_result> fail_req_result;
     };
 
     connection::impl::impl(cl::thread_pool *thread_pool,

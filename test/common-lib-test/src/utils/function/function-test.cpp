@@ -47,6 +47,7 @@ namespace {
         test &operator=(test &&) noexcept
         {
             ++move_assign_count;
+            return *this;
         }
 
         inline static size_t move_count = 0;
@@ -89,6 +90,7 @@ namespace {
         big_test &operator=(big_test &&)
         {
             ++move_assign_count;
+            return *this;
         }
 
         inline static size_t move_count = 0;
@@ -339,7 +341,7 @@ TEST_F(Function, DeletesObject)
 TEST_F(Function, DeletesEmptyObject)
 {
     {
-        function<void()> f; f;
+        function<void()> f; (void)f;
     }
 }
 
@@ -458,9 +460,14 @@ TEST_F(Function, MoveParameter)
     ASSERT_TRUE(t && *t == 9);
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Function, MayReturnTypesWithAnyQualifiers)
 {
     static int t = 0;
+    static volatile int vt = 0;
 
     function<int()> f1([]() -> int { return t; }); f1();
     function<int &()> f2([]() -> int &{ return t; }); f2();
@@ -469,12 +476,20 @@ TEST_F(Function, MayReturnTypesWithAnyQualifiers)
     function<const int &()> f5([]() -> const int &{ return t; }); f5();
     function<const int &&()> f6([]() -> const int &&{ return std::move(t); }); f6();
     function<volatile int()> f7([]() -> volatile int { return t; }); f7();
-    function<volatile int &()> f8([]() -> volatile int &{ return t; }); f8();
-    function<volatile int &&()> f9([]() -> volatile int &&{ return std::move(t); }); f9();
-    function<const volatile int()> f10([]() -> const volatile int { return t; }); f10();
-    function<const volatile int &()> f11([]() -> const volatile int &{ return t; }); f11();
-    function<const volatile int &&()> f12([]() -> const volatile int &&{ return std::move(t); }); f12();
+    function<volatile int &()> f8([]() -> volatile int &{ return vt; });
+    volatile int &r8 = f8(); EXPECT_EQ(&r8, &vt);
+    function<volatile int &&()> f9([]() -> volatile int &&{ return std::move(vt); });
+    volatile int &&r9 = f9(); EXPECT_EQ(&r9, &vt);
+    function<const volatile int()> f10([]() -> const volatile int { return vt; });
+    const volatile int r10 = f10(); EXPECT_NE(&r10, &vt);
+    function<const volatile int &()> f11([]() -> const volatile int &{ return vt; });
+    const volatile int &r11 = f11(); EXPECT_EQ(&r11, &vt);
+    function<const volatile int &&()> f12([]() -> const volatile int &&{ return std::move(vt); });
+    const volatile int &&r12 = f12(); EXPECT_EQ(&r12, &vt);
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Function, MayHaveTypeWithAnyQualifiersAsArgumtn)
 {

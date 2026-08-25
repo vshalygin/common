@@ -52,13 +52,6 @@ namespace {
         int64_t m_value = 0;
     };
 
-    buffer create_req_set_data_message(int64_t val, uint64_t number)
-    {
-        proto::data_message msg;
-        msg.set_val(val);
-        return create_transfer_msg_req(number, 0, &msg);
-    }
-
     buffer create_req_get_data_message(uint64_t number)
     {
         proto::null_message msg;

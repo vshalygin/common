@@ -33,7 +33,7 @@ namespace {
     constexpr auto pending_observation_timeout = std::chrono::milliseconds(100);
     constexpr auto socket_poll_delay = std::chrono::milliseconds(1);
     constexpr size_t max_backlog_fill_attempts = 64;
-    constexpr boost::asio::ip::port_type unavailable_loopback_port = 0;
+    constexpr uint16_t unavailable_loopback_port = 0;
 
     const auto loopback_address = boost::asio::ip::make_address_v4("127.0.0.1");
 
@@ -518,13 +518,22 @@ TEST_F(TcpPipeClientEnv, CancelsOnlyPendingOpenOperationsWithSpecifiedClientId)
     ASSERT_FALSE(second_result.endpoint);
 
     std::vector<std::unique_ptr<tcp::socket>> accepted_peers;
-    for(size_t i = 0;
-        i < max_backlog_fill_attempts + 3 &&
-        !remaining.wait_for(std::chrono::milliseconds(0));
-        ++i) {
+    boost::system::error_code ec;
+    listener->acceptor.non_blocking(true, ec);
+    ASSERT_FALSE(ec) << "Failed to make the loopback acceptor non-blocking: " << ec.message();
+
+    const auto deadline = std::chrono::steady_clock::now() + operation_timeout;
+    while(!remaining.wait_for(std::chrono::milliseconds(0)) &&
+          std::chrono::steady_clock::now() < deadline) {
         auto peer = std::make_unique<tcp::socket>(m_thread_pool->get_io_context());
-        ASSERT_TRUE(accept_one(listener->acceptor, *peer));
-        accepted_peers.push_back(std::move(peer));
+        listener->acceptor.accept(*peer, ec);
+        if(!ec) {
+            accepted_peers.push_back(std::move(peer));
+        } else if(is_would_block(ec)) {
+            std::this_thread::sleep_for(socket_poll_delay);
+        } else {
+            FAIL() << "Loopback accept failed: " << ec.message();
+        }
     }
 
     ASSERT_TRUE(wait_for_result(remaining,

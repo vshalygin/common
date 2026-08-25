@@ -3,8 +3,10 @@
 
 #include <rpc-lib/authenticator/simple-authenticator/simple-authenticator.h>
 #include <rpc-lib/pipe/memory-pipe/mem-pipe-env.h>
+#ifdef _WIN32
 #include <rpc-lib/pipe/win-pipe/win-pipe-client-env.h>
 #include <rpc-lib/pipe/win-pipe/win-pipe-server-env.h>
+#endif
 #include <rpc-lib/pipe/tcp-pipe/tcp-pipe-client-env.h>
 #include <rpc-lib/pipe/tcp-pipe/tcp-pipe-server-env.h>
 
@@ -43,8 +45,11 @@ namespace vshalygin::example {
         enum class transport_type
         {
             memory_pipe = 0,
+#ifdef _WIN32
             win_pipe = 1,
+#endif
             tcp = 2,
+
             unknown = 3
         };
 
@@ -52,9 +57,12 @@ namespace vshalygin::example {
         {
             std::stringstream ss;
             ss << "Choose transport: \n"
-               << "0 - memory pipe\n"
-               << "1 - win pipe\n"
-               << "2 - tcp\n";
+               << "0 - memory pipe\n";
+#ifdef _WIN32
+            ss << "1 - win pipe\n";
+#endif
+            ss << "2 - tcp\n";
+
 
             return ss.str();
         }
@@ -63,10 +71,15 @@ namespace vshalygin::example {
         {
             if(line == "0") {
                 return transport_type::memory_pipe;
-            } else if (line == "1") {
+            }
+#ifdef _WIN32
+             else if (line == "1") {
                 return transport_type::win_pipe;
-            } else if (line == "2") {
+            }
+#else
+             else if (line == "2") {
                 return transport_type::tcp;
+#endif
             } else {
                 return transport_type::unknown;
             }
@@ -257,9 +270,11 @@ namespace vshalygin::example {
                 auto env = std::make_shared<rpc::mem_pipe_env>(m_thread_pool.get());
                 m_client_pipe_env = env;
                 m_server_pipe_env = env;
+#ifdef _WIN32
             } else if (transport == transport_type::win_pipe) {
                 m_client_pipe_env = std::make_shared<rpc::win_pipe_client_env>(m_thread_pool.get(), L"47sdfrtgvczc849dsbdevdedb");
                 m_server_pipe_env = std::make_shared<rpc::win_pipe_server_env>(m_thread_pool.get(), L"47sdfrtgvczc849dsbdevdedb");
+#endif
             } else if (transport == transport_type::tcp) {
                 m_client_pipe_env = std::make_shared<rpc::tcp_pipe_client_env>(m_thread_pool.get(), "127.0.0.1", 31078);
                 m_server_pipe_env = std::make_shared<rpc::tcp_pipe_server_env>(m_thread_pool.get(), "127.0.0.1", 31078);

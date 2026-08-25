@@ -40,7 +40,7 @@ TEST(ValueProxy, TestConstGetters)
 TEST(ValueProxy, DestroyStoringValue)
 {
     value_proxy<std::unique_ptr<int> &> v(std::make_unique<int>(6), value_proxy_owned);
-    v;
+    (void)v;
 }
 
 TEST(ValueProxy, TestRRefGetters)

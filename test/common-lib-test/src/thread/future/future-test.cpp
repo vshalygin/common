@@ -596,8 +596,6 @@ TEST_F(Future, FutureDataMayApplyHandlerWithOneParamerterWithVariousQualificator
 
 TEST_F(Future, ConstFutureDataMayApplyHandlerWithNonModifyOneParameter)
 {
-    static volatile int vi = 4;
-
     auto p1 = promise(&m_pool, []()->int { return 1; });
     p1.resolve();
     auto f1 = p1.get_future();
@@ -686,6 +684,10 @@ TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
     ASSERT_EQ(*acceptor, 3);
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
 {
     static int i2 = 2;
@@ -769,6 +771,9 @@ TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
     EXPECT_EQ(i11, 11);
     EXPECT_EQ(i12, 12);
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Future, PromiseCannotExecuteGetFutureTwice)
 {
@@ -798,7 +803,7 @@ TEST_F(Future, DoesNotCopyMovableObjectInInnerStorage)
     EXPECT_EQ(counter::copy_num, 0u);
     EXPECT_EQ(counter::copy_assign_num, 0u);
     EXPECT_TRUE(counter::move_num > 0u);
-    EXPECT_TRUE(counter::move_assign_num >= 0);
+    EXPECT_TRUE(counter::move_assign_num > 0u);
 }
 
 TEST_F(Future, CallbacksMayReturnVoidType)
@@ -940,35 +945,39 @@ TEST_F(Future, IsValidIfPromiseDestroyed)
     f.get().apply([](int i) { ASSERT_EQ(i, 1); });
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturns)
 {
     int i = 0;
     auto p0 = promise(&m_pool, [&]() -> void {}); p0.resolve();
-    auto f0 = p0.get_future().then([&]() {}); f0;
+    auto f0 = p0.get_future().then([&]() {}); (void)f0;
     auto p1 = promise(&m_pool, [&]() -> int { return i; }); p1.resolve();
-    auto f1 = p1.get_future().then([&](int v) { EXPECT_EQ(v, i); }); f1;
+    auto f1 = p1.get_future().then([&](int v) { EXPECT_EQ(v, i); }); (void)f1;
     auto p2 = promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
-    auto f2 = p2.get_future().then([&](int &v) {  EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f2;
+    auto f2 = p2.get_future().then([&](int &v) {  EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f2;
     auto p3 = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
-    auto f3 = p3.get_future().then([&](int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f3;
+    auto f3 = p3.get_future().then([&](int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f3;
     auto p4 = promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
-    auto f4 = p4.get_future().then([&](const int v) { EXPECT_EQ(v, i); }); f4;
+    auto f4 = p4.get_future().then([&](const int v) { EXPECT_EQ(v, i); }); (void)f4;
     auto p5 = promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
-    auto f5 = p5.get_future().then([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f5;
+    auto f5 = p5.get_future().then([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f5;
     auto p6 = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
-    auto f6 = p6.get_future().then([&](const int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f6;
+    auto f6 = p6.get_future().then([&](const int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f6;
     auto p7 = promise(&m_pool, [&]() -> volatile int { return i; }); p7.resolve();
-    auto f7 = p7.get_future().then([&](volatile int v) { EXPECT_EQ(v, i); }); f7;
+    auto f7 = p7.get_future().then([&](volatile int v) { EXPECT_EQ(v, i); }); (void)f7;
     auto p8 = promise(&m_pool, [&]() -> volatile int &{ return i; }); p8.resolve();
-    auto f8 = p8.get_future().then([&](volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f8;
+    auto f8 = p8.get_future().then([&](volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f8;
     auto p9 = promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
-    auto f9 = p9.get_future().then([&](volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f9;
+    auto f9 = p9.get_future().then([&](volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f9;
     auto p10 = promise(&m_pool, [&]() -> const volatile int { return i; }); p10.resolve();
-    auto f10 = p10.get_future().then([&](const volatile int v) { EXPECT_EQ(v, i); }); f10;
+    auto f10 = p10.get_future().then([&](const volatile int v) { EXPECT_EQ(v, i); }); (void)f10;
     auto p11 = promise(&m_pool, [&]() -> const volatile int &{ return i; }); p11.resolve();
-    auto f11 = p11.get_future().then([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f11;
+    auto f11 = p11.get_future().then([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f11;
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
-    auto f12 = p12.get_future().then([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); f12;
+    auto f12 = p12.get_future().then([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f12;
 
     f0.get();
     f1.get();
@@ -984,34 +993,41 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturns)
     f11.get();
     f12.get();
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturnsAndPassIfFuther)
 {
     int i = 0;
     auto p1 = promise(&m_pool, [&]() ->int { return i; }); p1.resolve();
-    auto f1 = p1.get_future().then([&](int v) ->decltype(auto) {  return v; }); f1;
+    auto f1 = p1.get_future().then([&](int v) ->decltype(auto) {  return v; }); (void)f1;
     auto p2 = promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
-    auto f2 = p2.get_future().then([&](int &v) ->decltype(auto) { return v; }); f2;
+    auto f2 = p2.get_future().then([&](int &v) ->decltype(auto) { return v; }); (void)f2;
     auto p3 = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
-    auto f3 = p3.get_future().then([&](int &&v) ->decltype(auto) {  return std::move(v); }); f3;
+    auto f3 = p3.get_future().then([&](int &&v) ->decltype(auto) {  return std::move(v); }); (void)f3;
     auto p4 = promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
-    auto f4 = p4.get_future().then([&](const int v) ->decltype(auto) {  return v; }); f4;
+    auto f4 = p4.get_future().then([&](const int v) ->decltype(auto) {  return v; }); (void)f4;
     auto p5 = promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
-    auto f5 = p5.get_future().then([&](const int &v) ->decltype(auto) {  return v; }); f5;
+    auto f5 = p5.get_future().then([&](const int &v) ->decltype(auto) {  return v; }); (void)f5;
     auto p6 = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
-    auto f6 = p6.get_future().then([&](const int &&v) ->decltype(auto) {  return std::move(v); }); f6;
+    auto f6 = p6.get_future().then([&](const int &&v) ->decltype(auto) {  return std::move(v); }); (void)f6;
     auto p7 = promise(&m_pool, [&]() -> volatile int { return i; }); p7.resolve();
-    auto f7 = p7.get_future().then([&](volatile int v) ->decltype(auto) { return v; }); f7;
+    auto f7 = p7.get_future().then([&](volatile int v) ->decltype(auto) { return v; }); (void)f7;
     auto p8 = promise(&m_pool, [&]() -> volatile int &{ return i; }); p8.resolve();
-    auto f8 = p8.get_future().then([&](volatile int &v) ->decltype(auto) { return v; }); f8;
+    auto f8 = p8.get_future().then([&](volatile int &v) ->decltype(auto) { return v; }); (void)f8;
     auto p9 = promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
-    auto f9 = p9.get_future().then([&](volatile int &&v) ->decltype(auto) { return std::move(v); }); f9;
+    auto f9 = p9.get_future().then([&](volatile int &&v) ->decltype(auto) { return std::move(v); }); (void)f9;
     auto p10 = promise(&m_pool, [&]() -> const volatile int { return i; }); p10.resolve();
-    auto f10 = p10.get_future().then([&](const volatile int v) ->decltype(auto) { return v; }); f10;
+    auto f10 = p10.get_future().then([&](const volatile int v) ->decltype(auto) { return v; }); (void)f10;
     auto p11 = promise(&m_pool, [&]() -> const volatile int &{ return i; }); p11.resolve();
-    auto f11 = p11.get_future().then([&](const volatile int &v) ->decltype(auto) { return v; }); f11;
+    auto f11 = p11.get_future().then([&](const volatile int &v) ->decltype(auto) { return v; }); (void)f11;
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
-    auto f12 = p12.get_future().then([&](const volatile int &&v) ->decltype(auto) { return std::move(v); }); f12;
+    auto f12 = p12.get_future().then([&](const volatile int &&v) ->decltype(auto) { return std::move(v); }); (void)f12;
 
     f1.get().apply([&](int v) { EXPECT_EQ(v, i); });
     f2.get().apply([&](int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
@@ -1026,6 +1042,9 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturnsAndPassIfFuther)
     f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
     f12.get().apply([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Future, ThenFunctionMayReferenceParameterIfFutureStoreValue)
 {
@@ -1155,6 +1174,10 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture
     f.get().apply([](int i) { ASSERT_EQ(i, 2); });
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, IfSuccessCallbackReturnsFutureThenAnyTypeValueFromItPassesToFutherFuture)
 {
     bool f0_completed = false;
@@ -1257,6 +1280,9 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenAnyTypeValueFromItPassesToFuthe
     f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
     f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Future, SuccessCallbackReturnsFutureWithMoveOnlyType)
 {
@@ -1339,6 +1365,10 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAll
     ASSERT_NO_THROW(f3.get());
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, PromiseResolveFunctionReturnsFuture)
 {
     bool f0_completed = false;
@@ -1468,6 +1498,9 @@ TEST_F(Future, PromiseResolveFunctionReturnsFuture)
     f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
     f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Future, PromiseResolveFunctionReturnsFutureWhichThrowsException)
 {
@@ -2021,6 +2054,10 @@ TEST_F(Future, SeveralErrorHandlersDoNotExecuteIfNoExceptionInFirst)
     f2.get();
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, ErrorHandlerMayReturnTypeWithAnySpecifier)
 {
     int i = 0;
@@ -2087,6 +2124,9 @@ TEST_F(Future, ErrorHandlerMayReturnTypeWithAnySpecifier)
         .then([&](const volatile int &&v) { ASSERT_EQ(&i, &v); })
         .get();
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Future, ErrorHandlerMayAcceptAndReturnFtupleStoringTypeWithAnySpecifier)
 {
@@ -2491,6 +2531,10 @@ TEST_F(Future, FinallyIsTransparentInCallbackChain)
     ASSERT_EQ(beacon, 2);
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
 TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
 {
     int i = 0;
@@ -2687,6 +2731,9 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
         .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
         .get();
 }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 TEST_F(Future, FinallyHandlerMayStoreFtupleStoringTypeWithAnySpecifier)
 {

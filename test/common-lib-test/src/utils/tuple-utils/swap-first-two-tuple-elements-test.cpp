@@ -22,7 +22,6 @@ TEST(SwapFirstTwoTupleElements, BasicCheck)
 
 TEST(SwapFirstTwoTupleElements, MoveObjects)
 {
-    static float f = 34;
     auto t = std::make_tuple(std::make_unique<int>(2), 4, std::make_unique<double>(8.0));
 
     auto r = swap_first_two_tuple_elements(std::move(t));

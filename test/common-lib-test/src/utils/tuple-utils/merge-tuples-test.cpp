@@ -104,8 +104,8 @@ TEST(MergeTuples, MergeOneEmptyTuple)
     std::tuple<> t1{};
     std::tuple<int> t2{ 6};
 
-    auto r1 = merge_tuples(t1, t2); r1;
-    auto r2 = merge_tuples(t2, t1); r2;
+    auto r1 = merge_tuples(t1, t2); (void)r1;
+    auto r2 = merge_tuples(t2, t1); (void)r2;
 
     static_assert(std::is_same_v<decltype(r1), std::tuple<int>>);
     static_assert(std::is_same_v<decltype(r2), std::tuple<int>>);

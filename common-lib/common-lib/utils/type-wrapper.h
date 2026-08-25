@@ -1,6 +1,8 @@
 #pragma once
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/type-traits.h>
+
+#include <utility>
 #include <type_traits>
 
 namespace vshalygin::cl {
@@ -125,11 +127,6 @@ namespace vshalygin::cl {
 
         type_wrapper(type_wrapper &&) = default;
         type_wrapper &operator=(type_wrapper &&) = default;
-
-        operator void() const
-        {
-            return to_underlying();
-        }
 
         void to_underlying() const
         {}

@@ -2,6 +2,7 @@
 #include <common-lib/mpl/type-transform.h>
 
 #include <functional>
+#include <cstddef>
 #include <new>
 
 namespace vshalygin::cl {

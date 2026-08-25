@@ -20,10 +20,10 @@ namespace vshalygin::cl {
                       std::is_trivially_default_constructible_v<Allocator>,
                       "Allocator does not match requirements");
 
-        template<typename Allocator, typename T, typename...Args>
-        friend unique_ptr2<Allocator, T> make_unique2(Args&&...args);
+        template<typename Allocator2, typename T2, typename...Args>
+        friend unique_ptr2<Allocator2, T2> make_unique2(Args&&...args);
 
-        template<typename Allocator, typename T>
+        template<typename Allocator2, typename T2>
         friend class unique_ptr2;
 
     public:

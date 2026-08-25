@@ -4,8 +4,8 @@
 namespace vshalygin::rpc {
     mem_pipe_endpoint::mem_pipe_endpoint(bool is_server,
                                          std::shared_ptr<mem_buffers> mem_buffers)
-        : m_is_server(is_server)
-        , m_mem_buffers(std::move(mem_buffers))
+        : m_mem_buffers(std::move(mem_buffers))
+        , m_is_server(is_server)
     {}
 
     mem_pipe_endpoint::~mem_pipe_endpoint()

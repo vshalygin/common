@@ -228,8 +228,8 @@ namespace vshalygin::rpc {
         {
             write_operation_data(cl::buffer &&message, write_promise &&promise,
                                  uint64_t id_, std::optional<uint64_t> timer_id_)
-                : op(std::move(message), std::move(promise))
-                , id(id_)
+                : id(id_)
+                , op(std::move(message), std::move(promise))
                 , timer_id(timer_id_)
             {}
 
@@ -245,8 +245,8 @@ namespace vshalygin::rpc {
         {
             read_operation_data(read_promise &&promise,
                                 uint64_t id_, std::optional<uint64_t> timer_id_)
-                : op(std::move(promise))
-                , id(id_)
+                : id(id_)
+                , op(std::move(promise))
                 , timer_id(timer_id_)
             {}
 
@@ -479,7 +479,7 @@ namespace vshalygin::rpc {
         op.add_bytes(bytes);
 
         if(ec) {
-            if(ec == boost::asio::error::operation_aborted) {
+            if(ec == boost::asio::error::operation_aborted || !m_socket.is_open()) {
                 auto r = m_was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled;
                 complete_all_operations_unsafe(r, operations);
             } else {
@@ -511,7 +511,7 @@ namespace vshalygin::rpc {
         op.add_bytes(bytes);
 
         if(ec) {
-            if(ec == boost::asio::error::operation_aborted) {
+            if(ec == boost::asio::error::operation_aborted || !m_socket.is_open()) {
                 auto r = m_was_invalidated_by_fail ? pipe_op_res::failed : pipe_op_res::canceled;
                 complete_all_operations_unsafe(r, operations);
             } else {

@@ -205,7 +205,7 @@ namespace vshalygin::cl {
         void (*move)(void *from, void *to) = nullptr;
 
     private:
-        mutable alignas(alignment) std::byte m_buffer[size];
+        alignas(alignment) mutable std::byte m_buffer[size];
     };
 
     template<>
@@ -215,9 +215,6 @@ namespace vshalygin::cl {
         value_proxy() = default;
 
         void to_underlying() const noexcept
-        {}
-
-        operator void() noexcept
         {}
 
         bool is_valid() const noexcept

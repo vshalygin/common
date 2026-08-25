@@ -40,8 +40,16 @@ namespace {
     inline constexpr bool preserves_return_type_v =
         has_signature_v<nullary_function<R>, nullary_function<R>>;
 
-    long &test_function(const int &, volatile double &&, char);
-    long &test_noexcept_function(const int &, volatile double &&, char) noexcept;
+    long &test_function(const int &, volatile double &&, char)
+    {
+        static long l = 0;
+        return l;
+    }
+    long &test_noexcept_function(const int &, volatile double &&, char) noexcept
+    {
+        static long l = 0;
+        return l;
+    }
 
     class member_functions
     {

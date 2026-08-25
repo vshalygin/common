@@ -34,8 +34,8 @@ namespace vshalygin::rpc::internal {
     template<typename Callback>
     response_controller<Callback>::response_controller(Callback &&callback, uint64_t connection_id)
         : m_callback(std::move(callback))
-        , m_uncaught_exceptions(std::uncaught_exceptions())
         , m_connection_id(connection_id)
+        , m_uncaught_exceptions(std::uncaught_exceptions())
     {}
 
     template<typename Callback>

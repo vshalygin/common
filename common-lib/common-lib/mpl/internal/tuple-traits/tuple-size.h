@@ -1,4 +1,5 @@
 #pragma once
+#include <stdlib.h>
 
 namespace vshalygin::cl::internal {
     template<typename Tuple>

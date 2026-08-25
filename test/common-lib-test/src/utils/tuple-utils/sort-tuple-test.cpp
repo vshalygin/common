@@ -115,6 +115,7 @@ namespace {
         move_only_counter &operator=(move_only_counter &&)
         {
             move_assign_count++;
+            return *this;
         }
 
         inline static void clear()
@@ -142,6 +143,7 @@ namespace {
         copy_only_counter &operator=(copy_only_counter &)
         {
             ++copy_assign_count;
+            return *this;
         }
 
         inline static void clear()
@@ -159,7 +161,7 @@ TEST(SortTuple, BasicTest)
 {
     std::tuple<test1, test2, test3> t{};
 
-    auto s = sort_tuple<value_comparator>(t); s;
+    auto s = sort_tuple<value_comparator>(t); (void)s;
 
     static_assert(std::is_same_v<decltype(s), std::tuple<test1, test2, test3>>);
 }
@@ -297,7 +299,7 @@ TEST(SortTuple, MovesObjectsOnlyOnce)
 
     std::tuple<move_only_counter, move_only_counter> t;
 
-    auto s = sort_tuple<value_comparator>(std::move(t));
+    auto s = sort_tuple<value_comparator>(std::move(t)); (void)s;
 
     EXPECT_EQ(move_only_counter::move_count, 2);
     EXPECT_EQ(move_only_counter::move_assign_count, 0);
@@ -309,7 +311,7 @@ TEST(SortTuple, CopiesObjectsOnlyOnce)
 
     std::tuple<copy_only_counter, copy_only_counter> t;
 
-    auto s = sort_tuple<value_comparator>(std::move(t));
+    auto s = sort_tuple<value_comparator>(std::move(t)); (void)s;
 
     EXPECT_EQ(copy_only_counter::copy_count, 2);
     EXPECT_EQ(copy_only_counter::copy_assign_count, 0);

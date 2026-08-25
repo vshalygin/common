@@ -122,14 +122,14 @@ protected:
         return result;
     }
 
-    static boost::asio::ip::port_type reserve_loopback_port()
+    static uint16_t reserve_loopback_port()
     {
         boost::asio::io_context io_context;
         tcp::acceptor acceptor(io_context, tcp::endpoint(loopback_address, 0));
         return acceptor.local_endpoint().port();
     }
 
-    std::unique_ptr<tcp::socket> connect_loopback(boost::asio::ip::port_type port)
+    std::unique_ptr<tcp::socket> connect_loopback(uint16_t port)
     {
         auto socket = std::make_unique<tcp::socket>(m_client_io_context);
         boost::system::error_code ec;

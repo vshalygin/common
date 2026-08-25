@@ -32,7 +32,17 @@ namespace vshalygin::cl::internal {
         : public enable_shared_from_this_manual_set<future_controller<ThreadPool, T>>
         , public ifuture_controller
     {
-        using on_success_t = function<void(std::add_rvalue_reference_t<T>)>;
+        template<typename U>
+        static auto create_on_success()
+        {
+            if constexpr(std::is_void_v<U>) {
+                return function<void()>{};
+            } else {
+                return function<void(std::add_rvalue_reference_t<U>)>{};
+            }
+        }
+
+        using on_success_t = decltype(create_on_success<T>());
         using on_fail_t = function<void(std::exception_ptr)>;
 
     public:
@@ -73,19 +83,19 @@ namespace vshalygin::cl::internal {
         std::mutex &get_value_mtx_ref() const noexcept;
 
     private:
-        using value_proxy = value_proxy<add_lvalue_ref_to_value_t<T>>;
-        using on_success_mtx = ordered_mutex<0>;
-        using on_fail_mtx = ordered_mutex<1>;
-        using val_mtx = ordered_mutex<2>;
-        using exception_mtx = ordered_mutex<3>;
-        using outer_val_mtx_ref = ordered_mutex_ref<4>;
+        using value_proxy_t = cl::value_proxy<add_lvalue_ref_to_value_t<T>>;
+        using on_success_mtx_t = ordered_mutex<0>;
+        using on_fail_mtx_t = ordered_mutex<1>;
+        using val_mtx_t = ordered_mutex<2>;
+        using exception_mtx_t = ordered_mutex<3>;
+        using outer_val_mtx_ref_t = ordered_mutex_ref<4>;
 
         template<typename Func>
         void set_on_success_unsafe(Func &&func);
 
         void set_on_fail_unsafe(on_fail_t &&func);
 
-        void set_success(outer_val_mtx_ref outer_mtx_ref, value_proxy value);
+        void set_success(outer_val_mtx_ref_t outer_mtx_ref, value_proxy_t value);
 
         void wait_data_ready_or_throw() const;
 
@@ -101,21 +111,21 @@ namespace vshalygin::cl::internal {
         value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
         value_locker<std::vector<std::shared_ptr<ifuture_controller>>> m_dependent;
 
-        mutable on_success_mtx m_on_success_mtx;
+        mutable on_success_mtx_t m_on_success_mtx;
         std::queue<on_success_t> m_on_success_queue;
 
-        mutable on_fail_mtx m_on_fail_mtx;
+        mutable on_fail_mtx_t m_on_fail_mtx;
         std::queue<on_fail_t> m_on_fail_queue;
 
-        mutable val_mtx m_val_mtx;
-        std::optional<value_proxy> m_val;
+        mutable val_mtx_t m_val_mtx;
+        std::optional<value_proxy_t> m_val;
 
-        mutable exception_mtx m_exception_mtx;
+        mutable exception_mtx_t m_exception_mtx;
         std::optional<std::exception_ptr> m_exception;
 
         mutable std::condition_variable_any m_cv;
 
-        mutable outer_val_mtx_ref m_outer_val_mtx;
+        mutable outer_val_mtx_ref_t m_outer_val_mtx;
     };
 
     template<typename ThreadPool, typename T>
@@ -186,35 +196,35 @@ namespace vshalygin::cl::internal {
     template<typename TT, std::enable_if_t<std::is_void_v<TT>, int>>
     void future_controller<ThreadPool, T>::set_value()
     {
-        set_success(outer_val_mtx_ref{}, value_proxy{});
+        set_success(outer_val_mtx_ref_t{}, value_proxy_t{});
     }
 
     template<typename ThreadPool, typename T>
     template<typename U, typename TT, std::enable_if_t<!std::is_void_v<TT>, int>>
     void future_controller<ThreadPool, T>::set_value(U &&val)
     {
-        value_proxy v;
+        value_proxy_t v;
 
         if constexpr(std::is_reference_v<T>) {
-            v = value_proxy{ std::forward<U>(val), value_proxy_external };
+            v = value_proxy_t{ std::forward<U>(val), value_proxy_external };
         } else {
-            v = value_proxy{ std::forward<U>(val), value_proxy_owned };
+            v = value_proxy_t{ std::forward<U>(val), value_proxy_owned };
         }
 
-        set_success(outer_val_mtx_ref{}, std::move(v));
+        set_success(outer_val_mtx_ref_t{}, std::move(v));
     }
 
     template<typename ThreadPool, typename T>
     template<typename U, typename TT, std::enable_if_t<!std::is_void_v<TT>, int>>
     void future_controller<ThreadPool, T>::set_value_reference(std::mutex &outer_mtx, U &&value)
     {
-        set_success(outer_val_mtx_ref{ outer_mtx },
-                    value_proxy{ std::forward<U>(value), value_proxy_external });
+        set_success(outer_val_mtx_ref_t{ outer_mtx },
+                    value_proxy_t{ std::forward<U>(value), value_proxy_external });
     }
 
     template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_success(outer_val_mtx_ref outer_mtx_ref,
-                                                       value_proxy value)
+    void future_controller<ThreadPool, T>::set_success(outer_val_mtx_ref_t outer_mtx_ref,
+                                                       value_proxy_t value)
     {
         {
             ordered_lock g(m_val_mtx);

@@ -210,7 +210,6 @@ TEST(TypeWrapperRef, MayBeMoveAssignedByValue)
 TEST(TypeWrapperRef, RValueReferenceMayBeRetrieved)
 {
     static int i = 9;
-    static int ii = 10;
     type_wrapper<int &&> sut(std::move(i));
     type_wrapper<const int &&> sut2(std::move(i));
     
@@ -228,9 +227,6 @@ TEST(TypeWrapperRef, MayHoldAnyTypeOfReference)
 {
     static int i = 9;
     static volatile int ii = 10;
-    static const int iii = 9;
-    static const volatile int iiii = 10;
-
 
     type_wrapper<int &> s1(i);
     type_wrapper<int &&> s2(std::move(i));
@@ -362,8 +358,7 @@ TEST(TypeWrapperVoid, IsCopyConstructable)
 {
     type_wrapper<void> v;
     type_wrapper<void> v1(v);
-    v;
-
+    (void)v1;
 }
 
 TEST(TypeWrapperVoid, IsCopyAssignable)
@@ -377,8 +372,7 @@ TEST(TypeWrapperVoid, IsMoveConstructable)
 {
     type_wrapper<void> v;
     type_wrapper<void> v1(std::move(v));
-    v;
-
+    (void)v1;
 }
 
 TEST(TypeWrapperVoid, IsMoveAssignable)

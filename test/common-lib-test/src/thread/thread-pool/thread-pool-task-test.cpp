@@ -22,6 +22,7 @@ namespace {
         counter &operator=(const counter &)
         {
             ++copy_assign_num;
+            return *this;
         }
 
         counter(counter &&)
@@ -32,6 +33,7 @@ namespace {
         counter &operator=(counter &&)
         {
             ++move_assign_num;
+            return *this;
         }
 
         inline static std::atomic<unsigned> copy_num = 0;
@@ -166,7 +168,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterIfItIsRValueRef)
     counter cc;
     thread_pool_task sut(
         &pool,
-        [&sync_event](counter &&c) { auto t = std::move(c); t; sync_event.set(); });
+        [&sync_event](counter &&c) { auto t = std::move(c); (void)t; sync_event.set(); });
 
     sut.exec(std::move(cc));
 
@@ -185,7 +187,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterMoreThanNeededIfItIsLValueRef)
     counter cc;
     thread_pool_task sut(
         &pool,
-        [&](const counter &c) { auto t = c; t; sync_event.set(); });
+        [&](const counter &c) { auto t = c; (void)t; sync_event.set(); });
 
     sut.exec(std::move(cc));
 
@@ -204,7 +206,7 @@ TEST(ThreadPoolTask, DoesNotCopyParameterMoreThanNeededIfItIsNotRef)
     counter cc;
     thread_pool_task sut(
         &pool,
-        [&](counter c) { auto t = c; t; sync_event.set(); });
+        [&](counter c) { auto t = c; (void)t; sync_event.set(); });
 
     sut.exec(std::move(cc));
 

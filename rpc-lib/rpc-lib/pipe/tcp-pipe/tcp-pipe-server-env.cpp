@@ -149,8 +149,8 @@ namespace vshalygin::rpc {
                                   std::optional<uint64_t> timer_id_,
                                   std::shared_ptr<create_operation> op_)
                 : id(id_)
-                , timer_id(timer_id_)
                 , client_id(client_id_)
+                , timer_id(timer_id_)
                 , op(std::move(op_))
             {}
 
@@ -177,7 +177,7 @@ namespace vshalygin::rpc {
             throw std::invalid_argument("exceed max port value");
         }
 
-        tcp::endpoint endpoint(make_address_v4(ip4_address), static_cast<boost::asio::ip::port_type>(port));
+        tcp::endpoint endpoint(make_address_v4(ip4_address), static_cast<uint16_t>(port));
 
         m_acceptor.open(endpoint.protocol());
         m_acceptor.bind(endpoint);

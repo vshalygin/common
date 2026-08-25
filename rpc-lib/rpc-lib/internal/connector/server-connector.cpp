@@ -175,7 +175,7 @@ namespace vshalygin::rpc::internal {
                                               if(is_fail(r)) {
                                                   throw std::runtime_error("pipe is not connected");
                                               }
-                                              return std::move(ep);
+                                               return ep;
                                           });
 
         auto connection_id = m_next_connection_id++;
