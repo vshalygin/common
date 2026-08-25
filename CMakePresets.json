@@ -1,0 +1,49 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "vs2022-x64",
+      "displayName": "Visual Studio 2022 x64",
+      "description": "Configure all libraries, tests, and examples with MSVC v143",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/vs2022-x64",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "toolset": {
+        "value": "v143,host=x64",
+        "strategy": "set"
+      },
+      "cacheVariables": {
+        "CMAKE_SYSTEM_VERSION": "10.0",
+        "BUILD_TESTS": true,
+        "BUILD_EXAMPLES": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "vs2022-x64-debug",
+      "displayName": "Visual Studio 2022 x64 Debug",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Debug"
+    },
+    {
+      "name": "vs2022-x64-release",
+      "displayName": "Visual Studio 2022 x64 Release",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Release"
+    }
+  ]
+}

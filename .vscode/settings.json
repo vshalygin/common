@@ -1,0 +1,29 @@
+{
+    "cmake.useCMakePresets": "always",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.buildBeforeRun": true,
+
+    "files.exclude": {
+        "**/.git": true,
+        "**/.vs": true,
+        "**/out": true,
+        "**/x64": true,
+        "**/Debug": true,
+        "**/Release": true,
+        "**/submodules": true
+    },
+
+    "search.exclude": {
+        "**/.vs": true,
+        "**/out": true,
+        "**/x64": true,
+        "**/submodules": true
+    },
+
+    "files.watcherExclude": {
+        "**/.git/**": true,
+        "**/.vs/**": true,
+        "**/out/**": true,
+        "**/x64/**": true
+    }
+}
