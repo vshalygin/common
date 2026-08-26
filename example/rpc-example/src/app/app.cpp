@@ -79,8 +79,9 @@ namespace vshalygin::example {
 #else
              else if (line == "2") {
                 return transport_type::tcp;
+             }
 #endif
-            } else {
+             else {
                 return transport_type::unknown;
             }
         }
