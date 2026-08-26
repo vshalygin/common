@@ -147,7 +147,7 @@ TEST(Buffer, MayBeCheckedForInequality)
     buf2[0] = (std::byte)0x0;
     buf2[1] = (std::byte)0x1;
     buffer buf3(1);
-    buf2[0] = (std::byte)0x1;
+    buf3[0] = (std::byte)0x1;
 
     ASSERT_TRUE(buf1 != buf2);
     ASSERT_TRUE(buf1 != buf3);
