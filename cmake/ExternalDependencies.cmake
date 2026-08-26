@@ -199,7 +199,7 @@ target_link_libraries(sdk-absl INTERFACE
     ${_absl_libraries}
 )
 
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
     find_package(Boost 1.74 REQUIRED COMPONENTS thread)
     find_package(Protobuf REQUIRED)
 
@@ -246,7 +246,7 @@ function(add_googletest_sources target)
         "${GOOGLETEST_ROOT}/googletest/include"
         "${GOOGLETEST_ROOT}/googlemock/include"
     )
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
         set_source_files_properties(
             ${googletest_sources}
             PROPERTIES COMPILE_OPTIONS -w
@@ -291,6 +291,6 @@ function(add_protobuf_sources target proto_file)
     set_source_files_properties(
         "${generated_source}"
         PROPERTIES COMPILE_OPTIONS
-            "$<$<CXX_COMPILER_ID:MSVC>:/W0>;$<$<CXX_COMPILER_ID:GNU>:-w>"
+            "$<$<CXX_COMPILER_ID:MSVC>:/W0>;$<$<CXX_COMPILER_ID:GNU>:-w>;$<$<CXX_COMPILER_ID:Clang>:-w>"
     )
 endfunction()

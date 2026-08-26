@@ -4,9 +4,11 @@ project(common
     LANGUAGES CXX
 )
 
-if(NOT MSVC AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(NOT MSVC AND
+   NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND
+   NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message(FATAL_ERROR
-        "The current CMake build supports MSVC and GCC only."
+        "The current CMake build supports MSVC, GCC, and Clang only."
     )
 endif()
 

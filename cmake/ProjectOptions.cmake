@@ -67,7 +67,7 @@ function(configure_target target target_kind)
                 /SUBSYSTEM:CONSOLE
             )
         endif()
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
         target_compile_options("${target}" PRIVATE
             -Wall
             -Wextra
@@ -84,7 +84,7 @@ function(enable_release_link_optimizations target)
             "$<$<CONFIG:Release>:/OPT:REF>"
             "$<$<CONFIG:Release>:/OPT:ICF>"
         )
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
         target_compile_options("${target}" PRIVATE
             "$<$<CONFIG:Release>:-ffunction-sections>"
             "$<$<CONFIG:Release>:-fdata-sections>"
