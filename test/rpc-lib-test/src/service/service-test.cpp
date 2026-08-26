@@ -3,7 +3,7 @@
 #include <rpc-lib/iresponse-controller.h>
 
 #pragma warning(push, 0)
-#include "proto/test-messages.pb.h"
+#include <test-messages.pb.h>
 #include <google/protobuf/util/message_differencer.h>
 #pragma warning(pop)
 

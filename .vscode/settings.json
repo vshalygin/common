@@ -27,5 +27,6 @@
         "**/.vs/**": true,
         "**/out/**": true,
         "**/x64/**": true
-    }
+    },
+    "cmake.ctest.neverDebugTestsWithLaunchConfiguration": false
 }

@@ -257,18 +257,23 @@ endfunction()
 function(add_protobuf_sources target proto_file)
     get_filename_component(proto_file "${proto_file}" ABSOLUTE)
     get_filename_component(proto_directory "${proto_file}" DIRECTORY)
+    get_filename_component(proto_directory_name "${proto_directory}" NAME)
     get_filename_component(proto_name "${proto_file}" NAME_WE)
 
-    set(generated_source "${proto_directory}/${proto_name}.pb.cc")
-    set(generated_header "${proto_directory}/${proto_name}.pb.h")
+    set(generated_root "${CMAKE_CURRENT_BINARY_DIR}/generated")
+    set(generated_directory "${generated_root}/${proto_directory_name}")
+    set(generated_source "${generated_directory}/${proto_name}.pb.cc")
+    set(generated_header "${generated_directory}/${proto_name}.pb.h")
 
     add_custom_command(
         OUTPUT
             "${generated_source}"
             "${generated_header}"
         COMMAND
+            "${CMAKE_COMMAND}" -E make_directory "${generated_directory}"
+        COMMAND
             "${PROTOC_EXECUTABLE}"
-            "--cpp_out=${proto_directory}"
+            "--cpp_out=${generated_directory}"
             "--proto_path=${proto_directory}"
             "${proto_file}"
         DEPENDS
@@ -285,6 +290,13 @@ function(add_protobuf_sources target proto_file)
     )
     target_sources("${target}" PRIVATE
         "${proto_file}"
+        "${generated_source}"
+        "${generated_header}"
+    )
+    target_include_directories("${target}" PRIVATE
+        "${generated_directory}"
+    )
+    source_group("Generated\\Protobuf" FILES
         "${generated_source}"
         "${generated_header}"
     )

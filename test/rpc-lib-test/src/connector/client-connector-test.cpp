@@ -7,7 +7,7 @@
 #include <mocks/authenticator-mock.h>
 
 #pragma warning(push, 0)
-#include "proto/test-messages.pb.h"
+#include <test-messages.pb.h>
 #pragma warning(pop)
 
 #include <gtest/gtest.h>

@@ -12,7 +12,7 @@
 #include <gmock/gmock.h>
 
 #pragma warning(push, 0)
-#include "proto/test-messages.pb.h"
+#include <test-messages.pb.h>
 #pragma warning(pop)
 
 using namespace vshalygin::rpc;

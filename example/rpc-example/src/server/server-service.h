@@ -2,7 +2,7 @@
 #include "../utils/utils.h"
 
 #pragma warning(push, 0)
-#include "../proto/services.pb.h"
+#include <services.pb.h>
 #pragma warning(pop)
 
 #include <rpc-lib/closure-guard.h>
