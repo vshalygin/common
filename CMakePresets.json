@@ -7,9 +7,19 @@
   },
   "configurePresets": [
     {
+      "name": "vcpkg-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_MANIFEST_INSTALL": true,
+        "VCPKG_OVERLAY_PORTS": ""
+      }
+    },
+    {
       "name": "vs2022-x64",
       "displayName": "Visual Studio 2022 x64",
       "description": "Configure all libraries, tests, and examples with MSVC v143",
+      "inherits": "vcpkg-base",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/vs2022-x64",
       "architecture": {
@@ -22,6 +32,8 @@
       },
       "cacheVariables": {
         "CMAKE_SYSTEM_VERSION": "10.0",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+        "VCPKG_HOST_TRIPLET": "x64-windows-static",
         "BUILD_TESTING": true,
         "BUILD_EXAMPLES": true
       },
@@ -34,9 +46,12 @@
     {
       "name": "linux-gcc-base",
       "hidden": true,
+      "inherits": "vcpkg-base",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++",
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "BUILD_TESTING": true,
         "BUILD_EXAMPLES": true
@@ -70,9 +85,12 @@
     {
       "name": "linux-clang-base",
       "hidden": true,
+      "inherits": "vcpkg-base",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "BUILD_TESTING": true,
         "BUILD_EXAMPLES": true

@@ -36,7 +36,7 @@ private:
 };
 #endif
 
-GTEST_API_ int main(int argc, char **argv) {
+int main(int argc, char **argv) {
 #ifdef _MSC_VER
     testing::UnitTest::GetInstance()
         ->listeners()

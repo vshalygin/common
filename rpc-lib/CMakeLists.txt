@@ -100,9 +100,9 @@ target_include_directories(rpc-lib PUBLIC
 )
 target_link_libraries(rpc-lib PUBLIC
     common-lib
-    sdk::boost
-    sdk::protobuf
-    sdk::absl
+    Boost::headers
+    Boost::thread
+    protobuf::libprotobuf
 )
 
 if(WIN32)

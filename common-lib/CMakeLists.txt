@@ -109,7 +109,8 @@ target_include_directories(common-lib PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 target_link_libraries(common-lib PUBLIC
-    sdk::boost
+    Boost::headers
+    Boost::thread
     Threads::Threads
 )
 

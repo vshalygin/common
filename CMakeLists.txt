@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25...4.4)
 
-project(common
+project(vshalygin_common
     LANGUAGES CXX
 )
 

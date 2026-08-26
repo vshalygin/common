@@ -12,9 +12,10 @@ target_include_directories(win-lib-test PRIVATE
 )
 target_link_libraries(win-lib-test PRIVATE
     win-lib
+    GTest::gtest
+    GTest::gmock
 )
 
-add_googletest_sources(win-lib-test)
 configure_target(win-lib-test CONSOLE)
 
 set_target_properties(win-lib-test PROPERTIES

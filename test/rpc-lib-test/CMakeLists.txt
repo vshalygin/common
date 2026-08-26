@@ -55,16 +55,17 @@ target_include_directories(rpc-lib-test PRIVATE
 )
 target_link_libraries(rpc-lib-test PRIVATE
     rpc-lib
-    sdk::boost
-    sdk::protobuf
-    sdk::absl
+    Boost::headers
+    Boost::thread
+    protobuf::libprotobuf
+    GTest::gtest
+    GTest::gmock
 )
 
 add_protobuf_sources(
     rpc-lib-test
     "${CMAKE_CURRENT_SOURCE_DIR}/src/proto/test-messages.proto"
 )
-add_googletest_sources(rpc-lib-test)
 configure_target(rpc-lib-test CONSOLE)
 enable_release_link_optimizations(rpc-lib-test)
 

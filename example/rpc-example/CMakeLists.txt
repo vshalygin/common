@@ -21,9 +21,9 @@ add_executable(rpc-example
 target_link_libraries(rpc-example PRIVATE
     common-lib
     rpc-lib
-    sdk::boost
-    sdk::protobuf
-    sdk::absl
+    Boost::headers
+    Boost::thread
+    protobuf::libprotobuf
 )
 
 add_protobuf_sources(
