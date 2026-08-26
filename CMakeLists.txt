@@ -25,9 +25,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
-option(BUILD_TESTS "Build the existing test executables" ON)
 option(BUILD_EXAMPLES "Build the example applications" ON)
 
+include(CTest)
 include(cmake/ProjectOptions.cmake)
 include(cmake/ExternalDependencies.cmake)
 
@@ -37,7 +37,8 @@ if(WIN32)
 endif()
 add_subdirectory(rpc-lib)
 
-if(BUILD_TESTS)
+if(BUILD_TESTING)
+    include(GoogleTest)
     add_subdirectory(test/common-lib-test)
     if(WIN32)
         add_subdirectory(test/win-lib-test)

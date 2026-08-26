@@ -22,7 +22,7 @@
       },
       "cacheVariables": {
         "CMAKE_SYSTEM_VERSION": "10.0",
-        "BUILD_TESTS": true,
+        "BUILD_TESTING": true,
         "BUILD_EXAMPLES": true
       },
       "condition": {
@@ -38,7 +38,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "BUILD_TESTS": true,
+        "BUILD_TESTING": true,
         "BUILD_EXAMPLES": true
       },
       "condition": {
@@ -74,7 +74,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "BUILD_TESTS": true,
+        "BUILD_TESTING": true,
         "BUILD_EXAMPLES": true
       },
       "condition": {
@@ -160,6 +160,86 @@
     {
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release",
+      "configurePreset": "linux-clang-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "vs2022-x64-debug",
+      "displayName": "Visual Studio 2022 x64 Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vs2022-x64-release",
+      "displayName": "Visual Studio 2022 x64 Release Tests",
+      "inherits": "test-base",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "linux-gcc-debug",
+      "displayName": "Linux GCC Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-gcc-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-gcc-release",
+      "displayName": "Linux GCC Release Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-gcc-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-debug",
+      "displayName": "Linux Clang Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-clang-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-release",
+      "displayName": "Linux Clang Release Tests",
+      "inherits": "test-base",
       "configurePreset": "linux-clang-release",
       "condition": {
         "type": "equals",

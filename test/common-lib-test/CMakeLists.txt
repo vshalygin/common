@@ -82,6 +82,13 @@ set_target_properties(common-lib-test PROPERTIES
     FOLDER "Tests"
 )
 
+gtest_discover_tests(common-lib-test
+    TEST_PREFIX "common-lib."
+    DISCOVERY_TIMEOUT 30
+    PROPERTIES
+        TIMEOUT 60
+)
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
     ${common_lib_test_sources}
 )

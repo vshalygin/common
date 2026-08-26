@@ -76,6 +76,13 @@ set_target_properties(rpc-lib-test PROPERTIES
     FOLDER "Tests"
 )
 
+gtest_discover_tests(rpc-lib-test
+    TEST_PREFIX "rpc-lib."
+    DISCOVERY_TIMEOUT 30
+    PROPERTIES
+        TIMEOUT 60
+)
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
     ${rpc_lib_test_sources}
     ${rpc_lib_test_headers}
