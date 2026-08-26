@@ -255,14 +255,18 @@ TEST_F(ServerEndpoint, NotifyAboutConnectionInterruptOnDestruction)
 TEST_F(ServerEndpoint, MakeRequestReturnsNoConnectionCode)
 {
     uint64_t id;
+    event sync_event;
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::connected))
         .Times(1)
-        .WillOnce(SaveArg<0>(&id));
+        .WillOnce([&](auto i, auto) {
+            id = i;
+            sync_event.set();
+        });
     EXPECT_CALL(m_on_connection_change, Call(_, connection_state::disconnected))
         .Times(1);
     m_sut->start_listening();
     create_and_init_other_endpoint();
-    while(m_sut->get_active_connections_count() == 0) {}
+    sync_event.wait();
 
     auto ans = m_sut->make_request<proto::request_message, proto::response_message>(
         id + 1000, &proto::Service_Stub::Method, proto::request_message{});
