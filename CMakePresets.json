@@ -44,6 +44,34 @@
       }
     },
     {
+      "name": "vs2022-win32",
+      "displayName": "Visual Studio 2022 Win32",
+      "description": "Configure all libraries, tests, and examples for Win32 with MSVC v143",
+      "inherits": "vcpkg-base",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/vs2022-win32",
+      "architecture": {
+        "value": "Win32",
+        "strategy": "set"
+      },
+      "toolset": {
+        "value": "v143,host=x64",
+        "strategy": "set"
+      },
+      "cacheVariables": {
+        "CMAKE_SYSTEM_VERSION": "10.0",
+        "VCPKG_TARGET_TRIPLET": "x86-windows-static",
+        "VCPKG_HOST_TRIPLET": "x64-windows-static",
+        "BUILD_TESTING": true,
+        "BUILD_EXAMPLES": true
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
       "name": "linux-gcc-base",
       "hidden": true,
       "inherits": "vcpkg-base",
@@ -78,6 +106,36 @@
       "description": "Configure libraries, portable tests, and examples with GCC and LTO",
       "inherits": "linux-gcc-base",
       "binaryDir": "${sourceDir}/out/build/linux-gcc-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-gcc-x86-base",
+      "hidden": true,
+      "inherits": "linux-gcc-base",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-m32",
+        "VCPKG_TARGET_TRIPLET": "x86-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "linux-gcc-x86-debug",
+      "displayName": "Linux GCC x86 Debug",
+      "description": "Configure 32-bit libraries, portable tests, and examples with GCC",
+      "inherits": "linux-gcc-x86-base",
+      "binaryDir": "${sourceDir}/out/build/linux-gcc-x86-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-gcc-x86-release",
+      "displayName": "Linux GCC x86 Release",
+      "description": "Configure 32-bit libraries, portable tests, and examples with GCC and LTO",
+      "inherits": "linux-gcc-x86-base",
+      "binaryDir": "${sourceDir}/out/build/linux-gcc-x86-release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -120,6 +178,36 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "linux-clang-x86-base",
+      "hidden": true,
+      "inherits": "linux-clang-base",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-m32",
+        "VCPKG_TARGET_TRIPLET": "x86-linux",
+        "VCPKG_HOST_TRIPLET": "x64-linux"
+      }
+    },
+    {
+      "name": "linux-clang-x86-debug",
+      "displayName": "Linux Clang x86 Debug",
+      "description": "Configure 32-bit libraries, portable tests, and examples with Clang",
+      "inherits": "linux-clang-x86-base",
+      "binaryDir": "${sourceDir}/out/build/linux-clang-x86-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-clang-x86-release",
+      "displayName": "Linux Clang x86 Release",
+      "description": "Configure 32-bit libraries, portable tests, and examples with Clang and LTO",
+      "inherits": "linux-clang-x86-base",
+      "binaryDir": "${sourceDir}/out/build/linux-clang-x86-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -138,6 +226,28 @@
       "name": "vs2022-x64-release",
       "displayName": "Visual Studio 2022 x64 Release",
       "configurePreset": "vs2022-x64",
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vs2022-win32-debug",
+      "displayName": "Visual Studio 2022 Win32 Debug",
+      "configurePreset": "vs2022-win32",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vs2022-win32-release",
+      "displayName": "Visual Studio 2022 Win32 Release",
+      "configurePreset": "vs2022-win32",
       "configuration": "Release",
       "condition": {
         "type": "equals",
@@ -166,6 +276,26 @@
       }
     },
     {
+      "name": "linux-gcc-x86-debug",
+      "displayName": "Linux GCC x86 Debug",
+      "configurePreset": "linux-gcc-x86-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-gcc-x86-release",
+      "displayName": "Linux GCC x86 Release",
+      "configurePreset": "linux-gcc-x86-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug",
       "configurePreset": "linux-clang-debug",
@@ -179,6 +309,26 @@
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release",
       "configurePreset": "linux-clang-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-x86-debug",
+      "displayName": "Linux Clang x86 Debug",
+      "configurePreset": "linux-clang-x86-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-x86-release",
+      "displayName": "Linux Clang x86 Release",
+      "configurePreset": "linux-clang-x86-release",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -222,6 +372,30 @@
       }
     },
     {
+      "name": "vs2022-win32-debug",
+      "displayName": "Visual Studio 2022 Win32 Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "vs2022-win32",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "vs2022-win32-release",
+      "displayName": "Visual Studio 2022 Win32 Release Tests",
+      "inherits": "test-base",
+      "configurePreset": "vs2022-win32",
+      "configuration": "Release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
       "name": "linux-gcc-debug",
       "displayName": "Linux GCC Debug Tests",
       "inherits": "test-base",
@@ -244,6 +418,28 @@
       }
     },
     {
+      "name": "linux-gcc-x86-debug",
+      "displayName": "Linux GCC x86 Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-gcc-x86-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-gcc-x86-release",
+      "displayName": "Linux GCC x86 Release Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-gcc-x86-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug Tests",
       "inherits": "test-base",
@@ -259,6 +455,28 @@
       "displayName": "Linux Clang Release Tests",
       "inherits": "test-base",
       "configurePreset": "linux-clang-release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-x86-debug",
+      "displayName": "Linux Clang x86 Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-clang-x86-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-x86-release",
+      "displayName": "Linux Clang x86 Release Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-clang-x86-release",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
