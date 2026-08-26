@@ -174,7 +174,8 @@ TEST(ValueProxy, MoveAssignOwned)
 {
     value_proxy<int &> sut1(7, value_proxy_owned);
     value_proxy<int &> sut2(7, value_proxy_owned);
-    sut1 = std::move(sut1);
+    auto &sut1_alias = sut1;
+    sut1 = std::move(sut1_alias);
     sut2 = std::move(sut1);
 
     ASSERT_FALSE(sut1.is_valid());
@@ -186,7 +187,8 @@ TEST(ValueProxy, MoveAssignExternal)
     int i = 9;
     value_proxy<int &> sut1(i, value_proxy_external);
     value_proxy<int &> sut2(7, value_proxy_owned);
-    sut1 = std::move(sut1);
+    auto &sut1_alias = sut1;
+    sut1 = std::move(sut1_alias);
     sut2 = std::move(sut1);
 
     ASSERT_FALSE(sut1.is_valid());
@@ -198,7 +200,8 @@ TEST(ValueProxy, MoveAssignEmpty)
 {
     value_proxy<int &> sut1;
     value_proxy<int &> sut2;
-    sut1 = std::move(sut1);
+    auto &sut1_alias = sut1;
+    sut1 = std::move(sut1_alias);
     sut2 = std::move(sut1);
 
     ASSERT_FALSE(sut1.is_valid());

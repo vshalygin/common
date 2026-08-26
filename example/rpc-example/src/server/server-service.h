@@ -15,8 +15,8 @@ namespace vshalygin::example {
     public:
         server_service() = default;
 
-        server_service(const server_service &) = default;
-        server_service &operator=(const server_service &) = default;
+        server_service(const server_service &) = delete;
+        server_service &operator=(const server_service &) = delete;
 
         void accept_message(::google::protobuf::RpcController *controller,
                             const proto::message *request,

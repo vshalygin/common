@@ -21,15 +21,15 @@ TEST(TypeQualifiersCast, Tests)
     static_assert(std::is_same_v<decltype(r6), const int &&>);
     decltype(auto) r7 = type_qualifiers_cast<volatile int>(i); (void)r7;
     static_assert(std::is_same_v<decltype(r7), int>);
-    decltype(auto) r8 = type_qualifiers_cast<volatile int &>(i); (int)r8;
+    decltype(auto) r8 = type_qualifiers_cast<volatile int &>(i); (void)(int)r8;
     static_assert(std::is_same_v<decltype(r8), volatile int &>);
-    decltype(auto) r9 = type_qualifiers_cast<volatile int &&>(i); (int)r9;
+    decltype(auto) r9 = type_qualifiers_cast<volatile int &&>(i); (void)(int)r9;
     static_assert(std::is_same_v<decltype(r9), volatile int &&>);
     decltype(auto) r10 = type_qualifiers_cast<const volatile int>(i); (void)r10;
     static_assert(std::is_same_v<decltype(r10), int>);
-    decltype(auto) r11 = type_qualifiers_cast<const volatile int &>(i); (int)r11;
+    decltype(auto) r11 = type_qualifiers_cast<const volatile int &>(i); (void)(int)r11;
     static_assert(std::is_same_v<decltype(r11), const volatile int &>);
-    decltype(auto) r12 = type_qualifiers_cast<const volatile int &&>(i); (int)r12;
+    decltype(auto) r12 = type_qualifiers_cast<const volatile int &&>(i); (void)(int)r12;
     static_assert(std::is_same_v<decltype(r12), const volatile int &&>);
 
     decltype(auto) r13 = type_qualifiers_cast<int>(std::move(i)); (void)r13;

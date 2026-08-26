@@ -75,7 +75,8 @@ TEST_F(ClosureGuard, DoesNothingIfMoveAssignSameObject)
         .Times(0);
 
     auto sut = closure_guard(m_closure.get());
-    sut = std::move(sut);
+    auto &sut_alias = sut;
+    sut = std::move(sut_alias);
 
     Mock::VerifyAndClearExpectations(m_closure.get());
 }

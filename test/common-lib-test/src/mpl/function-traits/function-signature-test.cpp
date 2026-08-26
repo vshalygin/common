@@ -40,12 +40,12 @@ namespace {
     inline constexpr bool preserves_return_type_v =
         has_signature_v<nullary_function<R>, nullary_function<R>>;
 
-    long &test_function(const int &, volatile double &&, char)
+    [[maybe_unused]] long &test_function(const int &, volatile double &&, char)
     {
         static long l = 0;
         return l;
     }
-    long &test_noexcept_function(const int &, volatile double &&, char) noexcept
+    [[maybe_unused]] long &test_noexcept_function(const int &, volatile double &&, char) noexcept
     {
         static long l = 0;
         return l;
@@ -285,19 +285,19 @@ namespace {
     static_assert(all_object_qualifiers_have_signature_v<noexcept_function_pointer, test_signature>);
     static_assert(all_object_qualifiers_have_signature_v<std::function<test_signature>, test_signature>);
 
-    auto lambda = [](const int &, volatile double &&, char) -> long & {
+    [[maybe_unused]] auto lambda = [](const int &, volatile double &&, char) -> long & {
         static long value = 0;
         return value;
     };
-    auto mutable_lambda = [](const int &, volatile double &&, char) mutable -> long & {
+    [[maybe_unused]] auto mutable_lambda = [](const int &, volatile double &&, char) mutable -> long & {
         static long value = 0;
         return value;
     };
-    auto noexcept_lambda = [](const int &, volatile double &&, char) noexcept -> long & {
+    [[maybe_unused]] auto noexcept_lambda = [](const int &, volatile double &&, char) noexcept -> long & {
         static long value = 0;
         return value;
     };
-    auto mutable_noexcept_lambda = [](const int &, volatile double &&, char) mutable noexcept -> long & {
+    [[maybe_unused]] auto mutable_noexcept_lambda = [](const int &, volatile double &&, char) mutable noexcept -> long & {
         static long value = 0;
         return value;
     };

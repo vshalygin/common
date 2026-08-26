@@ -54,6 +54,8 @@ static_assert(std::is_same_v<sort_tuple_t<std::tuple<>, value_comparator>,
                              std::tuple<>>);
 static_assert(std::is_same_v<sort_tuple_t<std::tuple<test1>, value_comparator>,
                              std::tuple<test1>>);
+static_assert(std::is_same_v<sort_tuple_t<std::tuple<test3, test1, test2>, value_comparator>,
+                             std::tuple<test1, test2, test3>>);
 
 static_assert(std::is_same_v<sort_tuple_t<std::tuple<test2, test1>, value_comparator>,
                              std::tuple<test1, test2>>);

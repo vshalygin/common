@@ -29,7 +29,7 @@ static_assert(is_function_pointer_v<double(* const volatile &&)(int)>);
 
 static_assert(!is_function_pointer_v<int>);
 static_assert(!is_function_pointer_v<decltype(&test::f)>);
-namespace { auto test_lambda = []() {}; }
+namespace { [[maybe_unused]] auto test_lambda = []() {}; }
 static_assert(!is_function_pointer_v<decltype(test_lambda)> );
 static_assert(!is_function_pointer_v<decltype(test_lambda)> );
 static_assert(!is_function_pointer_v<std::function<void()>>);

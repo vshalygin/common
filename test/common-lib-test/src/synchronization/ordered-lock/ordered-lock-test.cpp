@@ -260,7 +260,8 @@ TEST_F(OrderedLock, AssignItselfDoesNothing)
     test<1> t2;
 
     auto lock1 = ordered_lock(t1, t2);
-    lock1 = std::move(lock1);
+    auto &lock1_alias = lock1;
+    lock1 = std::move(lock1_alias);
 
     EXPECT_EQ((*unlock_order).size(), 0);
     EXPECT_TRUE(t1.is_locked());

@@ -40,8 +40,6 @@ namespace vshalygin::rpc {
         void invalidate_impl(bool cancel_server_side, bool cancel_client_side);
 
     private:
-        cl::thread_pool *m_thread_pool;
-
         std::shared_ptr<mem_buffer> m_client_to_server;
         std::shared_ptr<mem_buffer> m_server_to_client;
 

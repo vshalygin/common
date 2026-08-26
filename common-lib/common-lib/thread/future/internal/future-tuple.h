@@ -4,6 +4,7 @@
 #include <common-lib/utils/type-qualifiers-cast.h>
 
 #include <tuple>
+#include <type_traits>
 
 namespace vshalygin::cl::internal {
     template<typename...Args>
@@ -12,7 +13,10 @@ namespace vshalygin::cl::internal {
         using tuple = std::tuple<Args...>;
 
     public:
-        template<typename...UArgs>
+        template<typename...UArgs,
+                 std::enable_if_t<
+                     sizeof...(UArgs) != 1 ||
+                     (!std::is_same_v<ftuple, remove_type_qualifiers_t<UArgs>> && ...), int> = 0>
         ftuple(UArgs&&...args)
             : m_tuple(std::forward<UArgs>(args)...)
         {}

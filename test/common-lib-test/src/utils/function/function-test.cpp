@@ -21,6 +21,7 @@ namespace {
     public:
         test()
         {
+            (void)i;
             ++existing_instanses;
         }
 
@@ -64,6 +65,7 @@ namespace {
     public:
         big_test()
         {
+            (void)b;
             ++existing_instanses;
         }
 
@@ -105,6 +107,11 @@ namespace {
     class multiple_test
     {
     public:
+        multiple_test()
+        {
+            (void)i;
+        }
+
         int operator()(int)
         {
             return 0;
@@ -127,6 +134,11 @@ namespace {
     class big_multiple_test
     {
     public:
+        big_multiple_test()
+        {
+            (void)b;
+        }
+
         int operator()(int)
         {
             return 0;
@@ -149,6 +161,11 @@ namespace {
     class const_test
     {
     public:
+        const_test()
+        {
+            (void)i;
+        }
+
         int operator()() const
         {
             return 1;
@@ -161,6 +178,11 @@ namespace {
     class big_const_test
     {
     public:
+        big_const_test()
+        {
+            (void)b;
+        }
+
         int operator()() const
         {
             return 1;
@@ -215,9 +237,9 @@ TEST_F(Function, MayContainAnyCallable)
     function<void(test &)> f5(&test::func); f5(t);
     function<void(big_test &)> f6(&big_test::func); f6(bt);
     function<void()> f7([]() {}); f7();
-    function<void()> f8([a = std::array<char, 100>()]() {}); f8();
+    function<void()> f8([a = std::array<char, 100>()]() { (void)a; }); f8();
     function<void()> f7_([]() mutable {}); f7_();
-    function<void()> f8_([a = std::array<char, 100>()]() mutable {}); f8_();
+    function<void()> f8_([a = std::array<char, 100>()]() mutable { (void)a; }); f8_();
     function<void()> f9(std::function<void()>{ &func }); f9();
 
     const function<void()> f10(func); f10();
@@ -227,9 +249,9 @@ TEST_F(Function, MayContainAnyCallable)
     const function<void(test &)> f14(&test::func); f14(t);
     const function<void(big_test &)> f15(&big_test::func); f15(bt);
     const function<void()> f16([]() {}); f16();
-    const function<void()> f17([a = std::array<char, 100>()]() {}); f17();
+    const function<void()> f17([a = std::array<char, 100>()]() { (void)a; }); f17();
     const function<void()> f16_([]() mutable {}); f16_();
-    const function<void()> f17_([a = std::array<char, 100>()]() mutable {}); f17_();
+    const function<void()> f17_([a = std::array<char, 100>()]() mutable { (void)a; }); f17_();
     const function<void()> f18(std::function<void()>{ &func }); f18();
 }
 
@@ -349,7 +371,8 @@ TEST_F(Function, MoveAssignable)
 {
     {
         function<void()> f(test{});
-        f = std::move(f);
+        auto &f_alias = f;
+        f = std::move(f_alias);
         EXPECT_EQ(test::existing_instanses, 1);
         EXPECT_TRUE(f);
     }
@@ -357,7 +380,8 @@ TEST_F(Function, MoveAssignable)
 
     {
         function<void()> f;
-        f = std::move(f);
+        auto &f_alias = f;
+        f = std::move(f_alias);
         EXPECT_EQ(test::existing_instanses, 0);
         EXPECT_FALSE(f);
     }
@@ -460,7 +484,7 @@ TEST_F(Function, MoveParameter)
     ASSERT_TRUE(t && *t == 9);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -487,7 +511,7 @@ TEST_F(Function, MayReturnTypesWithAnyQualifiers)
     function<const volatile int &&()> f12([]() -> const volatile int &&{ return std::move(vt); });
     const volatile int &&r12 = f12(); EXPECT_EQ(&r12, &vt);
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 

@@ -48,7 +48,7 @@ namespace vshalygin::rpc::internal {
 
     template<typename GServiceStub>
     template<typename Request,typename Response, typename StubMethod>
-    endpoint<GServiceStub>::request_future<Response>
+    typename endpoint<GServiceStub>::template request_future<Response>
         endpoint<GServiceStub>::make_request(StubMethod stub_method, const Request &req)
     {
         cl::promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {

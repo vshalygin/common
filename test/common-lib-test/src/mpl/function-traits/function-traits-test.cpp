@@ -9,7 +9,7 @@ namespace {
     class test_class
     {
     public:
-        float &f(const int &, volatile double &&t, T)
+        float &f(const int &, volatile double &&, T)
         {
             static float v = 0;
             return v;
@@ -30,7 +30,7 @@ namespace {
         void f4() const volatile & noexcept
         {}
 
-        float &operator()(const int &, volatile double &&t, T)
+        float &operator()(const int &, volatile double &&, T)
         {
             static float v = 0;
             return v;
@@ -41,7 +41,7 @@ namespace {
     class test_class1
     {
     public:
-        float &operator()(const int &, volatile double &&t, T) const
+        float &operator()(const int &, volatile double &&, T) const
         {
             static float v = 0;
             return v;
@@ -147,7 +147,11 @@ static_assert(std::is_same_v<function_args_as_tuple_t<std_function>,
 static_assert(function_arg_count_v<std_function> == 3);
 
 //lambda
-namespace { auto test_lamba1 = [i = 1](const int &, volatile double &&, char)->int { return 0; }; }
+namespace {
+    [[maybe_unused]] auto test_lamba1 = [i = 1](const int &, volatile double &&, char) -> int {
+        return i;
+    };
+}
 using lambda = decltype(test_lamba1);
 static_assert(std::is_same_v<function_arg_t<0, lambda>, const int &>);
 static_assert(std::is_same_v<function_arg_t<1, lambda>, volatile double &&>);
@@ -1342,6 +1346,6 @@ static_assert(std::is_same_v<function_args_as_tuple_t<void(test_class<int>:: *co
 //various checks
 static_assert(function_arg_count_v<void()> == 0);
 
-namespace { auto test_lamba2 = [](std::string &&) {}; }
+namespace { [[maybe_unused]] auto test_lamba2 = [](std::string &&) {}; }
 static_assert(std::is_same_v<function_arg_t<0, decltype(test_lamba2)>,
                              std::string &&>);

@@ -281,7 +281,7 @@ TEST_F(Promise, FunctionMayReturnVoidType)
     sync_event.wait();
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -327,7 +327,7 @@ TEST_F(Promise, FunctionMayReturnTypeWithAnyQualifiers)
         return std::move(ii);
     }); sut12.resolve();
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 

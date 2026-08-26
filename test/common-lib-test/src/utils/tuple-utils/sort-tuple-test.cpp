@@ -104,8 +104,8 @@ namespace {
 
         move_only_counter() = default;
 
-        move_only_counter(move_only_counter &) = delete;
-        move_only_counter &operator=(move_only_counter &) = delete;
+        move_only_counter(const move_only_counter &) = delete;
+        move_only_counter &operator=(const move_only_counter &) = delete;
 
         move_only_counter(move_only_counter &&)
         {

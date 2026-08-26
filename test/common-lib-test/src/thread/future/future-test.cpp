@@ -684,7 +684,7 @@ TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
     ASSERT_EQ(*acceptor, 3);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -771,7 +771,7 @@ TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
     EXPECT_EQ(i11, 11);
     EXPECT_EQ(i12, 12);
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -945,7 +945,7 @@ TEST_F(Future, IsValidIfPromiseDestroyed)
     f.get().apply([](int i) { ASSERT_EQ(i, 1); });
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -993,11 +993,11 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturns)
     f11.get();
     f12.get();
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -1042,7 +1042,7 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturnsAndPassIfFuther)
     f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
     f12.get().apply([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -1174,7 +1174,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture
     f.get().apply([](int i) { ASSERT_EQ(i, 2); });
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -1280,7 +1280,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenAnyTypeValueFromItPassesToFuthe
     f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
     f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -1365,7 +1365,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAll
     ASSERT_NO_THROW(f3.get());
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -1498,7 +1498,7 @@ TEST_F(Future, PromiseResolveFunctionReturnsFuture)
     f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
     f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -1744,7 +1744,7 @@ TEST_F(Future, FutureDataWithFutureTupleType)
 
     ftuple t3{ 1 };
     int &i3 = std::get<0>(t3.to_underlying());
-    auto p3 = promise(&m_pool, [&]() ->decltype(auto) { return t3; });
+    auto p3 = promise(&m_pool, [&]() ->decltype(auto) { return (t3); });
     p3.resolve();
     auto f3 = p3.get_future();
     f3.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
@@ -2054,7 +2054,7 @@ TEST_F(Future, SeveralErrorHandlersDoNotExecuteIfNoExceptionInFirst)
     f2.get();
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -2124,7 +2124,7 @@ TEST_F(Future, ErrorHandlerMayReturnTypeWithAnySpecifier)
         .then([&](const volatile int &&v) { ASSERT_EQ(&i, &v); })
         .get();
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 
@@ -2531,7 +2531,7 @@ TEST_F(Future, FinallyIsTransparentInCallbackChain)
     ASSERT_EQ(beacon, 2);
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
 #endif
@@ -2731,7 +2731,7 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
         .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
         .get();
 }
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 

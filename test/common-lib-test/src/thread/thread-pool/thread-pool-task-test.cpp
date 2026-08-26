@@ -274,7 +274,8 @@ TEST(ThreadPoolTask, IsMoveAssignable)
     thread_pool_task sut(&pool, [cc]() {});
     thread_pool_task other(&pool, []() {});
 
-    sut = std::move(sut);
+    auto &sut_alias = sut;
+    sut = std::move(sut_alias);
     other = std::move(sut);
 
     ASSERT_EQ(counter::copy_num, 1u);
@@ -301,11 +302,11 @@ TEST(ThreadPoolTask, IsBoolConvertible)
     int i;
     thread_pool_task<void()> sut1;
     thread_pool_task sut2(&pool, []() {});
-    thread_pool_task sut3(&pool, [&i]() {});
+    thread_pool_task sut3(&pool, [&i]() { (void)i; });
     thread_pool_task sut4(&pool, simple_functor{});
     thread_pool_task sut5(&pool, &simple_function);
     thread_pool_task sut6(&pool, std::function<void()>([]() {}));
-    thread_pool_task sut7(&pool, std::function<void()>([&i]() {}));
+    thread_pool_task sut7(&pool, std::function<void()>([&i]() { (void)i; }));
     thread_pool_task sut8(&pool, std::function<void()>(simple_functor{}));
     thread_pool_task sut9(&pool, std::function<void()>{&simple_function});
 
@@ -325,11 +326,11 @@ TEST(ThreadPoolTask, AnyCallableObjectMayBeCalled)
     thread_pool pool(1);
     int i;
     thread_pool_task sut1(&pool, []() {});
-    thread_pool_task sut2(&pool, [&i]() {});
+    thread_pool_task sut2(&pool, [&i]() { (void)i; });
     thread_pool_task sut3(&pool, simple_functor{});
     thread_pool_task sut4(&pool, &simple_function);
     thread_pool_task sut5(&pool, std::function<void()>([]() {}));
-    thread_pool_task sut6(&pool, std::function<void()>([&i]() {}));
+    thread_pool_task sut6(&pool, std::function<void()>([&i]() { (void)i; }));
     thread_pool_task sut7(&pool, std::function<void()>(simple_functor{}));
     thread_pool_task sut8(&pool, std::function<void()>{&simple_function});
 

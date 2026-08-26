@@ -93,7 +93,7 @@ namespace vshalygin::rpc {
 
     template<typename GServieServiceStub, typename GClientService>
     template<typename Request, typename Response, typename StubMethod>
-    client_endpoint<GServieServiceStub, GClientService>::request_future<Response>
+    typename client_endpoint<GServieServiceStub, GClientService>::template request_future<Response>
         client_endpoint<GServieServiceStub, GClientService>::impl::make_request(StubMethod stub_method,
                                                                                 const Request &req)
     {
@@ -185,7 +185,7 @@ namespace vshalygin::rpc {
 
     template<typename GServerServiceStub, typename GClientService>
     template<typename Request, typename Response, typename StubMethod>
-    client_endpoint<GServerServiceStub, GClientService>::request_future<Response>
+    typename client_endpoint<GServerServiceStub, GClientService>::template request_future<Response>
         client_endpoint<GServerServiceStub, GClientService>::make_request(StubMethod stub_method,
                                                                           const Request &req)
     {

@@ -14,7 +14,7 @@ static_assert(!is_std_function_v<int>);
 static_assert(!is_std_function_v<void()>);
 static_assert(!is_std_function_v<const functor &>);
 static_assert(!is_std_function_v<functor>);
-namespace { auto test_lambda = []() {}; }
+namespace { [[maybe_unused]] auto test_lambda = []() {}; }
 static_assert(!is_std_function_v<decltype(test_lambda)>);
 static_assert(!is_std_function_v<void(*)()>);
 static_assert(!is_std_function_v<decltype(&functor::operator())>);

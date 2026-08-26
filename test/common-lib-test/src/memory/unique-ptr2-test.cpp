@@ -97,6 +97,11 @@ namespace {
     class virual_base
     {
     public:
+        virual_base()
+        {
+            (void)buf_;
+        }
+
         virtual ~virual_base() = default;
 
         void set_virual_base(int val)
@@ -120,7 +125,10 @@ namespace {
     public:
         virtual ~test_base() = default;
 
-        test_base() = default;
+        test_base()
+        {
+            (void)buf_;
+        }
 
         test_base(const test_base &) = default;
         test_base &operator=(const test_base &) = default;
@@ -172,6 +180,11 @@ namespace {
         : public test_base
     {
     public:
+        test_base_2()
+        {
+            (void)block;
+        }
+
         virtual ~test_base_2() = default;
 
         double get_test_base2() const
@@ -193,6 +206,11 @@ namespace {
         : virtual public virual_base
     {
     public:
+        test_base_3_with_virtual_base()
+        {
+            (void)block;
+        }
+
         virtual ~test_base_3_with_virtual_base() = default;
 
         double get_test_base3() const
@@ -214,6 +232,11 @@ namespace {
         : virtual public virual_base
     {
     public:
+        test_base_4_with_virtual_base()
+        {
+            (void)block;
+        }
+
         virtual ~test_base_4_with_virtual_base() = default;
 
         double get_test_base_4_with_virtual_base() const
@@ -245,6 +268,11 @@ namespace {
         , public test_base_2
     {
     public:
+        test_class_with_two_base()
+        {
+            (void)buf;
+        }
+
         virtual ~test_class_with_two_base() = default;
 
     private:
@@ -256,6 +284,11 @@ namespace {
         , public test_base_4_with_virtual_base
     {
     public:
+        test_class_with_two_base_with_virtual_base()
+        {
+            (void)buf;
+        }
+
         virtual ~test_class_with_two_base_with_virtual_base() = default;
 
     private:

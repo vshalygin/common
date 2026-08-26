@@ -166,7 +166,7 @@ namespace vshalygin::rpc {
 
         std::optional<uint64_t> timer_id;
         if(timeout) {
-            timer_id = m_timer.start([self = weak_from_this(), promise_id, client_id, &own]() {
+            timer_id = m_timer.start([self = weak_from_this(), promise_id, &own]() {
                 if(auto s = self.lock()) {
                     s->remove_promise_by_timeout(own, promise_id);
                 }
