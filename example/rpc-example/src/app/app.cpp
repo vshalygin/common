@@ -76,11 +76,10 @@ namespace vshalygin::example {
              else if (line == "1") {
                 return transport_type::win_pipe;
             }
-#else
+#endif
              else if (line == "2") {
                 return transport_type::tcp;
              }
-#endif
              else {
                 return transport_type::unknown;
             }
