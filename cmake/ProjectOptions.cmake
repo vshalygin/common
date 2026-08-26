@@ -39,7 +39,6 @@ function(configure_target target target_kind)
         endif()
 
         set_target_properties("${target}" PROPERTIES
-            MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
             VS_GLOBAL_CharacterSet "Unicode"
         )
 
