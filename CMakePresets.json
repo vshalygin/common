@@ -420,6 +420,7 @@
       "name": "test-base",
       "hidden": true,
       "output": {
+        "verbosity": "verbose",
         "outputOnFailure": true
       },
       "execution": {
