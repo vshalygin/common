@@ -27,6 +27,15 @@ include(CTest)
 include(cmake/ProjectOptions.cmake)
 include(cmake/ExternalDependencies.cmake)
 
+set(VSHALYGIN_COMMON_TEST_TIMEOUT "60" CACHE STRING
+    "Timeout in seconds for each discovered test"
+)
+if(NOT VSHALYGIN_COMMON_TEST_TIMEOUT MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR
+        "VSHALYGIN_COMMON_TEST_TIMEOUT must be a positive integer."
+    )
+endif()
+
 add_subdirectory(common-lib)
 if(WIN32)
     add_subdirectory(win-lib)

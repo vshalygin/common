@@ -1,5 +1,6 @@
 include(CheckIPOSupported)
 include("${CMAKE_CURRENT_LIST_DIR}/Coverage.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/Sanitizers.cmake")
 
 check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_ERROR)
 
@@ -26,6 +27,7 @@ function(configure_target target target_kind)
     )
 
     enable_target_coverage("${target}")
+    enable_target_sanitizers("${target}")
 
     if(IPO_SUPPORTED)
         set_property(TARGET "${target}"

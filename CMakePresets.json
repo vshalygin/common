@@ -188,6 +188,31 @@
       }
     },
     {
+      "name": "linux-clang-asan-debug",
+      "displayName": "Linux Clang x64 ASan + UBSan Debug",
+      "description": "Configure libraries and portable tests with AddressSanitizer and UndefinedBehaviorSanitizer",
+      "inherits": "linux-clang-base",
+      "binaryDir": "${sourceDir}/out/build/linux-clang-asan-debug",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-clang-asan-debug",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VSHALYGIN_COMMON_SANITIZER": "address-undefined"
+      }
+    },
+    {
+      "name": "linux-clang-tsan-debug",
+      "displayName": "Linux Clang x64 TSan Debug",
+      "description": "Configure libraries and portable tests with ThreadSanitizer",
+      "inherits": "linux-clang-base",
+      "binaryDir": "${sourceDir}/out/build/linux-clang-tsan-debug",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-clang-tsan-debug",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VSHALYGIN_COMMON_SANITIZER": "thread",
+        "VSHALYGIN_COMMON_TEST_TIMEOUT": "300"
+      }
+    },
+    {
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release",
       "description": "Configure libraries and portable tests with Clang and LTO",
@@ -333,6 +358,26 @@
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug",
       "configurePreset": "linux-clang-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-asan-debug",
+      "displayName": "Linux Clang x64 ASan + UBSan Debug",
+      "configurePreset": "linux-clang-asan-debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-tsan-debug",
+      "displayName": "Linux Clang x64 TSan Debug",
+      "configurePreset": "linux-clang-tsan-debug",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -496,6 +541,35 @@
       }
     },
     {
+      "name": "linux-clang-asan-debug",
+      "displayName": "Linux Clang x64 ASan + UBSan Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-clang-asan-debug",
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-clang-tsan-debug",
+      "displayName": "Linux Clang x64 TSan Debug Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-clang-tsan-debug",
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release Tests",
       "inherits": "test-base",
@@ -542,6 +616,44 @@
         {
           "type": "build",
           "name": "linux-gcc-coverage"
+        }
+      ]
+    },
+    {
+      "name": "linux-clang-asan-debug",
+      "displayName": "Linux Clang x64 ASan + UBSan Debug",
+      "description": "Configure, build, and run tests with AddressSanitizer and UndefinedBehaviorSanitizer",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-clang-asan-debug"
+        },
+        {
+          "type": "build",
+          "name": "linux-clang-asan-debug"
+        },
+        {
+          "type": "test",
+          "name": "linux-clang-asan-debug"
+        }
+      ]
+    },
+    {
+      "name": "linux-clang-tsan-debug",
+      "displayName": "Linux Clang x64 TSan Debug",
+      "description": "Configure, build, and run tests with ThreadSanitizer",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-clang-tsan-debug"
+        },
+        {
+          "type": "build",
+          "name": "linux-clang-tsan-debug"
+        },
+        {
+          "type": "test",
+          "name": "linux-clang-tsan-debug"
         }
       ]
     }

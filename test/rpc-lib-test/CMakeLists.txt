@@ -82,7 +82,7 @@ gtest_discover_tests(rpc-lib-test
     DISCOVERY_MODE POST_BUILD
     DISCOVERY_TIMEOUT 120
     PROPERTIES
-        TIMEOUT 60
+        TIMEOUT "${VSHALYGIN_COMMON_TEST_TIMEOUT}"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES

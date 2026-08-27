@@ -209,6 +209,101 @@ jobs:
           path: out/build/rpc-example/${{ matrix.preset }}/rpc-example
           if-no-files-found: error
 
+  address-undefined-sanitizers:
+    name: Clang x64 ASan + UBSan Debug
+    needs:
+      - detect-toolchain-changes
+      - build-toolchain-images
+    if: >-
+      always() &&
+      needs.detect-toolchain-changes.result == 'success' &&
+      (needs.build-toolchain-images.result == 'success' ||
+       needs.build-toolchain-images.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    container:
+      image: ghcr.io/${{ github.repository }}-linux-clang-x64:ubuntu-22.04-clang-14
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    env:
+      VCPKG_BINARY_CACHE: /tmp/vcpkg-binary-cache
+      VCPKG_BINARY_SOURCES: clear;files,/tmp/vcpkg-binary-cache,readwrite
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Prepare vcpkg binary cache
+        run: mkdir -p "${VCPKG_BINARY_CACHE}"
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v5
+        with:
+          path: /tmp/vcpkg-binary-cache
+          key: vcpkg-linux-clang-x64-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json', 'docker/linux-clang-x64.Dockerfile') }}
+          restore-keys: |
+            vcpkg-linux-clang-x64-
+
+      - name: Configure ASan and UBSan build
+        run: cmake --preset linux-clang-asan-debug
+
+      - name: Build with ASan and UBSan
+        run: cmake --build --preset linux-clang-asan-debug --parallel
+
+      - name: Run tests with ASan and UBSan
+        run: ctest --preset linux-clang-asan-debug
+
+  thread-sanitizer:
+    name: Clang x64 TSan Debug
+    needs:
+      - detect-toolchain-changes
+      - build-toolchain-images
+    if: >-
+      always() &&
+      github.event_name != 'pull_request' &&
+      needs.detect-toolchain-changes.result == 'success' &&
+      (needs.build-toolchain-images.result == 'success' ||
+       needs.build-toolchain-images.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    container:
+      image: ghcr.io/${{ github.repository }}-linux-clang-x64:ubuntu-22.04-clang-14
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    env:
+      VCPKG_BINARY_CACHE: /tmp/vcpkg-binary-cache
+      VCPKG_BINARY_SOURCES: clear;files,/tmp/vcpkg-binary-cache,readwrite
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Prepare vcpkg binary cache
+        run: mkdir -p "${VCPKG_BINARY_CACHE}"
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v5
+        with:
+          path: /tmp/vcpkg-binary-cache
+          key: vcpkg-linux-clang-x64-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json', 'docker/linux-clang-x64.Dockerfile') }}
+          restore-keys: |
+            vcpkg-linux-clang-x64-
+
+      - name: Configure TSan build
+        run: cmake --preset linux-clang-tsan-debug
+
+      - name: Build with TSan
+        run: cmake --build --preset linux-clang-tsan-debug --parallel
+
+      - name: Run tests with TSan
+        run: ctest --preset linux-clang-tsan-debug
+
   coverage:
     name: GCC x64 Debug Coverage
     needs:

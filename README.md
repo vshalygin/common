@@ -57,3 +57,18 @@ portable tests, and writes the reports to
 report. `coverage.xml` contains the same line and branch data in Cobertura
 format. `coverage.txt` contains the per-file line report, and
 `coverage-summary.md` summarizes line, function, and branch coverage.
+
+## Sanitizers
+
+Linux Clang x64 presets are available for runtime diagnostics. Set
+`VCPKG_ROOT` and run either workflow locally:
+
+```bash
+cmake --workflow --preset linux-clang-asan-debug
+cmake --workflow --preset linux-clang-tsan-debug
+```
+
+`linux-clang-asan-debug` enables AddressSanitizer and
+UndefinedBehaviorSanitizer. `linux-clang-tsan-debug` is a separate build
+because ThreadSanitizer cannot be combined with AddressSanitizer. Sanitizer
+diagnostics and stack traces are written directly to the test output.
