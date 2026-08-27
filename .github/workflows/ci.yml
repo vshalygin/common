@@ -18,11 +18,57 @@ env:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  detect-toolchain-changes:
+    name: Detect toolchain image changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    outputs:
+      images_changed: ${{ steps.changes.outputs.images_changed }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect Docker context changes
+        id: changes
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" != "push" ]]; then
+            echo "images_changed=false" >> "${GITHUB_OUTPUT}"
+          elif ! git cat-file -e "${{ github.event.before }}^{commit}" 2>/dev/null; then
+            echo "images_changed=true" >> "${GITHUB_OUTPUT}"
+          elif git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- docker .github/workflows/toolchain-images.yml; then
+            echo "images_changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "images_changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+  build-toolchain-images:
+    name: Build changed toolchain images
+    needs: detect-toolchain-changes
+    if: needs.detect-toolchain-changes.outputs.images_changed == 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/toolchain-images.yml
+    secrets: inherit
+
   build-test:
     name: ${{ matrix.compiler }} ${{ matrix.architecture }} ${{ matrix.configuration }}
+    needs:
+      - detect-toolchain-changes
+      - build-toolchain-images
+    if: >-
+      always() &&
+      needs.detect-toolchain-changes.result == 'success' &&
+      (needs.build-toolchain-images.result == 'success' ||
+       needs.build-toolchain-images.result == 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
 
@@ -165,6 +211,14 @@ jobs:
 
   coverage:
     name: GCC x64 Debug Coverage
+    needs:
+      - detect-toolchain-changes
+      - build-toolchain-images
+    if: >-
+      always() &&
+      needs.detect-toolchain-changes.result == 'success' &&
+      (needs.build-toolchain-images.result == 'success' ||
+       needs.build-toolchain-images.result == 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
 
@@ -220,6 +274,14 @@ jobs:
 
   windows:
     name: MSVC ${{ matrix.architecture }} ${{ matrix.configuration }}
+    needs:
+      - detect-toolchain-changes
+      - build-toolchain-images
+    if: >-
+      always() &&
+      needs.detect-toolchain-changes.result == 'success' &&
+      (needs.build-toolchain-images.result == 'success' ||
+       needs.build-toolchain-images.result == 'skipped')
     runs-on: windows-2022
     timeout-minutes: 120
 

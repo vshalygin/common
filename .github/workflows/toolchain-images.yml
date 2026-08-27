@@ -1,13 +1,8 @@
 name: Toolchain images
 
 on:
+  workflow_call:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - docker/*.Dockerfile
-      - .github/workflows/toolchain-images.yml
 
 permissions:
   contents: read
