@@ -20,7 +20,6 @@ function(configure_target target target_kind)
     target_compile_features("${target}" ${standard_scope} cxx_std_17)
 
     set_target_properties("${target}" PROPERTIES
-        CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
     )
