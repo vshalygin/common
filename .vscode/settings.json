@@ -12,21 +12,25 @@
         "**/x64": true,
         "**/Debug": true,
         "**/Release": true,
-        "**/submodules": true
+        "**/submodules": true,
+        "example": true
     },
 
     "search.exclude": {
         "**/.vs": true,
         "**/out": true,
         "**/x64": true,
-        "**/submodules": true
+        "**/submodules": true,
+        "example": true
     },
 
     "files.watcherExclude": {
         "**/.git/**": true,
         "**/.vs/**": true,
         "**/out/**": true,
-        "**/x64/**": true
+        "**/x64/**": true,
+        "example": true
     },
+    
     "cmake.ctest.neverDebugTestsWithLaunchConfiguration": false
 }

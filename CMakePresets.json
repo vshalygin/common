@@ -19,7 +19,7 @@
     {
       "name": "vs2022-x64",
       "displayName": "Visual Studio 2022 x64",
-      "description": "Configure all libraries, tests, and examples with MSVC v143",
+      "description": "Configure all libraries and tests with MSVC v143",
       "inherits": "configure-base",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/vs2022-x64",
@@ -32,12 +32,12 @@
         "strategy": "set"
       },
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/vs2022-x64",
         "CMAKE_SYSTEM_VERSION": "10.0",
         "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "VCPKG_HOST_TRIPLET": "x64-windows-static",
-        "BUILD_TESTING": true,
-        "BUILD_EXAMPLES": true
+        "BUILD_TESTING": true
       },
       "condition": {
         "type": "equals",
@@ -48,7 +48,7 @@
     {
       "name": "vs2022-win32",
       "displayName": "Visual Studio 2022 Win32",
-      "description": "Configure all libraries, tests, and examples for Win32 with MSVC v143",
+      "description": "Configure all libraries and tests for Win32 with MSVC v143",
       "inherits": "configure-base",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/vs2022-win32",
@@ -61,12 +61,12 @@
         "strategy": "set"
       },
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/vs2022-win32",
         "CMAKE_SYSTEM_VERSION": "10.0",
         "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>",
         "VCPKG_TARGET_TRIPLET": "x86-windows-static",
         "VCPKG_HOST_TRIPLET": "x64-windows-static",
-        "BUILD_TESTING": true,
-        "BUILD_EXAMPLES": true
+        "BUILD_TESTING": true
       },
       "condition": {
         "type": "equals",
@@ -84,8 +84,7 @@
         "VCPKG_TARGET_TRIPLET": "x64-linux",
         "VCPKG_HOST_TRIPLET": "x64-linux",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "BUILD_TESTING": true,
-        "BUILD_EXAMPLES": true
+        "BUILD_TESTING": true
       },
       "condition": {
         "type": "equals",
@@ -96,20 +95,22 @@
     {
       "name": "linux-gcc-debug",
       "displayName": "Linux GCC Debug",
-      "description": "Configure libraries, portable tests, and examples with GCC",
+      "description": "Configure libraries and portable tests with GCC",
       "inherits": "linux-gcc-base",
       "binaryDir": "${sourceDir}/out/build/linux-gcc-debug",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-gcc-debug",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "linux-gcc-release",
       "displayName": "Linux GCC Release",
-      "description": "Configure libraries, portable tests, and examples with GCC and LTO",
+      "description": "Configure libraries and portable tests with GCC and LTO",
       "inherits": "linux-gcc-base",
       "binaryDir": "${sourceDir}/out/build/linux-gcc-release",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-gcc-release",
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
@@ -126,20 +127,22 @@
     {
       "name": "linux-gcc-x86-debug",
       "displayName": "Linux GCC x86 Debug",
-      "description": "Configure 32-bit libraries, portable tests, and examples with GCC",
+      "description": "Configure 32-bit libraries and portable tests with GCC",
       "inherits": "linux-gcc-x86-base",
       "binaryDir": "${sourceDir}/out/build/linux-gcc-x86-debug",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-gcc-x86-debug",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "linux-gcc-x86-release",
       "displayName": "Linux GCC x86 Release",
-      "description": "Configure 32-bit libraries, portable tests, and examples with GCC and LTO",
+      "description": "Configure 32-bit libraries and portable tests with GCC and LTO",
       "inherits": "linux-gcc-x86-base",
       "binaryDir": "${sourceDir}/out/build/linux-gcc-x86-release",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-gcc-x86-release",
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
@@ -153,8 +156,7 @@
         "VCPKG_TARGET_TRIPLET": "x64-linux",
         "VCPKG_HOST_TRIPLET": "x64-linux",
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "BUILD_TESTING": true,
-        "BUILD_EXAMPLES": true
+        "BUILD_TESTING": true
       },
       "condition": {
         "type": "equals",
@@ -165,20 +167,22 @@
     {
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug",
-      "description": "Configure libraries, portable tests, and examples with Clang",
+      "description": "Configure libraries and portable tests with Clang",
       "inherits": "linux-clang-base",
       "binaryDir": "${sourceDir}/out/build/linux-clang-debug",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-clang-debug",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "linux-clang-release",
       "displayName": "Linux Clang Release",
-      "description": "Configure libraries, portable tests, and examples with Clang and LTO",
+      "description": "Configure libraries and portable tests with Clang and LTO",
       "inherits": "linux-clang-base",
       "binaryDir": "${sourceDir}/out/build/linux-clang-release",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-clang-release",
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
@@ -195,20 +199,22 @@
     {
       "name": "linux-clang-x86-debug",
       "displayName": "Linux Clang x86 Debug",
-      "description": "Configure 32-bit libraries, portable tests, and examples with Clang",
+      "description": "Configure 32-bit libraries and portable tests with Clang",
       "inherits": "linux-clang-x86-base",
       "binaryDir": "${sourceDir}/out/build/linux-clang-x86-debug",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-clang-x86-debug",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "linux-clang-x86-release",
       "displayName": "Linux Clang x86 Release",
-      "description": "Configure 32-bit libraries, portable tests, and examples with Clang and LTO",
+      "description": "Configure 32-bit libraries and portable tests with Clang and LTO",
       "inherits": "linux-clang-x86-base",
       "binaryDir": "${sourceDir}/out/build/linux-clang-x86-release",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-clang-x86-release",
         "CMAKE_BUILD_TYPE": "Release"
       }
     }

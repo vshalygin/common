@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25...4.4)
 
 project(vshalygin_common
+    VERSION 0.1.0
     LANGUAGES CXX
 )
 
@@ -21,8 +22,7 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
-option(BUILD_EXAMPLES "Build the example applications" ON)
-
+include(GNUInstallDirs)
 include(CTest)
 include(cmake/ProjectOptions.cmake)
 include(cmake/ExternalDependencies.cmake)
@@ -42,6 +42,32 @@ if(BUILD_TESTING)
     add_subdirectory(test/rpc-lib-test)
 endif()
 
-if(BUILD_EXAMPLES)
-    add_subdirectory(example/rpc-example)
-endif()
+include(CMakePackageConfigHelpers)
+
+set(vshalygin_common_install_cmakedir
+    "${CMAKE_INSTALL_LIBDIR}/cmake/vshalygin-common"
+)
+
+configure_package_config_file(
+    cmake/vshalygin-common-config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config.cmake"
+    INSTALL_DESTINATION "${vshalygin_common_install_cmakedir}"
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config-version.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY SameMajorVersion
+)
+
+install(EXPORT vshalygin-common-targets
+    FILE vshalygin-common-targets.cmake
+    NAMESPACE vshalygin::
+    DESTINATION "${vshalygin_common_install_cmakedir}"
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config-version.cmake"
+    DESTINATION "${vshalygin_common_install_cmakedir}"
+)

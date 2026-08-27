@@ -10,9 +10,10 @@ endif()
 # Boost config packages expose Boost::headers. Keep the project compatible
 # with either package layout.
 if(NOT TARGET Boost::headers AND TARGET Boost::boost)
-    add_library(boost-headers-compat INTERFACE)
-    target_link_libraries(boost-headers-compat INTERFACE Boost::boost)
-    add_library(Boost::headers ALIAS boost-headers-compat)
+    add_library(Boost::headers INTERFACE IMPORTED)
+    set_property(TARGET Boost::headers PROPERTY
+        INTERFACE_LINK_LIBRARIES Boost::boost
+    )
 endif()
 
 if(NOT TARGET Boost::headers OR NOT TARGET Boost::thread)

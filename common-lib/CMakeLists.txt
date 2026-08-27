@@ -101,12 +101,19 @@ set(common_lib_headers
 
 add_library(common-lib STATIC
     ${common_lib_sources}
-    ${common_lib_headers}
 )
 add_library(vshalygin::common-lib ALIAS common-lib)
 
+target_sources(common-lib PUBLIC
+    FILE_SET public_headers
+    TYPE HEADERS
+    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES ${common_lib_headers}
+)
+
 target_include_directories(common-lib PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 target_link_libraries(common-lib PUBLIC
     Boost::headers
@@ -117,7 +124,16 @@ target_link_libraries(common-lib PUBLIC
 configure_target(common-lib LIBRARY)
 
 set_target_properties(common-lib PROPERTIES
+    DEBUG_POSTFIX d
     FOLDER "Libraries"
+)
+
+install(TARGETS common-lib
+    EXPORT vshalygin-common-targets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    FILE_SET public_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES

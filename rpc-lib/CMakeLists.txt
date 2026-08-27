@@ -91,12 +91,19 @@ endif()
 
 add_library(rpc-lib STATIC
     ${rpc_lib_sources}
-    ${rpc_lib_headers}
 )
 add_library(vshalygin::rpc-lib ALIAS rpc-lib)
 
+target_sources(rpc-lib PUBLIC
+    FILE_SET public_headers
+    TYPE HEADERS
+    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES ${rpc_lib_headers}
+)
+
 target_include_directories(rpc-lib PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 target_link_libraries(rpc-lib PUBLIC
     common-lib
@@ -112,7 +119,16 @@ endif()
 configure_target(rpc-lib LIBRARY)
 
 set_target_properties(rpc-lib PROPERTIES
+    DEBUG_POSTFIX d
     FOLDER "Libraries"
+)
+
+install(TARGETS rpc-lib
+    EXPORT vshalygin-common-targets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    FILE_SET public_headers DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES

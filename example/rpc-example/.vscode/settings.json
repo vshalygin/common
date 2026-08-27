@@ -1,0 +1,21 @@
+{
+    "cmake.useCMakePresets": "always",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.buildBeforeRun": true,
+
+    "terminal.integrated.scrollback": 100000,
+
+    "files.exclude": {
+        "**/out": true
+    },
+
+    "search.exclude": {
+        "**/out": true
+    },
+
+    "files.watcherExclude": {
+        "**/out/**": true
+    },
+    
+    "cmake.ctest.neverDebugTestsWithLaunchConfiguration": false
+}
