@@ -97,6 +97,7 @@ function(add_coverage_report_target)
             --verbose
         COMMAND
             "${VSHALYGIN_GCOVR_EXECUTABLE}"
+            --merge-lines
             --root "${CMAKE_SOURCE_DIR}"
             --object-directory "${CMAKE_BINARY_DIR}"
             --filter "${CMAKE_SOURCE_DIR}/common-lib/"
