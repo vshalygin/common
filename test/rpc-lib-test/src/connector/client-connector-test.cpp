@@ -181,10 +181,13 @@ TEST_F(ClientConnector, UseAuthentificatorForFormingHandshakeRequest)
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
-        .then([&](pipe_op_res, buffer &buf) {
+        .then([server_endpoint = m_server_endpoint, &req](pipe_op_res, buffer &buf) {
                   EXPECT_TRUE(req == buf);
+                  return server_endpoint->write_async({});
               })
         .get();
+
+    f.get();
 }
 
 TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)

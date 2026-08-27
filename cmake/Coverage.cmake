@@ -94,7 +94,7 @@ function(add_coverage_report_target)
         COMMAND
             "${CMAKE_CTEST_COMMAND}"
             --test-dir "${CMAKE_BINARY_DIR}"
-            --output-on-failure
+            --verbose
         COMMAND
             "${VSHALYGIN_GCOVR_EXECUTABLE}"
             --root "${CMAKE_SOURCE_DIR}"
