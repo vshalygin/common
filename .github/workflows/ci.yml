@@ -13,6 +13,9 @@ permissions:
   contents: read
   packages: read
 
+env:
+  VCPKG_COMMIT: ddd0023b0eee70986e42ed49d9d4afb8098f212e
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -21,6 +24,7 @@ jobs:
   build-test:
     name: ${{ matrix.compiler }} ${{ matrix.architecture }} ${{ matrix.configuration }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 120
 
     container:
       image: ghcr.io/${{ github.repository }}-${{ matrix.image }}:${{ matrix.image_tag }}
@@ -152,9 +156,17 @@ jobs:
           path: out/install/${{ matrix.preset }}
           if-no-files-found: error
 
+      - name: Upload rpc-example
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}-rpc-example
+          path: out/build/rpc-example/${{ matrix.preset }}/rpc-example
+          if-no-files-found: error
+
   windows:
     name: MSVC ${{ matrix.architecture }} ${{ matrix.configuration }}
     runs-on: windows-2022
+    timeout-minutes: 120
 
     strategy:
       fail-fast: false
@@ -194,8 +206,9 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: microsoft/vcpkg
-          ref: 6f29f12e82a8293156836ad81cc9bf5af41fe836
+          ref: ${{ env.VCPKG_COMMIT }}
           path: .vcpkg
+          fetch-depth: 0
 
       - name: Bootstrap vcpkg and prepare binary cache
         shell: pwsh
@@ -215,7 +228,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ runner.temp }}\vcpkg-binary-cache
-          key: vcpkg-windows-${{ matrix.cache_key }}-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json') }}
+          key: vcpkg-windows-${{ matrix.cache_key }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json') }}
           restore-keys: |
             vcpkg-windows-${{ matrix.cache_key }}-
 
@@ -244,4 +257,11 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: out/install/${{ matrix.configure_preset }}
+          if-no-files-found: error
+
+      - name: Upload rpc-example
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}-rpc-example
+          path: out/build/rpc-example/${{ matrix.configure_preset }}/${{ matrix.configuration }}/rpc-example.*
           if-no-files-found: error
