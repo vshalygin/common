@@ -66,6 +66,7 @@ function(enable_target_coverage target)
         -O0
         -g
         -fprofile-abs-path
+        -fprofile-update=atomic
     )
 
     get_target_property(target_type "${target}" TYPE)
