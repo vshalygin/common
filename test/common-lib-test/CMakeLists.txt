@@ -86,7 +86,8 @@ set_target_properties(common-lib-test PROPERTIES
 
 gtest_discover_tests(common-lib-test
     TEST_PREFIX "common-lib."
-    DISCOVERY_TIMEOUT 30
+    DISCOVERY_MODE POST_BUILD
+    DISCOVERY_TIMEOUT 120
     PROPERTIES
         TIMEOUT 60
 )

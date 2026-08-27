@@ -9,6 +9,12 @@ namespace vshalygin::cl {
     template<typename Signature>
     class function;
 
+#ifdef _MSC_VER
+#pragma warning(push)
+    // C4324: padding is intentional; the SBO buffer must support max-aligned objects.
+#pragma warning(disable : 4324)
+#endif
+
     template<typename R, typename...Args>
     class function<R(Args...)>
     {
@@ -134,4 +140,8 @@ namespace vshalygin::cl {
     private:
         alignas(sbo_alignment) std::byte m_buffer[sbo_size];
     };
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 }

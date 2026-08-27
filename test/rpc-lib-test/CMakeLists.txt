@@ -79,7 +79,8 @@ set_target_properties(rpc-lib-test PROPERTIES
 
 gtest_discover_tests(rpc-lib-test
     TEST_PREFIX "rpc-lib."
-    DISCOVERY_TIMEOUT 30
+    DISCOVERY_MODE POST_BUILD
+    DISCOVERY_TIMEOUT 120
     PROPERTIES
         TIMEOUT 60
 )
