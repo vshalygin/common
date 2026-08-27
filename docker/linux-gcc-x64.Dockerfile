@@ -4,6 +4,7 @@ FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CMAKE_VERSION=4.4.2
+ARG GCOVR_VERSION=8.6
 ARG VCPKG_COMMIT=6f29f12e82a8293156836ad81cc9bf5af41fe836
 
 RUN apt-get update \
@@ -21,7 +22,9 @@ RUN apt-get update \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --no-cache-dir "cmake==${CMAKE_VERSION}"
+RUN python3 -m pip install --no-cache-dir \
+        "cmake==${CMAKE_VERSION}" \
+        "gcovr==${GCOVR_VERSION}"
 
 RUN git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg \
     && git -C /opt/vcpkg checkout --detach "${VCPKG_COMMIT}" \

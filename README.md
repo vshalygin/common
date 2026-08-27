@@ -40,3 +40,20 @@ For a custom package location, pass it explicitly:
 cmake -S example/rpc-example -B out/build/rpc-example-custom `
     -DCMAKE_PREFIX_PATH=C:/path/to/vshalygin-common
 ```
+
+## Coverage
+
+Line and branch coverage is available locally on Linux with GCC and gcovr
+8.6 or newer. Install gcovr, set `VCPKG_ROOT`, and run the coverage workflow:
+
+```bash
+python3 -m pip install "gcovr==8.6"
+cmake --workflow --preset linux-gcc-coverage
+```
+
+The workflow configures and builds the instrumented Debug targets, runs all
+portable tests, and writes the reports to
+`out/build/linux-gcc-coverage/coverage`. Open `index.html` for the detailed
+report. `coverage.xml` contains the same line and branch data in Cobertura
+format. `coverage.txt` contains the per-file line report, and
+`coverage-summary.md` summarizes line, function, and branch coverage.

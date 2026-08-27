@@ -163,6 +163,72 @@ jobs:
           path: out/build/rpc-example/${{ matrix.preset }}/rpc-example
           if-no-files-found: error
 
+  coverage:
+    name: GCC x64 Debug Coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    permissions:
+      contents: read
+      packages: read
+      code-quality: write
+      pull-requests: read
+
+    container:
+      image: ghcr.io/${{ github.repository }}-linux-gcc-x64:ubuntu-22.04-gcc-11
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    env:
+      VCPKG_BINARY_CACHE: /tmp/vcpkg-binary-cache
+      VCPKG_BINARY_SOURCES: clear;files,/tmp/vcpkg-binary-cache,readwrite
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Prepare vcpkg binary cache
+        run: mkdir -p "${VCPKG_BINARY_CACHE}"
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v5
+        with:
+          path: /tmp/vcpkg-binary-cache
+          key: vcpkg-linux-gcc-x64-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json', 'docker/linux-gcc-x64.Dockerfile') }}
+          restore-keys: |
+            vcpkg-linux-gcc-x64-
+
+      - name: Ensure gcovr is available
+        run: python3 -m pip install --no-cache-dir "gcovr==8.6"
+
+      - name: Configure coverage build
+        run: cmake --preset linux-gcc-coverage
+
+      - name: Build, test, and generate coverage reports
+        run: cmake --build --preset linux-gcc-coverage --parallel
+
+      - name: Add coverage to job summary
+        run: cat out/build/linux-gcc-coverage/coverage/coverage-summary.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vshalygin-common-linux-gcc-x64-coverage
+          path: out/build/linux-gcc-coverage/coverage
+          if-no-files-found: error
+
+      - name: Upload coverage to GitHub Code Quality
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: out/build/linux-gcc-coverage/coverage/coverage.xml
+          language: "C++"
+          label: code-coverage/gcovr
+          fail-on-error: false
+
   windows:
     name: MSVC ${{ matrix.architecture }} ${{ matrix.configuration }}
     runs-on: windows-2022

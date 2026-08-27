@@ -1,4 +1,5 @@
 include(CheckIPOSupported)
+include("${CMAKE_CURRENT_LIST_DIR}/Coverage.cmake")
 
 check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_ERROR)
 
@@ -23,6 +24,8 @@ function(configure_target target target_kind)
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
     )
+
+    enable_target_coverage("${target}")
 
     if(IPO_SUPPORTED)
         set_property(TARGET "${target}"

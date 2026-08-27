@@ -104,6 +104,18 @@
       }
     },
     {
+      "name": "linux-gcc-coverage",
+      "displayName": "Linux GCC x64 Coverage",
+      "description": "Configure instrumented libraries and portable tests for line and branch coverage",
+      "inherits": "linux-gcc-base",
+      "binaryDir": "${sourceDir}/out/build/linux-gcc-coverage",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/linux-gcc-coverage",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VSHALYGIN_COMMON_ENABLE_COVERAGE": true
+      }
+    },
+    {
       "name": "linux-gcc-release",
       "displayName": "Linux GCC Release",
       "description": "Configure libraries and portable tests with GCC and LTO",
@@ -275,6 +287,19 @@
       }
     },
     {
+      "name": "linux-gcc-coverage",
+      "displayName": "Linux GCC x64 Coverage Report",
+      "configurePreset": "linux-gcc-coverage",
+      "targets": [
+        "coverage"
+      ],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "linux-gcc-release",
       "displayName": "Linux GCC Release",
       "configurePreset": "linux-gcc-release",
@@ -416,6 +441,17 @@
       }
     },
     {
+      "name": "linux-gcc-coverage",
+      "displayName": "Linux GCC x64 Coverage Tests",
+      "inherits": "test-base",
+      "configurePreset": "linux-gcc-coverage",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "linux-gcc-release",
       "displayName": "Linux GCC Release Tests",
       "inherits": "test-base",
@@ -491,6 +527,23 @@
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-gcc-coverage",
+      "displayName": "Linux GCC x64 Coverage",
+      "description": "Configure, build, test, and generate line and branch coverage reports",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux-gcc-coverage"
+        },
+        {
+          "type": "build",
+          "name": "linux-gcc-coverage"
+        }
+      ]
     }
   ]
 }

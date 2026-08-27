@@ -40,6 +40,11 @@ if(BUILD_TESTING)
         add_subdirectory(test/win-lib-test)
     endif()
     add_subdirectory(test/rpc-lib-test)
+
+    add_coverage_report_target(
+        common-lib-test
+        rpc-lib-test
+    )
 endif()
 
 include(CMakePackageConfigHelpers)
