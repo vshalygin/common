@@ -263,7 +263,6 @@ jobs:
       - build-toolchain-images
     if: >-
       always() &&
-      github.event_name != 'pull_request' &&
       needs.detect-toolchain-changes.result == 'success' &&
       (needs.build-toolchain-images.result == 'success' ||
        needs.build-toolchain-images.result == 'skipped')
