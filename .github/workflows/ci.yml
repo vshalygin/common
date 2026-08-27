@@ -1,0 +1,247 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: ${{ matrix.compiler }} ${{ matrix.architecture }} ${{ matrix.configuration }}
+    runs-on: ubuntu-24.04
+
+    container:
+      image: ghcr.io/${{ github.repository }}-${{ matrix.image }}:${{ matrix.image_tag }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - compiler: GCC
+            architecture: x64
+            configuration: Debug
+            preset: linux-gcc-debug
+            image: linux-gcc-x64
+            image_tag: ubuntu-22.04-gcc-11
+            cache_key: gcc-x64
+            dockerfile: docker/linux-gcc-x64.Dockerfile
+            artifact: vshalygin-common-linux-gcc-x64-debug
+          - compiler: GCC
+            architecture: x86
+            configuration: Debug
+            preset: linux-gcc-x86-debug
+            image: linux-gcc-x86
+            image_tag: ubuntu-22.04-gcc-11
+            cache_key: gcc-x86
+            dockerfile: docker/linux-gcc-x86.Dockerfile
+            artifact: vshalygin-common-linux-gcc-x86-debug
+          - compiler: Clang
+            architecture: x64
+            configuration: Debug
+            preset: linux-clang-debug
+            image: linux-clang-x64
+            image_tag: ubuntu-22.04-clang-14
+            cache_key: clang-x64
+            dockerfile: docker/linux-clang-x64.Dockerfile
+            artifact: vshalygin-common-linux-clang-x64-debug
+          - compiler: Clang
+            architecture: x86
+            configuration: Debug
+            preset: linux-clang-x86-debug
+            image: linux-clang-x86
+            image_tag: ubuntu-22.04-clang-14
+            cache_key: clang-x86
+            dockerfile: docker/linux-clang-x86.Dockerfile
+            artifact: vshalygin-common-linux-clang-x86-debug
+          - compiler: GCC
+            architecture: x64
+            configuration: Release
+            preset: linux-gcc-release
+            image: linux-gcc-x64
+            image_tag: ubuntu-22.04-gcc-11
+            cache_key: gcc-x64
+            dockerfile: docker/linux-gcc-x64.Dockerfile
+            artifact: vshalygin-common-linux-gcc-x64-release
+          - compiler: GCC
+            architecture: x86
+            configuration: Release
+            preset: linux-gcc-x86-release
+            image: linux-gcc-x86
+            image_tag: ubuntu-22.04-gcc-11
+            cache_key: gcc-x86
+            dockerfile: docker/linux-gcc-x86.Dockerfile
+            artifact: vshalygin-common-linux-gcc-x86-release
+          - compiler: Clang
+            architecture: x64
+            configuration: Release
+            preset: linux-clang-release
+            image: linux-clang-x64
+            image_tag: ubuntu-22.04-clang-14
+            cache_key: clang-x64
+            dockerfile: docker/linux-clang-x64.Dockerfile
+            artifact: vshalygin-common-linux-clang-x64-release
+          - compiler: Clang
+            architecture: x86
+            configuration: Release
+            preset: linux-clang-x86-release
+            image: linux-clang-x86
+            image_tag: ubuntu-22.04-clang-14
+            cache_key: clang-x86
+            dockerfile: docker/linux-clang-x86.Dockerfile
+            artifact: vshalygin-common-linux-clang-x86-release
+
+    env:
+      VCPKG_BINARY_CACHE: /tmp/vcpkg-binary-cache
+      VCPKG_BINARY_SOURCES: clear;files,/tmp/vcpkg-binary-cache,readwrite
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Prepare vcpkg binary cache
+        run: mkdir -p "${VCPKG_BINARY_CACHE}"
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v5
+        with:
+          path: /tmp/vcpkg-binary-cache
+          key: vcpkg-linux-${{ matrix.cache_key }}-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json', matrix.dockerfile) }}
+          restore-keys: |
+            vcpkg-linux-${{ matrix.cache_key }}-
+
+      - name: Configure libraries and tests
+        run: cmake --preset "${{ matrix.preset }}"
+
+      - name: Build libraries and tests
+        run: cmake --build --preset "${{ matrix.preset }}" --parallel
+
+      - name: Run tests
+        run: ctest --preset "${{ matrix.preset }}"
+
+      - name: Install libraries
+        run: cmake --install "out/build/${{ matrix.preset }}"
+
+      - name: Configure rpc-example
+        working-directory: example/rpc-example
+        run: cmake --preset "${{ matrix.preset }}"
+
+      - name: Build rpc-example
+        working-directory: example/rpc-example
+        run: cmake --build --preset "${{ matrix.preset }}" --parallel
+
+      - name: Upload installed package
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: out/install/${{ matrix.preset }}
+          if-no-files-found: error
+
+  windows:
+    name: MSVC ${{ matrix.architecture }} ${{ matrix.configuration }}
+    runs-on: windows-2022
+
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - architecture: x64
+            configuration: Debug
+            configure_preset: vs2022-x64
+            build_preset: vs2022-x64-debug
+            cache_key: msvc-x64
+            artifact: vshalygin-common-msvc-x64-debug
+          - architecture: Win32
+            configuration: Debug
+            configure_preset: vs2022-win32
+            build_preset: vs2022-win32-debug
+            cache_key: msvc-win32
+            artifact: vshalygin-common-msvc-win32-debug
+          - architecture: x64
+            configuration: Release
+            configure_preset: vs2022-x64
+            build_preset: vs2022-x64-release
+            cache_key: msvc-x64
+            artifact: vshalygin-common-msvc-x64-release
+          - architecture: Win32
+            configuration: Release
+            configure_preset: vs2022-win32
+            build_preset: vs2022-win32-release
+            cache_key: msvc-win32
+            artifact: vshalygin-common-msvc-win32-release
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Check out pinned vcpkg
+        uses: actions/checkout@v6
+        with:
+          repository: microsoft/vcpkg
+          ref: 6f29f12e82a8293156836ad81cc9bf5af41fe836
+          path: .vcpkg
+
+      - name: Bootstrap vcpkg and prepare binary cache
+        shell: pwsh
+        run: |
+          & "$env:GITHUB_WORKSPACE\.vcpkg\bootstrap-vcpkg.bat" -disableMetrics
+
+          $vcpkgRoot = "$env:GITHUB_WORKSPACE\.vcpkg"
+          $binaryCache = "$env:RUNNER_TEMP\vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force -Path $binaryCache | Out-Null
+
+          "VCPKG_ROOT=$vcpkgRoot" >> $env:GITHUB_ENV
+          "VCPKG_DISABLE_METRICS=1" >> $env:GITHUB_ENV
+          "VCPKG_BINARY_CACHE=$binaryCache" >> $env:GITHUB_ENV
+          "VCPKG_BINARY_SOURCES=clear;files,$binaryCache,readwrite" >> $env:GITHUB_ENV
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.temp }}\vcpkg-binary-cache
+          key: vcpkg-windows-${{ matrix.cache_key }}-${{ hashFiles('vcpkg.json', 'example/rpc-example/vcpkg.json', 'CMakePresets.json', 'example/rpc-example/CMakePresets.json') }}
+          restore-keys: |
+            vcpkg-windows-${{ matrix.cache_key }}-
+
+      - name: Configure libraries and tests
+        run: cmake --preset "${{ matrix.configure_preset }}"
+
+      - name: Build libraries and tests
+        run: cmake --build --preset "${{ matrix.build_preset }}" --parallel
+
+      - name: Run tests
+        run: ctest --preset "${{ matrix.build_preset }}"
+
+      - name: Install libraries
+        run: cmake --install "out/build/${{ matrix.configure_preset }}" --config "${{ matrix.configuration }}"
+
+      - name: Configure rpc-example
+        working-directory: example/rpc-example
+        run: cmake --preset "${{ matrix.configure_preset }}"
+
+      - name: Build rpc-example
+        working-directory: example/rpc-example
+        run: cmake --build --preset "${{ matrix.build_preset }}" --parallel
+
+      - name: Upload installed package
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: out/install/${{ matrix.configure_preset }}
+          if-no-files-found: error
