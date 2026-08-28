@@ -4,9 +4,29 @@
 
 #include <common-lib/utils/function.h>
 
+#include <functional>
+
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename Signature>
     class promise;
+
+    template<typename ThreadPool, typename T, typename Func, bool = std::is_void_v<T>>
+    struct then_result;
+
+    template<typename ThreadPool, typename T, typename Func>
+    struct then_result<ThreadPool, T, Func, false>
+    {
+        using type = std::invoke_result_t<Func, fvalue<ThreadPool, T>>;
+    };
+
+    template<typename ThreadPool, typename T, typename Func>
+    struct then_result<ThreadPool, T, Func, true>
+    {
+        using type = std::invoke_result_t<Func>;
+    };
+
+    template<typename ThreadPool, typename T, typename Func>
+    using then_result_t = typename then_result<ThreadPool, T, Func>::type;
 
     template<typename ThreadPool, typename T>
     class future
@@ -59,7 +79,7 @@ namespace vshalygin::cl::internal {
                  typename U = T, std::enable_if_t<!std::is_void_v<U>, int> = 0>
         static void exec_then_on_success(ControllerSp controller,
                                          Func &&task,
-                                         add_lvalue_ref_to_value_t<U> param);
+                                         fvalue<ThreadPool, U> value);
 
         template<typename Func, typename ControllerSp,
                  typename U = T, std::enable_if_t<std::is_void_v<U>, int> = 0>

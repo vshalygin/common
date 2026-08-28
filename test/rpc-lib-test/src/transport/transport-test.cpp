@@ -38,13 +38,19 @@ protected:
         m_thread_pool = std::make_shared<thread_pool>(2);
         auto m_pipe_env = mem_pipe_env(m_thread_pool.get());
         auto f1 = m_pipe_env.create_pipe(0)
-            .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
-                      m_pipe_endpoint = std::move(p);
-                  });
+            .then([&](auto source_fvalue) mutable {
+                      auto locked_source_value = source_fvalue.lock();
+                      return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
+                          m_pipe_endpoint = std::move(p);
+                      });
+            });
          auto f2 = m_pipe_env.open_pipe(0)
-             .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
-                      m_other_pipe_endpoint = std::move(p);
-                  });
+             .then([&](auto source_fvalue) mutable {
+                      auto locked_source_value = source_fvalue.lock();
+                      return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
+                          m_other_pipe_endpoint = std::move(p);
+                      });
+             });
 
         f1.get(); f2.get();
         m_sut = std::make_unique<transport>(m_pipe_endpoint, std::chrono::milliseconds(10000));
@@ -92,10 +98,16 @@ TEST_F(Transport, SendAsync)
         .Times(1);
 
     m_sut->send_async(buf.copy())
-        .then(write_callback.AsStdFunction())
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
     m_other_pipe_endpoint->read_async()
-        .then(read_callback.AsStdFunction())
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -110,10 +122,16 @@ TEST_F(Transport, RecvAsync)
         .Times(1);
 
     m_other_pipe_endpoint->write_async(buf.copy())
-        .then(write_callback.AsStdFunction())
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
     m_sut->recv_async()
-        .then(read_callback.AsStdFunction())
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -152,7 +170,10 @@ TEST_F(Transport, SendTimeout)
 
     transport sut(m_pipe_endpoint, std::chrono::milliseconds(0));
     auto f = sut.send_async({})
-        .then(write_callback.AsStdFunction());
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();

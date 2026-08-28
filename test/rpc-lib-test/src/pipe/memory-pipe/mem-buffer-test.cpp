@@ -73,7 +73,10 @@ TEST_F(MemBuffer, WritesDataToBufferIfNoPendingReadCallback)
 
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->write_async({}, std::nullopt)
-        .then(callback.AsStdFunction())
+        .then([callback = callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 
     ASSERT_EQ(sut->get_pending_messages_count(), 1);
@@ -90,7 +93,10 @@ TEST_F(MemBuffer, ExecutePendingReadCallbackOnWrite)
 
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
     sut->write_async(data.copy(), std::nullopt).get();
     
     sync_event.wait();
@@ -107,7 +113,10 @@ TEST_F(MemBuffer, DoesNotWriteIfInvalidated)
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->invalidate(true);
     sut->write_async({}, std::nullopt)
-        .then(callback.AsStdFunction())
+        .then([callback = callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 
     ASSERT_EQ(sut->get_pending_messages_count(), 0);
@@ -119,7 +128,12 @@ TEST_F(MemBuffer, AddReadHandlerOnReadAsync)
 
     auto sut = mem_buffer::create(m_thread_pool.get());
     auto f = sut->read_async(std::nullopt)
-        .then([&](pipe_op_res, buffer &&) { sync_event.set(); });
+        .then([&](auto source_fvalue) mutable {
+                  auto locked_source_value = source_fvalue.lock();
+                  return locked_source_value.with([&](pipe_op_res, buffer &&) {
+                     sync_event.set();
+                  });
+              });
     sut->write_async(create_test_data(), std::nullopt).get();
 
     sync_event.wait();
@@ -134,7 +148,10 @@ TEST_F(MemBuffer, DoesNotReadAsyncIfInvalid)
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->invalidate(true);
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction())
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 
     ASSERT_TRUE(sut->get_pending_read_handlers_count() == 0);
@@ -150,7 +167,10 @@ TEST_F(MemBuffer, ReadsWrittenData)
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->write_async(data.copy(), std::nullopt);
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction())
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 
     ASSERT_TRUE(sut->get_pending_read_handlers_count() == 0);
@@ -166,7 +186,10 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation)
 
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
     while(sut->get_pending_read_handlers_count() != 1) {}
 
     sut->invalidate(true);
@@ -185,7 +208,10 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnInvalidation2)
 
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
     while(sut->get_pending_read_handlers_count() != 1) {}
 
     sut->invalidate(false);
@@ -214,7 +240,10 @@ TEST_F(MemBuffer, ExecutePendingReadCallbacksOnDestruction)
 
     auto sut = mem_buffer::create(pool.get());
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
     while(sut->get_pending_read_handlers_count() != 1) {}
     sut.reset();
 
@@ -235,7 +264,10 @@ TEST_F(MemBuffer, CannotReadMoreBuffersThanWritten)
     sut->write_async(data.copy(), std::nullopt)
         .get();
     sut->read_async(std::nullopt)
-        .then(read_callback.AsStdFunction())
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 
     ASSERT_TRUE(sut->get_pending_read_handlers_count() == 0);
@@ -254,7 +286,10 @@ TEST_F(MemBuffer, WritePromiseResolvesTimeout)
 
     auto sut = mem_buffer::create(pool.get());
     auto f = sut->write_async(data.copy(), std::chrono::milliseconds(0))
-        .then(write_callback.AsStdFunction());
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
     sync_event->set();
@@ -271,7 +306,10 @@ TEST_F(MemBuffer, ReadPromiseResolvesTimeout)
 
     auto sut = mem_buffer::create(m_thread_pool.get());
     sut->read_async(std::chrono::milliseconds(1))
-        .then(read_callback.AsStdFunction())
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 
     ASSERT_TRUE(sut->get_pending_read_handlers_count() == 0);

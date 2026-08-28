@@ -79,9 +79,11 @@ namespace vshalygin::rpc::internal {
             }
         });
 
-        return f.then([](win_pipe_operation_res r, win::pipe_handle &&p) mutable {
-                          return cl::ftuple(to_pipe_wait_res(r), std::move(p));
-                      });
+        return f.then([](auto result) mutable {
+            return result.lock().with([&](win_pipe_operation_res r, win::pipe_handle &&p) mutable {
+                                          return cl::ftuple(to_pipe_wait_res(r), std::move(p));
+                                      });
+        });
     }
 
     cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>>
@@ -90,7 +92,8 @@ namespace vshalygin::rpc::internal {
         auto f = op->get_future();
         op->start();
 
-        return f.then([s = shared_from_this()](win_pipe_operation_res r, win::pipe_handle &&p) mutable {
+        return f.then([s = shared_from_this()](auto result) mutable {
+            return result.lock().with([&](win_pipe_operation_res r, win::pipe_handle &&p) mutable {
                           if(win_pipe_operation_res::success == r) {
                               s->m_iocp.associate(
                                   p.get(),
@@ -98,6 +101,7 @@ namespace vshalygin::rpc::internal {
                           }
                           return cl::ftuple(to_pipe_wait_res(r), std::move(p));
                       });
+        });
     }
 
     void win_pipe_iocp_owner::read_async(std::shared_ptr<win_pipe_read_operation> overlapped)

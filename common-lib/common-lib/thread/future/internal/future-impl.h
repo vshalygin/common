@@ -9,6 +9,8 @@
 #include <common-lib/utils/type-qualifiers-cast.h>
 #include "future.h"
 
+#include <functional>
+
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     future<ThreadPool, T>::future(
@@ -102,9 +104,11 @@ namespace vshalygin::cl::internal {
         auto next_controller = create_child_controller<future_store>(controller);
         auto next_controller_wp = std::weak_ptr(next_controller);
 
-        auto on_success = [next_controller_wp](future_t &&val) {
+        auto on_success = [next_controller_wp](fvalue<ThreadPool, future_t> value) {
             assert(!next_controller_wp.expired());
             auto next_controller = std::shared_ptr(next_controller_wp);
+            future_t val(std::move(*value.lock()));
+
             auto controller = val.get_controller();
             val = {};
 
@@ -122,12 +126,10 @@ namespace vshalygin::cl::internal {
                 };
                 controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
             } else {
-                auto controller_wp = std::weak_ptr(controller);
-                auto on_success = [next_controller_wp, controller_wp](future_store && /*value*/) {
+                auto on_success = [next_controller_wp](fvalue<ThreadPool, future_store> value) {
                     assert(!next_controller_wp.expired());
-                    assert(!controller_wp.expired());
                     std::shared_ptr(next_controller_wp)->set_value_state(
-                        std::shared_ptr(controller_wp)->get_value_state());
+                        value.get_value_state());
                 };
                 controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
             }
@@ -147,31 +149,16 @@ namespace vshalygin::cl::internal {
              typename U, std::enable_if_t<!std::is_void_v<U>, int>>
     void future<ThreadPool, T>::exec_then_on_success(ControllerSp controller,
                                                      Func &&task,
-                                                     add_lvalue_ref_to_value_t<U> param)
+                                                     fvalue<ThreadPool, U> value)
     {
-        using ret_t = function_ret_t<Func>;
+        using ret_t = then_result_t<ThreadPool, U, Func>;
 
         try {
-            if constexpr(is_future_tuple_v<T>) {
-                static_assert(is_value_v<T>);
-
-                if constexpr(!std::is_void_v<ret_t>) {
-                    controller->set_value(apply(task, param));
-                } else {
-                    apply(task, param);
-                    controller->set_value();
-                }
+            if constexpr(!std::is_void_v<ret_t>) {
+                controller->set_value(std::invoke(std::forward<Func>(task), std::move(value)));
             } else {
-                static_assert(function_arg_count_v<Func> == 1,
-                              "success callback must have 1 argument");
-                using arg_t = function_arg_t<0, Func>;
-
-                if constexpr(!std::is_void_v<ret_t>) {
-                    controller->set_value(task(type_qualifiers_cast<arg_t>(param)));
-                } else {
-                    task(type_qualifiers_cast<arg_t>(param));
-                    controller->set_value();
-                }
+                std::invoke(std::forward<Func>(task), std::move(value));
+                controller->set_value();
             }
         } catch(...) {
             controller->set_exception(std::current_exception());
@@ -184,7 +171,7 @@ namespace vshalygin::cl::internal {
     void future<ThreadPool, T>::exec_then_on_success(ControllerSp controller,
                                                      Func &&task)
     {
-        using ret_t = function_ret_t<Func>;
+        using ret_t = then_result_t<ThreadPool, T, Func>;
 
         try {
             static_assert(function_arg_count_v<Func> == 0,
@@ -205,7 +192,7 @@ namespace vshalygin::cl::internal {
     template<typename Func>
     auto future<ThreadPool, T>::then(Func &&task)
     {
-        using ret_t = function_ret_t<Func>;
+        using ret_t = then_result_t<ThreadPool, T, Func>;
 
         if(!m_controller) {
             throw std::logic_error("future is invalid");
@@ -231,11 +218,11 @@ namespace vshalygin::cl::internal {
             } else {
                 auto on_success = [new_controller_wp,
                                    task = std::forward<Func>(task)]
-                                   (add_lvalue_ref_to_value_t<T> val) mutable {
+                                   (fvalue<ThreadPool, T> value) mutable {
                     assert(!new_controller_wp.expired());
                     exec_then_on_success(std::shared_ptr(new_controller_wp),
                                          std::forward<Func>(task),
-                                         std::forward<decltype(val)>(val));
+                                         std::move(value));
                 };
                 m_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
             }
@@ -261,11 +248,11 @@ namespace vshalygin::cl::internal {
             } else {
                 auto on_success = [new_controller_wp,
                                    task = std::forward<Func>(task)]
-                                   (add_lvalue_ref_to_value_t<T> val) mutable {
+                                   (fvalue<ThreadPool, T> value) mutable {
                     assert(!new_controller_wp.expired());
                     exec_then_on_success(std::shared_ptr(new_controller_wp),
                                          std::forward<Func>(task),
-                                         std::forward<decltype(val)>(val));
+                                         std::move(value));
                 };
                 m_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
             }
@@ -373,17 +360,15 @@ namespace vshalygin::cl::internal {
                 std::shared_ptr(new_controller_wp)->set_value();
             };
         } else if constexpr(std::is_void_v<ret_t>) {
-            return [new_controller_wp](add_lvalue_ref_to_value_t<T> /*ignore_value*/) mutable {
+            return [new_controller_wp](fvalue<ThreadPool, T> /*ignore_value*/) mutable {
                 assert(!new_controller_wp.expired());
                 std::shared_ptr(new_controller_wp)->set_value();
             };
         } else {
-            auto source_controller_wp = std::weak_ptr(m_controller);
-            return [new_controller_wp, source_controller_wp](add_lvalue_ref_to_value_t<T> /*value*/) {
+            return [new_controller_wp](fvalue<ThreadPool, T> value) {
                 assert(!new_controller_wp.expired());
-                assert(!source_controller_wp.expired());
                 std::shared_ptr(new_controller_wp)->set_value_state(
-                    std::shared_ptr(source_controller_wp)->get_value_state());
+                    value.get_value_state());
             };
         }
     }
@@ -434,12 +419,10 @@ namespace vshalygin::cl::internal {
                         };
                         future_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     } else {
-                        auto future_controller_wp = std::weak_ptr(future_controller);
-                        auto on_success = [new_controller_wp, future_controller_wp](future_store && /*value*/) {
+                        auto on_success = [new_controller_wp](fvalue<ThreadPool, future_store> value) {
                             assert(!new_controller_wp.expired());
-                            assert(!future_controller_wp.expired());
                             std::shared_ptr(new_controller_wp)->set_value_state(
-                                std::shared_ptr(future_controller_wp)->get_value_state());
+                                value.get_value_state());
                         };
 
                         future_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
@@ -490,13 +473,10 @@ namespace vshalygin::cl::internal {
                 }
             };
         } else {
-            auto source_controller_wp = std::weak_ptr(m_controller);
-            return [new_controller_wp, source_controller_wp, task_sp]
-                   (add_lvalue_ref_to_value_t<T> /*value*/) mutable {
+            return [new_controller_wp, task_sp] (fvalue<ThreadPool, T> value) mutable {
                 assert(!new_controller_wp.expired());
-                assert(!source_controller_wp.expired());
                 std::shared_ptr new_controller(new_controller_wp);
-                auto value_state = std::shared_ptr(source_controller_wp)->get_value_state();
+                auto value_state = value.get_value_state();
                 try {
                     if constexpr(std::is_void_v<ret_t>) {
                         (*task_sp)();

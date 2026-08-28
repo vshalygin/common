@@ -163,16 +163,18 @@ namespace vshalygin::rpc::internal {
 
         add_request_to_map(msg_number, std::move(promise));
 
-        auto send_callback = [self = shared_from_this(), msg_number](pipe_op_res res) {
-            if(is_success(res)) {
-                self->process_request_sent(msg_number);
-            } else if(res == pipe_op_res::canceled) {
-                self->complete_request(msg_number, request_result::send_canceled, {});
-            } else if(res == pipe_op_res::timeout) {
-                self->complete_request(msg_number, request_result::send_timeout, {});
-            } else {
-                self->complete_request(msg_number, request_result::send_failed, {});
-            }
+        auto send_callback = [self = shared_from_this(), msg_number](auto value) {
+            value.lock().with([&](pipe_op_res res) {
+                if(is_success(res)) {
+                    self->process_request_sent(msg_number);
+                } else if(res == pipe_op_res::canceled) {
+                    self->complete_request(msg_number, request_result::send_canceled, {});
+                } else if(res == pipe_op_res::timeout) {
+                    self->complete_request(msg_number, request_result::send_timeout, {});
+                } else {
+                    self->complete_request(msg_number, request_result::send_failed, {});
+                }
+            });
         };
 
         m_transport.send_async(std::move(message))
@@ -201,7 +203,8 @@ namespace vshalygin::rpc::internal {
     void connection::impl::do_receive_async()
     {
         m_transport.recv_async()
-            .then([self = shared_from_this()](pipe_op_res r, cl::buffer &&message) {
+            .then([self = shared_from_this()](auto value) mutable {
+                return value.lock().with([&](pipe_op_res r, cl::buffer &&message) {
                       if(is_success(r)) {
                           self->dispatch_receive_event(std::move(message));
                           self->do_receive_async();
@@ -209,6 +212,7 @@ namespace vshalygin::rpc::internal {
                           self->complete_receive_routine(r);
                       }
                   });
+            });
     }
 
     void connection::impl::dispatch_receive_event(cl::buffer &&message) noexcept
@@ -243,11 +247,13 @@ namespace vshalygin::rpc::internal {
         }
 
         m_service->process_request_async(std::move(message))
-            .then([self = weak_from_this()](cl::buffer &&res_msg) {
+            .then([self = weak_from_this()](auto value) mutable {
+                return value.lock().with([&](cl::buffer &&res_msg) {
                       if(auto s = self.lock()) {
                           s->m_transport.send_async(std::move(res_msg));
                       }
                   });
+            });
     }
 
     void connection::impl::handle_received_response(cl::buffer &&message)

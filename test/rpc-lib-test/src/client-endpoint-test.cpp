@@ -192,7 +192,12 @@ TEST_F(ClientEndpoint, SetsDisconnectCallback)
     auto f = m_sut->connect_async(std::chrono::seconds(10));
     create_and_init_other_pipe_endpoint();
 
-    f.then([&](future<cl::thread_pool, void> &f) { f.then(disconnect_callback.AsStdFunction()); }).get();
+    f.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](future<cl::thread_pool, void> &f) {
+            f.then(disconnect_callback.AsStdFunction());
+        });
+    }).get();
 
     m_other->invalidate();
     sync_event->wait();

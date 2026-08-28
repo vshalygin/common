@@ -174,13 +174,19 @@ protected:
         mem_pipe_env env(m_thread_pool.get());
         auto m_pipe_env = mem_pipe_env(m_thread_pool.get());
         auto f1 = m_pipe_env.create_pipe(0)
-            .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
-            m_pipe_endpoint = std::move(p);
-        });
+            .then([&](auto source_fvalue) mutable {
+                auto locked_source_value = source_fvalue.lock();
+                return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
+                    m_pipe_endpoint = std::move(p);
+                });
+            });
         auto f2 = m_pipe_env.open_pipe(0)
-            .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
-            m_other_pipe_enpoint = std::move(p);
-        });
+            .then([&](auto source_fvalue) mutable {
+                auto locked_source_value = source_fvalue.lock();
+                return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
+                    m_other_pipe_enpoint = std::move(p);
+                });
+            });
 
         f1.get(); f2.get();
         m_service = std::make_shared<service<DataHolderService>>(m_data_holder_service,

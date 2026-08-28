@@ -17,6 +17,7 @@
 #include <optional>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 #include <queue>
 #include <vector>
 #include <chrono>
@@ -39,7 +40,7 @@ namespace vshalygin::cl::internal {
             if constexpr(std::is_void_v<U>) {
                 return function<void()>{};
             } else {
-                return function<void(std::add_rvalue_reference_t<U>)>{};
+                return function<void(fvalue<ThreadPool, U>)>{};
             }
         }
 
@@ -75,8 +76,6 @@ namespace vshalygin::cl::internal {
 
         void add_child(std::unique_ptr<ifuture_controller> child);
         void add_dependent(std::shared_ptr<ifuture_controller> dependent);
-
-        auto get_value_state() const;
 
     private:
         using value_proxy_t = cl::value_proxy<add_lvalue_ref_to_value_t<T>>;
@@ -154,22 +153,25 @@ namespace vshalygin::cl::internal {
     template<typename Func>
     void future_controller<ThreadPool, T>::set_on_success_unsafe(Func &&func)
     {
-        static_assert(std::is_same_v<void, function_ret_t<Func>>,
-                      "success callback return type is not void");
         if constexpr(!std::is_void_v<T>) {
-            static_assert(function_arg_count_v<Func> == 1,
-                          "success callback arg count is not 1");
+            static_assert(std::is_invocable_v<Func, fvalue<ThreadPool, T>>,
+                          "success callback must accept fvalue");
+            static_assert(std::is_same_v<
+                              std::invoke_result_t<Func, fvalue<ThreadPool, T>>, void>,
+                          "success callback must return void");
         } else {
-            static_assert(function_arg_count_v<Func> == 0,
-                          "success callback arg count is not 0");
+            static_assert(std::is_invocable_v<Func>,
+                          "success callback must have no arguments");
+            static_assert(std::is_same_v<std::invoke_result_t<Func>, void>,
+                          "success callback must return void");
         }
 
         if constexpr(std::is_void_v<T>) {
             m_on_success_queue.push(std::forward<Func>(func));
         } else {
             m_on_success_queue.push([func = std::forward<Func>(func)]
-                                    (std::add_rvalue_reference_t<T> val) mutable {
-                func(type_qualifiers_cast<function_arg_t<0, Func>>(val));
+                                    (fvalue<ThreadPool, T> value) mutable {
+                std::invoke(func, std::move(value));
             });
         }
 
@@ -355,9 +357,7 @@ namespace vshalygin::cl::internal {
                 ordered_lock guard(m_val_mtx);
                 value_state = m_val_state;
             }
-            value_state->with_locked_value([&func](auto &&value) {
-                func(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(value));
-            });
+            func(fvalue<ThreadPool, T>(std::move(value_state)));
         } else {
             func();
         }
@@ -389,10 +389,4 @@ namespace vshalygin::cl::internal {
         m_dependent.lock()->push_back(std::move(dependent));
     }
 
-    template<typename ThreadPool, typename T>
-    auto future_controller<ThreadPool, T>::get_value_state() const
-    {
-        ordered_lock guard(m_val_mtx);
-        return m_val_state;
-    }
 }

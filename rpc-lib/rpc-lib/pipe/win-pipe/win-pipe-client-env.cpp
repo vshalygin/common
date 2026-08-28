@@ -73,8 +73,8 @@ namespace vshalygin::rpc {
         pending_ops->insert({ id, open_operation_info{ std::move(op), client_id, std::nullopt } });
 
         return f.finally([id, self = shared_from_this()]{ self->m_pending_open_operations->lock()->erase(id); })
-                .then([self = shared_from_this()]
-                      (pipe_wait_res r, win::pipe_handle &&p) {
+                .then([self = shared_from_this()](auto result) mutable {
+                    return result.lock().with([&](pipe_wait_res r, win::pipe_handle &&p) {
                           std::shared_ptr<ipipe_endpoint> endpoint = is_success(r)
                               ? std::make_shared<win_pipe_endpoint>(std::move(p),
                                                                     self->m_iocp_owner,
@@ -82,6 +82,7 @@ namespace vshalygin::rpc {
                               : std::shared_ptr<win_pipe_endpoint>{};
                           return cl::ftuple(r, std::move(endpoint));
                       });
+                });
     }
 
     pipe_endpoint_future win_pipe_client_env::impl::open_pipe(uint64_t client_id,
@@ -112,7 +113,8 @@ namespace vshalygin::rpc {
                                  ops->erase(it);
                              }
                          })
-                .then([self = shared_from_this()](pipe_wait_res r, win::pipe_handle &&p) {
+                .then([self = shared_from_this()](auto result) mutable {
+                    return result.lock().with([&](pipe_wait_res r, win::pipe_handle &&p) {
                           std::shared_ptr<ipipe_endpoint> endpoint = is_success(r)
                               ? std::make_shared<win_pipe_endpoint>(std::move(p),
                                                                     self->m_iocp_owner,
@@ -120,6 +122,7 @@ namespace vshalygin::rpc {
                               : std::shared_ptr<win_pipe_endpoint>{};
                           return cl::ftuple(r, std::move(endpoint));
                       });
+                });
     }
 
     void win_pipe_client_env::impl::cancel_pending_client_endpoints(const std::optional<uint64_t> &client_id)

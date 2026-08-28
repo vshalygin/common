@@ -16,6 +16,12 @@ namespace vshalygin::cl::internal {
     template<typename, typename>
     class future_controller;
 
+    template<typename, typename>
+    class future;
+
+    template<typename, typename>
+    class promise;
+
     template<typename T>
     class locked_fvalue
     {
@@ -34,19 +40,17 @@ namespace vshalygin::cl::internal {
         locked_fvalue &operator=(const locked_fvalue &) = delete;
 
         template<typename Func>
-        void with(Func &&func)
+        decltype(auto) with(Func &&func)
         {
-            static_assert(std::is_same_v<function_ret_t<Func>, void>,
-                          "value callback return type must be void");
             using stored_type = remove_type_qualifiers_t<T>;
 
             if constexpr(is_future_tuple_v<stored_type>) {
-                apply(std::forward<Func>(func), **this);
+                return ::vshalygin::cl::internal::apply(std::forward<Func>(func), **this);
             } else {
                 static_assert(function_arg_count_v<Func> == 1,
                               "value callback must have 1 argument");
                 using arg_t = function_arg_t<0, Func>;
-                std::forward<Func>(func)(type_qualifiers_cast<arg_t>(**this));
+                return std::forward<Func>(func)(type_qualifiers_cast<arg_t>(**this));
             }
         }
 
@@ -86,7 +90,15 @@ namespace vshalygin::cl::internal {
     {
         friend class future_controller<ThreadPool, T>;
 
+        template<typename, typename>
+        friend class future;
+
+        template<typename, typename>
+        friend class promise;
+
         explicit fvalue(std::shared_ptr<future_value_state<T>> value);
+
+        auto get_value_state() const;
 
     public:
         fvalue(const fvalue &) = delete;
@@ -106,6 +118,12 @@ namespace vshalygin::cl::internal {
     fvalue<ThreadPool, T>::fvalue(std::shared_ptr<future_value_state<T>> value)
         : m_value(std::move(value))
     {}
+
+    template<typename ThreadPool, typename T>
+    auto fvalue<ThreadPool, T>::get_value_state() const
+    {
+        return m_value;
+    }
 
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::lock()

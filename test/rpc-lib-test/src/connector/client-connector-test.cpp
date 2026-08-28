@@ -69,9 +69,12 @@ protected:
     void create_server_pipe_end()
     {
         m_pipe_env->create_pipe(0)
-            .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
+            .then([&](auto source_fvalue) mutable {
+                auto locked_source_value = source_fvalue.lock();
+                return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
                       m_server_endpoint = std::move(p);
-                  })
+                  });
+            })
             .get();
     }
 
@@ -89,9 +92,12 @@ TEST_F(ClientConnector, CreatesConnection)
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
-        .then([server_endpoint = m_server_endpoint](pipe_op_res , buffer &) {
+        .then([server_endpoint = m_server_endpoint](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](pipe_op_res , buffer &) {
                   return server_endpoint->write_async({});
               });
+        });
 
     std::unique_ptr<iconnection> con;
     f.get().lock().with([&](std::unique_ptr<iconnection> &&c) { con = std::move(c); });
@@ -131,9 +137,12 @@ TEST_F(ClientConnector, FailsIfCannotReadHandshakeResponse)
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
-        .then([server_endpoint = m_server_endpoint](pipe_op_res, buffer &) {
+        .then([server_endpoint = m_server_endpoint](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](pipe_op_res, buffer &) {
                   server_endpoint->invalidate();
               });
+        });
 
     m_server_endpoint->invalidate();
 
@@ -162,9 +171,12 @@ TEST_F(ClientConnector, FailsIfConnectionRefusedByServer)
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
-        .then([server_endpoint = m_server_endpoint](pipe_op_res, buffer &) {
+        .then([server_endpoint = m_server_endpoint](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](pipe_op_res, buffer &) {
                   return server_endpoint->write_async({});
               });
+        });
 
     ASSERT_ANY_THROW(f.get());
 }
@@ -181,10 +193,13 @@ TEST_F(ClientConnector, UseAuthentificatorForFormingHandshakeRequest)
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
-        .then([server_endpoint = m_server_endpoint, &req](pipe_op_res, buffer &buf) {
+        .then([server_endpoint = m_server_endpoint, &req](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](pipe_op_res, buffer &buf) {
                   EXPECT_TRUE(req == buf);
                   return server_endpoint->write_async({});
-              })
+              });
+        })
         .get();
 
     f.get();
@@ -202,9 +217,12 @@ TEST_F(ClientConnector, UseAuthentificatorForCheckingHandshakeResponse)
     create_server_pipe_end();
 
     m_server_endpoint->read_async()
-        .then([server_endpoint = m_server_endpoint, &res](pipe_op_res, buffer &) {
+        .then([server_endpoint = m_server_endpoint, &res](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](pipe_op_res, buffer &) {
                   return server_endpoint->write_async(res.copy());
-              })
+              });
+        })
         .get();
 
     f.get();

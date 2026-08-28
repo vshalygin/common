@@ -121,7 +121,10 @@ TEST_F(MemPipeEndpoint, WritesDataFromClientToServer)
 
     client_endpoint.write_async(data.copy());
     server_endpoint.read_async()
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sync_event.wait();
 }
@@ -140,7 +143,10 @@ TEST_F(MemPipeEndpoint, WritesDataFromServerToClient)
 
     server_endpoint.write_async(data.copy());
     client_endpoint.read_async()
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sync_event.wait();
 }
@@ -175,7 +181,10 @@ TEST_F(MemPipeEndpoint, WritesDataFromClientToServerTimeout)
     test_mem_pipe_endpoint client_endpoint(false, buffers);
 
     auto f = client_endpoint.write_async(data.copy(), std::chrono::milliseconds(0))
-        .then(write_callback.AsStdFunction());
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -196,7 +205,10 @@ TEST_F(MemPipeEndpoint, WritesDataFromServerToClientTimeout)
     test_mem_pipe_endpoint server_endpoint(true, buffers);
 
     auto f = server_endpoint.write_async(data.copy(), std::chrono::milliseconds(0))
-        .then(write_callback.AsStdFunction());
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -216,7 +228,10 @@ TEST_F(MemPipeEndpoint, ReadDataFromClient)
     test_mem_pipe_endpoint server_endpoint(true, buffers);
 
     auto f = server_endpoint.read_async(std::chrono::milliseconds(0))
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -236,7 +251,10 @@ TEST_F(MemPipeEndpoint, WritesDataFromServer)
     test_mem_pipe_endpoint client_endpoint(false, buffers);
 
     auto f = client_endpoint.read_async(std::chrono::milliseconds(0))
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();

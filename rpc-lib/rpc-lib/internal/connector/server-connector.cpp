@@ -171,19 +171,24 @@ namespace vshalygin::rpc::internal {
         }
 
         m_connect_pipe_future = m_pipe_env->create_pipe(m_id)
-                                    .then([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> ep) {
+                                    .then([](auto result) mutable {
+                                        return result.lock().with(
+                                            [&](pipe_wait_res r,
+                                                std::shared_ptr<ipipe_endpoint> ep) {
                                               if(is_fail(r)) {
                                                   throw std::runtime_error("pipe is not connected");
                                               }
                                                return ep;
                                           });
+                                    });
 
         auto connection_id = m_next_connection_id++;
         cl::promise promise(m_thread_pool,
                            [self = weak_from_this(), connection_id, is_running_sp](std::shared_ptr<ipipe_endpoint> pe) {
             std::shared_ptr s(self);
             return pe->read_async(s->m_config.handshake_timeout)
-                .then([pe, self](pipe_op_res r, cl::buffer &&b) {
+                .then([pe, self](auto result) mutable {
+                    return result.lock().with([&](pipe_op_res r, cl::buffer &&b) {
                           if(is_fail(r)) {
                               throw std::runtime_error("read operation failed: " + to_string(r));
                           }
@@ -193,8 +198,10 @@ namespace vshalygin::rpc::internal {
                           }
                           return pe->write_async(s->m_authenticator->create_response(b),
                                                  s->m_config.handshake_timeout);
-                       })
-                .then([pe, self, connection_id, is_running_sp](pipe_op_res r) mutable {
+                       });
+                })
+                .then([pe, self, connection_id, is_running_sp](auto result) mutable {
+                    return result.lock().with([&](pipe_op_res r) mutable {
                           if(is_fail(r)){
                               throw std::runtime_error("write operation failed: " + to_string(r));
                           }
@@ -209,7 +216,8 @@ namespace vshalygin::rpc::internal {
                                                                 s->m_config.ping_timeout);
 
                           s->notify_on_new_connection(connection_id, std::move(c), is_running_sp);
-                      })
+                      });
+                })
                 .finally([self, connection_id]() {
                              if(auto s = self.lock()) {
                                  s->erase_connection_future_from_map(connection_id);
@@ -220,11 +228,14 @@ namespace vshalygin::rpc::internal {
         (*m_connection_future_map.lock())[connection_id] = promise.get_future();
         
         m_connect_pipe_future
-            .then([promise = std::move(promise), self = shared_from_this(), is_running_sp]
-                  (std::shared_ptr<ipipe_endpoint> ep) mutable {
+            .then([promise = std::move(promise),
+                   self = shared_from_this(),
+                   is_running_sp](auto result) mutable {
+                return result.lock().with([&](std::shared_ptr<ipipe_endpoint> ep) mutable {
                       promise.resolve(std::move(ep));
                       self->start_pipe_connect(false, is_running_sp);
-                  })
+                  });
+            })
             .catched([self = shared_from_this(), is_running_sp](std::exception_ptr) {
                          self->stop_impl(is_running_sp);
                      });

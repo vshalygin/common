@@ -95,12 +95,8 @@ namespace vshalygin::cl::internal {
                         };
                         prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     } else {
-                        auto prev_controller_wp = std::weak_ptr(prev_controller);
-                        auto on_success = [c = controller, prev_controller_wp]
-                                          (future_store && /*value*/) mutable {
-                            assert(!prev_controller_wp.expired());
-                            c->set_value_state(
-                                std::shared_ptr(prev_controller_wp)->get_value_state());
+                        auto on_success = [c = controller] (fvalue<ThreadPool, future_store> value) mutable {
+                            c->set_value_state(value.get_value_state());
                         };
                         prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     }

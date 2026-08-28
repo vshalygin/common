@@ -73,7 +73,10 @@ protected:
             return ftuple(r, std::move(m));
         });
         promise.get_future()
-            .then(m_request_callback.AsStdFunction());
+            .then([callback = m_request_callback.AsStdFunction()](auto value) mutable {
+                auto locked_value = value.lock();
+                return locked_value.with(callback);
+            });
 
         auto req_controller =
             request_controller<proto::response_message>::create_on_heap(
@@ -99,7 +102,10 @@ protected:
             return ftuple(r, std::move(m));
         });
         promise.get_future()
-            .then(m_request_callback.AsStdFunction());
+            .then([callback = m_request_callback.AsStdFunction()](auto value) mutable {
+                auto locked_value = value.lock();
+                return locked_value.with(callback);
+            });
 
         auto req_controller2 =
             request_controller<proto::response_message>::create_on_heap(

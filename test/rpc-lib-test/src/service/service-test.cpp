@@ -82,7 +82,10 @@ TEST_F(Service, CallsResponseCallbackWithRequestParseErrorCodeIfParsingFailed)
         .Times(0);
 
     m_service->process_request_async(std::move(invalid_request_buf))
-        .then(response_callback.AsStdFunction())
+        .then([callback = response_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -112,7 +115,10 @@ TEST_F(Service, CallsResponseCallbackWithResponseTooBigCode)
                   });
 
     m_service->process_request_async(std::move(request_buf))
-        .then(response_callback.AsStdFunction())
+        .then([callback = response_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -139,7 +145,10 @@ TEST_F(Service, CallsResponseCallbackWithSetResponseErrorCode)
                   });
 
     m_service->process_request_async(std::move(request_buf))
-        .then(response_callback.AsStdFunction())
+        .then([callback = response_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -161,7 +170,10 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfGServiceWasNot
         .Times(0);
 
     sut.process_request_async(std::move(request_buf))
-        .then(response_callback.AsStdFunction())
+        .then([callback = response_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -181,7 +193,10 @@ TEST_F(Service, CallsResponseCallbackWithInvalidRequestErrorCode)
         .Times(0);
 
     sut.process_request_async(buffer{})
-        .then(response_callback.AsStdFunction())
+        .then([callback = response_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 
@@ -202,7 +217,10 @@ TEST_F(Service, CallsResponseCallbackWithNotImplementedErrorCodeIfMethodIdxEqual
         .Times(0);
 
     m_service->process_request_async(std::move(request_buf))
-        .then(response_callback.AsStdFunction())
+        .then([callback = response_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        })
         .get();
 }
 

@@ -66,22 +66,25 @@ namespace vshalygin::rpc::internal {
                                                         std::chrono::milliseconds pipe_waiting_timeout)
     {
         auto f = m_pipe_env->open_pipe(m_id, pipe_waiting_timeout)
-            .then([self = weak_from_this(), service]
-                  (pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
+            .then([self = weak_from_this(), service](auto result) mutable {
+                return result.lock().with([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> pipe_endpoint) {
                       if(is_fail(r)) {
                           throw std::runtime_error("pipe waiting failed");
                       }
                       std::shared_ptr s(self);
                       auto req = s->m_authenticator->create_request();
                       return  pipe_endpoint->write_async(std::move(req), s->m_handshake_timeout)
-                          .then([pipe_endpoint, self] (pipe_op_res r) {
+                          .then([pipe_endpoint, self](auto result) mutable {
+                              return result.lock().with([&](pipe_op_res r) {
                                     if(is_fail(r)) {
                                         throw std::runtime_error("write operation failed: " + to_string(r));
                                     }
                                     std::shared_ptr s(self);
                                     return pipe_endpoint->read_async(s->m_handshake_timeout);
-                                })
-                          .then([pipe_endpoint, service, self](pipe_op_res r, cl::buffer &&b)
+                                });
+                          })
+                          .then([pipe_endpoint, service, self](auto result) mutable {
+                              return result.lock().with([&](pipe_op_res r, cl::buffer &&b)
                                                                    -> std::unique_ptr<iconnection> {
                                     if(is_fail(r)) {
                                         throw std::runtime_error("read operation failed: " + to_string(r));
@@ -100,7 +103,9 @@ namespace vshalygin::rpc::internal {
                                                                         s->m_check_connection_period,
                                                                         s->m_ping_timeout);
                                 });
+                          });
                   });
+            });
             
         
         return f;

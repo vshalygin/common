@@ -120,7 +120,10 @@ TEST_F(Future, ExecutesSuccessCallback)
     auto promise = cl::promise(&m_pool, []() { return 2; });
     promise.resolve();
     auto future = promise.get_future();
-    future.then([&](int &&ii) { i = ii; return 0; })
+    future.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &&ii) { i = ii; return 0; });
+    })
           .get();
 
     ASSERT_EQ(i, 2);
@@ -229,8 +232,14 @@ TEST_F(Future, TestChaining)
     promice.resolve();
 
     auto r = promice.get_future()
-        .then([](int i) { return i * 2; })
-        .then([](int i) { return i + 1; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i * 2; });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 1; });
+        })
         .get();
 
     r.lock().with([](int i) { ASSERT_EQ(i, 5); });
@@ -259,8 +268,14 @@ TEST_F(Future, ExceptionCatchedInChainedHanler)
     event sync_event;
     auto p = promise(&m_pool, []() { return 2; });
     p.get_future()
-        .then([](int)->int { throw std::runtime_error("message"); })
-        .then([](int i) { return i + 1; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int)->int { throw std::runtime_error("message"); });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 1; });
+        })
         .catched([&sync_event](std::exception_ptr e) {
             try{
                 std::rethrow_exception(e);
@@ -281,9 +296,15 @@ TEST_F(Future, IgnorePassedExceptionHandler)
     auto p = promise(&m_pool, []() { return 2; });
     p.resolve();
     p.get_future()
-        .then([](int) { return 0; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { return 0; });
+        })
         .catched([&](std::exception_ptr) { first_catch_called = true; return 0; })
-        .then([](int)->int{ throw std::runtime_error("message"); })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int)->int{ throw std::runtime_error("message"); });
+        })
         .catched([&sync_event](std::exception_ptr e) {
             try{
                 std::rethrow_exception(e);
@@ -303,9 +324,15 @@ TEST_F(Future, MayGetValueAfterCatchHandlerSet)
     auto p = promise(&m_pool, []() { return 2; });
     p.resolve();
     auto r = p.get_future()
-        .then([](int i) { return i + 3; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 3; });
+        })
         .catched([&](std::exception_ptr) { catch_called = true; return 0; })
-        .then([](int i)->int { return i + 4; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i)->int { return i + 4; });
+        })
         .catched([&](std::exception_ptr) { catch_called = true; return 0; })
         .get();
 
@@ -320,9 +347,18 @@ TEST_F(Future, DoNotExecuteChandedHandlersIfPreviousWasInterruptedByException)
     auto p = promise(&m_pool, []() { return 2; });
     p.resolve();
     p.get_future()
-        .then([](int) { return 0; })
-        .then([](int)->int { throw std::runtime_error("message"); })
-        .then([&](int)->int { flag = true; return 0; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { return 0; });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int)->int { throw std::runtime_error("message"); });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int)->int { flag = true; return 0; });
+        })
         .catched([&sync_event](std::exception_ptr e) {
                      try {
                          std::rethrow_exception(e);
@@ -343,15 +379,24 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureExcutesFailHandler)
     auto p = promise(&m_pool, []() { return 2; });
     p.resolve();
     auto f = p.get_future()
-        .then([](int) { return 0; })
-        .then([](int)->int { throw std::runtime_error("message"); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { return 0; });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int)->int { throw std::runtime_error("message"); });
+        });
     try {
         f.get();
         FAIL();
     } catch (const std::runtime_error& e) {
         ASSERT_EQ(e.what(), std::string("message"));
     }
-    f.then([&](int)->int { flag = true; return 0; })
+    f.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int)->int { flag = true; return 0; });
+    })
      .catched([&sync_event](std::exception_ptr e) {
                      try {
                          std::rethrow_exception(e);
@@ -371,8 +416,14 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureThrowsOnGet)
     auto p = promise(&m_pool, []() { return 2; });
     p.resolve();
     auto f = p.get_future()
-        .then([](int) { return 0; })
-        .then([](int)->int { throw std::runtime_error("message"); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { return 0; });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int)->int { throw std::runtime_error("message"); });
+        });
     try {
         f.get();
         FAIL();
@@ -381,7 +432,10 @@ TEST_F(Future, NextChainedFutureAfterFailedFutureThrowsOnGet)
     }
 
     try {
-        f.then([&flag](int) { flag = true; return 0; }).get();
+        f.then([&flag](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { flag = true; return 0; });
+        }).get();
         FAIL();
     } catch(const std::runtime_error &e) {
         ASSERT_EQ(e.what(), std::string("message"));
@@ -412,7 +466,10 @@ TEST_F(Future, ExecuteSuccessHandlerIfThisHandlerSetAfterTaskExecution)
     f.get();
 
     event sync_event;
-    f.then([&](int) { sync_event.set(); return 0; });
+    f.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int) { sync_event.set(); return 0; });
+    });
 
     sync_event.wait();
 }
@@ -448,7 +505,10 @@ TEST_F(Future, SuccessHandlerExecutesIfCorrespondingFutureAndPromiseDestroyed)
                                   (promise(&m_pool, [&]() -> int { sync_event1.wait(); return 0; }));
     p->resolve();
     p->get_future()
-        .then([&](int) { sync_event2.set(); return 0; });
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { sync_event2.set(); return 0; });
+        });
     p.reset();
 
     sync_event1.set();
@@ -479,7 +539,10 @@ TEST_F(Future, PromiseFunctionNeverCopyIfMovedToPromiseConstructor)
     auto p = promise(&m_pool, std::move(promise_task));
     p.resolve();
     auto f = p.get_future()
-        .then([&](int) { return 0; });
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { return 0; });
+        });
 
     f.get();
 
@@ -504,7 +567,10 @@ TEST_F(Future, PromiseFunctionMayBeCopiedToPromiseConstructor)
     p.resolve();
 
     auto f = p.get_future()
-        .then([&](int) { sync_event.wait(); return 0; });
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { sync_event.wait(); return 0; });
+        });
     promise_task = {};
     sync_event.set();
 
@@ -519,8 +585,9 @@ TEST_F(Future, PromiseFunctionMayBeCopiedToPromiseConstructor)
 TEST_F(Future, SuccessHandlerNeverCopyIfMovedToThenMethod)
 {
     auto c = counter{};
-    auto task = [c = std::move(c)](int) -> int {
-        return 0;
+    auto task = [c = std::move(c)](auto value) mutable -> int {
+        auto locked_value = value.lock();
+        return locked_value.with([](int) -> int { return 0; });
     };
     auto p = promise(&m_pool, []() { return 1; });
     p.resolve();
@@ -539,12 +606,15 @@ TEST_F(Future, SuccessHanlerMayBeCopiedToThenMethod)
 {
     event sync_event;
 
-    std::function<int(int)> task;
+    std::function<int(fvalue<thread_pool, int>)> task;
     auto c = counter{};
-    task = [c, &sync_event](int)->int {
-        sync_event.wait();
-        c.do_something(); //check valid
-        return 0;
+    task = [c, &sync_event](auto value) mutable -> int {
+        auto locked_value = value.lock();
+        return locked_value.with([&](int) -> int {
+            sync_event.wait();
+            c.do_something(); //check valid
+            return 0;
+        });
     };
     auto p = promise(&m_pool, []() { return 0; });
     p.resolve();
@@ -688,9 +758,18 @@ TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
     auto p = promise(&m_pool, []()->std::unique_ptr<int> { return std::make_unique<int>(3); });
     p.resolve();
     auto d = p.get_future()
-                 .then([](std::unique_ptr<int> &&i) { return std::move(i); })
-                 .then([](std::unique_ptr<int> &&i) { return std::move(i); })
-                 .then([](std::unique_ptr<int> &&i) { return std::move(i); })
+                 .then([](auto source_fvalue) mutable {
+                     auto locked_source_value = source_fvalue.lock();
+                     return locked_source_value.with([&](std::unique_ptr<int> &&i) { return std::move(i); });
+                 })
+                 .then([](auto source_fvalue) mutable {
+                     auto locked_source_value = source_fvalue.lock();
+                     return locked_source_value.with([&](std::unique_ptr<int> &&i) { return std::move(i); });
+                 })
+                 .then([](auto source_fvalue) mutable {
+                     auto locked_source_value = source_fvalue.lock();
+                     return locked_source_value.with([&](std::unique_ptr<int> &&i) { return std::move(i); });
+                 })
                  .get();
     
     std::unique_ptr<int> acceptor;
@@ -810,8 +889,14 @@ TEST_F(Future, DoesNotCopyMovableObjectInInnerStorage)
     auto p = promise(&m_pool, []() { return counter{}; });
     p.resolve();
     auto f = p.get_future()
-        .then([](counter &&c) { return std::move(c); })
-        .then([](counter &&c) { return std::move(c); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](counter &&c) { return std::move(c); });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](counter &&c) { return std::move(c); });
+        });
 
     counter acceptor;
     f.get().lock().with([&acceptor](counter &&c) { acceptor = std::move(c); });
@@ -842,9 +927,15 @@ TEST_F(Future, DoChainingWithVoidReturnCallback)
         .then([]() {})
         .then([]() {})
         .then([]() { return 1; })
-        .then([](int) {})
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) {});
+        })
         .then([]() {return 22; })
-        .then([&i](int ii) { i = ii; });
+        .then([&i](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int ii) { i = ii; });
+        });
 
     f.get();
     ASSERT_EQ(i, 22);
@@ -971,29 +1062,65 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturns)
     auto p0 = promise(&m_pool, [&]() -> void {}); p0.resolve();
     auto f0 = p0.get_future().then([&]() {}); (void)f0;
     auto p1 = promise(&m_pool, [&]() -> int { return i; }); p1.resolve();
-    auto f1 = p1.get_future().then([&](int v) { EXPECT_EQ(v, i); }); (void)f1;
+    auto f1 = p1.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int v) { EXPECT_EQ(v, i); });
+    }); (void)f1;
     auto p2 = promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
-    auto f2 = p2.get_future().then([&](int &v) {  EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f2;
+    auto f2 = p2.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &v) {  EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f2;
     auto p3 = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
-    auto f3 = p3.get_future().then([&](int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f3;
+    auto f3 = p3.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f3;
     auto p4 = promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
-    auto f4 = p4.get_future().then([&](const int v) { EXPECT_EQ(v, i); }); (void)f4;
+    auto f4 = p4.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int v) { EXPECT_EQ(v, i); });
+    }); (void)f4;
     auto p5 = promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
-    auto f5 = p5.get_future().then([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f5;
+    auto f5 = p5.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f5;
     auto p6 = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
-    auto f6 = p6.get_future().then([&](const int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f6;
+    auto f6 = p6.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f6;
     auto p7 = promise(&m_pool, [&]() -> volatile int { return i; }); p7.resolve();
-    auto f7 = p7.get_future().then([&](volatile int v) { EXPECT_EQ(v, i); }); (void)f7;
+    auto f7 = p7.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int v) { EXPECT_EQ(v, i); });
+    }); (void)f7;
     auto p8 = promise(&m_pool, [&]() -> volatile int &{ return i; }); p8.resolve();
-    auto f8 = p8.get_future().then([&](volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f8;
+    auto f8 = p8.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f8;
     auto p9 = promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
-    auto f9 = p9.get_future().then([&](volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f9;
+    auto f9 = p9.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f9;
     auto p10 = promise(&m_pool, [&]() -> const volatile int { return i; }); p10.resolve();
-    auto f10 = p10.get_future().then([&](const volatile int v) { EXPECT_EQ(v, i); }); (void)f10;
+    auto f10 = p10.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int v) { EXPECT_EQ(v, i); });
+    }); (void)f10;
     auto p11 = promise(&m_pool, [&]() -> const volatile int &{ return i; }); p11.resolve();
-    auto f11 = p11.get_future().then([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f11;
+    auto f11 = p11.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f11;
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
-    auto f12 = p12.get_future().then([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); }); (void)f12;
+    auto f12 = p12.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    }); (void)f12;
 
     f0.get();
     f1.get();
@@ -1021,29 +1148,65 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturnsAndPassIfFuther)
 {
     int i = 0;
     auto p1 = promise(&m_pool, [&]() ->int { return i; }); p1.resolve();
-    auto f1 = p1.get_future().then([&](int v) ->decltype(auto) {  return v; }); (void)f1;
+    auto f1 = p1.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int v) ->decltype(auto) {  return v; });
+    }); (void)f1;
     auto p2 = promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
-    auto f2 = p2.get_future().then([&](int &v) ->decltype(auto) { return v; }); (void)f2;
+    auto f2 = p2.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &v) ->decltype(auto) { return v; });
+    }); (void)f2;
     auto p3 = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
-    auto f3 = p3.get_future().then([&](int &&v) ->decltype(auto) {  return std::move(v); }); (void)f3;
+    auto f3 = p3.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &&v) ->decltype(auto) {  return std::move(v); });
+    }); (void)f3;
     auto p4 = promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
-    auto f4 = p4.get_future().then([&](const int v) ->decltype(auto) {  return v; }); (void)f4;
+    auto f4 = p4.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int v) ->decltype(auto) {  return v; });
+    }); (void)f4;
     auto p5 = promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
-    auto f5 = p5.get_future().then([&](const int &v) ->decltype(auto) {  return v; }); (void)f5;
+    auto f5 = p5.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &v) ->decltype(auto) {  return v; });
+    }); (void)f5;
     auto p6 = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
-    auto f6 = p6.get_future().then([&](const int &&v) ->decltype(auto) {  return std::move(v); }); (void)f6;
+    auto f6 = p6.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &&v) ->decltype(auto) {  return std::move(v); });
+    }); (void)f6;
     auto p7 = promise(&m_pool, [&]() -> volatile int { return i; }); p7.resolve();
-    auto f7 = p7.get_future().then([&](volatile int v) ->decltype(auto) { return v; }); (void)f7;
+    auto f7 = p7.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int v) ->decltype(auto) { return v; });
+    }); (void)f7;
     auto p8 = promise(&m_pool, [&]() -> volatile int &{ return i; }); p8.resolve();
-    auto f8 = p8.get_future().then([&](volatile int &v) ->decltype(auto) { return v; }); (void)f8;
+    auto f8 = p8.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int &v) ->decltype(auto) { return v; });
+    }); (void)f8;
     auto p9 = promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
-    auto f9 = p9.get_future().then([&](volatile int &&v) ->decltype(auto) { return std::move(v); }); (void)f9;
+    auto f9 = p9.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int &&v) ->decltype(auto) { return std::move(v); });
+    }); (void)f9;
     auto p10 = promise(&m_pool, [&]() -> const volatile int { return i; }); p10.resolve();
-    auto f10 = p10.get_future().then([&](const volatile int v) ->decltype(auto) { return v; }); (void)f10;
+    auto f10 = p10.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int v) ->decltype(auto) { return v; });
+    }); (void)f10;
     auto p11 = promise(&m_pool, [&]() -> const volatile int &{ return i; }); p11.resolve();
-    auto f11 = p11.get_future().then([&](const volatile int &v) ->decltype(auto) { return v; }); (void)f11;
+    auto f11 = p11.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int &v) ->decltype(auto) { return v; });
+    }); (void)f11;
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
-    auto f12 = p12.get_future().then([&](const volatile int &&v) ->decltype(auto) { return std::move(v); }); (void)f12;
+    auto f12 = p12.get_future().then([&](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int &&v) ->decltype(auto) { return std::move(v); });
+    }); (void)f12;
 
     f1.get().lock().with([&](int v) { EXPECT_EQ(v, i); });
     f2.get().lock().with([&](int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
@@ -1067,35 +1230,59 @@ TEST_F(Future, ThenFunctionMayReferenceParameterIfFutureStoreValue)
     int *a1 = nullptr;
     auto p1 = promise(&m_pool, [&]() { return 1; }); p1.resolve();
     auto f1 = p1.get_future();
-    auto f1_ = f1.then([&](int &v) { a1 = &v; v = 2; });
+    auto f1_ = f1.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &v) { a1 = &v; v = 2; });
+    });
     int *a2 = nullptr;
     auto p2 = promise(&m_pool, [&]() { return 1; }); p2.resolve();
     auto f2 = p2.get_future();
-    auto f2_ = f2.then([&](int &&v) { a2 = &v; v = 2; });
+    auto f2_ = f2.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int &&v) { a2 = &v; v = 2; });
+    });
     const int *a3 = nullptr;
     auto p3 = promise(&m_pool, [&]() { return 1; }); p3.resolve();
     auto f3 = p3.get_future();
-    auto f3_ = f3.then([&](const int &v) { a3 = &v; });
+    auto f3_ = f3.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &v) { a3 = &v; });
+    });
     const int *a4 = nullptr;
     auto p4 = promise(&m_pool, [&]() { return 1; }); p4.resolve();
     auto f4 = p4.get_future();
-    auto f4_ = f4.then([&](const int &&v) { a4 = &v; });
+    auto f4_ = f4.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &&v) { a4 = &v; });
+    });
     volatile int *a5 = nullptr;
     auto p5 = promise(&m_pool, [&]() { return 1; }); p5.resolve();
     auto f5 = p5.get_future();
-    auto f5_ = f5.then([&](volatile int &v) { a5 = &v; v = 2; });
+    auto f5_ = f5.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int &v) { a5 = &v; v = 2; });
+    });
     volatile int *a6 = nullptr;
     auto p6 = promise(&m_pool, [&]() { return 1; }); p6.resolve();
     auto f6 = p6.get_future();
-    auto f6_ = f6.then([&](volatile int &&v) { a6 = &v; v = 2; });
+    auto f6_ = f6.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](volatile int &&v) { a6 = &v; v = 2; });
+    });
     const volatile int *a7 = nullptr;
     auto p7 = promise(&m_pool, [&]() { return 1; }); p7.resolve();
     auto f7 = p7.get_future();
-    auto f7_ = f7.then([&](const volatile int &v) { a7 = &v; });
+    auto f7_ = f7.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int &v) { a7 = &v; });
+    });
     const volatile int *a8 = nullptr;
     auto p8 = promise(&m_pool, [&]() { return 1; }); p8.resolve();
     auto f8 = p8.get_future();
-    auto f8_ = f8.then([&](const volatile int &&v) { a8 = &v; });
+    auto f8_ = f8.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const volatile int &&v) { a8 = &v; });
+    });
 
     f1_.get(); f2_.get(); f3_.get(); f4_.get(); f5_.get(); f6_.get(); f7_.get(); f8_.get();
 
@@ -1115,8 +1302,14 @@ TEST_F(Future, MoveOnlyObjectMayBePassedToSuccessCallbackByRValueRef)
     auto p1 = promise(&m_pool, [&]() { return std::make_unique<int>(2); });
     p1.resolve();
     p1.get_future()
-        .then([&](std::unique_ptr<int>&& i) { return std::move(i); })
-        .then([&](std::unique_ptr<int>&& i) { v = std::move(i); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int>&& i) { return std::move(i); });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int>&& i) { v = std::move(i); });
+        })
         .get();
 
 
@@ -1131,8 +1324,14 @@ TEST_F(Future, MoveOnlyObjectMayBePassedThroughChainAndAchievedViaGet)
     auto p1 = promise(&m_pool, [&]() { return std::make_unique<int>(2); });
     p1.resolve();
     p1.get_future()
-        .then([&](std::unique_ptr<int> &&i) { return std::move(i); })
-        .then([&](std::unique_ptr<int> &&i) { return std::move(i); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int> &&i) { return std::move(i); });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int> &&i) { return std::move(i); });
+        })
         .get()
         .lock().with([&](std::unique_ptr<int> &&i) { v = std::move(i); });
 
@@ -1179,10 +1378,13 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture
     auto p = promise(&m_pool, []() { return 1; });
     p.resolve();
 
-    auto f = p.get_future().then([&](int i) {
+    auto f = p.get_future().then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int i) {
         auto p1 = promise(&m_pool, [](int ii) { return ii * 2; });
         p1.resolve(i);
         return p1.get_future();
+    });
     });
 
     static_assert(std::is_same_v<decltype(f), future<thread_pool, int>>);
@@ -1304,14 +1506,20 @@ TEST_F(Future, SuccessCallbackReturnsFutureWithMoveOnlyType)
 {
     auto p = promise(&m_pool, []() { return std::make_unique<int>(2); }); p.resolve();
     auto f = p.get_future()
-     .then([&](std::unique_ptr<int> &&ptr) {
+     .then([&](auto source_fvalue) mutable {
+         auto locked_source_value = source_fvalue.lock();
+         return locked_source_value.with([&](std::unique_ptr<int> &&ptr) {
         auto p = promise(&m_pool, [ptr = std::move(ptr)]() mutable { return std::move(ptr); });
         p.resolve();
-        return p.get_future(); })
-     .then([](std::unique_ptr<int> &&ptr) mutable {
+        return p.get_future(); });
+     })
+     .then([](auto source_fvalue) mutable {
+         auto locked_source_value = source_fvalue.lock();
+         return locked_source_value.with([&](std::unique_ptr<int> &&ptr) mutable {
         EXPECT_TRUE(ptr);
         EXPECT_EQ(*ptr, 2);
         return std::move(ptr);
+     });
      });
 
     f.get().lock().with([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 2); });
@@ -1321,14 +1529,20 @@ TEST_F(Future, SuccessCallbackReturnsFutureAndCopiesStoredVarible)
 {
     auto p = promise(&m_pool, []() { return std::string("test"); }); p.resolve();
     auto f = p.get_future()
-        .then([&](std::string &&str) {
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::string &&str) {
                auto p = promise(&m_pool, [str = std::move(str)]() mutable { return str; });
                p.resolve();
-               return p.get_future(); })
-        .then([](std::string ptr) mutable {
+               return p.get_future(); });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::string ptr) mutable {
                   EXPECT_EQ(ptr, "test");
                   return ptr;
               });
+        });
 
     f.get().lock().with([](std::string str) { ASSERT_EQ(str, "test"); });
 }
@@ -1405,84 +1619,135 @@ TEST_F(Future, PromiseResolveFunctionReturnsFuture)
         return p.get_future();
     }); p1.resolve(6);
     auto f1 = p1.get_future()
-        .then([&](int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        });
     auto p2 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> int &{ return i; }); p.resolve();
         return p.get_future();
     }); p2.resolve(6);
     auto f2 = p2.get_future()
-        .then([&](int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        });
     auto p3 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p.resolve();
         return p.get_future();
     }); p3.resolve(6);
     auto f3 = p3.get_future()
-        .then([&](int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
+        });
     auto p4 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> const int { return i; }); p.resolve();
         return p.get_future();
     }); p4.resolve(6);
     auto f4 = p4.get_future()
-        .then([&](const int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        });
     auto p5 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> const int &{ return i; }); p.resolve();
         return p.get_future();
     }); p5.resolve(6);
     auto f5 = p5.get_future()
-        .then([&](const int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &v) -> decltype(auto) { EXPECT_EQ(v, i); return v; });
+        });
     auto p6 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p.resolve();
         return p.get_future();
     }); p6.resolve(6);
     auto f6 = p6.get_future()
-        .then([&](const int &&v) -> decltype(auto) { EXPECT_EQ(v, i); return std::move(v); });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&v) -> decltype(auto) {
+                EXPECT_EQ(v, i);
+                return std::move(v);
+            });
+        });
     auto p7 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> volatile int { return ii; }); p.resolve();
         return p.get_future();
     }); p7.resolve(6);
     auto f7 = p7.get_future()
-        .then([&](volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+        });
     auto p8 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> volatile int &{ return ii; }); p.resolve();
         return p.get_future();
     }); p8.resolve(6);
     auto f8 = p8.get_future()
-        .then([&](volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+        });
     auto p9 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> volatile int &&{ return std::move(ii); }); p.resolve();
         return p.get_future();
     }); p9.resolve(6);
     auto f9 = p9.get_future()
-        .then([&](volatile int &&v) -> decltype(auto) { EXPECT_EQ(v, ii); return std::move(v); });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&v) -> decltype(auto) {
+                EXPECT_EQ(v, ii);
+                return std::move(v);
+            });
+        });
     auto p10 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> const volatile int { return ii; }); p.resolve();
         return p.get_future();
     }); p10.resolve(6);
     auto f10 = p10.get_future()
-        .then([&](const volatile int v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int v) -> decltype(auto) {
+                EXPECT_EQ(v, ii);
+                return v;
+            });
+        });
     auto p11 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p.resolve();
         return p.get_future();
     }); p11.resolve(6);
     auto f11 = p11.get_future()
-        .then([&](const volatile int &v) -> decltype(auto) { EXPECT_EQ(v, ii); return v; });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &v) -> decltype(auto) {
+                EXPECT_EQ(v, ii);
+                return v;
+            });
+        });
     auto p12 = promise(&m_pool, [&](int) {
         EXPECT_NE(master_thread_id, std::this_thread::get_id());
         auto p = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(ii); }); p.resolve();
         return p.get_future();
     }); p12.resolve(6);
     auto f12 = p12.get_future()
-        .then([&](const volatile int &&v) -> decltype(auto) { EXPECT_EQ(v, ii); return std::move(v); });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&v) -> decltype(auto) {
+                EXPECT_EQ(v, ii);
+                return std::move(v);
+            });
+        });
 
 
     EXPECT_ANY_THROW(p0.resolve(8));
@@ -1524,7 +1789,10 @@ TEST_F(Future, PromiseResolveFunctionReturnsFutureWhichThrowsException)
     auto p1 = promise(&m_pool, [&](int) -> future<thread_pool, int> { throw std::runtime_error("test"); });
     p1.resolve(6);
     auto f1 = p1.get_future()
-        .then([](int) { FAIL(); })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { FAIL(); });
+        })
         .catched([&](std::exception_ptr) { sync_event1.set(); });
 
     sync_event1.wait();
@@ -1540,7 +1808,10 @@ TEST_F(Future, PromiseResolveFunctionReturnsFutureWhichThrowsException)
                            });
     p2.resolve(6);
     auto f2 = p2.get_future()
-        .then([](int) { FAIL(); })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { FAIL(); });
+        })
         .catched([&](std::exception_ptr) { sync_event2.set(); });
 
     sync_event2.wait();
@@ -1556,7 +1827,10 @@ TEST_F(Future, PromiseFunctionWhichReturnsFutureAcceptsMoveOnlyTypeAndPassesItFu
     });
     p.resolve(std::make_unique<int>(3));
     auto f = p.get_future()
-        .then([](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
+        });
 
     f.get().lock().with([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 3); });
 }
@@ -1571,15 +1845,21 @@ TEST_F(Future, PromiseFunctionWhichReturnsFutureCopiesVarible)
     });
     p.resolve(s);
     auto f = p.get_future()
-        .then([&](std::string &&str) {
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::string &&str) {
               auto p = promise(&m_pool, [str = std::move(str)]() mutable { return str; });
               p.resolve();
               return p.get_future();
-         })
-        .then([](const std::string &ptr) mutable {
+         });
+        })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const std::string &ptr) mutable {
              EXPECT_EQ(ptr, "test");
              return ptr;
          });
+        });
 
     f.get().lock().with([](std::string str) { ASSERT_EQ(str, "test"); });
 }
@@ -1590,10 +1870,13 @@ TEST_F(Future, FutureTupleAsStoredType)
     p.resolve();
     p.get_future()
         .then([]() { return ftuple{ 7, 8 }; })
-        .then([](int i, int j) {
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i, int j) {
             EXPECT_EQ(i, 7);
             EXPECT_EQ(j, 8);
-         })
+         });
+        })
         .get();
 }
 
@@ -1605,7 +1888,10 @@ TEST_F(Future, FutureTupleStoresReference)
     p.resolve();
     auto f = p.get_future()
         .then([&]() { return ftuple<int &&>{ std::move(i) }; });
-    f.then([&](const int &ii) { ASSERT_EQ(&i, &ii); });
+    f.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &ii) { ASSERT_EQ(&i, &ii); });
+    });
 
     static_assert(std::is_same_v<decltype(f), future<thread_pool, ftuple<int &&>>>);
 
@@ -1620,7 +1906,10 @@ TEST_F(Future, FutureTupleStoresValuesByDefault)
     p.resolve();
     auto f = p.get_future()
         .then([&]() { return ftuple{ std::move(i) }; });
-    f.then([&](const int &ii) { ASSERT_NE(&i, &ii); })
+    f.then([&](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](const int &ii) { ASSERT_NE(&i, &ii); });
+    })
      .get();
 
     static_assert(std::is_same_v<decltype(f), future<thread_pool, ftuple<int>>>);
@@ -1632,46 +1921,121 @@ TEST_F(Future, FutureTupleAsStoredValueMayBeConvertedToTypeWithAnyQualifiers)
     p1.resolve();
     auto f1 = p1.get_future()
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; })
-        .then([&](const int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](const int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](const int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; })
-        .then([&](volatile int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](volatile int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](volatile int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; })
-        .then([&](const volatile int i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](const volatile int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; })
-        .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; });
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&i) { EXPECT_EQ(i, 1); return ftuple{ std::move(i) }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &i) { EXPECT_EQ(i, 1); return ftuple{ i }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&i) {
+                EXPECT_EQ(i, 1);
+                return ftuple{ std::move(i) };
+            });
+        });
 
     auto p2 = promise(&m_pool, []() {});
     p2.resolve();
     auto f2 = p2.get_future()
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](int i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](int &i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](int &&i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](const int i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](const int &i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](const int &&i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](volatile int i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](volatile int &i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](volatile int &&i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](const volatile int i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](const volatile int &i) { EXPECT_EQ(i, 1); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &i) { EXPECT_EQ(i, 1); });
+        })
         .then([&]() { return ftuple{ 1 }; })
-        .then([&](const volatile int &&i) { EXPECT_EQ(i, 1); });
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&i) { EXPECT_EQ(i, 1); });
+        });
 
     f1.get();
     f2.get();
@@ -1684,8 +2048,14 @@ TEST_F(Future, FutureTupleAsStoredValueStoresReferenceAndPassesItFuther)
     p.resolve();
     auto f = p.get_future()
         .then([&]() { return ftuple<int &>{ i0 }; })
-        .then([&](int &i) ->int &{ EXPECT_EQ(&i0, &i); return i; })
-        .then([&](int &i) { EXPECT_EQ(&i0, &i); });
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &i) ->int &{ EXPECT_EQ(&i0, &i); return i; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &i) { EXPECT_EQ(&i0, &i); });
+        });
 
     f.get();
 }
@@ -1696,7 +2066,10 @@ TEST_F(Future, FutureTupleAsStoredValueStoresNothing)
     p.resolve();
     auto f = p.get_future()
         .then([&]() { return ftuple{}; })
-        .then([&]() {});
+        .then([&](auto value) {
+            auto locked_value = value.lock();
+            return locked_value.with([]() {});
+        });
 
     f.get();
 }
@@ -1706,7 +2079,10 @@ TEST_F(Future, PromiseFunctionReturnsFutureTuple)
     auto p = promise(&m_pool, []() { return ftuple{ 1, 4 }; });
     p.resolve();
     auto f = p.get_future()
-        .then([&](int i, int j) { EXPECT_EQ(i, 1); EXPECT_EQ(j, 4); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i, int j) { EXPECT_EQ(i, 1); EXPECT_EQ(j, 4); });
+        })
         .then([&]() {});
 
     f.get();
@@ -1717,8 +2093,14 @@ TEST_F(Future, MoveOnlyTypeMayBePassesThroughAllChainViaFutureTuple)
     auto p = promise(&m_pool, []() { return ftuple{ std::make_unique<int>(34) }; });
     p.resolve();
     auto f = p.get_future()
-        .then([&](std::unique_ptr<int> &&ptr) { return ftuple{ std::move(ptr) }; })
-        .then([&](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int> &&ptr) { return ftuple{ std::move(ptr) }; });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
+        });
 
     f.get().lock().with([](const std::unique_ptr<int> &ptr) { ASSERT_TRUE(ptr && *ptr == 34); });
 }
@@ -1886,7 +2268,10 @@ TEST_F(Future, CatchedMethodReturnsNewPromise)
 {
     auto p1 = promise(&m_pool, []() { return 2; });
     auto f1 = p1.get_future()
-        .then([](int) -> int { throw std::runtime_error(""); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) -> int { throw std::runtime_error(""); });
+        });
     auto f1_ = f1.catched([](std::exception_ptr) { return 34; });
     p1.resolve();
 
@@ -1894,7 +2279,10 @@ TEST_F(Future, CatchedMethodReturnsNewPromise)
 
     auto p2 = promise(&m_pool, []() { return 2; });
     auto f2 = p2.get_future()
-        .then([](int) -> int { throw std::runtime_error(""); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) -> int { throw std::runtime_error(""); });
+        });
     auto f2_ = f2.catched([](std::exception_ptr) {});
     p2.resolve();
 
@@ -1907,16 +2295,25 @@ TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
     auto p1 = promise(&m_pool, []() { return 2; });
     p1.resolve();
     auto f1 = p1.get_future()
-        .then([](int i) { return i + 8; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 8; });
+        })
         .catched([&](std::exception_ptr) { is_catch_called = true; return 5545; })
-        .then([](int i) { return i * 2; });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i * 2; });
+        });
     f1.get().lock().with([](int i) { ASSERT_EQ(i, 20); });
     ASSERT_FALSE(is_catch_called);
 
     auto p2 = promise(&m_pool, []() { return 2; });
     p2.resolve();
     auto f2 = p2.get_future()
-        .then([](int i) { return i + 8; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 8; });
+        })
         .catched([&](std::exception_ptr) { is_catch_called = true; return 5545; });
     f2.get().lock().with([](int i) { ASSERT_EQ(i, 10); });
     ASSERT_FALSE(is_catch_called);
@@ -1924,7 +2321,10 @@ TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
     auto p3 = promise(&m_pool, []() { return 2; });
     p3.resolve();
     auto f3 = p3.get_future()
-        .then([](int i) { return i + 8; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 8; });
+        })
         .catched([&](std::exception_ptr) { is_catch_called = true; })
         .then([]() { return 45; });
     f3.get().lock().with([](int i) { ASSERT_EQ(i, 45); });
@@ -1933,7 +2333,10 @@ TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
     auto p4 = promise(&m_pool, []() { return 2; });
     p4.resolve();
     auto f4 = p4.get_future()
-        .then([](int i) { return i + 8; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i + 8; });
+        })
         .catched([&](std::exception_ptr) { is_catch_called = true; });
     f4.get();
     ASSERT_FALSE(is_catch_called);
@@ -1946,9 +2349,15 @@ TEST_F(Future, ExceptionCatchesInClosesErrorHandlerThenExecutionCompleted)
     auto p1 = promise(&m_pool, []() -> int { throw std::runtime_error(""); });
     p1.resolve();
     auto f1 = p1.get_future()
-        .then([&](int i) { is_first_then_called1 = true; return i + 8; })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { is_first_then_called1 = true; return i + 8; });
+        })
         .catched([&](std::exception_ptr) { is_catch_called1 = true; return 100; })
-        .then([](int i) { return i * 2; })
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { return i * 2; });
+        })
         .catched([](std::exception_ptr) { declare_fail(); return 0; });
     f1.get().lock().with([](int i) { ASSERT_EQ(i, 200); });
     ASSERT_FALSE(is_first_then_called1);
@@ -1959,7 +2368,10 @@ TEST_F(Future, ExceptionCatchesInClosesErrorHandlerThenExecutionCompleted)
     auto p2 = promise(&m_pool, []() -> int { throw std::runtime_error(""); });
     p2.resolve();
     auto f2 = p2.get_future()
-        .then([&](int i) { is_first_then_called2 = true; return i + 8; })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { is_first_then_called2 = true; return i + 8; });
+        })
         .catched([&](std::exception_ptr) { is_catch_called2 = true; })
         .then([]() { return 50; })
         .catched([](std::exception_ptr) { declare_fail(); return 0; });
@@ -1975,7 +2387,10 @@ TEST_F(Future, SetPromiseFailIfErrorHandlerThrowsException)
     auto p1 = promise(&m_pool, []() -> int { return 0; });
     p1.resolve();
     auto f1 = p1.get_future()
-        .then([&](int) -> int { throw std::runtime_error("sdfsdfsdf"); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) -> int { throw std::runtime_error("sdfsdfsdf"); });
+        })
         .catched([&](std::exception_ptr ep) -> int {
                      try {
                          std::rethrow_exception(ep);
@@ -1987,7 +2402,10 @@ TEST_F(Future, SetPromiseFailIfErrorHandlerThrowsException)
                      }
                      return 0;
                   })
-        .then([&](int i) { is_second_then_called1 = true; return i * 2; })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) { is_second_then_called1 = true; return i * 2; });
+        })
         .catched([&](std::exception_ptr ep) {
                      try {
                          std::rethrow_exception(ep);
@@ -2008,7 +2426,10 @@ TEST_F(Future, SetPromiseFailIfErrorHandlerThrowsException)
     auto p2 = promise(&m_pool, []() -> int { return 0; });
     p2.resolve();
     auto f2 = p2.get_future()
-        .then([&](int) -> int { throw std::runtime_error("sfdsf"); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) -> int { throw std::runtime_error("sfdsf"); });
+        })
         .catched([&](std::exception_ptr ep) -> void {
                      try {
                          std::rethrow_exception(ep);
@@ -2045,7 +2466,10 @@ TEST_F(Future, ThrowsOnAttemtToGetDataFromFailedFuture)
     auto p2 = promise(&m_pool, []() -> int { return 0; });
     p2.resolve();
     auto f2 = p2.get_future()
-        .then([](int) { throw std::runtime_error(""); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int) { throw std::runtime_error(""); });
+        });
     ASSERT_THROW(f2.get(), std::runtime_error);
 }
 
@@ -2082,62 +2506,98 @@ TEST_F(Future, ErrorHandlerMayReturnTypeWithAnySpecifier)
     auto p1 = promise(&m_pool, [&]() -> int { return i; }); p1.resolve();
     p1.get_future()
         .catched([&](std::exception_ptr) -> int { return i; })
-        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p2 = promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
     p2.get_future()
         .catched([&](std::exception_ptr) -> int &{ return i; })
-        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p3 = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
     p3.get_future()
         .catched([&](std::exception_ptr) -> int &&{ return std::move(i); })
-        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p4 = promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
     p4.get_future()
         .catched([&](std::exception_ptr) -> const int { return i; })
-        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p5 = promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
     p5.get_future()
         .catched([&](std::exception_ptr) -> const int &{ return i; })
-        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p6 = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
     p6.get_future()
         .catched([&](std::exception_ptr) -> const int &&{ return std::move(i); })
-        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p7 = promise(&m_pool, [&]() -> volatile int { return ii; }); p7.resolve();
     p7.get_future()
         .catched([&](std::exception_ptr) -> volatile int { return ii; })
-        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p8 = promise(&m_pool, [&]() -> volatile int &{ return ii; }); p8.resolve();
     p8.get_future()
         .catched([&](std::exception_ptr) -> volatile int &{ return ii; })
-        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p9 = promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
     p9.get_future()
         .catched([&](std::exception_ptr) -> volatile int &&{ return std::move(i); })
-        .then([&](volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p10 = promise(&m_pool, [&]() -> const volatile int { return ii; }); p10.resolve();
     p10.get_future()
         .catched([&](std::exception_ptr) -> const volatile int { return ii; })
-        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p11 = promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p11.resolve();
     p11.get_future()
         .catched([&](std::exception_ptr) -> const volatile int &{ return ii; })
-        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
     p12.get_future()
         .catched([&](std::exception_ptr) -> const volatile int &&{ return std::move(i); })
-        .then([&](const volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
 }
 #if defined(__GNUC__)
@@ -2152,62 +2612,98 @@ TEST_F(Future, ErrorHandlerMayAcceptAndReturnFtupleStoringTypeWithAnySpecifier)
     auto p1 = promise(&m_pool, [&]() { return ftuple<int>(i); }); p1.resolve();
     p1.get_future()
         .catched([&](std::exception_ptr){ return ftuple<int>(i); })
-        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p2 = promise(&m_pool, [&]() { return ftuple<int &>(i); }); p2.resolve();
     p2.get_future()
         .catched([&](std::exception_ptr){ return ftuple<int &>(i); })
-        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p3 = promise(&m_pool, [&]() { return ftuple<int &&>(std::move(i)); }); p3.resolve();
     p3.get_future()
         .catched([&](std::exception_ptr) { return ftuple<int &&>(std::move(i)); })
-        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p4 = promise(&m_pool, [&]() { return ftuple<const int>(i); }); p4.resolve();
     p4.get_future()
         .catched([&](std::exception_ptr) { return ftuple<const int>(i); })
-        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p5 = promise(&m_pool, [&]() { return ftuple<const int &>(i); }); p5.resolve();
     p5.get_future()
         .catched([&](std::exception_ptr) { return ftuple<const int &>(i); })
-        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p6 = promise(&m_pool, [&]() { return ftuple<const int &&>(std::move(i)); }); p6.resolve();
     p6.get_future()
         .catched([&](std::exception_ptr) { return ftuple<const int &&>(std::move(i)); })
-        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p7 = promise(&m_pool, [&]() { return ftuple<volatile int>(ii); }); p7.resolve();
     p7.get_future()
         .catched([&](std::exception_ptr) { return ftuple<volatile int>(ii); })
-        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p8 = promise(&m_pool, [&]() { return ftuple<volatile int &>(ii); }); p8.resolve();
     p8.get_future()
         .catched([&](std::exception_ptr) { return ftuple<volatile int &>(ii); })
-        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p9 = promise(&m_pool, [&]() { return ftuple<volatile int &&>(std::move(ii)); }); p9.resolve();
     p9.get_future()
         .catched([&](std::exception_ptr) { return ftuple<volatile int &&>(std::move(ii)); })
-        .then([&](volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p10 = promise(&m_pool, [&]() { return ftuple<const volatile int>(ii); }); p10.resolve();
     p10.get_future()
         .catched([&](std::exception_ptr) { return ftuple<const volatile int>(ii); })
-        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p11 = promise(&m_pool, [&]() { return ftuple<const volatile int &>(ii); }); p11.resolve();
     p11.get_future()
         .catched([&](std::exception_ptr) { return ftuple<const volatile int &>(ii); })
-        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p12 = promise(&m_pool, [&]() { return ftuple<const volatile int &&>(std::move(ii)); }); p12.resolve();
     p12.get_future()
         .catched([&](std::exception_ptr) { return ftuple<const volatile int &&>(std::move(ii)); })
-        .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
 }
 
@@ -2217,13 +2713,22 @@ TEST_F(Future, AllFuturesStoreDataExistsAlongAllChain)
     auto promise = cl::promise(&m_pool, []() { return 2; });
     promise.resolve();
     auto f = promise.get_future()
-        .then([&](int &v) -> int &{ i = &v; return v; })
-        .then([&](int &v) {
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) -> int &{ i = &v; return v; });
+        })
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) {
                   auto p = cl::promise(&m_pool, [&]() -> int &{ return v; });
                   p.resolve();
                   return p.get_future();
-              })
-        .then([&](int &v) -> int &{ return v; });
+              });
+        })
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) -> int &{ return v; });
+        });
 
     promise = {};
 
@@ -2236,21 +2741,30 @@ TEST_F(Future, SeveralFutureReturnSuccessMayBeChainConsequentially)
     auto promise = cl::promise(&m_pool, []() { return 2; });
     promise.resolve();
     auto f = promise.get_future()
-        .then([&](int &v) {
+        .then([&](auto source_fvalue) mutable -> decltype(auto) {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) {
                   auto p = cl::promise(&m_pool, [&](){ return v * 2; });
                   p.resolve();
                   return p.get_future()
-                      .then([&](int &i) {
+                      .then([&](auto source_fvalue) mutable -> decltype(auto) {
+                          auto locked_source_value = source_fvalue.lock();
+                          return locked_source_value.with([&](int &i) {
                                 auto pp = cl::promise(&m_pool, [&]() { return i * 2; });
                                 pp.resolve();
                                 return pp.get_future();
                             });
-              })
-        .then([&](int &v) {
+                      });
+              });
+        })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) {
                   auto p = cl::promise(&m_pool, [&](){ return v * 2; });
                   p.resolve();
                   return p.get_future();
               });
+        });
 
     f.get().lock().with([](int i) { ASSERT_EQ(i, 16); });
 }
@@ -2260,11 +2774,14 @@ TEST_F(Future, ExceptionGoesThroughSuccessHanlderReturningFuture)
     auto promise = cl::promise(&m_pool, []() ->int { throw std::runtime_error(""); });
     promise.resolve();
     auto f = promise.get_future()
-        .then([&](int v) {
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) {
                   auto p = cl::promise(&m_pool, [&]() { return v * 2; });
                   p.resolve();
                   return p.get_future();
-              })
+              });
+        })
         .catched([](std::exception_ptr) { return 55; });
 
 
@@ -2276,10 +2793,16 @@ TEST_F(Future, SavePrevValueReferenceInCatchFuture)
     auto promise = cl::promise(&m_pool, []() { return std::make_unique<int>(3); });
     promise.resolve();
     auto f = promise.get_future()
-        .then([](std::unique_ptr<int> &&p) { return std::move(p); });
+        .then([](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](std::unique_ptr<int> &&p) { return std::move(p); });
+        });
     auto f1 = f.catched([](std::exception_ptr) { return std::make_unique<int>(5); });
     f1.get().lock().with([](std::unique_ptr<int> &p) { EXPECT_EQ(*p, 3); });
-    auto f2 = f1.then([](std::unique_ptr<int> &&p) { return std::move(p); });
+    auto f2 = f1.then([](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](std::unique_ptr<int> &&p) { return std::move(p); });
+    });
 
     f2.get().lock().with([](std::unique_ptr<int> &&p) { EXPECT_EQ(*p, 3); });
     f.get().lock().with([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
@@ -2314,7 +2837,14 @@ TEST_F(Future, CatchedFlattensReturnedFutureType)
                      p.resolve();
                      return p.get_future();
                  })
-        .then([&](int i) { ASSERT_EQ(i, 34); beacon.fetch_add(1, std::memory_order_relaxed); throw std::runtime_error(""); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int i) {
+                ASSERT_EQ(i, 34);
+                beacon.fetch_add(1, std::memory_order_relaxed);
+                throw std::runtime_error("");
+            });
+        })
         .catched([&](std::exception_ptr) {
                      auto p = cl::promise(&m_pool, [&]() { beacon.fetch_add(1, std::memory_order_relaxed); });
                      p.resolve();
@@ -2559,62 +3089,98 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     auto p1 = promise(&m_pool, [&]() -> int { return i; }); p1.resolve();
     p1.get_future()
         .finally([]() {})
-        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p2 = promise(&m_pool, [&]() -> int &{ return i; }); p2.resolve();
     p2.get_future()
         .finally([]() {})
-        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p3 = promise(&m_pool, [&]() -> int &&{ return std::move(i); }); p3.resolve();
     p3.get_future()
         .finally([]() {})
-        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p4 = promise(&m_pool, [&]() -> const int { return i; }); p4.resolve();
     p4.get_future()
         .finally([]() {})
-        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p5 = promise(&m_pool, [&]() -> const int &{ return i; }); p5.resolve();
     p5.get_future()
         .finally([]() {})
-        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p6 = promise(&m_pool, [&]() -> const int &&{ return std::move(i); }); p6.resolve();
     p6.get_future()
         .finally([]() {})
-        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p7 = promise(&m_pool, [&]() -> volatile int { return ii; }); p7.resolve();
     p7.get_future()
         .finally([]() {})
-        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p8 = promise(&m_pool, [&]() -> volatile int &{ return ii; }); p8.resolve();
     p8.get_future()
         .finally([]() {})
-        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p9 = promise(&m_pool, [&]() -> volatile int &&{ return std::move(i); }); p9.resolve();
     p9.get_future()
         .finally([]() {})
-        .then([&](volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p10 = promise(&m_pool, [&]() -> const volatile int { return ii; }); p10.resolve();
     p10.get_future()
         .finally([]() {})
-        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p11 = promise(&m_pool, [&]() -> const volatile int &{ return ii; }); p11.resolve();
     p11.get_future()
         .finally([]() {})
-        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
     p12.get_future()
         .finally([]() {})
-        .then([&](const volatile int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p13 = promise(&m_pool, [&]() {
                                          auto p = promise(&m_pool, [&]() -> int{ return i; });
@@ -2624,7 +3190,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p13.resolve();
     p13.get_future()
         .finally([]() {})
-        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p14 = promise(&m_pool, [&]() {
                                          auto p = promise(&m_pool, [&]() -> int &{ return i; });
@@ -2634,7 +3203,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p14.resolve();
     p14.get_future()
         .finally([]() {})
-        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p15 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2645,7 +3217,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p15.resolve();
     p15.get_future()
         .finally([]() {})
-        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p16 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2656,7 +3231,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p16.resolve();
     p16.get_future()
         .finally([]() {})
-        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p17 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2667,7 +3245,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p17.resolve();
     p17.get_future()
         .finally([]() {})
-        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p18 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2678,7 +3259,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p18.resolve();
     p18.get_future()
         .finally([]() {})
-        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p19 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2689,7 +3273,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p19.resolve();
     p19.get_future()
         .finally([]() {})
-        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p20 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2700,7 +3287,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p20.resolve();
     p20.get_future()
         .finally([]() {})
-        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p21 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2711,7 +3301,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p21.resolve();
     p21.get_future()
         .finally([]() {})
-        .then([&](volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p22 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2722,7 +3315,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p22.resolve();
     p22.get_future()
         .finally([]() {})
-        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p23 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2733,7 +3329,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p23.resolve();
     p23.get_future()
         .finally([]() {})
-        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p24 = promise(&m_pool, [&]() {
                                          auto p = promise(
@@ -2744,7 +3343,10 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
     p24.resolve();
     p24.get_future()
         .finally([]() {})
-        .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
 }
 #if defined(__GNUC__)
@@ -2759,62 +3361,98 @@ TEST_F(Future, FinallyHandlerMayStoreFtupleStoringTypeWithAnySpecifier)
     auto p1 = promise(&m_pool, [&]() { return ftuple<int>(i); }); p1.resolve();
     p1.get_future()
         .finally([]() {})
-        .then([&](int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p2 = promise(&m_pool, [&]() { return ftuple<int &>(i); }); p2.resolve();
     p2.get_future()
         .finally([]() {})
-        .then([&](int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p3 = promise(&m_pool, [&]() { return ftuple<int &&>(std::move(i)); }); p3.resolve();
     p3.get_future()
         .finally([]() {})
-        .then([&](int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p4 = promise(&m_pool, [&]() { return ftuple<const int>(i); }); p4.resolve();
     p4.get_future()
         .finally([]() {})
-        .then([&](const int v) { ASSERT_NE(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int v) { ASSERT_NE(&i, &v); });
+        })
         .get();
     auto p5 = promise(&m_pool, [&]() { return ftuple<const int &>(i); }); p5.resolve();
     p5.get_future()
         .finally([]() {})
-        .then([&](const int &v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p6 = promise(&m_pool, [&]() { return ftuple<const int &&>(std::move(i)); }); p6.resolve();
     p6.get_future()
         .finally([]() {})
-        .then([&](const int &&v) { ASSERT_EQ(&i, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const int &&v) { ASSERT_EQ(&i, &v); });
+        })
         .get();
     auto p7 = promise(&m_pool, [&]() { return ftuple<volatile int>(ii); }); p7.resolve();
     p7.get_future()
         .finally([]() {})
-        .then([&](volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p8 = promise(&m_pool, [&]() { return ftuple<volatile int &>(ii); }); p8.resolve();
     p8.get_future()
         .finally([]() {})
-        .then([&](volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p9 = promise(&m_pool, [&]() { return ftuple<volatile int &&>(std::move(ii)); }); p9.resolve();
     p9.get_future()
         .finally([]() {})
-        .then([&](volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](volatile int &&v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p10 = promise(&m_pool, [&]() { return ftuple<const volatile int>(ii); }); p10.resolve();
     p10.get_future()
         .finally([]() {})
-        .then([&](const volatile int v) { ASSERT_NE(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int v) { ASSERT_NE(&ii, &v); });
+        })
         .get();
     auto p11 = promise(&m_pool, [&]() { return ftuple<const volatile int &>(ii); }); p11.resolve();
     p11.get_future()
         .finally([]() {})
-        .then([&](const volatile int &v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
     auto p12 = promise(&m_pool, [&]() { return ftuple<const volatile int &&>(std::move(ii)); }); p12.resolve();
     p12.get_future()
         .finally([]() {})
-        .then([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); })
+        .then([&](auto source_fvalue) mutable {
+            auto locked_source_value = source_fvalue.lock();
+            return locked_source_value.with([&](const volatile int &&v) { ASSERT_EQ(&ii, &v); });
+        })
         .get();
 }
 
@@ -2874,8 +3512,14 @@ TEST_F(Future, FinallyExecutesAfterCatchedIfNoException)
 TEST_F(Future, FutureMayBeCreatedAlreadyWithSetValue)
 {
     future f1(&m_pool, 9);
-    f1.then([](int i) { EXPECT_EQ(i, 9); return 4; })
-      .then([](int i) { EXPECT_EQ(i, 4); return 34; })
+    f1.then([](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int i) { EXPECT_EQ(i, 9); return 4; });
+    })
+      .then([](auto source_fvalue) mutable {
+          auto locked_source_value = source_fvalue.lock();
+          return locked_source_value.with([&](int i) { EXPECT_EQ(i, 4); return 34; });
+      })
       .get().lock().with([](int i) { ASSERT_EQ(i, 34); });
     f1.get().lock().with([](int i) { ASSERT_EQ(i, 9); });
 
@@ -2894,9 +3538,15 @@ TEST_F(Future, ExceptionPropagateAfterFinally)
     auto p = promise(&m_pool, []() { return 1; });
     auto f = p.get_future();
     p.resolve();
-    f.then([](int) ->int { throw 1; })
+    f.then([](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int) ->int { throw 1; });
+    })
      .finally([&](){ finally_called = true; })
-     .then([](int ) { FAIL(); })
+     .then([](auto source_fvalue) mutable {
+         auto locked_source_value = source_fvalue.lock();
+         return locked_source_value.with([&](int ) { FAIL(); });
+     })
      .catched([&](std::exception_ptr){ catched_called = true;})
      .wait();
 
@@ -2967,7 +3617,10 @@ TEST_F(Future, TestHasException)
 TEST_F(Future, MethodThenThrowsExceptionOnInvalidFuture)
 {
     future<thread_pool, int> f;
-    ASSERT_ANY_THROW(f.then([](int) {}));
+    ASSERT_ANY_THROW(f.then([](auto source_fvalue) mutable {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([&](int) {});
+    }));
 }
 
 TEST_F(Future, MethodCatchedThrowsExceptionOnInvalidFuture)

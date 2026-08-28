@@ -112,9 +112,9 @@ namespace vshalygin::rpc {
                                  std::make_shared<internal::service<GClientService>>(m_gservice, m_thread_pool, 0),
                                  timeout);
 
-        return f.then([self = this->weak_from_this()](std::unique_ptr<internal::iconnection> &&connection) {
+        return f.then([self = this->weak_from_this()](auto connection) mutable {
             std::shared_ptr s(self);
-            return cl::ftuple(s->establish_endpoint(std::move(connection)));
+            return cl::ftuple(s->establish_endpoint(std::move(*connection.lock())));
         });
     }
 

@@ -167,7 +167,8 @@ namespace vshalygin::rpc {
         }
 
         return data.op->get_future()
-            .then([self = shared_from_this(), timer_id, id](op_res r) {
+            .then([self = shared_from_this(), timer_id, id](auto result) mutable {
+                return result.lock().with([&](op_res r) {
                       if(r == op_res::failed) {
                           self->invalidate_impl(false);
                       }
@@ -176,6 +177,7 @@ namespace vshalygin::rpc {
 
                       return to_pipe_op_res(r);
                   });
+            });
     }
 
     win_pipe_endpoint::read_future win_pipe_endpoint::impl::read_async(
@@ -201,7 +203,8 @@ namespace vshalygin::rpc {
         }
 
         return data.op->get_future()
-            .then([self = shared_from_this(), timer_id, id](op_res r, cl::buffer &&b) {
+            .then([self = shared_from_this(), timer_id, id](auto result) mutable {
+                return result.lock().with([&](op_res r, cl::buffer &&b) {
                       if(r == op_res::failed) {
                           self->invalidate_impl(false);
                       }
@@ -210,6 +213,7 @@ namespace vshalygin::rpc {
 
                       return cl::ftuple(to_pipe_op_res(r), std::move(b));
                   });
+            });
     }
 
     void win_pipe_endpoint::impl::invalidate()

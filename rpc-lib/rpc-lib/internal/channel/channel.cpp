@@ -42,54 +42,56 @@ namespace vshalygin::rpc::internal {
         const auto req_id = m_next_req_id.fetch_add(1);
         const auto method_idx = static_cast<uint32_t>(method->index());
         m_connection->request_async(create_transfer_msg_req(req_id, method_idx, request))
-            .then([cg = std::move(cg), request_controller, response, req_id] (request_result rc,
-                                                                              cl::buffer &&buffer) mutable
-        {
-            auto guard = std::move(cg);
+            .then([cg = std::move(cg), request_controller, response, req_id] (auto value) mutable {
+                return value.lock().with(
+                    [&](request_result rc, cl::buffer &&buffer) mutable {
+                        auto guard = std::move(cg);
 
-            try {
-                if(is_success(rc)) {
-                    if(!is_response_buffer_valid(buffer)) {
-                        request_controller->set_result(request_result::invalid_response);
-                        return;
-                    }
+                        try {
+                            if(is_success(rc)) {
+                                if(!is_response_buffer_valid(buffer)) {
+                                    request_controller->set_result(request_result::invalid_response);
+                                    return;
+                                }
 
-                    if(get_transfer_msg_type(buffer) != transfer_msg_type::res) {
-                        throw std::runtime_error("unexpected transfer_msg_type: " +
-                                                 std::to_string(static_cast<int>(get_transfer_msg_type(buffer))));
-                    }
+                                if(get_transfer_msg_type(buffer) != transfer_msg_type::res) {
+                                    throw std::runtime_error(
+                                        "unexpected transfer_msg_type: " +
+                                        std::to_string(static_cast<int>(get_transfer_msg_type(buffer))));
+                                }
 
-                    if(get_msg_number_res(buffer) != req_id) {
-                        throw std::runtime_error("unexpected message number: " +
-                                                 std::to_string(get_msg_number_res(buffer)));
-                    }
+                                if(get_msg_number_res(buffer) != req_id) {
+                                    throw std::runtime_error(
+                                        "unexpected message number: " +
+                                        std::to_string(get_msg_number_res(buffer)));
+                                }
 
-                    response->Clear();
+                                response->Clear();
 
-                    if(auto res_code = get_msg_response_code_res(buffer); is_fail(res_code)) {
-                        request_controller->set_result(request_result::request_not_processed);
-                        return;
-                    }
+                                if(auto res_code = get_msg_response_code_res(buffer); is_fail(res_code)) {
+                                    request_controller->set_result(request_result::request_not_processed);
+                                    return;
+                                }
 
-                    const auto serialized_response = get_serialized_proto_message(buffer);
-                    const auto parse_result =
-                        response->ParseFromArray(
-                            static_cast<const void *>(serialized_response.data()),
-                            static_cast<int>(serialized_response.size()));
+                                const auto serialized_response = get_serialized_proto_message(buffer);
+                                const auto parse_result = response->ParseFromArray(
+                                    static_cast<const void *>(serialized_response.data()),
+                                    static_cast<int>(serialized_response.size()));
 
-                    if(!parse_result) {
-                        request_controller->set_result(request_result::response_parse_error);
-                        return;
-                    }
+                                if(!parse_result) {
+                                    request_controller->set_result(request_result::response_parse_error);
+                                    return;
+                                }
 
-                    request_controller->set_result(request_result::ok);
-                } else {
-                    request_controller->set_result(rc);
-                }
-             } catch (...) {
-                 request_controller->set_result(request_result::unknown_error);
-             }
-        });
+                                request_controller->set_result(request_result::ok);
+                            } else {
+                                request_controller->set_result(rc);
+                            }
+                        } catch(...) {
+                            request_controller->set_result(request_result::unknown_error);
+                        }
+                    });
+            });
     }
 
     void channel::start()

@@ -80,7 +80,10 @@ TEST_F(MemBuffers, WritesFromClientToServer)
     mem_buffers sut(m_thread_pool.get());
     sut.write_async_to_server(data.copy(), std::nullopt);
     sut.read_async_from_client(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sync_event.wait();
 }
@@ -97,7 +100,10 @@ TEST_F(MemBuffers, WritesFromServerToClient)
     mem_buffers sut(m_thread_pool.get());
     sut.write_async_to_client(data.copy(), std::nullopt);
     sut.read_async_from_server(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sync_event.wait();
 }
@@ -164,7 +170,10 @@ TEST_F(MemBuffers, WritesFromClientToServerTimeout)
 
     mem_buffers sut(pool.get());
     auto f = sut.write_async_to_server(data.copy(), std::chrono::milliseconds(0))
-        .then(write_callback.AsStdFunction());
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -184,7 +193,10 @@ TEST_F(MemBuffers, WritesFromServerToClientTimeout)
 
     mem_buffers sut(pool.get());
     auto f = sut.write_async_to_client(data.copy(), std::chrono::milliseconds(0))
-        .then(write_callback.AsStdFunction());
+        .then([callback = write_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -203,7 +215,10 @@ TEST_F(MemBuffers, ReadsFromClientTimeout)
 
     mem_buffers sut(pool.get());
     auto f = sut.read_async_from_client(std::chrono::milliseconds(0))
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -222,7 +237,10 @@ TEST_F(MemBuffers, ReadsFromServerTimeout)
 
     mem_buffers sut(pool.get());
     auto f = sut.read_async_from_server(std::chrono::milliseconds(0))
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
@@ -241,7 +259,10 @@ TEST_F(MemBuffers, ReadsFromClientCanceled)
 
     mem_buffers sut(pool.get());
     auto f = sut.read_async_from_client(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
     
     sut.invalidate(true);
 
@@ -261,7 +282,10 @@ TEST_F(MemBuffers, ReadsFromServerCanceled)
 
     mem_buffers sut(pool.get());
     auto f = sut.read_async_from_server(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sut.invalidate(false);
 
@@ -281,7 +305,10 @@ TEST_F(MemBuffers, ReadsFromClientFailed)
 
     mem_buffers sut(pool.get());
     auto f = sut.read_async_from_client(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sut.invalidate(false);
 
@@ -301,7 +328,10 @@ TEST_F(MemBuffers, ReadsFromServerFailed)
 
     mem_buffers sut(pool.get());
     auto f = sut.read_async_from_server(std::nullopt)
-        .then(read_callback.AsStdFunction());
+        .then([callback = read_callback.AsStdFunction()](auto value) mutable {
+            auto locked_value = value.lock();
+            return locked_value.with(callback);
+        });
 
     sut.invalidate(true);
 

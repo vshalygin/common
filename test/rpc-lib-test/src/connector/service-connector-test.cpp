@@ -160,16 +160,22 @@ TEST_F(ServiceConnector, CreatesTwoConnections)
     std::shared_ptr<ipipe_endpoint> pe1;
     std::shared_ptr<ipipe_endpoint> pe2;
     m_mem_pipe_env->open_pipe(0)
-        .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
-                  pe->write_async({});
-                  pe->read_async();
-                  pe1 = pe;
+        .then([&](auto source_fvalue) mutable {
+                  auto locked_source_value = source_fvalue.lock();
+                  return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+                      pe->write_async({});
+                      pe->read_async();
+                      pe1 = pe;
+                  });
               });
     m_mem_pipe_env->open_pipe(0)
-        .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
-                  pe->write_async({});
-                  pe->read_async();
-                  pe2 = pe;
+        .then([&](auto source_fvalue) mutable {
+                  auto locked_source_value = source_fvalue.lock();
+                  return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+                      pe->write_async({});
+                      pe->read_async();
+                      pe2 = pe;
+                  });
               });
 
     sync_event->wait();
@@ -280,10 +286,13 @@ TEST_F(ServiceConnector, MayStartAfterStop)
         .WillOnce([sync_event]() { sync_event->set(); });
     std::shared_ptr<ipipe_endpoint> pe1;
     m_mem_pipe_env->open_pipe(0)
-        .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
-                  pe->write_async({});
-                  pe->read_async();
-                  pe1 = pe;
+        .then([&](auto source_fvalue) mutable {
+                  auto locked_source_value = source_fvalue.lock();
+                  return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+                      pe->write_async({});
+                      pe->read_async();
+                      pe1 = pe;
+                  });
               });
     sync_event->wait();
     sut->stop();
@@ -298,10 +307,13 @@ TEST_F(ServiceConnector, MayStartAfterStop)
     sut->start();
     std::shared_ptr<ipipe_endpoint> pe2;
     m_mem_pipe_env->open_pipe(0)
-        .then([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
-                  pe->write_async({});
-                  pe->read_async();
-                  pe2 = pe;
+        .then([&](auto source_fvalue) mutable {
+                  auto locked_source_value = source_fvalue.lock();
+                  return locked_source_value.with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+                      pe->write_async({});
+                      pe->read_async();
+                      pe2 = pe;
+                  });
               });
     sync_event->wait();
 }

@@ -34,14 +34,6 @@ namespace vshalygin::cl::internal {
             m_value.emplace(std::move(value));
         }
 
-        template<typename Func>
-        decltype(auto) with_locked_value(Func &&func)
-        {
-            std::lock_guard g(m_mtx);
-            assert(m_value);
-            return std::forward<Func>(func)(m_value->to_underlying());
-        }
-
     private:
         mutable std::mutex m_mtx;
         std::optional<value_proxy_t> m_value;
