@@ -128,7 +128,10 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("no resolve function");
         }
 
-        if constexpr(is_future_v<R>) {
+        if constexpr(is_future_v<R> && !is_flattenable_future_v<R>) {
+            static_assert(is_flattenable_future_v<R>,
+                          "future callback must return future by value without cv/ref qualifiers");
+        } else if constexpr(is_flattenable_future_v<R>) {
             static_assert(is_value_v<R>);
 
             using future_t = R;

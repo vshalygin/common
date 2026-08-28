@@ -95,8 +95,7 @@ namespace vshalygin::cl::internal {
     template<typename Future, typename Controller>
     auto future<ThreadPool, T>::flatten_future(std::shared_ptr<Controller> controller)
     {
-        static_assert(is_future_v<Future>);
-        static_assert(is_value_v<Future>);
+        static_assert(is_flattenable_future_v<Future>);
 
         using future_t = Future;
         using future_store = future_store_type_or_self_t<future_t>;
@@ -214,7 +213,10 @@ namespace vshalygin::cl::internal {
             throw std::logic_error("future is invalid");
         }
 
-        if constexpr(!is_future_v<ret_t>) {
+        if constexpr(is_future_v<ret_t> && !is_flattenable_future_v<ret_t>) {
+            static_assert(is_flattenable_future_v<ret_t>,
+                          "future callback must return future by value without cv/ref qualifiers");
+        } else if constexpr(!is_future_v<ret_t>) {
             auto new_controller = create_child_controller<ret_t>(m_controller);
             auto new_controller_wp = std::weak_ptr(new_controller);
 
@@ -286,24 +288,35 @@ namespace vshalygin::cl::internal {
         static_assert(function_arg_count_v<Func> == 1 &&
                       std::is_same_v<function_arg_t<0, Func>, std::exception_ptr>,
                       "fail callback argument must be std::exception_ptr");
-        static_assert(std::is_same_v<future_store_type_or_self_t<ret_t>, T> ||
-                      std::is_void_v<ret_t>,
-                      "fail callback argument must return future storing type or void");
 
-        if(!m_controller) {
-            throw std::logic_error("future is invalid");
+        if constexpr(is_future_v<ret_t> && !is_flattenable_future_v<ret_t>) {
+            static_assert(is_flattenable_future_v<ret_t>,
+                          "future callback must return future by value without cv/ref qualifiers");
+        } else {
+            static_assert(std::is_same_v<future_store_type_or_self_t<ret_t>, T> ||
+                          std::is_void_v<ret_t>,
+                          "fail callback argument must return future storing type or void");
+
+            if(!m_controller) {
+                throw std::logic_error("future is invalid");
+            }
+
+            auto new_controller =
+                create_child_controller<future_store_type_or_self_t<ret_t>>(m_controller);
+            auto new_controller_wp = std::weak_ptr(new_controller);
+
+            auto on_success =
+                get_on_success_for_catched_method<Func, decltype(new_controller_wp)>(new_controller_wp);
+            auto on_fail =
+                get_on_fail_for_catched_method<Func, decltype(new_controller_wp)>(std::forward<Func>(task),
+                                                                                  new_controller_wp);
+
+            m_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
+
+            return future<ThreadPool, future_store_type_or_self_t<ret_t>>(
+                m_thread_pool,
+                std::move(new_controller));
         }
-
-        auto new_controller = create_child_controller<future_store_type_or_self_t<ret_t>>(m_controller);
-        auto new_controller_wp = std::weak_ptr(new_controller);
-
-        auto on_success = get_on_success_for_catched_method<Func, decltype(new_controller_wp)>(new_controller_wp);
-        auto on_fail = get_on_fail_for_catched_method<Func, decltype(new_controller_wp)>(std::forward<Func>(task),
-                                                                                         new_controller_wp);
-
-        m_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
-
-        return future<ThreadPool, future_store_type_or_self_t<ret_t>>(m_thread_pool, std::move(new_controller));
     }
 
     template<typename ThreadPool, typename T>
@@ -314,22 +327,30 @@ namespace vshalygin::cl::internal {
 
         static_assert(function_arg_count_v<Func> == 0,
                       "finally callback must have no argument");
-        static_assert(std::is_same_v<ret_t, void> || std::is_same_v<ret_t, future<ThreadPool, void>>,
-                      "finally callback must return void or future storing void type");
 
-        if(!m_controller) {
-            throw std::logic_error("future is invalid");
+        if constexpr(is_future_v<ret_t> && !is_flattenable_future_v<ret_t>) {
+            static_assert(is_flattenable_future_v<ret_t>,
+                          "future callback must return future by value without cv/ref qualifiers");
+        } else {
+            static_assert(std::is_same_v<ret_t, void> ||
+                          std::is_same_v<ret_t, future<ThreadPool, void>>,
+                          "finally callback must return void or future storing void type");
+
+            if(!m_controller) {
+                throw std::logic_error("future is invalid");
+            }
+
+            auto new_controller = create_child_controller<T>(m_controller);
+            auto new_controller_wp = std::weak_ptr(new_controller);
+            auto task_sp =
+                std::make_shared<remove_type_qualifiers_t<Func>>(std::forward<Func>(task));
+
+            auto on_success = get_on_success_for_finally_method(task_sp, new_controller_wp);
+            auto on_fail = get_on_fail_for_finally_method(task_sp, new_controller_wp);
+            m_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
+
+            return future<ThreadPool, T>(m_thread_pool, std::move(new_controller));
         }
-
-        auto new_controller = create_child_controller<T>(m_controller);
-        auto new_controller_wp = std::weak_ptr(new_controller);
-        auto task_sp = std::make_shared<remove_type_qualifiers_t<Func>>(std::forward<Func>(task));
-
-        auto on_success = get_on_success_for_finally_method(task_sp, new_controller_wp);
-        auto on_fail = get_on_fail_for_finally_method(task_sp, new_controller_wp);
-        m_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
-
-        return future<ThreadPool, T>(m_thread_pool, std::move(new_controller));
     }
 
     template<typename ThreadPool, typename T>
@@ -395,7 +416,7 @@ namespace vshalygin::cl::internal {
     {
         using ret_t = function_ret_t<Func>;
 
-        if constexpr(!is_future_v<ret_t>) {
+        if constexpr(!is_flattenable_future_v<ret_t>) {
             return [new_controller_wp, task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
                 try {
                     if constexpr(!std::is_void_v<ret_t>) {
@@ -471,7 +492,7 @@ namespace vshalygin::cl::internal {
                         (*task_sp)();
                         new_controller->set_value();
                     } else {
-                        static_assert(is_future_v<ret_t>);
+                        static_assert(is_flattenable_future_v<ret_t>);
             
                         auto future = (*task_sp)();
                         if(!future.is_valid()) {
@@ -506,7 +527,7 @@ namespace vshalygin::cl::internal {
                         (*task_sp)();
                         new_controller->set_value_state(std::move(value_state));
                     } else {
-                        static_assert(is_future_v<ret_t>);
+                        static_assert(is_flattenable_future_v<ret_t>);
             
                         auto future = (*task_sp)();
                         if(!future.is_valid()) {
@@ -548,7 +569,7 @@ namespace vshalygin::cl::internal {
                     (*task_sp)();
                     new_controller->set_exception(ep);
                 } else {
-                    static_assert(is_future_v<ret_t>);
+                    static_assert(is_flattenable_future_v<ret_t>);
 
                     auto future = (*task_sp)();
                     if(!future.is_valid()) {

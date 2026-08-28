@@ -22,6 +22,25 @@ static_assert(!std::is_copy_assignable_v<future<thread_pool, int>>);
 static_assert(std::is_move_constructible_v<future<thread_pool, int>>);
 static_assert(std::is_move_assignable_v<future<thread_pool, int>>);
 
+using int_future = future<thread_pool, int>;
+static_assert(cl::internal::is_future_v<int_future>);
+static_assert(cl::internal::is_future_v<const int_future>);
+static_assert(cl::internal::is_future_v<volatile int_future>);
+static_assert(cl::internal::is_future_v<int_future &>);
+static_assert(cl::internal::is_future_v<int_future &&>);
+static_assert(cl::internal::is_flattenable_future_v<int_future>);
+static_assert(!cl::internal::is_flattenable_future_v<const int_future>);
+static_assert(!cl::internal::is_flattenable_future_v<volatile int_future>);
+static_assert(!cl::internal::is_flattenable_future_v<int_future &>);
+static_assert(!cl::internal::is_flattenable_future_v<int_future &&>);
+
+using int_ftuple = ftuple<int>;
+static_assert(cl::internal::is_future_tuple_v<int_ftuple>);
+static_assert(cl::internal::is_future_tuple_v<const int_ftuple>);
+static_assert(cl::internal::is_future_tuple_v<volatile int_ftuple>);
+static_assert(cl::internal::is_future_tuple_v<int_ftuple &>);
+static_assert(cl::internal::is_future_tuple_v<int_ftuple &&>);
+
 namespace {
     void declare_fail()
     {
