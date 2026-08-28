@@ -157,6 +157,52 @@ TEST_F(Future, PromiseIsNotValidAfterMoveAssignment)
     ASSERT_FALSE(sut.is_valid());
 }
 
+TEST_F(Future, DestroyingUnresolvedPromiseSetsBrokenPromiseException)
+{
+    future<thread_pool, int> result;
+
+    {
+        auto promise = cl::promise(&m_pool, []() { return 1; });
+        result = promise.get_future();
+    }
+
+    EXPECT_TRUE(result.has_exception());
+
+    try {
+        (void)result.get();
+        FAIL();
+    } catch(const std::future_error &e) {
+        EXPECT_EQ(e.code(), std::make_error_code(std::future_errc::broken_promise));
+    }
+}
+
+TEST_F(Future, MoveAssignmentBreaksReplacedUnresolvedPromise)
+{
+    auto promise = cl::promise(&m_pool, []() { return 1; });
+    auto replaced_result = promise.get_future();
+
+    auto replacement = cl::promise(&m_pool, []() { return 2; });
+    promise = std::move(replacement);
+    auto replacement_result = promise.get_future();
+    promise.resolve();
+
+    EXPECT_TRUE(replaced_result.has_exception());
+    EXPECT_THROW((void)replaced_result.get(), std::future_error);
+    replacement_result.get().lock().with([](int value) { EXPECT_EQ(value, 2); });
+}
+
+TEST_F(Future, MoveConstructionTransfersUnresolvedPromise)
+{
+    auto source = cl::promise(&m_pool, []() { return 1; });
+    auto result = source.get_future();
+    auto destination = std::move(source);
+
+    EXPECT_FALSE(result.wait_for(std::chrono::milliseconds(0)));
+
+    destination.resolve();
+    result.get().lock().with([](int value) { EXPECT_EQ(value, 1); });
+}
+
 TEST_F(Future, DefaultCreatedPromiseIsNotValid)
 {
     promise<thread_pool, int()> sut;

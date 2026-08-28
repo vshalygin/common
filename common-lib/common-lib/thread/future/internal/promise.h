@@ -6,7 +6,9 @@
 #include <common-lib/mpl/function-traits.h>
 #include <common-lib/utils/function.h>
 
+#include <future>
 #include <memory>
+#include <utility>
 
 namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename Signature>
@@ -28,8 +30,10 @@ namespace vshalygin::cl::internal {
         promise(const promise &) = delete;
         promise &operator=(const promise &) = delete;
 
-        promise(promise &&) = default;
-        promise &operator=(promise &&) = default;
+        promise(promise &&other) noexcept;
+        promise &operator=(promise &&other) noexcept;
+
+        ~promise() noexcept;
 
         void resolve(Args...args);
 
@@ -38,12 +42,16 @@ namespace vshalygin::cl::internal {
         bool is_valid() const;
 
     private:
+        void abandon() noexcept;
+
+    private:
         ThreadPool *m_thread_pool = nullptr;
 
         function<R(Args...)> m_function;
 
         std::shared_ptr<future_controller<ThreadPool, future_store_type_or_self_t<R>>> m_controller;
         future<ThreadPool, future_store_type_or_self_t<R>> m_future;
+        bool m_completion_pending = false;
     };
 
     template<typename ThreadPool, typename Function>
@@ -58,9 +66,59 @@ namespace vshalygin::cl::internal {
         , m_function(std::forward<Function>(function))
         , m_controller(std::make_shared<future_controller<ThreadPool, future_store_type_or_self_t<R>>>(thread_pool))
         , m_future(thread_pool, m_controller)
+        , m_completion_pending(true)
     {
         assert(m_thread_pool);
         m_controller->set_self_shared_ptr(m_controller);
+    }
+
+    template<typename ThreadPool, typename R, typename...Args>
+    promise<ThreadPool, R(Args...)>::promise(promise &&other) noexcept
+        : m_thread_pool(std::exchange(other.m_thread_pool, nullptr))
+        , m_function(std::move(other.m_function))
+        , m_controller(std::move(other.m_controller))
+        , m_future(std::move(other.m_future))
+        , m_completion_pending(std::exchange(other.m_completion_pending, false))
+    {}
+
+    template<typename ThreadPool, typename R, typename...Args>
+    promise<ThreadPool, R(Args...)> &
+        promise<ThreadPool, R(Args...)>::operator=(promise &&other) noexcept
+    {
+        if(this != &other) {
+            abandon();
+
+            m_thread_pool = std::exchange(other.m_thread_pool, nullptr);
+            m_function = std::move(other.m_function);
+            m_controller = std::move(other.m_controller);
+            m_future = std::move(other.m_future);
+            m_completion_pending = std::exchange(other.m_completion_pending, false);
+        }
+
+        return *this;
+    }
+
+    template<typename ThreadPool, typename R, typename...Args>
+    promise<ThreadPool, R(Args...)>::~promise() noexcept
+    {
+        abandon();
+    }
+
+    template<typename ThreadPool, typename R, typename...Args>
+    void promise<ThreadPool, R(Args...)>::abandon() noexcept
+    {
+        if(!m_completion_pending || !m_controller) {
+            return;
+        }
+
+        m_completion_pending = false;
+
+        try {
+            const auto exception = std::make_exception_ptr(
+                std::future_error(std::future_errc::broken_promise));
+            m_controller->set_exception(exception);
+        } catch(...) {
+        }
     }
 
     template<typename ThreadPool, typename R, typename...Args>
@@ -124,6 +182,8 @@ namespace vshalygin::cl::internal {
                 }
             });
         }
+
+        m_completion_pending = false;
     }
 
     template<typename ThreadPool, typename R, typename...Args>
