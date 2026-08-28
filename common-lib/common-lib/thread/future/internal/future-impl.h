@@ -114,29 +114,26 @@ namespace vshalygin::cl::internal {
                 return;
             }
 
-            auto controller = val.get_controller();
+            auto value_controller = val.get_controller();
             val = {};
 
-            controller->add_dependent(next_controller);
-
-            auto on_fail = [next_controller_wp](std::exception_ptr e) {
-                assert(!next_controller_wp.expired());
-                std::shared_ptr(next_controller_wp)->set_exception(e);
+            auto on_fail = [next_controller](std::exception_ptr e) {
+                next_controller->set_exception(e);
             };
 
             if constexpr(std::is_void_v<future_store>) {
-                auto on_success = [next_controller_wp]() {
-                    assert(!next_controller_wp.expired());
-                    std::shared_ptr(next_controller_wp)->set_value();
+                auto on_success = [next_controller]() {
+                    next_controller->set_value();
                 };
-                controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
+                value_controller->set_on_success_and_fail(
+                    std::move(on_success), std::move(on_fail));
             } else {
-                auto on_success = [next_controller_wp](fvalue<ThreadPool, future_store> value) {
-                    assert(!next_controller_wp.expired());
-                    std::shared_ptr(next_controller_wp)->set_value_state(
-                        value.get_value_state());
+                auto on_success = [next_controller](fvalue<ThreadPool, future_store> value) {
+                    next_controller->add_value_source(value.get_controller());
+                    next_controller->set_value_state(value.get_value_state());
                 };
-                controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
+                value_controller->set_on_success_and_fail(
+                    std::move(on_success), std::move(on_fail));
             }
         };
         auto on_fail = [next_controller_wp](std::exception_ptr e) {
@@ -446,24 +443,20 @@ namespace vshalygin::cl::internal {
 
                     auto future_controller = future.get_controller();
                     std::shared_ptr new_controller(new_controller_wp);
-                    future_controller->add_dependent(new_controller);
 
-                    auto on_fail = [new_controller_wp](std::exception_ptr ep) {
-                        assert(!new_controller_wp.expired());
-                        std::shared_ptr(new_controller_wp)->set_exception(ep);
+                    auto on_fail = [new_controller](std::exception_ptr ep) {
+                        new_controller->set_exception(ep);
                     };
 
                     if constexpr(std::is_void_v<future_store>) {
-                        auto on_success = [new_controller_wp]() {
-                            assert(!new_controller_wp.expired());
-                            std::shared_ptr(new_controller_wp)->set_value();
+                        auto on_success = [new_controller]() {
+                            new_controller->set_value();
                         };
                         future_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     } else {
-                        auto on_success = [new_controller_wp](fvalue<ThreadPool, future_store> value) {
-                            assert(!new_controller_wp.expired());
-                            std::shared_ptr(new_controller_wp)->set_value_state(
-                                value.get_value_state());
+                        auto on_success = [new_controller](fvalue<ThreadPool, future_store> value) {
+                            new_controller->add_value_source(value.get_controller());
+                            new_controller->set_value_state(value.get_value_state());
                         };
 
                         future_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));

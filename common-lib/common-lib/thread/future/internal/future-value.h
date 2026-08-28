@@ -109,6 +109,7 @@ namespace vshalygin::cl::internal {
         explicit fvalue(
             std::shared_ptr<const future_controller<ThreadPool, T>> controller);
 
+        auto get_controller() const;
         auto get_value_state() const;
         void ensure_valid() const;
 
@@ -131,6 +132,13 @@ namespace vshalygin::cl::internal {
         std::shared_ptr<const future_controller<ThreadPool, T>> controller)
         : m_controller(std::move(controller))
     {}
+
+    template<typename ThreadPool, typename T>
+    auto fvalue<ThreadPool, T>::get_controller() const
+    {
+        ensure_valid();
+        return m_controller;
+    }
 
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::get_value_state() const

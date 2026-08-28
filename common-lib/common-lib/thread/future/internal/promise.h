@@ -161,6 +161,7 @@ namespace vshalygin::cl::internal {
                         prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     } else {
                         auto on_success = [c = controller] (fvalue<ThreadPool, future_store> value) mutable {
+                            c->add_value_source(value.get_controller());
                             c->set_value_state(value.get_value_state());
                         };
                         prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));

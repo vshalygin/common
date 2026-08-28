@@ -91,6 +91,23 @@ namespace {
             move_assign_num = 0;
         }
     };
+
+    auto make_owned_reference_future(
+        thread_pool *pool,
+        std::shared_ptr<int> owner)
+    {
+        auto promise = cl::promise(
+            pool,
+            [owner = std::move(owner)]() { return owner; });
+        auto result = promise.get_future().then(
+            [](auto source_fvalue) -> std::shared_ptr<int> & {
+                auto locked_source_value = source_fvalue.lock();
+                return *locked_source_value;
+            });
+
+        promise.resolve();
+        return result;
+    }
 }
 
 class Future
@@ -3149,6 +3166,104 @@ TEST_F(Future, CatchedFlattensReturnedFutureType)
         .get().lock().with([](int i) { ASSERT_EQ(i, 34); });
 
     ASSERT_EQ(beacon, 8);
+}
+
+TEST_F(Future, ThenFlatteningKeepsReturnedReferenceOwnerAlive)
+{
+    thread_pool pool{ 1 };
+    auto owner = std::make_shared<int>(42);
+    std::weak_ptr<int> weak_owner = owner;
+    auto promise = cl::promise(&pool, []() {});
+    auto result = promise.get_future().then(
+        [&pool, owner] {
+            return make_owned_reference_future(&pool, owner);
+        });
+
+    owner.reset();
+    promise.resolve();
+    result.wait();
+
+    event callbacks_drained;
+    pool.post([&callbacks_drained] { callbacks_drained.set(); });
+    ASSERT_TRUE(callbacks_drained.wait_for(std::chrono::seconds(10)));
+
+    ASSERT_FALSE(weak_owner.expired());
+    result.get().lock().with([](std::shared_ptr<int> &value) {
+        ASSERT_TRUE(value);
+        EXPECT_EQ(*value, 42);
+    });
+
+    result = {};
+    promise = {};
+    EXPECT_TRUE(weak_owner.expired());
+    pool.stop();
+}
+
+TEST_F(Future, PromiseFlatteningKeepsReturnedReferenceOwnerAlive)
+{
+    thread_pool pool{ 1 };
+    auto owner = std::make_shared<int>(42);
+    std::weak_ptr<int> weak_owner = owner;
+    auto promise = cl::promise(
+        &pool,
+        [&pool, owner] {
+            return make_owned_reference_future(&pool, owner);
+        });
+    auto result = promise.get_future();
+
+    owner.reset();
+    promise.resolve();
+    result.wait();
+
+    event callbacks_drained;
+    pool.post([&callbacks_drained] { callbacks_drained.set(); });
+    ASSERT_TRUE(callbacks_drained.wait_for(std::chrono::seconds(10)));
+
+    ASSERT_FALSE(weak_owner.expired());
+    result.get().lock().with([](std::shared_ptr<int> &value) {
+        ASSERT_TRUE(value);
+        EXPECT_EQ(*value, 42);
+    });
+
+    result = {};
+    promise = {};
+    EXPECT_TRUE(weak_owner.expired());
+    pool.stop();
+}
+
+TEST_F(Future, CatchedFlatteningKeepsReturnedReferenceOwnerAlive)
+{
+    thread_pool pool{ 1 };
+    auto owner = std::make_shared<int>(42);
+    std::weak_ptr<int> weak_owner = owner;
+    auto promise = cl::promise(
+        &pool,
+        []() -> std::shared_ptr<int> & {
+            throw std::runtime_error("expected exception");
+        });
+    auto result = promise.get_future().catched(
+        [&pool, owner](std::exception_ptr) {
+            return make_owned_reference_future(&pool, owner);
+        });
+
+    owner.reset();
+    promise.resolve();
+    result.wait();
+
+    event callbacks_drained;
+    pool.post([&callbacks_drained] { callbacks_drained.set(); });
+    ASSERT_TRUE(callbacks_drained.wait_for(std::chrono::seconds(10)));
+
+    ASSERT_FALSE(weak_owner.expired());
+    result.get().lock().with([](std::shared_ptr<int> &value) {
+        ASSERT_TRUE(value);
+        EXPECT_EQ(*value, 42);
+    });
+
+    result = {};
+    promise = {};
+    EXPECT_TRUE(weak_owner.expired());
+    pool.stop();
 }
 
 TEST_F(Future, TestFinallyMethod)

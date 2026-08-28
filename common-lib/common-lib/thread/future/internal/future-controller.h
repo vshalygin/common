@@ -82,6 +82,7 @@ namespace vshalygin::cl::internal {
         void wait() const;
         bool wait_for(std::chrono::milliseconds timeout) const;
 
+        void add_value_source(std::shared_ptr<const ifuture_controller> value_source);
         void add_child(std::unique_ptr<ifuture_controller> child);
         void add_dependent(std::shared_ptr<ifuture_controller> dependent);
 
@@ -112,6 +113,7 @@ namespace vshalygin::cl::internal {
     private:
         ThreadPool *m_thread_pool;
 
+        std::shared_ptr<const ifuture_controller> m_value_source;
         value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
         value_locker<std::vector<std::shared_ptr<ifuture_controller>>> m_dependent;
 
@@ -423,6 +425,22 @@ namespace vshalygin::cl::internal {
 
         assert(func);
         func(std::move(exception));
+    }
+
+    template<typename ThreadPool, typename T>
+    void future_controller<ThreadPool, T>::add_value_source(
+        std::shared_ptr<const ifuture_controller> value_source)
+    {
+        assert(value_source);
+
+        const auto self = this->shared_from_this();
+        const auto has_different_owner =
+            self.owner_before(value_source) || value_source.owner_before(self);
+
+        if(has_different_owner) {
+            assert(!m_value_source);
+            m_value_source = std::move(value_source);
+        }
     }
 
     template<typename ThreadPool, typename T>
