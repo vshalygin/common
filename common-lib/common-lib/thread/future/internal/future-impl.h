@@ -109,6 +109,12 @@ namespace vshalygin::cl::internal {
             auto next_controller = std::shared_ptr(next_controller_wp);
             future_t val(std::move(*value.lock()));
 
+            if(!val.is_valid()) {
+                next_controller->set_exception(std::make_exception_ptr(
+                    std::logic_error("returned future is invalid")));
+                return;
+            }
+
             auto controller = val.get_controller();
             val = {};
 
@@ -413,6 +419,10 @@ namespace vshalygin::cl::internal {
             return [new_controller_wp, task = std::forward<Func>(task)](std::exception_ptr ep) mutable {
                 try {
                     auto future = task(ep);
+                    if(!future.is_valid()) {
+                        throw std::logic_error("returned future is invalid");
+                    }
+
                     auto future_controller = future.get_controller();
                     std::shared_ptr new_controller(new_controller_wp);
                     future_controller->add_dependent(new_controller);
@@ -464,6 +474,10 @@ namespace vshalygin::cl::internal {
                         static_assert(is_future_v<ret_t>);
             
                         auto future = (*task_sp)();
+                        if(!future.is_valid()) {
+                            throw std::logic_error("returned future is invalid");
+                        }
+
                         auto future_controller = future.get_controller();
                         future_controller->add_dependent(new_controller);
 
@@ -495,6 +509,10 @@ namespace vshalygin::cl::internal {
                         static_assert(is_future_v<ret_t>);
             
                         auto future = (*task_sp)();
+                        if(!future.is_valid()) {
+                            throw std::logic_error("returned future is invalid");
+                        }
+
                         auto future_controller = future.get_controller();
                         future_controller->add_dependent(new_controller);
 
@@ -533,6 +551,10 @@ namespace vshalygin::cl::internal {
                     static_assert(is_future_v<ret_t>);
 
                     auto future = (*task_sp)();
+                    if(!future.is_valid()) {
+                        throw std::logic_error("returned future is invalid");
+                    }
+
                     auto future_controller = future.get_controller();
                     future_controller->add_dependent(new_controller);
 

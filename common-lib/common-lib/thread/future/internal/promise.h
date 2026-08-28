@@ -146,6 +146,10 @@ namespace vshalygin::cl::internal {
                         c->set_exception(e);
                     };
 
+                    if(!future.is_valid()) {
+                        throw std::logic_error("returned future is invalid");
+                    }
+
                     auto prev_controller = future.get_controller();
                     if constexpr(std::is_void_v<future_store>) {
                         auto on_success = [c = controller]() mutable {

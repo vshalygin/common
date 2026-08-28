@@ -203,6 +203,65 @@ TEST_F(Future, MoveConstructionTransfersUnresolvedPromise)
     result.get().lock().with([](int value) { EXPECT_EQ(value, 1); });
 }
 
+TEST_F(Future, ThenReturningInvalidFutureSetsException)
+{
+    auto promise = cl::promise(&m_pool, []() {});
+    auto result = promise.get_future().then([] {
+        return future<thread_pool, int>{};
+    });
+    promise.resolve();
+
+    EXPECT_THROW((void)result.get(), std::logic_error);
+}
+
+TEST_F(Future, CatchedReturningInvalidFutureSetsException)
+{
+    auto promise = cl::promise(&m_pool, []() -> int {
+        throw std::runtime_error("source failure");
+    });
+    auto result = promise.get_future().catched([](std::exception_ptr) {
+        return future<thread_pool, int>{};
+    });
+    promise.resolve();
+
+    EXPECT_THROW((void)result.get(), std::logic_error);
+}
+
+TEST_F(Future, FinallyReturningInvalidFutureAfterValueSetsException)
+{
+    auto promise = cl::promise(&m_pool, []() { return 1; });
+    auto result = promise.get_future().finally([] {
+        return future<thread_pool, void>{};
+    });
+    promise.resolve();
+
+    EXPECT_THROW((void)result.get(), std::logic_error);
+}
+
+TEST_F(Future, FinallyReturningInvalidFutureAfterExceptionSetsException)
+{
+    auto promise = cl::promise(&m_pool, []() -> int {
+        throw std::runtime_error("source failure");
+    });
+    auto result = promise.get_future().finally([] {
+        return future<thread_pool, void>{};
+    });
+    promise.resolve();
+
+    EXPECT_THROW((void)result.get(), std::logic_error);
+}
+
+TEST_F(Future, PromiseReturningInvalidFutureSetsException)
+{
+    auto promise = cl::promise(&m_pool, [] {
+        return future<thread_pool, int>{};
+    });
+    auto result = promise.get_future();
+    promise.resolve();
+
+    EXPECT_THROW((void)result.get(), std::logic_error);
+}
+
 TEST_F(Future, DefaultCreatedPromiseIsNotValid)
 {
     promise<thread_pool, int()> sut;
