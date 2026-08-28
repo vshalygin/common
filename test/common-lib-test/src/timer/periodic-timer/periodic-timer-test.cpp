@@ -64,12 +64,15 @@ TEST_F(PeriodicTimer, CallsCallbackInSpecifiedTimes)
 
 TEST_F(PeriodicTimer, ThrowsExceptionOnAttemptToStartTimerTwiceWhenFirstInNotCompleted)
 {
-    event sync_event;
     periodic_timer sut(m_thread_pool->get_io_context());
 
-    MockFunction<callack_ret()> callback;
-    sut.start(callback.AsStdFunction(), std::chrono::milliseconds(1));
-    ASSERT_ANY_THROW(sut.start(callback.AsStdFunction(), std::chrono::milliseconds(1)));
+    const auto callback = []() { return callack_ret::Continue; };
+    sut.start(callback, std::chrono::hours(1));
+
+    EXPECT_THROW(sut.start(callback, std::chrono::hours(1)), std::logic_error);
+
+    sut.stop_async({});
+    m_thread_pool->stop();
 }
 
 TEST_F(PeriodicTimer, AnwersNotActiveJustAfterCreation)
