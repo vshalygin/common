@@ -11,6 +11,9 @@
 
 #include <gtest/gtest.h>
 
+#include <mutex>
+#include <stdexcept>
+
 using namespace vshalygin::rpc;
 using namespace vshalygin::rpc::internal;
 using namespace vshalygin::cl;
@@ -55,14 +58,15 @@ protected:
         return std::make_unique<server_connector>(m_thread_pool.get(),
                                                   m_authenticator,
                                                   m_mem_pipe_env,
-                                                  [this](uint64_t) {
+                                                  [this](uint64_t) -> std::unique_ptr<iservice> {
+                                                      std::lock_guard lock(m_service_mutex);
+
                                                       if(m_service) {
                                                           return std::move(m_service);
                                                       } else if (m_service2) {
                                                           return std::move(m_service2);
                                                       } else {
-                                                          assert(false);
-                                                          throw;
+                                                          throw std::logic_error("No service instance available");
                                                       }
                                                   },
                                                   m_on_new_connection.AsStdFunction(),
@@ -76,6 +80,7 @@ protected:
 
     std::shared_ptr<authenticator_nice_mock> m_authenticator;
 
+    std::mutex m_service_mutex;
     std::unique_ptr<service_nice_mock> m_service;
     std::unique_ptr<service_nice_mock> m_service2;
 
