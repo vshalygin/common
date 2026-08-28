@@ -100,7 +100,7 @@ protected:
     {
         m_pipe_env->create_pipe(0)
             .get()
-            .apply([this](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
+            .lock().with([this](pipe_wait_res, std::shared_ptr<ipipe_endpoint> p) {
                        m_other = p;
                    });
 
@@ -148,7 +148,7 @@ TEST_F(ClientEndpoint, MakeRequestFailsIfNoConnection)
                                                                                   request);
 
 
-    f.get().apply([](request_result r, std::unique_ptr<proto::response_message> &&) {
+    f.get().lock().with([](request_result r, std::unique_ptr<proto::response_message> &&) {
         ASSERT_EQ(r, request_result::no_connection);
     });
 }
@@ -170,12 +170,12 @@ TEST_F(ClientEndpoint, MakeRequest)
                                                                                    request);
 
 
-    m_other->read_async().get().apply([&](pipe_op_res, buffer &&b) {
+    m_other->read_async().get().lock().with([&](pipe_op_res, buffer &&b) {
         ASSERT_EQ(req_message, b);
     });
     m_other->write_async(res_message.copy());
 
-    f2.get().apply([&](request_result r, std::unique_ptr<proto::response_message> &&res) {
+    f2.get().lock().with([&](request_result r, std::unique_ptr<proto::response_message> &&res) {
         ASSERT_EQ(r, request_result::ok);
         ASSERT_TRUE(MessageDifferencer::Equals(*res, response));
     });
@@ -214,7 +214,7 @@ TEST_F(ClientEndpoint, ServiceProcessesReqeust)
     f.get();
 
     m_other->write_async(req_message.copy());
-    m_other->read_async().get().apply([&](pipe_op_res r, buffer &&b) {
+    m_other->read_async().get().lock().with([&](pipe_op_res r, buffer &&b) {
         ASSERT_EQ(r, pipe_op_res::success);
         EXPECT_EQ(b, res_message);
     });

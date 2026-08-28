@@ -85,7 +85,7 @@ protected:
     static open_operation_result get_result(operation::future &future)
     {
         open_operation_result result;
-        future.get().apply([&](win_pipe_operation_res state, pipe_handle &&pipe) {
+        future.get().lock().with([&](win_pipe_operation_res state, pipe_handle &&pipe) {
             result.state = state;
             result.pipe = std::move(pipe);
         });

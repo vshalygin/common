@@ -127,7 +127,7 @@ protected:
     static endpoint_read_result get_read_result(read_future &future)
     {
         endpoint_read_result result;
-        future.get().apply([&](pipe_op_res state, buffer &&data) {
+        future.get().lock().with([&](pipe_op_res state, buffer &&data) {
             result.state = state;
             result.data = std::move(data);
         });
@@ -137,7 +137,7 @@ protected:
     static pipe_op_res get_write_result(write_future &future)
     {
         auto result = pipe_op_res::failed;
-        future.get().apply([&](pipe_op_res state) { result = state; });
+        future.get().lock().with([&](pipe_op_res state) { result = state; });
         return result;
     }
 

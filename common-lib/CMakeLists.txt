@@ -61,7 +61,7 @@ set(common_lib_headers
     common-lib/synchronization/value-locker.h
     common-lib/thread/future/future.h
     common-lib/thread/future/internal/future-controller.h
-    common-lib/thread/future/internal/future-data.h
+    common-lib/thread/future/internal/future-value.h
     common-lib/thread/future/internal/future-impl.h
     common-lib/thread/future/internal/future-store-type-or-self.h
     common-lib/thread/future/internal/future-tuple.h
@@ -69,6 +69,7 @@ set(common_lib_headers
     common-lib/thread/future/internal/is-future-tuple.h
     common-lib/thread/future/internal/is-future.h
     common-lib/thread/future/internal/promise.h
+    common-lib/thread/future/internal/future-value-state.h
     common-lib/thread/thread-pool/strand.h
     common-lib/thread/thread-pool/thread-pool-task.h
     common-lib/thread/thread-pool/thread-pool.h

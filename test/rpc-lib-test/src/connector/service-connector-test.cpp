@@ -222,7 +222,7 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfAuthenticationFailed)
     sut->start();
 
     auto f = m_mem_pipe_env->open_pipe(0);
-    f.get().apply([](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+    f.get().lock().with([](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
         pe->write_async({});
     });
 
@@ -245,7 +245,7 @@ TEST_F(ServiceConnector, DoesNotCreateConnectionIfWriteFailed)
     sut->start();
 
     auto f = m_mem_pipe_env->open_pipe(0);
-    f.get().apply([](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+    f.get().lock().with([](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
         pe->write_async({});
     });
 

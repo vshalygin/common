@@ -51,7 +51,7 @@ TEST_F(MemPipeEnv, StopPendingServerEndpoint)
 
     m_sut->cancel_all_pending_server_endpoints();
     
-    f.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
+    f.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
     });
     EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
@@ -64,7 +64,7 @@ TEST_F(MemPipeEnv, StopPendingClientEndpoint)
 
     m_sut->cancel_all_pending_client_endpoints();
 
-    f.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
+    f.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
     });
     EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 0u);
@@ -77,7 +77,7 @@ TEST_F(MemPipeEnv, StopPendingServerEndpointOnDestruction)
 
     m_sut.reset();
 
-    f.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
+    f.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
     });
 }
@@ -88,7 +88,7 @@ TEST_F(MemPipeEnv, StopPendingClientEndpointOnDestruction)
 
     m_sut.reset();
 
-    f.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
+    f.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
     });
 }
@@ -100,13 +100,13 @@ TEST_F(MemPipeEnv, CreateConnectedEndpoints)
 
     std::shared_ptr<ipipe_endpoint> server_endpoint;
     std::shared_ptr<ipipe_endpoint> client_endpoint;
-    f1.get().apply([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
+    f1.get().lock().with([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
         ASSERT_EQ(r, pipe_wait_res::success);
         ASSERT_TRUE(p);
         
         client_endpoint = std::move(p);
     });
-    f2.get().apply([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
+    f2.get().lock().with([&](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
         ASSERT_EQ(r, pipe_wait_res::success);
         ASSERT_TRUE(p);
 
@@ -117,7 +117,7 @@ TEST_F(MemPipeEnv, CreateConnectedEndpoints)
     server_endpoint->write_async(buf.copy()).get();
     client_endpoint->read_async()
         .get()
-        .apply([&](pipe_op_res r, buffer &&b) {
+        .lock().with([&](pipe_op_res r, buffer &&b) {
             EXPECT_EQ(r, pipe_op_res::success);
             EXPECT_TRUE(b == buf);
         });
@@ -129,7 +129,7 @@ TEST_F(MemPipeEnv, CancelWaitingByTimer)
 {
     auto f = m_sut->create_pipe(0, std::chrono::milliseconds(1));
 
-    f.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
+    f.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint>) {
         EXPECT_EQ(r, pipe_wait_res::timeout);
     });
 
@@ -148,17 +148,17 @@ TEST_F(MemPipeEnv, CancelsOnlyPendingServerEndpointsWithSpecifiedClientId)
     m_sut->cancel_pending_server_endpoints(canceled_client_id);
 
     EXPECT_EQ(m_sut->get_pending_server_endpoints_count(), 1u);
-    first_canceled.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    first_canceled.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
-    second_canceled.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    second_canceled.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
 
     m_sut->cancel_pending_server_endpoints(remaining_client_id);
-    remaining.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    remaining.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
@@ -176,17 +176,17 @@ TEST_F(MemPipeEnv, CancelsOnlyPendingClientEndpointsWithSpecifiedClientId)
     m_sut->cancel_pending_client_endpoints(canceled_client_id);
 
     EXPECT_EQ(m_sut->get_pending_client_endpoints_count(), 1u);
-    first_canceled.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    first_canceled.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
-    second_canceled.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    second_canceled.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
 
     m_sut->cancel_pending_client_endpoints(remaining_client_id);
-    remaining.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    remaining.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
@@ -201,15 +201,15 @@ TEST_F(MemPipeEnv, CancelsAllPendingServerEndpointsWithDifferentClientIds)
 
     m_sut->cancel_all_pending_server_endpoints();
 
-    first.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    first.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
-    second.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    second.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
-    third.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    third.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
@@ -224,15 +224,15 @@ TEST_F(MemPipeEnv, CancelsAllPendingClientEndpointsWithDifferentClientIds)
 
     m_sut->cancel_all_pending_client_endpoints();
 
-    first.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    first.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
-    second.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    second.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });
-    third.get().apply([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
+    third.get().lock().with([](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> endpoint) {
         EXPECT_EQ(r, pipe_wait_res::canceled);
         EXPECT_FALSE(endpoint);
     });

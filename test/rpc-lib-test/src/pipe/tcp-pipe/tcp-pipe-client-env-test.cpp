@@ -96,7 +96,7 @@ protected:
     static endpoint_result get_endpoint_result(endpoint_future &future)
     {
         endpoint_result result;
-        future.get().apply([&](pipe_wait_res state, std::shared_ptr<ipipe_endpoint> endpoint) {
+        future.get().lock().with([&](pipe_wait_res state, std::shared_ptr<ipipe_endpoint> endpoint) {
             result.state = state;
             result.endpoint = std::move(endpoint);
         });

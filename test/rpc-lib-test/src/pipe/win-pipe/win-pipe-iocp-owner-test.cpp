@@ -106,7 +106,7 @@ protected:
     static pipe_result get_pipe_result(pipe_future &future)
     {
         pipe_result result;
-        future.get().apply([&](pipe_wait_res state, pipe_handle &&pipe) {
+        future.get().lock().with([&](pipe_wait_res state, pipe_handle &&pipe) {
             result.state = state;
             result.pipe = std::move(pipe);
         });
@@ -116,7 +116,7 @@ protected:
     static read_result get_read_result(read_future &future)
     {
         read_result result;
-        future.get().apply([&](win_pipe_operation_res state, buffer &&data) {
+        future.get().lock().with([&](win_pipe_operation_res state, buffer &&data) {
             result.state = state;
             result.data = std::move(data);
         });
@@ -126,7 +126,7 @@ protected:
     static win_pipe_operation_res get_write_result(write_future &future)
     {
         auto result = win_pipe_operation_res::unknown;
-        future.get().apply([&](win_pipe_operation_res state) { result = state; });
+        future.get().lock().with([&](win_pipe_operation_res state) { result = state; });
         return result;
     }
 

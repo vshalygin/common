@@ -7,8 +7,6 @@
 #include <common-lib/mpl/type-traits.h>
 
 #include <common-lib/utils/type-qualifiers-cast.h>
-#include <common-lib/utils/type-wrapper.h>
-
 #include "future.h"
 
 namespace vshalygin::cl::internal {
@@ -124,9 +122,12 @@ namespace vshalygin::cl::internal {
                 };
                 controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
             } else {
-                auto on_success = [next_controller_wp](future_store &&v) {
+                auto controller_wp = std::weak_ptr(controller);
+                auto on_success = [next_controller_wp, controller_wp](future_store && /*value*/) {
                     assert(!next_controller_wp.expired());
-                    std::shared_ptr(next_controller_wp)->set_value(std::forward<future_store>(v));
+                    assert(!controller_wp.expired());
+                    std::shared_ptr(next_controller_wp)->set_value_state(
+                        std::shared_ptr(controller_wp)->get_value_state());
                 };
                 controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
             }
@@ -377,10 +378,12 @@ namespace vshalygin::cl::internal {
                 std::shared_ptr(new_controller_wp)->set_value();
             };
         } else {
-            auto &mtx = m_controller->get_value_mtx_ref();
-            return [new_controller_wp, &mtx](add_lvalue_ref_to_value_t<T> v) {
+            auto source_controller_wp = std::weak_ptr(m_controller);
+            return [new_controller_wp, source_controller_wp](add_lvalue_ref_to_value_t<T> /*value*/) {
                 assert(!new_controller_wp.expired());
-                std::shared_ptr(new_controller_wp)->set_value_reference(mtx, std::forward<decltype(v)>(v));
+                assert(!source_controller_wp.expired());
+                std::shared_ptr(new_controller_wp)->set_value_state(
+                    std::shared_ptr(source_controller_wp)->get_value_state());
             };
         }
     }
@@ -431,9 +434,12 @@ namespace vshalygin::cl::internal {
                         };
                         future_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
                     } else {
-                        auto on_success = [new_controller_wp](future_store &&v) {
+                        auto future_controller_wp = std::weak_ptr(future_controller);
+                        auto on_success = [new_controller_wp, future_controller_wp](future_store && /*value*/) {
                             assert(!new_controller_wp.expired());
-                            std::shared_ptr(new_controller_wp)->set_value(std::forward<future_store>(v));
+                            assert(!future_controller_wp.expired());
+                            std::shared_ptr(new_controller_wp)->set_value_state(
+                                std::shared_ptr(future_controller_wp)->get_value_state());
                         };
 
                         future_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
@@ -484,14 +490,17 @@ namespace vshalygin::cl::internal {
                 }
             };
         } else {
-            auto &mtx = m_controller->get_value_mtx_ref();
-            return [new_controller_wp, task_sp, &mtx](add_lvalue_ref_to_value_t<T> val) mutable {
+            auto source_controller_wp = std::weak_ptr(m_controller);
+            return [new_controller_wp, source_controller_wp, task_sp]
+                   (add_lvalue_ref_to_value_t<T> /*value*/) mutable {
                 assert(!new_controller_wp.expired());
+                assert(!source_controller_wp.expired());
                 std::shared_ptr new_controller(new_controller_wp);
+                auto value_state = std::shared_ptr(source_controller_wp)->get_value_state();
                 try {
                     if constexpr(std::is_void_v<ret_t>) {
                         (*task_sp)();
-                        new_controller->set_value_reference(mtx, std::forward<decltype(val)>(val));
+                        new_controller->set_value_state(std::move(value_state));
                     } else {
                         static_assert(is_future_v<ret_t>);
             
@@ -499,10 +508,9 @@ namespace vshalygin::cl::internal {
                         auto future_controller = future.get_controller();
                         future_controller->add_dependent(new_controller);
 
-                        type_wrapper<decltype(val)> v(std::forward<decltype(val)>(val));
-                        auto on_success = [new_controller_wp, &mtx, v]() mutable {
+                        auto on_success = [new_controller_wp, value_state = std::move(value_state)]() mutable {
                             assert(!new_controller_wp.expired());
-                            std::shared_ptr(new_controller_wp)->set_value_reference(mtx, v.to_underlying());
+                            std::shared_ptr(new_controller_wp)->set_value_state(std::move(value_state));
                         };
                         auto on_fail = [new_controller_wp](std::exception_ptr ep) {
                             assert(!new_controller_wp.expired());

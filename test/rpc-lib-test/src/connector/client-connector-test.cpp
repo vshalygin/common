@@ -94,14 +94,14 @@ TEST_F(ClientConnector, CreatesConnection)
               });
 
     std::unique_ptr<iconnection> con;
-    f.get().apply([&](std::unique_ptr<iconnection> &&c) { con = std::move(c); });
+    f.get().lock().with([&](std::unique_ptr<iconnection> &&c) { con = std::move(c); });
     con->start();
 
     con->request_async(create_req_message());
 
     m_server_endpoint->read_async()
         .get()
-        .apply([](pipe_op_res, buffer &b) { EXPECT_TRUE(b == create_req_message()); });
+        .lock().with([](pipe_op_res, buffer &b) { EXPECT_TRUE(b == create_req_message()); });
 }
 
 TEST_F(ClientConnector, FailsIfCannotWriteHandshakeRequest)

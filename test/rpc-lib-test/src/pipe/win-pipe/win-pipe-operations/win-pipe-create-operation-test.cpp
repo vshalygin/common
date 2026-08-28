@@ -143,7 +143,7 @@ protected:
         op->resolve();
 
         resolved_operation result;
-        future.get().apply([&](win_pipe_operation_res state, pipe_handle &&pipe) {
+        future.get().lock().with([&](win_pipe_operation_res state, pipe_handle &&pipe) {
             result.state = state;
             result.pipe = std::move(pipe);
         });

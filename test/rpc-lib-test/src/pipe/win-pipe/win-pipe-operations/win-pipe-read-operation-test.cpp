@@ -254,7 +254,7 @@ protected:
     static read_operation_result get_result(future<thread_pool, ftuple<win_pipe_operation_res, buffer>> &future)
     {
         read_operation_result result;
-        future.get().apply([&](win_pipe_operation_res state, buffer &&data) {
+        future.get().lock().with([&](win_pipe_operation_res state, buffer &&data) {
             result.state = state;
             result.data = std::move(data);
         });

@@ -85,7 +85,7 @@ namespace {
 
         heartbeat_read_result result;
         result.completed = true;
-        future.get().apply([&result](pipe_op_res r, buffer &&message) {
+        future.get().lock().with([&result](pipe_op_res r, buffer &&message) {
             result.result = r;
             result.message = std::move(message);
         });
@@ -126,7 +126,7 @@ namespace {
         }
 
         auto result = pipe_op_res::failed;
-        future.get().apply([&result](pipe_op_res r) { result = r; });
+        future.get().lock().with([&result](pipe_op_res r) { result = r; });
         return result == pipe_op_res::success;
     }
 
@@ -306,7 +306,7 @@ TEST_F(Connection, ReturnFailOnAttemptToMakeRequestOnInactiveTransport)
 
     auto f = sut->request_async(create_req_get_data_message(1));
 
-    f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::failed); });
+    f.get().lock().with([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::failed); });
 }
 
 TEST_F(Connection, ReturnFailOnAttemptToMakeRequestOnInactiveTransport2)
@@ -317,7 +317,7 @@ TEST_F(Connection, ReturnFailOnAttemptToMakeRequestOnInactiveTransport2)
 
     auto f = sut->request_async(create_req_get_data_message(1));
 
-    f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::failed); });
+    f.get().lock().with([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::failed); });
 }
 
 TEST_F(Connection, HasZeroPendingRequestsAfterCreation)
@@ -338,7 +338,7 @@ TEST_F(Connection, SendsARequest)
     sut->request_async(msg.copy());
 
     m_other_pipe_enpoint->read_async()
-        .get().apply([&](pipe_op_res, buffer &&b) { ASSERT_TRUE(b == msg); });
+        .get().lock().with([&](pipe_op_res, buffer &&b) { ASSERT_TRUE(b == msg); });
     EXPECT_EQ(1, sut->get_active_timers_count());
     EXPECT_EQ(1, sut->get_pending_requests_count());
 }
@@ -353,7 +353,7 @@ TEST_F(Connection, CancelActiveRequestOnDeactivation)
     m_other_pipe_enpoint->read_async().wait();
     sut->deactivate();
     
-    f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::canceled); });
+    f.get().lock().with([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::canceled); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
 }
@@ -368,7 +368,7 @@ TEST_F(Connection, CancelActiveRequestOnDestroy)
     m_other_pipe_enpoint->read_async().wait();
     sut.reset();
 
-    f.get().apply([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::canceled); });
+    f.get().lock().with([](request_result r, buffer &&) { ASSERT_EQ(r, request_result::canceled); });
 }
 
 TEST_F(Connection, MakesSuccessRequest)
@@ -381,7 +381,7 @@ TEST_F(Connection, MakesSuccessRequest)
     auto f = sut->request_async(req_msg.copy());
     m_other_pipe_enpoint->write_async(res_msg.copy());
 
-    f.get().apply([&](request_result r, buffer &&b) {
+    f.get().lock().with([&](request_result r, buffer &&b) {
         ASSERT_EQ(r, request_result::ok);
         ASSERT_TRUE(b == res_msg);
     });
@@ -418,7 +418,7 @@ TEST_F(Connection, WriteOperationCanceled)
     m_pipe_endpoint->invalidate();
 
     sync_event->set();
-    f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_canceled); });
+    f.get().lock().with([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_canceled); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
 }
@@ -437,7 +437,7 @@ TEST_F(Connection, WriteOperationTimeout)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
-    f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_timeout); });
+    f.get().lock().with([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::send_timeout); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
 }
@@ -456,7 +456,7 @@ TEST_F(Connection, RequestTimeout)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
     sync_event->set();
-    f.get().apply([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::timeout); });
+    f.get().lock().with([&](request_result r, buffer &&) { EXPECT_EQ(r, request_result::timeout); });
     while(sut->get_active_timers_count()) {}
     EXPECT_EQ(0, sut->get_pending_requests_count());
 }
@@ -472,7 +472,7 @@ TEST_F(Connection, ProcessRequestAsServer)
     m_other_pipe_enpoint->write_async(req_msg.copy());
     auto f = m_other_pipe_enpoint->read_async();
 
-    f.get().apply([&](pipe_op_res p, buffer &b) {
+    f.get().lock().with([&](pipe_op_res p, buffer &b) {
         EXPECT_EQ(p, pipe_op_res::success);
         EXPECT_TRUE(expected_res_msg == b);
     });
@@ -488,7 +488,7 @@ TEST_F(Connection, CancelsActiveRequestOnDeactivate)
     m_other_pipe_enpoint->read_async().get();
     sut->deactivate();
 
-    f.get().apply([&](request_result r, buffer &&) {
+    f.get().lock().with([&](request_result r, buffer &&) {
         ASSERT_EQ(r, request_result::canceled);
     });
 
@@ -506,7 +506,7 @@ TEST_F(Connection, CancelsActiveRequestOnConnectionLost)
     m_other_pipe_enpoint->read_async().wait();
     m_other_pipe_enpoint->invalidate();
 
-    f.get().apply([&](request_result r, buffer &&) {
+    f.get().lock().with([&](request_result r, buffer &&) {
         ASSERT_EQ(r, request_result::failed);
     });
 

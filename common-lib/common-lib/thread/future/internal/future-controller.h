@@ -1,15 +1,16 @@
 #pragma once
-#include "future-data.h"
+#include "future-value.h"
+#include "future-value-state.h"
 
 #include <common-lib/mpl/type-traits.h>
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/synchronization/ordered-mutex.h>
-#include <common-lib/synchronization/ordered-mutex-ref.h>
 #include <common-lib/synchronization/ordered-lock.h>
 #include <common-lib/synchronization/value-locker.h>
 #include <common-lib/utils/value-proxy.h>
 #include <common-lib/utils/function.h>
 #include <common-lib/memory/enable-shared-from-this-manual-set.h>
+#include <common-lib/utils/type-qualifiers-cast.h>
 
 #include <memory>
 #include <cassert>
@@ -63,24 +64,19 @@ namespace vshalygin::cl::internal {
         template<typename U, typename TT = T, std::enable_if_t<!std::is_void_v<TT>, int> = 0>
         void set_value(U &&val);
 
-        template<typename U, typename TT = T, std::enable_if_t<!std::is_void_v<TT>, int> = 0>
-        void set_value_reference(std::mutex &outer_mtx, U &&value);
+        void set_value_state(std::shared_ptr<future_value_state<T>> value_state);
 
         void set_exception(const std::exception_ptr &e);
 
         auto get() const;
-        auto get();
 
         void wait() const;
         bool wait_for(std::chrono::milliseconds timeout) const;
 
-        auto get_val();
-        auto get_val() const;
-
         void add_child(std::unique_ptr<ifuture_controller> child);
         void add_dependent(std::shared_ptr<ifuture_controller> dependent);
 
-        std::mutex &get_value_mtx_ref() const noexcept;
+        auto get_value_state() const;
 
     private:
         using value_proxy_t = cl::value_proxy<add_lvalue_ref_to_value_t<T>>;
@@ -88,14 +84,11 @@ namespace vshalygin::cl::internal {
         using on_fail_mtx_t = ordered_mutex<1>;
         using val_mtx_t = ordered_mutex<2>;
         using exception_mtx_t = ordered_mutex<3>;
-        using outer_val_mtx_ref_t = ordered_mutex_ref<4>;
 
         template<typename Func>
         void set_on_success_unsafe(Func &&func);
 
         void set_on_fail_unsafe(on_fail_t &&func);
-
-        void set_success(outer_val_mtx_ref_t outer_mtx_ref, value_proxy_t value);
 
         void wait_data_ready_or_throw() const;
 
@@ -118,14 +111,13 @@ namespace vshalygin::cl::internal {
         std::queue<on_fail_t> m_on_fail_queue;
 
         mutable val_mtx_t m_val_mtx;
-        std::optional<value_proxy_t> m_val;
+        std::shared_ptr<future_value_state<T>> m_val_state;
 
         mutable exception_mtx_t m_exception_mtx;
         std::optional<std::exception_ptr> m_exception;
 
         mutable std::condition_variable_any m_cv;
 
-        mutable outer_val_mtx_ref_t m_outer_val_mtx;
     };
 
     template<typename ThreadPool, typename T>
@@ -139,7 +131,7 @@ namespace vshalygin::cl::internal {
     bool future_controller<ThreadPool, T>::has_value() const
     {
         ordered_lock guard(m_val_mtx);
-        return m_val.has_value();
+        return m_val_state != nullptr;
     }
 
     template<typename ThreadPool, typename T>
@@ -196,7 +188,9 @@ namespace vshalygin::cl::internal {
     template<typename TT, std::enable_if_t<std::is_void_v<TT>, int>>
     void future_controller<ThreadPool, T>::set_value()
     {
-        set_success(outer_val_mtx_ref_t{}, value_proxy_t{});
+        auto value_state = std::make_shared<future_value_state<T>>();
+        value_state->set_value(value_proxy_t{});
+        set_value_state(std::move(value_state));
     }
 
     template<typename ThreadPool, typename T>
@@ -211,26 +205,21 @@ namespace vshalygin::cl::internal {
             v = value_proxy_t{ std::forward<U>(val), value_proxy_owned };
         }
 
-        set_success(outer_val_mtx_ref_t{}, std::move(v));
+        auto value_state = std::make_shared<future_value_state<T>>();
+        value_state->set_value(std::move(v));
+        set_value_state(std::move(value_state));
     }
 
     template<typename ThreadPool, typename T>
-    template<typename U, typename TT, std::enable_if_t<!std::is_void_v<TT>, int>>
-    void future_controller<ThreadPool, T>::set_value_reference(std::mutex &outer_mtx, U &&value)
+    void future_controller<ThreadPool, T>::set_value_state(
+        std::shared_ptr<future_value_state<T>> value_state)
     {
-        set_success(outer_val_mtx_ref_t{ outer_mtx },
-                    value_proxy_t{ std::forward<U>(value), value_proxy_external });
-    }
+        assert(value_state);
 
-    template<typename ThreadPool, typename T>
-    void future_controller<ThreadPool, T>::set_success(outer_val_mtx_ref_t outer_mtx_ref,
-                                                       value_proxy_t value)
-    {
         {
             ordered_lock g(m_val_mtx);
-
-            m_val.emplace(std::move(value));
-            m_outer_val_mtx = outer_mtx_ref;
+            assert(!m_val_state);
+            m_val_state = std::move(value_state);
 
             process_on_success_async();
             process_on_fail_async();
@@ -258,17 +247,10 @@ namespace vshalygin::cl::internal {
     auto future_controller<ThreadPool, T>::get() const
     {
         wait_data_ready_or_throw();
-        if constexpr(!std::is_void_v<T>) {
-            return future_data<T, ThreadPool>(this->shared_from_this());
-        }
-    }
 
-    template<typename ThreadPool, typename T>
-    auto future_controller<ThreadPool, T>::get()
-    {
-        wait_data_ready_or_throw();
         if constexpr(!std::is_void_v<T>) {
-            return future_data<T, ThreadPool>(this->shared_from_this());
+            ordered_lock lock(m_val_mtx);
+            return fvalue<ThreadPool, T>(m_val_state);
         }
     }
 
@@ -276,7 +258,7 @@ namespace vshalygin::cl::internal {
     void future_controller<ThreadPool, T>::wait() const
     {
         ordered_lock lock(m_val_mtx, m_exception_mtx);
-        m_cv.wait(lock, [this]() { return m_val || m_exception; });
+        m_cv.wait(lock, [this]() { return m_val_state || m_exception; });
     }
 
     template<typename ThreadPool, typename T>
@@ -290,33 +272,7 @@ namespace vshalygin::cl::internal {
         clock::time_point tp = (timeout > max_tp - now) ? max_tp : now + timeout;
 
         ordered_lock lock(m_val_mtx, m_exception_mtx);
-        return m_cv.wait_until(lock, tp, [this]() { return m_val || m_exception; });
-    }
-
-    template<typename ThreadPool, typename T>
-    auto future_controller<ThreadPool, T>::get_val()
-    {
-        if constexpr(!std::is_void_v<T>) {
-            using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx), decltype(m_outer_val_mtx)>, val_t>;
-
-            ordered_lock lock(m_val_mtx, m_outer_val_mtx);
-            assert(m_val);
-            return tuple_t{ std::move(lock), m_val->to_underlying()};
-        }
-    }
-
-    template<typename ThreadPool, typename T>
-    auto future_controller<ThreadPool, T>::get_val() const
-    {
-        if constexpr(!std::is_void_v<T>) {
-            using val_t = decltype(m_val->to_underlying());
-            using tuple_t = std::tuple<ordered_lock<decltype(m_val_mtx), decltype(m_outer_val_mtx)>, val_t>;
-
-            ordered_lock lock(m_val_mtx, m_outer_val_mtx);
-            assert(m_val);
-            return tuple_t{ std::move(lock), m_val->to_underlying() };
-        }
+        return m_cv.wait_until(lock, tp, [this]() { return m_val_state || m_exception; });
     }
 
     template<typename ThreadPool, typename T>
@@ -336,9 +292,9 @@ namespace vshalygin::cl::internal {
 
             {
                 ordered_lock l(s->m_on_success_mtx, s->m_val_mtx, s->m_exception_mtx);
-                assert(!(s->m_val && s->m_exception));
+                assert(!(s->m_val_state && s->m_exception));
 
-                if(s->m_val) {
+                if(s->m_val_state) {
                     temp.swap(s->m_on_success_queue);
                 } else if (s->m_exception) {
                     temp.swap(s->m_on_success_queue);
@@ -366,11 +322,11 @@ namespace vshalygin::cl::internal {
 
             {
                 ordered_lock l(s->m_on_fail_mtx, s->m_val_mtx, s->m_exception_mtx);
-                assert(!(s->m_val && s->m_exception));
+                assert(!(s->m_val_state && s->m_exception));
 
                 if(s->m_exception) {
                     temp.swap(s->m_on_fail_queue);
-                } else if(s->m_val) {
+                } else if(s->m_val_state) {
                     temp.swap(s->m_on_fail_queue);
                     return;
                 } else {
@@ -394,9 +350,14 @@ namespace vshalygin::cl::internal {
         assert(func);
 
         if constexpr(!std::is_void_v<T>) {
-            ordered_lock guard(m_val_mtx, m_outer_val_mtx);
-            assert(m_val);
-            func(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(m_val->to_underlying()));
+            std::shared_ptr<future_value_state<T>> value_state;
+            {
+                ordered_lock guard(m_val_mtx);
+                value_state = m_val_state;
+            }
+            value_state->with_locked_value([&func](auto &&value) {
+                func(type_qualifiers_cast<std::add_rvalue_reference_t<T>>(value));
+            });
         } else {
             func();
         }
@@ -405,11 +366,15 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     void future_controller<ThreadPool, T>::call_fail(on_fail_t &&func)
     {
-        ordered_lock guard(m_exception_mtx);
+        std::exception_ptr exception;
+        {
+            ordered_lock guard(m_exception_mtx);
+            assert(m_exception);
+            exception = *m_exception;
+        }
 
-        assert(m_exception);
         assert(func);
-        func(*m_exception);
+        func(std::move(exception));
     }
 
     template<typename ThreadPool, typename T>
@@ -425,11 +390,9 @@ namespace vshalygin::cl::internal {
     }
 
     template<typename ThreadPool, typename T>
-    std::mutex &future_controller<ThreadPool, T>::get_value_mtx_ref() const noexcept
+    auto future_controller<ThreadPool, T>::get_value_state() const
     {
-        if(m_outer_val_mtx.has_underlying()) {
-            return m_outer_val_mtx.get_underlying();
-        }
-        return m_val_mtx.get_underlying();
+        ordered_lock guard(m_val_mtx);
+        return m_val_state;
     }
 }

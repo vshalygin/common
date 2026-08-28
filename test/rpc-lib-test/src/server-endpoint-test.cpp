@@ -106,7 +106,7 @@ protected:
 
     void create_and_init_other_endpoint()
     {
-        m_pipe_env->open_pipe(0).get().apply([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
+        m_pipe_env->open_pipe(0).get().lock().with([&](pipe_wait_res, std::shared_ptr<ipipe_endpoint> pe) {
             m_other = pe;
         });
 
@@ -271,7 +271,7 @@ TEST_F(ServerEndpoint, MakeRequestReturnsNoConnectionCode)
     auto ans = m_sut->make_request<proto::request_message, proto::response_message>(
         id + 1000, &proto::Service_Stub::Method, proto::request_message{});
 
-    ans.get().apply([](request_result r, std::unique_ptr<proto::response_message> &&) {
+    ans.get().lock().with([](request_result r, std::unique_ptr<proto::response_message> &&) {
         EXPECT_EQ(r, request_result::no_connection);
     });
 }
@@ -301,7 +301,7 @@ TEST_F(ServerEndpoint, MakeRequest)
         id, &proto::Service_Stub::Method, request);
     m_other->write_async(res_message.copy());
 
-    ans.get().apply([&](request_result r, std::unique_ptr<proto::response_message> &&res) {
+    ans.get().lock().with([&](request_result r, std::unique_ptr<proto::response_message> &&res) {
         EXPECT_EQ(r, request_result::ok);
         EXPECT_TRUE(MessageDifferencer::Equals(*res, response));
     });
@@ -342,7 +342,7 @@ TEST_F(ServerEndpoint, MakeRequestAll)
 
     ASSERT_EQ(ans.size(), 1);
     ASSERT_EQ(ans[0].first, id);
-    ans[0].second.get().apply([&](request_result r, std::unique_ptr<proto::response_message> &&res) {
+    ans[0].second.get().lock().with([&](request_result r, std::unique_ptr<proto::response_message> &&res) {
         EXPECT_EQ(r, request_result::ok);
         EXPECT_TRUE(MessageDifferencer::Equals(*res, response));
     });
@@ -372,7 +372,7 @@ TEST_F(ServerEndpoint, ServiceProcessesRequest)
     sync_event.wait();
 
     m_other->write_async(req_message.copy());
-    m_other->read_async().get().apply([&](pipe_op_res r, buffer &&b) {
+    m_other->read_async().get().lock().with([&](pipe_op_res r, buffer &&b) {
         ASSERT_EQ(r, pipe_op_res::success);
         EXPECT_EQ(b, res_message);
     });

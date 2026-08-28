@@ -35,7 +35,7 @@ namespace vshalygin::example {
             m_endpoint.make_request<proto::message, proto::message, stub_method>(
                 connection_id , &proto::client_service_Stub::accept_message, message)
                 .get()
-                .apply([connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
+                .lock().with([connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
                                                 std::to_string(connection_id) + ", " +
@@ -61,7 +61,7 @@ namespace vshalygin::example {
                 auto connection_id = f.first;
                 f.second
                     .get()
-                    .apply([connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
+                    .lock().with([connection_id](rpc::request_result r, std::unique_ptr<proto::message> &&m) {
                            if(is_success(r)) {
                                write_to_console("server successfully sent a message to client with connection id " +
                                                 std::to_string(connection_id) + ", " +

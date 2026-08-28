@@ -95,7 +95,23 @@ TEST_F(Future, Init)
     promise.resolve();
     auto future = promise.get_future();
     auto data = future.get();
-    data.apply([](int i) { ASSERT_EQ(i, 1); });
+    auto value = data.lock();
+    ASSERT_EQ(*value, 1);
+}
+
+TEST_F(Future, FutureStateMayBeQueriedWhileFValueIsLocked)
+{
+    auto promise = cl::promise(&m_pool, []() { return 1; });
+    auto future = promise.get_future();
+    promise.resolve();
+
+    auto value = future.get();
+    auto locked_value = value.lock();
+
+    EXPECT_TRUE(future.has_value());
+    EXPECT_FALSE(future.has_exception());
+    EXPECT_TRUE(future.wait_for(std::chrono::milliseconds(0)));
+    EXPECT_EQ(*locked_value, 1);
 }
 
 TEST_F(Future, ExecutesSuccessCallback)
@@ -166,7 +182,7 @@ TEST_F(Future, FutureCreatedFromPromiseIsValid)
     auto future = p.get_future();
 
     ASSERT_TRUE(future.is_valid());
-    future.get().apply([](int i) { ASSERT_EQ(i, 2); });
+    future.get().lock().with([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, FutureIsInvalidAfterMove)
@@ -178,7 +194,7 @@ TEST_F(Future, FutureIsInvalidAfterMove)
 
     ASSERT_FALSE(future.is_valid());
     ASSERT_TRUE(other_future.is_valid());
-    other_future.get().apply([](int i) { ASSERT_EQ(i, 2); });
+    other_future.get().lock().with([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, FutureIsInvalidAfterMoveAssign)
@@ -193,7 +209,7 @@ TEST_F(Future, FutureIsInvalidAfterMoveAssign)
 
     ASSERT_FALSE(future1.is_valid());
     ASSERT_TRUE(future2.is_valid());
-    future2.get().apply([](int i) { ASSERT_EQ(i, 1); });
+    future2.get().lock().with([](int i) { ASSERT_EQ(i, 1); });
 }
 
 TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
@@ -204,7 +220,7 @@ TEST_F(Future, FutureIsValidAfterCorrespondingPromiseDestoyed)
     p.reset();
 
     ASSERT_TRUE(future.is_valid());
-    future.get().apply([](int i) { ASSERT_EQ(i, 2); });
+    future.get().lock().with([](int i) { ASSERT_EQ(i, 2); });
 }
 
 TEST_F(Future, TestChaining)
@@ -217,7 +233,7 @@ TEST_F(Future, TestChaining)
         .then([](int i) { return i + 1; })
         .get();
 
-    r.apply([](int i) { ASSERT_EQ(i, 5); });
+    r.lock().with([](int i) { ASSERT_EQ(i, 5); });
 }
 
 TEST_F(Future, CatchesException)
@@ -293,7 +309,7 @@ TEST_F(Future, MayGetValueAfterCatchHandlerSet)
         .catched([&](std::exception_ptr) { catch_called = true; return 0; })
         .get();
 
-    r.apply([](int i) { ASSERT_EQ(i, 9); });
+    r.lock().with([](int i) { ASSERT_EQ(i, 9); });
     ASSERT_FALSE(catch_called);
 }
 
@@ -563,7 +579,7 @@ TEST_F(Future, FailHandlerNeverCopyIfMovedToCatchedMethod)
     EXPECT_EQ(counter::move_assign_num, 0u);
 }
 
-TEST_F(Future, FutureDataMayApplyHandlerWithOneParamerterWithVariousQualificators)
+TEST_F(Future, FValueMayInvokeHandlerWithOneParamerterWithVariousQualificators)
 {
     static volatile int vi = 1;
     auto p1 = promise(&m_pool, []()->int { return 1; });
@@ -575,96 +591,96 @@ TEST_F(Future, FutureDataMayApplyHandlerWithOneParamerterWithVariousQualificator
 
     auto data1 = f1.get();
     auto data2 = f2.get();
-    data1.apply([](int i) { ASSERT_EQ(i, 1); });
-    data1.apply([](int &i) { ASSERT_EQ(i, 1); });
-    data1.apply([](int &&i) { ASSERT_EQ(i, 1); });
-    data1.apply([](const int i) { ASSERT_EQ(i, 1); });
-    data1.apply([](const int &i) { ASSERT_EQ(i, 1); });
-    data1.apply([](const int &&i) { ASSERT_EQ(i, 1); });
-    data2.apply([](volatile int i) { ASSERT_EQ(i, 1); });
-    data2.apply([](volatile int &i) { ASSERT_EQ(i, 1); });
-    data2.apply([](volatile int &&i) { ASSERT_EQ(i, 1); });
-    data2.apply([](volatile const int i) { ASSERT_EQ(i, 1); });
-    data2.apply([](volatile const int &i) { ASSERT_EQ(i, 1); });
-    data2.apply([](volatile const int &&i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](int i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](int &i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](int &&i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](const int i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](const int &i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](const int &&i) { ASSERT_EQ(i, 1); });
+    data2.lock().with([](volatile int i) { ASSERT_EQ(i, 1); });
+    data2.lock().with([](volatile int &i) { ASSERT_EQ(i, 1); });
+    data2.lock().with([](volatile int &&i) { ASSERT_EQ(i, 1); });
+    data2.lock().with([](volatile const int i) { ASSERT_EQ(i, 1); });
+    data2.lock().with([](volatile const int &i) { ASSERT_EQ(i, 1); });
+    data2.lock().with([](volatile const int &&i) { ASSERT_EQ(i, 1); });
     
-    data1.apply([](int &i) { i = 2; });
-    data1.apply([](const int &i) { ASSERT_EQ(i, 2); });
-    data2.apply([](volatile int &i) { i = 2; });
-    data2.apply([](volatile const int &i) { ASSERT_EQ(i, 2); });
+    data1.lock().with([](int &i) { i = 2; });
+    data1.lock().with([](const int &i) { ASSERT_EQ(i, 2); });
+    data2.lock().with([](volatile int &i) { i = 2; });
+    data2.lock().with([](volatile const int &i) { ASSERT_EQ(i, 2); });
 }
 
-TEST_F(Future, ConstFutureDataMayApplyHandlerWithNonModifyOneParameter)
+TEST_F(Future, ConstFValueMayInvokeHandlerWithNonModifyOneParameter)
 {
     auto p1 = promise(&m_pool, []()->int { return 1; });
     p1.resolve();
     auto f1 = p1.get_future();
 
     const auto data1 = f1.get();
-    data1.apply([](int i) { ASSERT_EQ(i, 1); });
-    data1.apply([](int &i) { ASSERT_EQ(i, 1); });
-    data1.apply([](int &&i) { ASSERT_EQ(i, 1); });
-    data1.apply([](const int i) { ASSERT_EQ(i, 1); });
-    data1.apply([](const int &i) { ASSERT_EQ(i, 1); });
-    data1.apply([](const int &&i) { ASSERT_EQ(i, 1); });
-    data1.apply([](volatile int i) { ASSERT_EQ(i, 1); });
-    data1.apply([](volatile int &i) { ASSERT_EQ(i, 1); });
-    data1.apply([](volatile int &&i) { ASSERT_EQ(i, 1); });
-    data1.apply([](volatile const int i) { ASSERT_EQ(i, 1); });
-    data1.apply([](volatile const int &i) { ASSERT_EQ(i, 1); });
-    data1.apply([](volatile const int &&i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](int i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](int &i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](int &&i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](const int i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](const int &i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](const int &&i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](volatile int i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](volatile int &i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](volatile int &&i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](volatile const int i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](volatile const int &i) { ASSERT_EQ(i, 1); });
+    data1.lock().with([](volatile const int &&i) { ASSERT_EQ(i, 1); });
 }
 
-TEST_F(Future, FutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
+TEST_F(Future, FValueMakesCopyOfValueIfFunctorHasNonReferenceParameter)
 {
     auto p = promise(&m_pool, []()->std::string { return "data"; });
     p.resolve();
     auto f = p.get_future();
 
     auto data = f.get();
-    data.apply([](std::string i) { EXPECT_EQ(i, "data"); i[0] = 's'; });
-    data.apply([](const std::string i) { EXPECT_EQ(i, "data"); });
+    data.lock().with([](std::string i) { EXPECT_EQ(i, "data"); i[0] = 's'; });
+    data.lock().with([](const std::string i) { EXPECT_EQ(i, "data"); });
 
-    data.apply([](const std::string &i) { EXPECT_EQ(i, "data"); });
+    data.lock().with([](const std::string &i) { EXPECT_EQ(i, "data"); });
 }
 
-TEST_F(Future, FutureDataMakeAcceptRValueRefParameteraziedFunctorAndMoveValue)
+TEST_F(Future, FValueAcceptsRValueRefParameteraziedFunctorAndMovesValue)
 {
     auto p = promise(&m_pool, []()->std::string { return "data"; });
     p.resolve();
     auto f1 = p.get_future();
     auto data1 = f1.get();
     std::string acceptor1;
-    data1.apply([&](std::string &&i) {
+    data1.lock().with([&](std::string &&i) {
         acceptor1 = std::move(i);
     });
 
     EXPECT_EQ(acceptor1, "data");
-    data1.apply([&](const std::string &i) { EXPECT_EQ(i, ""); });
+    data1.lock().with([&](const std::string &i) { EXPECT_EQ(i, ""); });
 }
 
-TEST_F(Future, FutureDataMakeAcceptLValueRefParameteraziedFunctorAndChangeValue)
+TEST_F(Future, FValueAcceptsLValueRefParameteraziedFunctorAndChangesValue)
 {
     auto p = promise(&m_pool, []()->std::string { return "data"; });
     p.resolve();
     auto f1 = p.get_future();
     auto data1 = f1.get();
-    data1.apply([&](std::string &i) { i[0] = 's'; });
+    data1.lock().with([&](std::string &i) { i[0] = 's'; });
 
-    data1.apply([&](const std::string &i) { EXPECT_EQ(i, "sata"); });
+    data1.lock().with([&](const std::string &i) { EXPECT_EQ(i, "sata"); });
 }
 
-TEST_F(Future, ConstFutureDataMakeCopyOfValueIfFunctorHasNonReferenceParameter)
+TEST_F(Future, ConstFValueMakesCopyOfValueIfFunctorHasNonReferenceParameter)
 {
     auto p = promise(&m_pool, []()->std::string { return "data"; });
     p.resolve();
     auto f = p.get_future();
 
     const auto data = f.get();
-    data.apply([](std::string i) { EXPECT_EQ(i, "data"); });
-    data.apply([](const std::string i) { EXPECT_EQ(i, "data"); });
+    data.lock().with([](std::string i) { EXPECT_EQ(i, "data"); });
+    data.lock().with([](const std::string i) { EXPECT_EQ(i, "data"); });
 
-    data.apply([](const std::string &i) { EXPECT_EQ(i, "data"); });
+    data.lock().with([](const std::string &i) { EXPECT_EQ(i, "data"); });
 }
 
 TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
@@ -678,7 +694,7 @@ TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
                  .get();
     
     std::unique_ptr<int> acceptor;
-    d.apply([&](std::unique_ptr<int> &&i) { acceptor = std::move(i); });
+    d.lock().with([&](std::unique_ptr<int> &&i) { acceptor = std::move(i); });
     
     ASSERT_TRUE(acceptor);
     ASSERT_EQ(*acceptor, 3);
@@ -737,31 +753,31 @@ TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
     auto d11 = p11.get_future();
     auto d12 = p12.get_future();
     
-    d1.get().apply([](int &i) { i++; });
-    d2.get().apply([](int &i) { i++; });
-    d3.get().apply([](int &&i) { i++; });
-    d4.get().apply([](const int &) {});
-    d5.get().apply([](const int &) {});
-    d6.get().apply([](const int &&) {});
-    d7.get().apply([](volatile int &i) { i++; });
-    d8.get().apply([](volatile int &i) { i++; });
-    d9.get().apply([](volatile int &&i) { i++; });
-    d10.get().apply([](const volatile int &) {});
-    d11.get().apply([](const volatile int &) {});
-    d12.get().apply([](const volatile int &&) {});
+    d1.get().lock().with([](int &i) { i++; });
+    d2.get().lock().with([](int &i) { i++; });
+    d3.get().lock().with([](int &&i) { i++; });
+    d4.get().lock().with([](const int &) {});
+    d5.get().lock().with([](const int &) {});
+    d6.get().lock().with([](const int &&) {});
+    d7.get().lock().with([](volatile int &i) { i++; });
+    d8.get().lock().with([](volatile int &i) { i++; });
+    d9.get().lock().with([](volatile int &&i) { i++; });
+    d10.get().lock().with([](const volatile int &) {});
+    d11.get().lock().with([](const volatile int &) {});
+    d12.get().lock().with([](const volatile int &&) {});
     
-    d1.get().apply([](int &i) { EXPECT_EQ(2, i); });
-    d2.get().apply([](int &i) { EXPECT_EQ(3, i); });
-    d3.get().apply([](int &&i) { EXPECT_EQ(4, i); });
-    d4.get().apply([](const int &i) { EXPECT_EQ(4, i); });
-    d5.get().apply([](const int &i) { EXPECT_EQ(5, i); });
-    d6.get().apply([](const int &&i) { EXPECT_EQ(6, i); });
-    d7.get().apply([](volatile int &i) { EXPECT_EQ(8, i); });
-    d8.get().apply([](volatile int &i) { EXPECT_EQ(9, i); });
-    d9.get().apply([](volatile int &&i) { EXPECT_EQ(10, i); });
-    d10.get().apply([](const volatile int  &i) { EXPECT_EQ(10, i); });
-    d11.get().apply([](const volatile int &i) { EXPECT_EQ(11, i); });
-    d12.get().apply([](const volatile int &&i) { EXPECT_EQ(12, i); });
+    d1.get().lock().with([](int &i) { EXPECT_EQ(2, i); });
+    d2.get().lock().with([](int &i) { EXPECT_EQ(3, i); });
+    d3.get().lock().with([](int &&i) { EXPECT_EQ(4, i); });
+    d4.get().lock().with([](const int &i) { EXPECT_EQ(4, i); });
+    d5.get().lock().with([](const int &i) { EXPECT_EQ(5, i); });
+    d6.get().lock().with([](const int &&i) { EXPECT_EQ(6, i); });
+    d7.get().lock().with([](volatile int &i) { EXPECT_EQ(8, i); });
+    d8.get().lock().with([](volatile int &i) { EXPECT_EQ(9, i); });
+    d9.get().lock().with([](volatile int &&i) { EXPECT_EQ(10, i); });
+    d10.get().lock().with([](const volatile int  &i) { EXPECT_EQ(10, i); });
+    d11.get().lock().with([](const volatile int &i) { EXPECT_EQ(11, i); });
+    d12.get().lock().with([](const volatile int &&i) { EXPECT_EQ(12, i); });
     EXPECT_EQ(i2, 3);
     EXPECT_EQ(i3, 4);
     EXPECT_EQ(i5, 5);
@@ -798,7 +814,7 @@ TEST_F(Future, DoesNotCopyMovableObjectInInnerStorage)
         .then([](counter &&c) { return std::move(c); });
 
     counter acceptor;
-    f.get().apply([&acceptor](counter &&c) { acceptor = std::move(c); });
+    f.get().lock().with([&acceptor](counter &&c) { acceptor = std::move(c); });
 
     EXPECT_EQ(counter::copy_num, 0u);
     EXPECT_EQ(counter::copy_assign_num, 0u);
@@ -914,7 +930,7 @@ TEST_F(Future, ActuallyDoesMove)
     p.resolve();
 
     auto f2(std::move(f));
-    f2.get().apply([](int i) { ASSERT_EQ(i, 1); });
+    f2.get().lock().with([](int i) { ASSERT_EQ(i, 1); });
 
     EXPECT_TRUE(f2.is_valid());
     EXPECT_FALSE(f.is_valid());
@@ -928,7 +944,7 @@ TEST_F(Future, ActuallyDoesMoveAssign)
 
     future<thread_pool, int> f2;
     f2 = std::move(f);
-    f2.get().apply([](int i) { ASSERT_EQ(i, 1); });
+    f2.get().lock().with([](int i) { ASSERT_EQ(i, 1); });
 
     EXPECT_TRUE(f2.is_valid());
     EXPECT_FALSE(f.is_valid());
@@ -942,7 +958,7 @@ TEST_F(Future, IsValidIfPromiseDestroyed)
     p.reset();
 
     ASSERT_TRUE(f.is_valid());
-    f.get().apply([](int i) { ASSERT_EQ(i, 1); });
+    f.get().lock().with([](int i) { ASSERT_EQ(i, 1); });
 }
 
 #if defined(__GNUC__)
@@ -1029,18 +1045,18 @@ TEST_F(Future, ThenAcceptParameterWhichPromiseFunctionReturnsAndPassIfFuther)
     auto p12 = promise(&m_pool, [&]() -> const volatile int &&{ return std::move(i); }); p12.resolve();
     auto f12 = p12.get_future().then([&](const volatile int &&v) ->decltype(auto) { return std::move(v); }); (void)f12;
 
-    f1.get().apply([&](int v) { EXPECT_EQ(v, i); });
-    f2.get().apply([&](int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f3.get().apply([&](int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f4.get().apply([&](const int v) { EXPECT_EQ(v, i); });
-    f5.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f6.get().apply([&](const int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f7.get().apply([&](volatile int v) { EXPECT_EQ(v, i); });
-    f8.get().apply([&](volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f9.get().apply([&](volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f10.get().apply([&](const volatile int v) { EXPECT_EQ(v, i); });
-    f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f12.get().apply([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f1.get().lock().with([&](int v) { EXPECT_EQ(v, i); });
+    f2.get().lock().with([&](int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f3.get().lock().with([&](int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f4.get().lock().with([&](const int v) { EXPECT_EQ(v, i); });
+    f5.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f6.get().lock().with([&](const int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f7.get().lock().with([&](volatile int v) { EXPECT_EQ(v, i); });
+    f8.get().lock().with([&](volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f9.get().lock().with([&](volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f10.get().lock().with([&](const volatile int v) { EXPECT_EQ(v, i); });
+    f11.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f12.get().lock().with([&](const volatile int &&v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
 }
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -1083,14 +1099,14 @@ TEST_F(Future, ThenFunctionMayReferenceParameterIfFutureStoreValue)
 
     f1_.get(); f2_.get(); f3_.get(); f4_.get(); f5_.get(); f6_.get(); f7_.get(); f8_.get();
 
-    f1.get().apply([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a1, &v); });
-    f2.get().apply([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a2, &v); });
-    f3.get().apply([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a3, &v); });
-    f4.get().apply([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a4, &v); });
-    f5.get().apply([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a5, &v); });
-    f6.get().apply([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a6, &v); });
-    f7.get().apply([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a7, &v); });
-    f8.get().apply([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a8, &v); });
+    f1.get().lock().with([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a1, &v); });
+    f2.get().lock().with([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a2, &v); });
+    f3.get().lock().with([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a3, &v); });
+    f4.get().lock().with([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a4, &v); });
+    f5.get().lock().with([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a5, &v); });
+    f6.get().lock().with([&](int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(a6, &v); });
+    f7.get().lock().with([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a7, &v); });
+    f8.get().lock().with([&](int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(a8, &v); });
 }
 
 TEST_F(Future, MoveOnlyObjectMayBePassedToSuccessCallbackByRValueRef)
@@ -1118,7 +1134,7 @@ TEST_F(Future, MoveOnlyObjectMayBePassedThroughChainAndAchievedViaGet)
         .then([&](std::unique_ptr<int> &&i) { return std::move(i); })
         .then([&](std::unique_ptr<int> &&i) { return std::move(i); })
         .get()
-        .apply([&](std::unique_ptr<int> &&i) { v = std::move(i); });
+        .lock().with([&](std::unique_ptr<int> &&i) { v = std::move(i); });
 
     ASSERT_TRUE(v);
     ASSERT_EQ(*v, 2);
@@ -1138,24 +1154,24 @@ TEST_F(Future, DoNotExecuteTheRestOfHandlerIfExceptionHappened)
     } catch(...){}
 }
 
-TEST_F(Future, FutureDataFunctionParameterMayBeValue)
+TEST_F(Future, FValueFunctionParameterMayBeValue)
 {
     auto p = promise(&m_pool, []() { return 1; });
     p.resolve();
 
-    p.get_future().get().apply([](int i) { EXPECT_EQ(i, 1); });
+    p.get_future().get().lock().with([](int i) { EXPECT_EQ(i, 1); });
 }
 
-TEST_F(Future, FutureDataFunctionParameterMayBeNonConstReferenceForConstFutureAndData)
+TEST_F(Future, FValueFunctionParameterMayBeNonConstReferenceForConstFutureAndValue)
 {
     auto p = promise(&m_pool, []() { return 1; });
     p.resolve();
 
     const auto f = p.get_future();
     const auto d = f.get();
-    d.apply([](int &i) { i = 4; });
+    d.lock().with([](int &i) { i = 4; });
 
-    d.apply([](const int &i) { EXPECT_EQ(i, 4); });
+    d.lock().with([](const int &i) { EXPECT_EQ(i, 4); });
 }
 
 TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture)
@@ -1171,7 +1187,7 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenValueFromItPassesToFutherFuture
 
     static_assert(std::is_same_v<decltype(f), future<thread_pool, int>>);
 
-    f.get().apply([](int i) { ASSERT_EQ(i, 2); });
+    f.get().lock().with([](int i) { ASSERT_EQ(i, 2); });
 }
 
 #if defined(__GNUC__)
@@ -1267,18 +1283,18 @@ TEST_F(Future, IfSuccessCallbackReturnsFutureThenAnyTypeValueFromItPassesToFuthe
     f0.get();
     ASSERT_TRUE(f0_completed);
 
-    f1.get().apply([&](const int &v) { EXPECT_EQ(v, 1); });
-    f2.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
-    f3.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
-    f4.get().apply([&](const int &v) { EXPECT_EQ(v, 1); });
-    f5.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
-    f6.get().apply([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
-    f7.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); });
-    f8.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
-    f9.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
-    f10.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); });
-    f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
-    f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f1.get().lock().with([&](const int &v) { EXPECT_EQ(v, 1); });
+    f2.get().lock().with([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f3.get().lock().with([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f4.get().lock().with([&](const int &v) { EXPECT_EQ(v, 1); });
+    f5.get().lock().with([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f6.get().lock().with([&](const int &v) { EXPECT_EQ(v, 1); EXPECT_EQ(&v, &i); });
+    f7.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, 2); });
+    f8.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f9.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f10.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, 2); });
+    f11.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
+    f12.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, 2); EXPECT_EQ(&v, &ii); });
 }
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -1298,7 +1314,7 @@ TEST_F(Future, SuccessCallbackReturnsFutureWithMoveOnlyType)
         return std::move(ptr);
      });
 
-    f.get().apply([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 2); });
+    f.get().lock().with([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 2); });
 }
 
 TEST_F(Future, SuccessCallbackReturnsFutureAndCopiesStoredVarible)
@@ -1314,7 +1330,7 @@ TEST_F(Future, SuccessCallbackReturnsFutureAndCopiesStoredVarible)
                   return ptr;
               });
 
-    f.get().apply([](std::string str) { ASSERT_EQ(str, "test"); });
+    f.get().lock().with([](std::string str) { ASSERT_EQ(str, "test"); });
 }
 
 TEST_F(Future, IfSuccessCallbackReturnsFutureThenHappenedExceptionGoesThroughAllChain)
@@ -1485,18 +1501,18 @@ TEST_F(Future, PromiseResolveFunctionReturnsFuture)
 
     f0.get();
     ASSERT_TRUE(f0_completed);
-    f1.get().apply([&](const int &v) { EXPECT_EQ(v, i); });
-    f2.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f3.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f4.get().apply([&](const int &v) { EXPECT_EQ(v, i); });
-    f5.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f6.get().apply([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
-    f7.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); });
-    f8.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
-    f9.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
-    f10.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); });
-    f11.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
-    f12.get().apply([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f1.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); });
+    f2.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f3.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f4.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); });
+    f5.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f6.get().lock().with([&](const int &v) { EXPECT_EQ(v, i); EXPECT_EQ(&v, &i); });
+    f7.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, ii); });
+    f8.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f9.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f10.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, ii); });
+    f11.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
+    f12.get().lock().with([&](const volatile int &v) { EXPECT_EQ(v, ii); EXPECT_EQ(&v, &ii); });
 }
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -1542,7 +1558,7 @@ TEST_F(Future, PromiseFunctionWhichReturnsFutureAcceptsMoveOnlyTypeAndPassesItFu
     auto f = p.get_future()
         .then([](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
 
-    f.get().apply([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 3); });
+    f.get().lock().with([](std::unique_ptr<int> &&ptr) { ASSERT_TRUE(ptr); ASSERT_EQ(*ptr, 3); });
 }
 
 TEST_F(Future, PromiseFunctionWhichReturnsFutureCopiesVarible)
@@ -1565,7 +1581,7 @@ TEST_F(Future, PromiseFunctionWhichReturnsFutureCopiesVarible)
              return ptr;
          });
 
-    f.get().apply([](std::string str) { ASSERT_EQ(str, "test"); });
+    f.get().lock().with([](std::string str) { ASSERT_EQ(str, "test"); });
 }
 
 TEST_F(Future, FutureTupleAsStoredType)
@@ -1704,79 +1720,79 @@ TEST_F(Future, MoveOnlyTypeMayBePassesThroughAllChainViaFutureTuple)
         .then([&](std::unique_ptr<int> &&ptr) { return ftuple{ std::move(ptr) }; })
         .then([&](std::unique_ptr<int> &&ptr) { return std::move(ptr); });
 
-    f.get().apply([](const std::unique_ptr<int> &ptr) { ASSERT_TRUE(ptr && *ptr == 34); });
+    f.get().lock().with([](const std::unique_ptr<int> &ptr) { ASSERT_TRUE(ptr && *ptr == 34); });
 }
 
-TEST_F(Future, FutureDataWithFutureTupleType)
+TEST_F(Future, FValueWithFutureTupleType)
 {
     auto p1 = promise(&m_pool, [&]() { return ftuple<int>{ 1 }; });
     p1.resolve();
     auto f1 = p1.get_future();
-    f1.get().apply([](int i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](int &i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](int &&i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](const int i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](const int &i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](const int &&i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](volatile int i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](volatile int &i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](volatile int &&i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](const volatile int i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](const volatile int &i) { EXPECT_EQ(i, 1); });
-    f1.get().apply([](const volatile int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](int i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](int &i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](const int i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](const int &i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](const int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](volatile int i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](volatile int &i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](volatile int &&i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](const volatile int i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](const volatile int &i) { EXPECT_EQ(i, 1); });
+    f1.get().lock().with([](const volatile int &&i) { EXPECT_EQ(i, 1); });
 
     int i2 = 1;
     auto p2 = promise(&m_pool, [&]() { return ftuple<int &>{ i2 }; });
     p2.resolve();
     auto f2 = p2.get_future();
-    f2.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
-    f2.get().apply([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
-    f2.get().apply([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
-    f2.get().apply([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
-    f2.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
-    f2.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().lock().with([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().lock().with([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().lock().with([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i2); });
+    f2.get().lock().with([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
+    f2.get().lock().with([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i2); });
 
     ftuple t3{ 1 };
     int &i3 = std::get<0>(t3.to_underlying());
     auto p3 = promise(&m_pool, [&]() ->decltype(auto) { return (t3); });
     p3.resolve();
     auto f3 = p3.get_future();
-    f3.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
-    f3.get().apply([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
-    f3.get().apply([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
-    f3.get().apply([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
-    f3.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
-    f3.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().lock().with([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().lock().with([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().lock().with([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i3); });
+    f3.get().lock().with([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
+    f3.get().lock().with([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i3); });
 
     ftuple t4{ 1 };
     int &i4 = std::get<0>(t4.to_underlying());
     auto p4 = promise(&m_pool, [&]() ->decltype(auto) { return std::move(t4); });
     p4.resolve();
     auto f4 = p4.get_future();
-    f4.get().apply([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
-    //f4.get().apply([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
-    f4.get().apply([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
-    //f4.get().apply([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
-    //f4.get().apply([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
-    f4.get().apply([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    //f4.get().lock().with([&](int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](const int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    f4.get().lock().with([&](const int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](const int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    //f4.get().lock().with([&](volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](const volatile int i) { EXPECT_EQ(i, 1); EXPECT_NE(&i, &i4); });
+    //f4.get().lock().with([&](const volatile int &i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
+    f4.get().lock().with([&](const volatile int &&i) { EXPECT_EQ(i, 1); EXPECT_EQ(&i, &i4); });
 }
 
 TEST_F(Future, MaySetSeveralSuccessCallbacks)
@@ -1827,8 +1843,8 @@ TEST_F(Future, EveryThenFunctionReturnsDifferentFuture)
     p.resolve();
 
     f1.get();
-    f2.get().apply([](int i) { EXPECT_EQ(i, 1); });
-    f3.get().apply([](char i) { EXPECT_EQ(i, 's'); });
+    f2.get().lock().with([](int i) { EXPECT_EQ(i, 1); });
+    f3.get().lock().with([](char i) { EXPECT_EQ(i, 's'); });
 }
 
 TEST_F(Future, EveryCathcedFunctionReturnsDifferentFuture)
@@ -1874,7 +1890,7 @@ TEST_F(Future, CatchedMethodReturnsNewPromise)
     auto f1_ = f1.catched([](std::exception_ptr) { return 34; });
     p1.resolve();
 
-    f1_.get().apply([](int i) { ASSERT_EQ(i, 34); });
+    f1_.get().lock().with([](int i) { ASSERT_EQ(i, 34); });
 
     auto p2 = promise(&m_pool, []() { return 2; });
     auto f2 = p2.get_future()
@@ -1894,7 +1910,7 @@ TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
         .then([](int i) { return i + 8; })
         .catched([&](std::exception_ptr) { is_catch_called = true; return 5545; })
         .then([](int i) { return i * 2; });
-    f1.get().apply([](int i) { ASSERT_EQ(i, 20); });
+    f1.get().lock().with([](int i) { ASSERT_EQ(i, 20); });
     ASSERT_FALSE(is_catch_called);
 
     auto p2 = promise(&m_pool, []() { return 2; });
@@ -1902,7 +1918,7 @@ TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
     auto f2 = p2.get_future()
         .then([](int i) { return i + 8; })
         .catched([&](std::exception_ptr) { is_catch_called = true; return 5545; });
-    f2.get().apply([](int i) { ASSERT_EQ(i, 10); });
+    f2.get().lock().with([](int i) { ASSERT_EQ(i, 10); });
     ASSERT_FALSE(is_catch_called);
 
     auto p3 = promise(&m_pool, []() { return 2; });
@@ -1911,7 +1927,7 @@ TEST_F(Future, ErrorHandlerDoesNotExecuteInChainIfNoException)
         .then([](int i) { return i + 8; })
         .catched([&](std::exception_ptr) { is_catch_called = true; })
         .then([]() { return 45; });
-    f3.get().apply([](int i) { ASSERT_EQ(i, 45); });
+    f3.get().lock().with([](int i) { ASSERT_EQ(i, 45); });
     ASSERT_FALSE(is_catch_called);
 
     auto p4 = promise(&m_pool, []() { return 2; });
@@ -1934,7 +1950,7 @@ TEST_F(Future, ExceptionCatchesInClosesErrorHandlerThenExecutionCompleted)
         .catched([&](std::exception_ptr) { is_catch_called1 = true; return 100; })
         .then([](int i) { return i * 2; })
         .catched([](std::exception_ptr) { declare_fail(); return 0; });
-    f1.get().apply([](int i) { ASSERT_EQ(i, 200); });
+    f1.get().lock().with([](int i) { ASSERT_EQ(i, 200); });
     ASSERT_FALSE(is_first_then_called1);
     ASSERT_TRUE(is_catch_called1);
 
@@ -1947,7 +1963,7 @@ TEST_F(Future, ExceptionCatchesInClosesErrorHandlerThenExecutionCompleted)
         .catched([&](std::exception_ptr) { is_catch_called2 = true; })
         .then([]() { return 50; })
         .catched([](std::exception_ptr) { declare_fail(); return 0; });
-    f2.get().apply([](int i) { ASSERT_EQ(i, 50); });
+    f2.get().lock().with([](int i) { ASSERT_EQ(i, 50); });
     ASSERT_FALSE(is_first_then_called2);
     ASSERT_TRUE(is_catch_called2);
 }
@@ -1983,7 +1999,7 @@ TEST_F(Future, SetPromiseFailIfErrorHandlerThrowsException)
                      is_catch_called1 = true;
                      return 55;
                  });
-    f1.get().apply([](int i) { ASSERT_EQ(i, 55); });
+    f1.get().lock().with([](int i) { ASSERT_EQ(i, 55); });
     ASSERT_FALSE(is_second_then_called1);
     ASSERT_TRUE(is_catch_called1);
 
@@ -2042,7 +2058,7 @@ TEST_F(Future, SeveralErrorHandlersDoNotExecuteIfNoExceptionInFirst)
         .catched([](std::exception_ptr) { declare_fail(); return 44; })
         .catched([](std::exception_ptr) { declare_fail(); return 54; })
         .catched([](std::exception_ptr) { declare_fail(); return 64; });
-    f1.get().apply([](int i) { ASSERT_EQ(i, 34); });
+    f1.get().lock().with([](int i) { ASSERT_EQ(i, 34); });
 
     auto p2 = promise(&m_pool, []() -> int { throw std::runtime_error(""); });
     p2.resolve();
@@ -2211,7 +2227,7 @@ TEST_F(Future, AllFuturesStoreDataExistsAlongAllChain)
 
     promise = {};
 
-    f.get().apply([&](int &v) { ASSERT_EQ(&v, i); v = 7; });
+    f.get().lock().with([&](int &v) { ASSERT_EQ(&v, i); v = 7; });
     ASSERT_EQ(*i, 7);
 }
 
@@ -2236,7 +2252,7 @@ TEST_F(Future, SeveralFutureReturnSuccessMayBeChainConsequentially)
                   return p.get_future();
               });
 
-    f.get().apply([](int i) { ASSERT_EQ(i, 16); });
+    f.get().lock().with([](int i) { ASSERT_EQ(i, 16); });
 }
 
 TEST_F(Future, ExceptionGoesThroughSuccessHanlderReturningFuture)
@@ -2252,7 +2268,7 @@ TEST_F(Future, ExceptionGoesThroughSuccessHanlderReturningFuture)
         .catched([](std::exception_ptr) { return 55; });
 
 
-    f.get().apply([](int i) { ASSERT_EQ(i, 55); });
+    f.get().lock().with([](int i) { ASSERT_EQ(i, 55); });
 }
 
 TEST_F(Future, SavePrevValueReferenceInCatchFuture)
@@ -2262,12 +2278,12 @@ TEST_F(Future, SavePrevValueReferenceInCatchFuture)
     auto f = promise.get_future()
         .then([](std::unique_ptr<int> &&p) { return std::move(p); });
     auto f1 = f.catched([](std::exception_ptr) { return std::make_unique<int>(5); });
-    f1.get().apply([](std::unique_ptr<int> &p) { EXPECT_EQ(*p, 3); });
+    f1.get().lock().with([](std::unique_ptr<int> &p) { EXPECT_EQ(*p, 3); });
     auto f2 = f1.then([](std::unique_ptr<int> &&p) { return std::move(p); });
 
-    f2.get().apply([](std::unique_ptr<int> &&p) { EXPECT_EQ(*p, 3); });
-    f.get().apply([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
-    f1.get().apply([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
+    f2.get().lock().with([](std::unique_ptr<int> &&p) { EXPECT_EQ(*p, 3); });
+    f.get().lock().with([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
+    f1.get().lock().with([](std::unique_ptr<int> &&p) { EXPECT_FALSE(p); });
 }
 
 TEST_F(Future, SavePrevValueReferenceInCatchFutureChain)
@@ -2282,7 +2298,7 @@ TEST_F(Future, SavePrevValueReferenceInCatchFutureChain)
         .catched([](std::exception_ptr) { return std::make_unique<int>(5); })
         .catched([](std::exception_ptr) { return std::make_unique<int>(5); });
 
-    f.get().apply([&](std::unique_ptr<int> &v) { ASSERT_EQ(v.get(), p); });
+    f.get().lock().with([&](std::unique_ptr<int> &v) { ASSERT_EQ(v.get(), p); });
 }
 
 TEST_F(Future, CatchedFlattensReturnedFutureType)
@@ -2329,7 +2345,7 @@ TEST_F(Future, CatchedFlattensReturnedFutureType)
                      beacon.fetch_add(1, std::memory_order_relaxed);
                  })
         .then([]() { return 34; })
-        .get().apply([](int i) { ASSERT_EQ(i, 34); });
+        .get().lock().with([](int i) { ASSERT_EQ(i, 34); });
 
     ASSERT_EQ(beacon, 8);
 }
@@ -2421,7 +2437,7 @@ TEST_F(Future, FinallyRegistrationDoesNotDeadlockWhenReadyCallbackWaitsForCaller
         }
 
         ASSERT_TRUE(result.wait_for(operation_timeout));
-        result.get().apply([](int value) { EXPECT_EQ(value, 34); });
+        result.get().lock().with([](int value) { EXPECT_EQ(value, 34); });
         EXPECT_EQ(callback_count.load(std::memory_order_relaxed), 1u);
     }
 }
@@ -2515,10 +2531,10 @@ TEST_F(Future, FinallyIsTransparentInCallbackChain)
 
     p1.get_future()
         .finally([]() {})
-        .get().apply([](std::unique_ptr<int> &&i) { ASSERT_EQ(*i, 34); });
+        .get().lock().with([](std::unique_ptr<int> &&i) { ASSERT_EQ(*i, 34); });
     p2.get_future()
         .finally([&]() {auto p = promise(&m_pool, [] {}); p.resolve(); return p.get_future(); })
-        .get().apply([](std::unique_ptr<int> &&i) { ASSERT_EQ(*i, 35); });
+        .get().lock().with([](std::unique_ptr<int> &&i) { ASSERT_EQ(*i, 35); });
     p3.get_future()
         .finally([]() {})
         .catched([&](std::exception_ptr) { ++beacon; })
@@ -2860,13 +2876,13 @@ TEST_F(Future, FutureMayBeCreatedAlreadyWithSetValue)
     future f1(&m_pool, 9);
     f1.then([](int i) { EXPECT_EQ(i, 9); return 4; })
       .then([](int i) { EXPECT_EQ(i, 4); return 34; })
-      .get().apply([](int i) { ASSERT_EQ(i, 34); });
-    f1.get().apply([](int i) { ASSERT_EQ(i, 9); });
+      .get().lock().with([](int i) { ASSERT_EQ(i, 34); });
+    f1.get().lock().with([](int i) { ASSERT_EQ(i, 9); });
 
     int flag = 0;
     future f2(&m_pool);
     f2.then([&]() { flag = 1; return 34; })
-      .get().apply([](int i) { ASSERT_EQ(i, 34); });
+      .get().lock().with([](int i) { ASSERT_EQ(i, 34); });
     f2.wait();
     ASSERT_EQ(flag, 1);
 }
@@ -2993,12 +3009,12 @@ TEST_F(Future, T)
     static_assert(std::is_same_v<decltype(f8), future<thread_pool, int>>);
 
     f0.get();
-    f1.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f2.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f3.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f4.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f5.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f6.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f7.get().apply([](int i) { ASSERT_EQ(i, 0); });
-    f8.get().apply([](int i) { ASSERT_EQ(i, 0); });
+    f1.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f2.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f3.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f4.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f5.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f6.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f7.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
+    f8.get().lock().with([](int i) { ASSERT_EQ(i, 0); });
 }

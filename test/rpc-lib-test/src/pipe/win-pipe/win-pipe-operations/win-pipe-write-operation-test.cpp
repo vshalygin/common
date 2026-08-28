@@ -224,7 +224,7 @@ protected:
         future<thread_pool, win_pipe_operation_res> &future)
     {
         auto result = win_pipe_operation_res::unknown;
-        future.get().apply([&](win_pipe_operation_res state) { result = state; });
+        future.get().lock().with([&](win_pipe_operation_res state) { result = state; });
         return result;
     }
 
