@@ -3625,6 +3625,37 @@ TEST_F(Future, TestWaitFor)
     ASSERT_FALSE(p4.get_future().wait_for(std::chrono::milliseconds(1)));
 }
 
+TEST_F(Future, WaitForWithMinimumTimeoutDoesNotWait)
+{
+    auto promise = cl::promise(&m_pool, []() {});
+    auto future = promise.get_future();
+
+    EXPECT_FALSE(future.wait_for(std::chrono::milliseconds::min()));
+
+    promise.resolve();
+    future.wait();
+}
+
+TEST_F(Future, WaitForWithMinimumTimeoutDetectsReadyFuture)
+{
+    auto promise = cl::promise(&m_pool, []() {});
+    auto future = promise.get_future();
+    promise.resolve();
+    future.wait();
+
+    EXPECT_TRUE(future.wait_for(std::chrono::milliseconds::min()));
+}
+
+TEST_F(Future, WaitForWithMaximumTimeoutWaitsForFuture)
+{
+    auto promise = cl::promise(&m_pool, []() {});
+    auto future = promise.get_future();
+
+    promise.resolve();
+
+    EXPECT_TRUE(future.wait_for(std::chrono::milliseconds::max()));
+}
+
 TEST_F(Future, FinallyExecutesAfterCatchedIfNoException)
 {
     std::atomic_uint64_t beacon{ 0 };

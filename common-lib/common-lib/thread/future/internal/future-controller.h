@@ -301,13 +301,23 @@ namespace vshalygin::cl::internal {
     {
         using clock = std::chrono::steady_clock;
 
+        ordered_lock lock(m_val_mtx, m_exception_mtx);
+        const auto is_ready = [this]() { return m_val_state || m_exception; };
+
+        if(timeout <= std::chrono::milliseconds::zero()) {
+            return is_ready();
+        }
+
         const auto now = clock::now();
         const auto max_tp = clock::time_point::max();
+        const auto remaining = max_tp - now;
+        using floating_duration = std::chrono::duration<long double>;
 
-        clock::time_point tp = (timeout > max_tp - now) ? max_tp : now + timeout;
+        const auto tp = floating_duration(timeout) >= floating_duration(remaining)
+            ? max_tp
+            : now + std::chrono::duration_cast<clock::duration>(timeout);
 
-        ordered_lock lock(m_val_mtx, m_exception_mtx);
-        return m_cv.wait_until(lock, tp, [this]() { return m_val_state || m_exception; });
+        return m_cv.wait_until(lock, tp, is_ready);
     }
 
     template<typename ThreadPool, typename T>
