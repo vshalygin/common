@@ -9,6 +9,7 @@
 #include <cassert>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 
@@ -99,6 +100,7 @@ namespace vshalygin::cl::internal {
         explicit fvalue(std::shared_ptr<future_value_state<T>> value);
 
         auto get_value_state() const;
+        void ensure_valid() const;
 
     public:
         fvalue(const fvalue &) = delete;
@@ -122,20 +124,29 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::get_value_state() const
     {
+        ensure_valid();
         return m_value;
+    }
+
+    template<typename ThreadPool, typename T>
+    void fvalue<ThreadPool, T>::ensure_valid() const
+    {
+        if(!m_value) {
+            throw std::logic_error("fvalue is invalid");
+        }
     }
 
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::lock()
     {
-        assert(m_value);
+        ensure_valid();
         return locked_fvalue<T>(m_value);
     }
 
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::lock() const
     {
-        assert(m_value);
+        ensure_valid();
         return locked_fvalue<T>(m_value);
     }
 }

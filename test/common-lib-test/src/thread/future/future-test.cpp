@@ -807,6 +807,42 @@ TEST_F(Future, ConstFValueMayInvokeHandlerWithNonModifyOneParameter)
     data1.lock().with([](volatile const int &&i) { ASSERT_EQ(i, 1); });
 }
 
+TEST_F(Future, FValueThrowsAfterMoveConstruction)
+{
+    auto promise = cl::promise(&m_pool, []() { return 1; });
+    auto future = promise.get_future();
+    promise.resolve();
+    auto source = future.get();
+
+    auto destination = std::move(source);
+
+    EXPECT_THROW((void)source.lock(), std::logic_error);
+    const auto &const_source = source;
+    EXPECT_THROW((void)const_source.lock(), std::logic_error);
+    destination.lock().with([](int value) {
+        EXPECT_EQ(value, 1);
+    });
+}
+
+TEST_F(Future, FValueThrowsAfterMoveAssignment)
+{
+    auto source_promise = cl::promise(&m_pool, []() { return 1; });
+    auto destination_promise = cl::promise(&m_pool, []() { return 2; });
+    auto source_future = source_promise.get_future();
+    auto destination_future = destination_promise.get_future();
+    source_promise.resolve();
+    destination_promise.resolve();
+    auto source = source_future.get();
+    auto destination = destination_future.get();
+
+    destination = std::move(source);
+
+    EXPECT_THROW((void)source.lock(), std::logic_error);
+    destination.lock().with([](int value) {
+        EXPECT_EQ(value, 1);
+    });
+}
+
 TEST_F(Future, FValueMakesCopyOfValueIfFunctorHasNonReferenceParameter)
 {
     auto p = promise(&m_pool, []()->std::string { return "data"; });
