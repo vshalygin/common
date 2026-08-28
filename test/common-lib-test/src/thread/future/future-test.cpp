@@ -42,6 +42,10 @@ static_assert(cl::internal::is_future_tuple_v<const int_ftuple>);
 static_assert(cl::internal::is_future_tuple_v<volatile int_ftuple>);
 static_assert(cl::internal::is_future_tuple_v<int_ftuple &>);
 static_assert(cl::internal::is_future_tuple_v<int_ftuple &&>);
+static_assert(!cl::internal::future_tuple_has_reference_v<int_ftuple>);
+static_assert(cl::internal::future_tuple_has_reference_v<ftuple<int &>>);
+static_assert(cl::internal::future_tuple_has_reference_v<const ftuple<int &&>>);
+static_assert(cl::internal::future_tuple_has_reference_v<ftuple<int, const int &>>);
 
 namespace {
     void declare_fail()
@@ -3022,6 +3026,79 @@ TEST_F(Future, FutureReturningReferenceSharesValueLockWithItsParent)
     ASSERT_EQ(child_lock_task.wait_for(std::chrono::seconds(10)),
               std::future_status::ready);
     child_lock_task.get();
+}
+
+TEST_F(Future, FutureTupleReturningReferenceSharesValueLockWithItsParent)
+{
+    auto promise = cl::promise(&m_pool, []() { return 2; });
+    auto parent = promise.get_future();
+    auto child = parent.then([](auto source_fvalue) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([](int &value) {
+            return ftuple<int &>{ value };
+        });
+    });
+    promise.resolve();
+
+    auto parent_value = parent.get();
+    auto child_value = child.get();
+    event lock_attempt_started;
+    std::future<void> child_lock_task;
+
+    {
+        [[maybe_unused]] auto parent_lock = parent_value.lock();
+        child_lock_task = std::async(std::launch::async, [&] {
+            lock_attempt_started.set();
+            [[maybe_unused]] auto child_lock = child_value.lock();
+        });
+
+        ASSERT_TRUE(lock_attempt_started.wait_for(std::chrono::seconds(10)));
+        EXPECT_EQ(child_lock_task.wait_for(std::chrono::milliseconds(100)),
+                  std::future_status::timeout);
+    }
+
+    ASSERT_EQ(child_lock_task.wait_for(std::chrono::seconds(10)),
+              std::future_status::ready);
+    child_lock_task.get();
+    child_value.lock().with([](int &value) { EXPECT_EQ(value, 2); });
+}
+
+TEST_F(Future, MixedFutureTupleSharesValueLockWithItsReferencedParent)
+{
+    auto promise = cl::promise(&m_pool, []() { return 2; });
+    auto parent = promise.get_future();
+    auto child = parent.then([](auto source_fvalue) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([](int &value) {
+            return ftuple<int &, int>{ value, 7 };
+        });
+    });
+    promise.resolve();
+
+    auto parent_value = parent.get();
+    auto child_value = child.get();
+    event lock_attempt_started;
+    std::future<void> child_lock_task;
+
+    {
+        [[maybe_unused]] auto parent_lock = parent_value.lock();
+        child_lock_task = std::async(std::launch::async, [&] {
+            lock_attempt_started.set();
+            [[maybe_unused]] auto child_lock = child_value.lock();
+        });
+
+        ASSERT_TRUE(lock_attempt_started.wait_for(std::chrono::seconds(10)));
+        EXPECT_EQ(child_lock_task.wait_for(std::chrono::milliseconds(100)),
+                  std::future_status::timeout);
+    }
+
+    ASSERT_EQ(child_lock_task.wait_for(std::chrono::seconds(10)),
+              std::future_status::ready);
+    child_lock_task.get();
+    child_value.lock().with([](int &reference, int value) {
+        EXPECT_EQ(reference, 2);
+        EXPECT_EQ(value, 7);
+    });
 }
 
 TEST_F(Future, SeveralFutureReturnSuccessMayBeChainConsequentially)

@@ -1,7 +1,7 @@
 #pragma once
 #include "is-future.h"
 #include "future-store-type-or-self.h"
-#include "is-future-tuple.h"
+#include "future-tuple-utils.h"
 
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/type-traits.h>
@@ -157,7 +157,8 @@ namespace vshalygin::cl::internal {
 
         try {
             if constexpr(!std::is_void_v<ret_t>) {
-                if constexpr(std::is_reference_v<ret_t>) {
+                if constexpr(std::is_reference_v<ret_t> ||
+                             future_tuple_has_reference_v<ret_t>) {
                     auto value_state = value.get_value_state();
                     decltype(auto) result =
                         std::invoke(std::forward<Func>(task), std::move(value));

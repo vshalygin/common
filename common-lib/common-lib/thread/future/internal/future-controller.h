@@ -68,7 +68,9 @@ namespace vshalygin::cl::internal {
         void set_value(U &&val);
 
         template<typename U, typename SourceT, typename TT = T,
-                 std::enable_if_t<std::is_reference_v<TT>, int> = 0>
+                 std::enable_if_t<
+                     std::is_reference_v<TT> ||
+                     future_tuple_has_reference_v<TT>, int> = 0>
         void set_value(
             U &&val,
             std::shared_ptr<future_value_state<SourceT>> source_value_state);
@@ -218,7 +220,9 @@ namespace vshalygin::cl::internal {
 
     template<typename ThreadPool, typename T>
     template<typename U, typename SourceT, typename TT,
-             std::enable_if_t<std::is_reference_v<TT>, int>>
+             std::enable_if_t<
+                 std::is_reference_v<TT> ||
+                 future_tuple_has_reference_v<TT>, int>>
     void future_controller<ThreadPool, T>::set_value(
         U &&val,
         std::shared_ptr<future_value_state<SourceT>> source_value_state)

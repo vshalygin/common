@@ -66,7 +66,7 @@ set(common_lib_headers
     common-lib/thread/future/internal/future-store-type-or-self.h
     common-lib/thread/future/internal/future-tuple.h
     common-lib/thread/future/internal/future.h
-    common-lib/thread/future/internal/is-future-tuple.h
+    common-lib/thread/future/internal/future-tuple-utils.h
     common-lib/thread/future/internal/is-future.h
     common-lib/thread/future/internal/promise.h
     common-lib/thread/future/internal/future-value-state.h
