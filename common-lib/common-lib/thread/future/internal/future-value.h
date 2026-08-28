@@ -30,7 +30,7 @@ namespace vshalygin::cl::internal {
 
         locked_fvalue(std::shared_ptr<future_value_state<T>> value_state)
             : m_value_state(std::move(value_state))
-            , m_lock(m_value_state->m_mtx)
+            , m_lock(*m_value_state->m_mtx)
         {}
 
     public:

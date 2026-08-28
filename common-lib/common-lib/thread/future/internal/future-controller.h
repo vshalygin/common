@@ -65,6 +65,12 @@ namespace vshalygin::cl::internal {
         template<typename U, typename TT = T, std::enable_if_t<!std::is_void_v<TT>, int> = 0>
         void set_value(U &&val);
 
+        template<typename U, typename SourceT, typename TT = T,
+                 std::enable_if_t<std::is_reference_v<TT>, int> = 0>
+        void set_value(
+            U &&val,
+            std::shared_ptr<future_value_state<SourceT>> source_value_state);
+
         void set_value_state(std::shared_ptr<future_value_state<T>> value_state);
 
         void set_exception(const std::exception_ptr &e);
@@ -88,6 +94,9 @@ namespace vshalygin::cl::internal {
         void set_on_success_unsafe(Func &&func);
 
         void set_on_fail_unsafe(on_fail_t &&func);
+
+        template<typename U>
+        void set_value_impl(U &&val, std::shared_ptr<std::mutex> value_mutex);
 
         void wait_data_ready_or_throw() const;
 
@@ -199,6 +208,28 @@ namespace vshalygin::cl::internal {
     template<typename U, typename TT, std::enable_if_t<!std::is_void_v<TT>, int>>
     void future_controller<ThreadPool, T>::set_value(U &&val)
     {
+        set_value_impl(std::forward<U>(val), {});
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename U, typename SourceT, typename TT,
+             std::enable_if_t<std::is_reference_v<TT>, int>>
+    void future_controller<ThreadPool, T>::set_value(
+        U &&val,
+        std::shared_ptr<future_value_state<SourceT>> source_value_state)
+    {
+        assert(source_value_state);
+        set_value_impl(
+            std::forward<U>(val),
+            source_value_state->m_mtx);
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename U>
+    void future_controller<ThreadPool, T>::set_value_impl(
+        U &&val,
+        std::shared_ptr<std::mutex> value_mutex)
+    {
         value_proxy_t v;
 
         if constexpr(std::is_reference_v<T>) {
@@ -207,7 +238,9 @@ namespace vshalygin::cl::internal {
             v = value_proxy_t{ std::forward<U>(val), value_proxy_owned };
         }
 
-        auto value_state = std::make_shared<future_value_state<T>>();
+        auto value_state = value_mutex
+            ? std::make_shared<future_value_state<T>>(std::move(value_mutex))
+            : std::make_shared<future_value_state<T>>();
         value_state->set_value(std::move(v));
         set_value_state(std::move(value_state));
     }

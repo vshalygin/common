@@ -155,7 +155,17 @@ namespace vshalygin::cl::internal {
 
         try {
             if constexpr(!std::is_void_v<ret_t>) {
-                controller->set_value(std::invoke(std::forward<Func>(task), std::move(value)));
+                if constexpr(std::is_reference_v<ret_t>) {
+                    auto value_state = value.get_value_state();
+                    decltype(auto) result =
+                        std::invoke(std::forward<Func>(task), std::move(value));
+                    controller->set_value(
+                        std::forward<ret_t>(result),
+                        std::move(value_state));
+                } else {
+                    controller->set_value(
+                        std::invoke(std::forward<Func>(task), std::move(value)));
+                }
             } else {
                 std::invoke(std::forward<Func>(task), std::move(value));
                 controller->set_value();

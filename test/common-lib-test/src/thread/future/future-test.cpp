@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <future>
 #include <type_traits>
 #include <atomic>
 #include <mutex>
@@ -2734,6 +2735,38 @@ TEST_F(Future, AllFuturesStoreDataExistsAlongAllChain)
 
     f.get().lock().with([&](int &v) { ASSERT_EQ(&v, i); v = 7; });
     ASSERT_EQ(*i, 7);
+}
+
+TEST_F(Future, FutureReturningReferenceSharesValueLockWithItsParent)
+{
+    auto promise = cl::promise(&m_pool, []() { return 2; });
+    auto parent = promise.get_future();
+    auto child = parent.then([](auto source_fvalue) mutable -> decltype(auto) {
+        auto locked_source_value = source_fvalue.lock();
+        return locked_source_value.with([](int &value) -> int & { return value; });
+    });
+    promise.resolve();
+
+    auto parent_value = parent.get();
+    auto child_value = child.get();
+    event lock_attempt_started;
+    std::future<void> child_lock_task;
+
+    {
+        [[maybe_unused]] auto parent_lock = parent_value.lock();
+        child_lock_task = std::async(std::launch::async, [&] {
+            lock_attempt_started.set();
+            [[maybe_unused]] auto child_lock = child_value.lock();
+        });
+
+        ASSERT_TRUE(lock_attempt_started.wait_for(std::chrono::seconds(10)));
+        EXPECT_EQ(child_lock_task.wait_for(std::chrono::milliseconds(100)),
+                  std::future_status::timeout);
+    }
+
+    ASSERT_EQ(child_lock_task.wait_for(std::chrono::seconds(10)),
+              std::future_status::ready);
+    child_lock_task.get();
 }
 
 TEST_F(Future, SeveralFutureReturnSuccessMayBeChainConsequentially)
