@@ -34,6 +34,8 @@ namespace vshalygin::cl::internal {
         : public enable_shared_from_this_manual_set<future_controller<ThreadPool, T>>
         , public ifuture_controller
     {
+        friend class fvalue<ThreadPool, T>;
+
         template<typename U>
         static auto create_on_success()
         {
@@ -98,6 +100,7 @@ namespace vshalygin::cl::internal {
         template<typename U>
         void set_value_impl(U &&val, std::shared_ptr<std::mutex> value_mutex);
 
+        auto get_value_state() const;
         void wait_data_ready_or_throw() const;
 
         void process_on_success_async();
@@ -284,9 +287,16 @@ namespace vshalygin::cl::internal {
         wait_data_ready_or_throw();
 
         if constexpr(!std::is_void_v<T>) {
-            ordered_lock lock(m_val_mtx);
-            return fvalue<ThreadPool, T>(m_val_state);
+            return fvalue<ThreadPool, T>(this->shared_from_this());
         }
+    }
+
+    template<typename ThreadPool, typename T>
+    auto future_controller<ThreadPool, T>::get_value_state() const
+    {
+        ordered_lock lock(m_val_mtx);
+        assert(m_val_state);
+        return m_val_state;
     }
 
     template<typename ThreadPool, typename T>
@@ -395,12 +405,7 @@ namespace vshalygin::cl::internal {
         assert(func);
 
         if constexpr(!std::is_void_v<T>) {
-            std::shared_ptr<future_value_state<T>> value_state;
-            {
-                ordered_lock guard(m_val_mtx);
-                value_state = m_val_state;
-            }
-            func(fvalue<ThreadPool, T>(std::move(value_state)));
+            func(fvalue<ThreadPool, T>(this->shared_from_this()));
         } else {
             func();
         }

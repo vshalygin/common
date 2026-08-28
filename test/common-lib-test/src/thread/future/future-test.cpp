@@ -6,6 +6,8 @@
 
 #include <chrono>
 #include <future>
+#include <memory>
+#include <optional>
 #include <type_traits>
 #include <atomic>
 #include <mutex>
@@ -860,6 +862,82 @@ TEST_F(Future, FValueThrowsAfterMoveAssignment)
     destination.lock().with([](int value) {
         EXPECT_EQ(value, 1);
     });
+}
+
+TEST_F(Future, FValueKeepsControllerAndReferencedAncestorAlive)
+{
+    thread_pool pool{ 1 };
+    std::weak_ptr<int> weak_owner;
+    std::optional<fvalue<thread_pool, std::shared_ptr<int> &>> stored_value;
+
+    {
+        auto owner = std::make_shared<int>(42);
+        weak_owner = owner;
+        auto promise = cl::promise(&pool, [owner]() { return owner; });
+        auto source = promise.get_future();
+        auto reference = source.then([](auto source_fvalue)
+                                     -> std::shared_ptr<int> & {
+            auto locked_source_value = source_fvalue.lock();
+            return *locked_source_value;
+        });
+
+        promise.resolve();
+        stored_value.emplace(reference.get());
+
+        event callbacks_drained;
+        pool.post([&callbacks_drained] { callbacks_drained.set(); });
+        ASSERT_TRUE(callbacks_drained.wait_for(std::chrono::seconds(10)));
+    }
+
+    ASSERT_FALSE(weak_owner.expired());
+    stored_value->lock().with([](std::shared_ptr<int> &value) {
+        ASSERT_TRUE(value);
+        EXPECT_EQ(*value, 42);
+    });
+
+    stored_value.reset();
+    EXPECT_TRUE(weak_owner.expired());
+    pool.stop();
+}
+
+TEST_F(Future, LockedFValueKeepsControllerAndReferencedAncestorAlive)
+{
+    thread_pool pool{ 1 };
+    std::weak_ptr<int> weak_owner;
+
+    {
+        auto owner = std::make_shared<int>(42);
+        weak_owner = owner;
+        auto promise = cl::promise(&pool, [owner]() { return owner; });
+        auto source = promise.get_future();
+        auto reference = source.then([](auto source_fvalue)
+                                     -> std::shared_ptr<int> & {
+            auto locked_source_value = source_fvalue.lock();
+            return *locked_source_value;
+        });
+
+        promise.resolve();
+        reference.wait();
+
+        event callbacks_drained;
+        pool.post([&callbacks_drained] { callbacks_drained.set(); });
+        ASSERT_TRUE(callbacks_drained.wait_for(std::chrono::seconds(10)));
+
+        auto locked_value = reference.get().lock();
+        owner.reset();
+        promise = {};
+        source = {};
+        reference = {};
+
+        ASSERT_FALSE(weak_owner.expired());
+        locked_value.with([](std::shared_ptr<int> &value) {
+            ASSERT_TRUE(value);
+            EXPECT_EQ(*value, 42);
+        });
+    }
+
+    EXPECT_TRUE(weak_owner.expired());
+    pool.stop();
 }
 
 TEST_F(Future, FValueMakesCopyOfValueIfFunctorHasNonReferenceParameter)

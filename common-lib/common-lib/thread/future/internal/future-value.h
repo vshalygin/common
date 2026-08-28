@@ -14,6 +14,8 @@
 #include <utility>
 
 namespace vshalygin::cl::internal {
+    class ifuture_controller;
+
     template<typename, typename>
     class future_controller;
 
@@ -29,10 +31,16 @@ namespace vshalygin::cl::internal {
         template<typename, typename>
         friend class fvalue;
 
-        locked_fvalue(std::shared_ptr<future_value_state<T>> value_state)
-            : m_value_state(std::move(value_state))
+        locked_fvalue(
+            std::shared_ptr<future_value_state<T>> value_state,
+            std::shared_ptr<const ifuture_controller> controller)
+            : m_controller(std::move(controller))
+            , m_value_state(std::move(value_state))
             , m_lock(*m_value_state->m_mtx)
-        {}
+        {
+            assert(m_controller);
+            assert(m_value_state);
+        }
 
     public:
         using value_type = std::remove_reference_t<T>;
@@ -82,6 +90,7 @@ namespace vshalygin::cl::internal {
         }
 
     private:
+        std::shared_ptr<const ifuture_controller> m_controller;
         std::shared_ptr<future_value_state<T>> m_value_state;
         std::unique_lock<std::mutex> m_lock;
     };
@@ -97,7 +106,8 @@ namespace vshalygin::cl::internal {
         template<typename, typename>
         friend class promise;
 
-        explicit fvalue(std::shared_ptr<future_value_state<T>> value);
+        explicit fvalue(
+            std::shared_ptr<const future_controller<ThreadPool, T>> controller);
 
         auto get_value_state() const;
         void ensure_valid() const;
@@ -113,25 +123,26 @@ namespace vshalygin::cl::internal {
         auto lock() const;
 
     private:
-        std::shared_ptr<future_value_state<T>> m_value;
+        std::shared_ptr<const future_controller<ThreadPool, T>> m_controller;
     };
 
     template<typename ThreadPool, typename T>
-    fvalue<ThreadPool, T>::fvalue(std::shared_ptr<future_value_state<T>> value)
-        : m_value(std::move(value))
+    fvalue<ThreadPool, T>::fvalue(
+        std::shared_ptr<const future_controller<ThreadPool, T>> controller)
+        : m_controller(std::move(controller))
     {}
 
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::get_value_state() const
     {
         ensure_valid();
-        return m_value;
+        return m_controller->get_value_state();
     }
 
     template<typename ThreadPool, typename T>
     void fvalue<ThreadPool, T>::ensure_valid() const
     {
-        if(!m_value) {
+        if(!m_controller) {
             throw std::logic_error("fvalue is invalid");
         }
     }
@@ -139,14 +150,12 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::lock()
     {
-        ensure_valid();
-        return locked_fvalue<T>(m_value);
+        return locked_fvalue<T>(get_value_state(), m_controller);
     }
 
     template<typename ThreadPool, typename T>
     auto fvalue<ThreadPool, T>::lock() const
     {
-        ensure_valid();
-        return locked_fvalue<T>(m_value);
+        return locked_fvalue<T>(get_value_state(), m_controller);
     }
 }
