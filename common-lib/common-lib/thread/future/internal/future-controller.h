@@ -116,8 +116,6 @@ namespace vshalygin::cl::internal {
         ThreadPool *m_thread_pool;
 
         std::shared_ptr<const ifuture_controller> m_value_source;
-        value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
-        value_locker<std::vector<std::shared_ptr<ifuture_controller>>> m_dependent;
 
         mutable on_success_mtx_t m_on_success_mtx;
         std::queue<on_success_t> m_on_success_queue;
@@ -132,6 +130,11 @@ namespace vshalygin::cl::internal {
         std::optional<std::exception_ptr> m_exception;
 
         mutable std::condition_variable_any m_cv;
+
+        // Controllers that may depend on this controller's value are declared
+        // last so that they are destroyed before m_val_state.
+        value_locker<std::vector<std::shared_ptr<ifuture_controller>>> m_dependent;
+        value_locker<std::vector<std::unique_ptr<ifuture_controller>>> m_children;
 
     };
 

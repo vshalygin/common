@@ -96,6 +96,65 @@ namespace {
         }
     };
 
+    class ancestor_lifetime_value
+    {
+    public:
+        explicit ancestor_lifetime_value(std::shared_ptr<std::atomic_bool> alive)
+            : m_alive(std::move(alive))
+        {}
+
+        ancestor_lifetime_value(const ancestor_lifetime_value &) = delete;
+        ancestor_lifetime_value &operator=(const ancestor_lifetime_value &) = delete;
+
+        ancestor_lifetime_value(ancestor_lifetime_value &&) noexcept = default;
+        ancestor_lifetime_value &operator=(ancestor_lifetime_value &&) noexcept = default;
+
+        ~ancestor_lifetime_value()
+        {
+            if(m_alive) {
+                m_alive->store(false, std::memory_order_relaxed);
+            }
+        }
+
+    private:
+        std::shared_ptr<std::atomic_bool> m_alive;
+    };
+
+    class descendant_destruction_observer
+    {
+    public:
+        descendant_destruction_observer(
+            std::shared_ptr<std::atomic_bool> ancestor_alive,
+            std::shared_ptr<std::atomic_bool> destroyed_while_ancestor_alive)
+            : m_ancestor_alive(std::move(ancestor_alive))
+            , m_destroyed_while_ancestor_alive(
+                  std::move(destroyed_while_ancestor_alive))
+        {}
+
+        descendant_destruction_observer(
+            const descendant_destruction_observer &) = delete;
+        descendant_destruction_observer &operator=(
+            const descendant_destruction_observer &) = delete;
+
+        descendant_destruction_observer(
+            descendant_destruction_observer &&) noexcept = default;
+        descendant_destruction_observer &operator=(
+            descendant_destruction_observer &&) noexcept = default;
+
+        ~descendant_destruction_observer()
+        {
+            if(m_ancestor_alive) {
+                m_destroyed_while_ancestor_alive->store(
+                    m_ancestor_alive->load(std::memory_order_relaxed),
+                    std::memory_order_relaxed);
+            }
+        }
+
+    private:
+        std::shared_ptr<std::atomic_bool> m_ancestor_alive;
+        std::shared_ptr<std::atomic_bool> m_destroyed_while_ancestor_alive;
+    };
+
     auto make_owned_reference_future(
         thread_pool *pool,
         std::shared_ptr<int> owner)
@@ -962,6 +1021,51 @@ TEST_F(Future, LockedFValueKeepsControllerAndReferencedAncestorAlive)
     pool.stop();
 }
 
+TEST_F(Future, DestroysDescendantValueBeforeReferencedAncestorValue)
+{
+    auto ancestor_alive = std::make_shared<std::atomic_bool>(true);
+    auto descendant_destroyed_while_ancestor_alive =
+        std::make_shared<std::atomic_bool>(false);
+    thread_pool pool{ 1 };
+
+    {
+        auto promise = cl::promise(&pool, [ancestor_alive] {
+            return ancestor_lifetime_value(ancestor_alive);
+        });
+        auto ancestor = promise.get_future();
+        auto descendant = ancestor.then(
+            [ancestor_alive,
+             descendant_destroyed_while_ancestor_alive](auto source_fvalue) {
+                auto locked_source_value = source_fvalue.lock();
+                return locked_source_value.with(
+                    [ancestor_alive,
+                     descendant_destroyed_while_ancestor_alive]
+                    (ancestor_lifetime_value &value) {
+                        return ftuple<
+                            ancestor_lifetime_value &,
+                            descendant_destruction_observer>{
+                                value,
+                                descendant_destruction_observer(
+                                    ancestor_alive,
+                                    descendant_destroyed_while_ancestor_alive)
+                            };
+                    });
+            });
+
+        promise.resolve();
+        descendant.wait();
+
+        event callbacks_drained;
+        pool.post([&callbacks_drained] { callbacks_drained.set(); });
+        ASSERT_TRUE(callbacks_drained.wait_for(std::chrono::seconds(10)));
+    }
+
+    EXPECT_FALSE(ancestor_alive->load(std::memory_order_relaxed));
+    EXPECT_TRUE(descendant_destroyed_while_ancestor_alive->load(
+        std::memory_order_relaxed));
+    pool.stop();
+}
+
 TEST_F(Future, FValueMakesCopyOfValueIfFunctorHasNonReferenceParameter)
 {
     auto p = promise(&m_pool, []()->std::string { return "data"; });
@@ -1053,7 +1157,7 @@ TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
     static volatile int i8; i8 = 8;
     static volatile int i9; i9 = 9;
     static volatile int i11; i11 = 11;
-    static volatile int i12; i12 = 12
+    static volatile int i12; i12 = 12;
 
     auto p1 = promise(&m_pool, []()->int { return 1; });
     p1.resolve();
