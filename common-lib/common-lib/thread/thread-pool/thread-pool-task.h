@@ -55,7 +55,7 @@ namespace vshalygin::cl {
         }
 
     private:
-        thread_pool *m_thread_pool;
+        thread_pool *m_thread_pool = nullptr;
         function<Signature> m_func;
     };
 

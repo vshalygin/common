@@ -42,7 +42,7 @@ namespace vshalygin::cl {
         boost::asio::steady_timer timer(m_io_context);
         timer.expires_after(timeout);
         timer.async_wait([timers_map_wp = std::weak_ptr(m_timers_map), timer_id,
-                          callback = std::move(callback)]
+                          callback = std::forward<Callback>(callback)]
                           (const boost::system::error_code &ec) mutable
         {
             if(auto timers_map = timers_map_wp.lock()){
