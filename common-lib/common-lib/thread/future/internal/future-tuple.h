@@ -1,4 +1,6 @@
 #pragma once
+#include "future-tuple-utils.h"
+
 #include <common-lib/mpl/type-transform.h>
 #include <common-lib/mpl/function-traits.h>
 #include <common-lib/utils/type-qualifiers-cast.h>
@@ -10,6 +12,10 @@ namespace vshalygin::cl::internal {
     template<typename...Args>
     class ftuple
     {
+        static_assert(
+            (!is_nested_future_tuple<remove_type_qualifiers_t<Args>>::value && ...),
+            "nested ftuple is not supported");
+
         using tuple = std::tuple<Args...>;
 
     public:

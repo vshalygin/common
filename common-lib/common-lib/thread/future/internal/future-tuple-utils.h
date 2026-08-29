@@ -1,10 +1,22 @@
 #pragma once
-#include "future-tuple.h"
 #include <common-lib/mpl/type-transform.h>
 
 #include <type_traits>
 
 namespace vshalygin::cl::internal {
+    template<typename...Args>
+    class ftuple;
+
+    template<typename T>
+    struct is_nested_future_tuple
+        : std::false_type
+    {};
+
+    template<typename...Args>
+    struct is_nested_future_tuple<ftuple<Args...>>
+        : std::true_type
+    {};
+
     template<typename T>
     struct is_future_tuple_impl
         : std::false_type
