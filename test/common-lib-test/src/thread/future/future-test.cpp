@@ -799,7 +799,8 @@ TEST_F(Future, FailHandlerNeverCopyIfMovedToCatchedMethod)
 
 TEST_F(Future, FValueMayInvokeHandlerWithOneParamerterWithVariousQualificators)
 {
-    static volatile int vi = 1;
+    static volatile int vi;
+    vi = 1;
     auto p1 = promise(&m_pool, []()->int { return 1; });
     auto p2 = promise(&m_pool, []()->volatile int &{ return vi; });
     p1.resolve();
@@ -1045,14 +1046,14 @@ TEST_F(Future, PassMoveOnlyTypeThroughChainHanlers)
 #endif
 TEST_F(Future, MayBeParameterizedByTypeWithAnyQualifiers)
 {
-    static int i2 = 2;
-    static int i3 = 3;
-    static int i5 = 5;
-    static int i6 = 6;
-    static volatile int i8 = 8;
-    static volatile int i9 = 9;
-    static volatile int i11 = 11;
-    static volatile int i12 = 12;
+    static int i2; i2 = 2;
+    static int i3; i3 = 3;
+    static int i5; i5 = 5;
+    static int i6; i6 = 6;
+    static volatile int i8; i8 = 8;
+    static volatile int i9; i9 = 9;
+    static volatile int i11; i11 = 11;
+    static volatile int i12; i12 = 12
 
     auto p1 = promise(&m_pool, []()->int { return 1; });
     p1.resolve();
