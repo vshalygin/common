@@ -26,9 +26,10 @@ waiting for a response, applying timeouts, and completing disconnection are
 expressed through futures and callbacks scheduled on the supplied execution
 context. The RPC API has no method that blocks the calling thread while waiting
 for an external event or another operation to complete. Internal methods may
-briefly block while acquiring mutexes used to protect an object's shared
-mutable state; those critical sections do not perform transport I/O or wait for
-asynchronous completion.
+block while acquiring mutexes used to protect shared mutable state. Code holding such a lock may
+initiate an asynchronous transport operation, but it does not wait
+synchronously for that operation to complete. Completion is delivered later
+through the scheduled callback and future chain.
 
 ```mermaid
 flowchart LR
@@ -102,6 +103,11 @@ The server endpoint:
 An internal endpoint binds one connection to a generated Protocol Buffers
 service stub. Its channel implements `google::protobuf::RpcChannel`, translating
 a generated stub invocation into an asynchronous library request.
+
+Service `.proto` files must contain `option cc_generic_services = true;` so
+that C++ generation produces the `google::protobuf::Service` base and matching
+stub used by this layer. Generating only message classes is insufficient for
+the RPC API.
 
 The channel assigns a monotonically increasing message number, serializes the
 request, and later validates and parses the correlated response. The public
@@ -355,22 +361,17 @@ should not yet be treated as a stable cross-version wire contract.
 ## Transport extension contract
 
 A custom transport integrates below the RPC layer by implementing the relevant
-pipe environment and `ipipe_endpoint` interfaces. The endpoint contract
-requires that an implementation:
+pipe environment and `ipipe_endpoint` interfaces. It must preserve complete
+message boundaries and the asynchronous completion, timeout, cancellation,
+disconnect, invalidation, and connection-state semantics specified next to the
+public `ipipe_endpoint` declaration. That declaration is the authoritative
+implementation contract.
 
-- be active when returned by a successful environment operation;
-- preserve complete message boundaries;
-- support asynchronous reads and writes, with and without timeouts;
-- complete every operation exactly once with `success`, `timeout`, `canceled`,
-  or `failed`;
-- complete pending operations as canceled when explicitly invalidated;
-- complete pending and subsequent operations as failed after an unexpected
-  connection loss;
-- invoke the disconnect callback, including immediately when it is registered
-  after the connection has already been lost;
-- reject or fail an incoming message larger than `MaxTransferMessageSize`;
-- treat destruction as invalidation;
-- not attempt transparent reconnection inside the same endpoint.
+Transport implementations that accept data from outside the process must also
+reject an incoming message larger than `MaxTransferMessageSize`. The bundled
+in-memory transport is process-local and relies on the RPC layer's request,
+response, and transfer-message limits instead of repeating this validation at
+its internal queue boundary.
 
 Client and server environments are responsible for pairing or establishing
 the two transport sides and for canceling pending establishment operations by

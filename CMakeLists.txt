@@ -68,12 +68,6 @@ configure_package_config_file(
     INSTALL_DESTINATION "${vshalygin_common_install_cmakedir}"
 )
 
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config-version.cmake"
-    VERSION "${PROJECT_VERSION}"
-    COMPATIBILITY SameMajorVersion
-)
-
 install(EXPORT vshalygin-common-targets
     FILE vshalygin-common-targets.cmake
     NAMESPACE vshalygin::
@@ -82,6 +76,5 @@ install(EXPORT vshalygin-common-targets
 
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/vshalygin-common-config-version.cmake"
     DESTINATION "${vshalygin_common_install_cmakedir}"
 )

@@ -30,7 +30,7 @@ is built as a standalone project and consumes the installed package through
 - x64 and x86 builds on Windows and Linux.
 - Debug and Release presets, with interprocedural optimization in Release when
   supported by the toolchain.
-- Dependencies managed through vcpkg manifest mode.
+- Recommended presets with dependencies managed through vcpkg manifest mode.
 - Tests discovered and executed individually through GoogleTest and CTest.
 - GCC line and branch coverage reports.
 - Clang AddressSanitizer, UndefinedBehaviorSanitizer, and ThreadSanitizer
@@ -44,7 +44,8 @@ is built as a standalone project and consumes the installed package through
   currently use Visual Studio 2022 with the v143 toolset, GCC 11, and Clang 14;
   these versions are recommended configurations rather than requirements for
   custom builds.
-- [vcpkg](https://github.com/microsoft/vcpkg), bootstrapped locally.
+- [vcpkg](https://github.com/microsoft/vcpkg), bootstrapped locally, required
+  for the provided presets.
 - Ninja for the provided Linux presets.
 - A multilib toolchain and 32-bit development libraries for Linux x86 builds.
 - Python 3 and gcovr 8.6 for coverage generation.
@@ -129,7 +130,7 @@ toolchain and architecture combinations.
 - [Documentation index](docs/README.md)
 - [Getting started](docs/getting-started.md)
 - [Building and installing](docs/build-and-install.md)
-- [Testing and runtime diagnostics](docs/testing.md)
+- [Testing](docs/testing.md)
 - [Architecture](docs/architecture.md)
 - [Future semantics](docs/future-semantics.md)
 - [RPC architecture and protocol](docs/rpc-architecture.md)

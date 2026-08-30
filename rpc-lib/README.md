@@ -50,9 +50,11 @@ disconnection completion are expressed through futures and callbacks. No RPC
 method blocks the calling thread while waiting for transport activity or
 another asynchronous operation to finish.
 
-The only synchronous blocking inside these workflows is the brief acquisition
-of mutexes that protect an object's mutable state. Transport I/O and waiting
-for asynchronous completion are not performed while such mutexes are held.
+The only synchronous blocking inside these workflows is acquisition of
+mutexes that protect shared mutable state. An asynchronous transport operation may be
+initiated while that state is locked, but the calling thread does not wait for
+the I/O to complete: completion is reported later through a callback and the
+associated future.
 
 The application supplies the execution context used by RPC objects. This keeps
 thread count, scheduling, and shutdown under application control rather than
@@ -67,6 +69,17 @@ calls use a generated stub; incoming calls are dispatched to an
 application-provided service implementation. Request and response messages are
 serialized for transfer and correlated so that multiple operations may be in
 flight concurrently.
+
+The `.proto` definitions used with `rpc-lib` must request generation of the C++
+generic service and stub interfaces:
+
+```proto
+option cc_generic_services = true;
+```
+
+Without this option, `protoc` generates message types but not the
+`google::protobuf::Service` implementation base and matching stub required by
+the library.
 
 The RPC protocol is independent of the concrete transport. It defines the
 information needed to identify a message, select a service method, distinguish

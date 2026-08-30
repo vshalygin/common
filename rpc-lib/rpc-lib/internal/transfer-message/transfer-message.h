@@ -7,25 +7,10 @@
 
 #include <string>
 
-/*
-    A transfer_msg is a single, logically complete message transmitted
-    between a client and a server.
-    Each transfer_msg has its own type:
-    transfer_type::req  - a request sent from one endpoint to another
-    transfer_type::res  - a response sent from one endpoint to another in reply to a request
-    transfer_type::ping - a special request sent to check connection validity
-    transfer_type::pong - a response to a ping
-
-    The req and res types have the same header:
-    1 byte for the message type + 4 bytes for the serialized Protobuf message size
-
-    The req and res types have their own trailers:
-    req: 8 bytes for the message number + 4 bytes for the method index
-    res: 8 bytes for the message number + 1 byte for the response result code
-
-    Ping and pong messages have at least one byte at the beginning for the
-    message type; the remaining bytes are unspecified.
-*/
+// A transfer message is one logically complete request, response, ping, or
+// pong exchanged by two RPC connections. Its byte-level layout is centralized
+// in transfer-message.cpp and described in the project's RPC architecture
+// document.
 
 namespace google::protobuf {
     class Message;

@@ -311,9 +311,10 @@ outcome.
 
 ## Future flattening
 
-When a `then()` or `catched()` callback returns a future by value, the outer
-operation adopts the returned future's eventual stored type and outcome. The
-caller receives one flattened future rather than a `future<future<T>>`.
+Flattening applies only to a future returned by value from a `then()` or
+`catched()` callback. The outer operation adopts the returned future's eventual
+stored type and outcome, so the caller receives one flattened future rather
+than a `future<future<T>>`.
 
 ```cpp
 auto async_double = [&pool](int value) {
@@ -339,6 +340,13 @@ If `source_future` stores `int`, `doubled` also stores `int`, not another
 future. Exceptions from either level propagate through the flattened chain.
 The returned future must be valid and returned as an unqualified value; an
 invalid returned future settles the outer chain with `std::logic_error`.
+
+A future is not a valid stored value for `promise<ThreadPool, T>`: instantiating
+a promise whose `T` is a future is rejected at compile time. Likewise,
+`promise::set_value()` rejects a future argument at compile time. Completing a
+promise therefore never performs flattening. Start or obtain the nested
+asynchronous operation in a continuation and return its future from `then()` or
+`catched()` when flattening is required.
 
 Flattening also preserves the controller that owns the adopted value state.
 Consequently, values or references backed by a returned future remain valid
@@ -389,10 +397,15 @@ pool, such blocking can starve the operation and deadlock the workflow.
 
 ## Validity and move semantics
 
-Promises, futures, and value handles are move-only. A default-constructed or
-moved-from object is invalid. `is_valid()` can be used before an optional
-operation, while methods that require state throw `std::logic_error` when
-called on an invalid object.
+Promises and futures are move-only. They may be default-constructed, and a
+default-constructed or moved-from object is invalid. Their `is_valid()` method
+can be used before an optional operation; methods that require state throw
+`std::logic_error` when called on an invalid object.
+
+An `fvalue` is also move-only, but it cannot be default-constructed and does
+not expose `is_valid()`. A valid future creates it only after a value is
+available. A moved-from `fvalue` must not be used; attempting to lock one throws
+`std::logic_error`.
 
 Move-only result values are supported. A continuation that wants to transfer
 such a value to its child stage must explicitly move it while holding the value
@@ -427,7 +440,8 @@ The future subsystem guarantees that:
   continuations registered after settlement;
 - exceptions skip success callbacks and propagate until handled;
 - `then()`, `catched()`, and `finally()` each return a distinct child future;
-- a future returned by value is flattened and its failure propagates;
+- a compatible future returned by value from `then()` or `catched()` is
+  flattened and its failure propagates;
 - internal source states needed by reference-valued descendants and flattened
   results are retained;
 - access through `fvalue::lock()` is serialized by the value's mutex.

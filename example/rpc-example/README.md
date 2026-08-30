@@ -13,26 +13,19 @@ repository source tree.
 ## Before building
 
 The libraries must already be built and installed with the configuration that
-will be used by the example. The matching example presets point
-`CMAKE_PREFIX_PATH` to the installation directories produced by the root
-project presets.
+will be used by the example. Follow [Getting started](../../docs/getting-started.md)
+for a first package installation or
+[Building and installing](../../docs/build-and-install.md) for other
+configurations. The matching example presets point `CMAKE_PREFIX_PATH` to the
+installation directories produced by the root project presets.
 
-Set `VCPKG_ROOT` to a bootstrapped vcpkg checkout before configuring either
-project. For complete prerequisite and initial setup instructions, see
-[Getting started](../../docs/getting-started.md).
+Set `VCPKG_ROOT` to a bootstrapped vcpkg checkout before using the provided
+example presets.
 
 ## Windows: MSVC x64 Debug
 
-From PowerShell, build and install the package:
-
-```powershell
-Set-Location C:/Coding/common
-cmake --preset vs2022-x64
-cmake --build --preset vs2022-x64-debug --parallel
-cmake --install out/build/vs2022-x64 --config Debug
-```
-
-Configure and build the standalone example:
+After installing the matching package, configure and build the standalone
+example from PowerShell:
 
 ```powershell
 Set-Location C:/Coding/common/example/rpc-example
@@ -51,16 +44,8 @@ preset can be used in the same way for a 32-bit build.
 
 ## Linux: GCC x64 Debug
 
-From the repository root, build and install the package:
-
-```bash
-cd "$HOME/Coding/common"
-cmake --preset linux-gcc-debug
-cmake --build --preset linux-gcc-debug --parallel
-cmake --install out/build/linux-gcc-debug
-```
-
-Configure and build the standalone example:
+After installing the matching package, configure and build the standalone
+example:
 
 ```bash
 cd "$HOME/Coding/common/example/rpc-example"

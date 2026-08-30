@@ -211,7 +211,7 @@ installed package contains:
 
 - static library binaries for the selected platform and configuration;
 - public headers and compiler-required implementation headers;
-- `vshalygin-common-config.cmake` and its version file;
+- `vshalygin-common-config.cmake` package metadata;
 - exported targets under the `vshalygin::` namespace.
 
 Debug binaries use a `d` postfix, allowing Debug and Release variants to share
@@ -234,6 +234,6 @@ installation prefix.
 - [Repository overview](../README.md)
 - [Getting started](getting-started.md)
 - [Building and installing](build-and-install.md)
-- [Testing and runtime diagnostics](testing.md)
+- [Testing](testing.md)
 - [Future semantics](future-semantics.md)
 - [RPC architecture and protocol](rpc-architecture.md)

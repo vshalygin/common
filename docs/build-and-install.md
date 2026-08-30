@@ -32,7 +32,8 @@ Every build requires:
 
 - CMake 3.25 or newer;
 - a C++17-capable MSVC, GCC, or Clang compiler;
-- Boost 1.86 or newer with Boost.Thread;
+- Boost 1.86 or newer with Boost.Asio, Boost.Endian, Boost.MultiIndex, and
+  Boost.Thread;
 - Protobuf with the `protobuf::libprotobuf` and `protobuf::protoc` CMake
   targets;
 - platform thread support.
@@ -95,7 +96,7 @@ The principal build configurations are:
 | Linux | Clang | x64, x86 | Debug, Release |
 
 Coverage and sanitizer presets are documented in
-[Testing and runtime diagnostics](testing.md).
+[Testing](testing.md).
 
 ## Building on Windows
 
@@ -283,7 +284,6 @@ Given an installation prefix `<prefix>`, CMake installs a conventional layout:
     `-- cmake/
         `-- vshalygin-common/
             |-- vshalygin-common-config.cmake
-            |-- vshalygin-common-config-version.cmake
             `-- vshalygin-common-targets*.cmake
 ```
 
@@ -384,5 +384,5 @@ architectures, standard-library ABIs, or MSVC runtime models.
 
 - [Repository overview](../README.md)
 - [Architecture](architecture.md)
-- [Testing and runtime diagnostics](testing.md)
+- [Testing](testing.md)
 - [RPC example](../example/rpc-example/README.md)

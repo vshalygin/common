@@ -251,7 +251,7 @@ outputs.
 
 - Read [Building and installing](build-and-install.md) for the complete preset
   matrix and custom configurations.
-- Read [Testing and runtime diagnostics](testing.md) for coverage and sanitizer
+- Read [Testing](testing.md) for coverage and sanitizer
   workflows.
 - Read [Architecture](architecture.md) for project boundaries and dependency
   direction.
