@@ -26,7 +26,7 @@ namespace vshalygin::rpc {
         stop_listening
     };
 
-    template<typename GClientServiceStub, typename GServerService>
+    template<typename RemoteStub, typename LocalService>
     class server_endpoint
     {
     public:
@@ -41,7 +41,7 @@ namespace vshalygin::rpc {
                                  cl::thread_pool *thread_pool,
                                  std::shared_ptr<iauthenticator> authenticator,
                                  std::shared_ptr<iserver_pipe_env> pipe_env,
-                                 std::shared_ptr<GServerService> gservice,
+                                 std::shared_ptr<LocalService> gservice,
                                  const config & = config{});
 
         server_endpoint(const server_endpoint &) = delete;
@@ -66,8 +66,8 @@ namespace vshalygin::rpc {
         std::shared_ptr<impl> m_impl;
     };
 
-    template<typename GClientServiceStub, typename GServerService>
-    class server_endpoint<GClientServiceStub, GServerService>::impl
+    template<typename RemoteStub, typename LocalService>
+    class server_endpoint<RemoteStub, LocalService>::impl
         : public std::enable_shared_from_this<impl>
     {
     public:
@@ -106,27 +106,27 @@ namespace vshalygin::rpc {
         std::unique_ptr<internal::server_connector> m_connector;
 
         mutable std::mutex m_mtx;
-        std::unordered_map<uint64_t, std::unique_ptr<internal::endpoint<GClientServiceStub>>> m_endpoints_map;
+        std::unordered_map<uint64_t, std::unique_ptr<internal::endpoint<RemoteStub>>> m_endpoints_map;
         bool m_is_finalizing = false;
     };
 
-    template<typename GClientServiceStub, typename GServerService>
-    server_endpoint<GClientServiceStub, GServerService>::impl::impl(
+    template<typename RemoteStub, typename LocalService>
+    server_endpoint<RemoteStub, LocalService>::impl::impl(
         cl::thread_pool *thread_pool,
         on_connection_change_t &&on_connection_change)
         : m_thread_pool(thread_pool)
         , m_on_connection_change(std::make_shared<on_connection_change_t>(std::move(on_connection_change)))
     {}
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::impl::set_connector(
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::impl::set_connector(
         std::unique_ptr<internal::server_connector> connector)
     {
         m_connector = std::move(connector);
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::impl::process_new_connection(
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::impl::process_new_connection(
         uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
         cl::promise disconnect_promise(m_thread_pool, []() {});
@@ -137,7 +137,7 @@ namespace vshalygin::rpc {
             return;
         }
 
-        auto ep = std::make_unique<internal::endpoint<GClientServiceStub>>(std::move(c), m_thread_pool);
+        auto ep = std::make_unique<internal::endpoint<RemoteStub>>(std::move(c), m_thread_pool);
         ep->set_disconnect_callback(
             cl::thread_pool_task(
                 m_thread_pool,
@@ -165,8 +165,8 @@ namespace vshalygin::rpc {
                   });
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::impl::finalize()
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::impl::finalize()
     {
         std::lock_guard guard(m_mtx);
         m_is_finalizing = true;
@@ -175,17 +175,17 @@ namespace vshalygin::rpc {
         }
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    size_t server_endpoint<GClientServiceStub, GServerService>::impl::get_active_connections_count() const
+    template<typename RemoteStub, typename LocalService>
+    size_t server_endpoint<RemoteStub, LocalService>::impl::get_active_connections_count() const
     {
         std::lock_guard guard(m_mtx);
         return m_endpoints_map.size();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::impl::remove_endpoint_from_map(uint64_t id)
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::impl::remove_endpoint_from_map(uint64_t id)
     {
-        std::unique_ptr<internal::endpoint<GClientServiceStub>> endpoint_to_remove;
+        std::unique_ptr<internal::endpoint<RemoteStub>> endpoint_to_remove;
 
         std::lock_guard guard(m_mtx);
         auto it = m_endpoints_map.find(id);
@@ -195,27 +195,27 @@ namespace vshalygin::rpc {
         }
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::impl::start_listening()
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::impl::start_listening()
     {
         m_connector->start();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::impl::stop_listening()
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::impl::stop_listening()
     {
         m_connector->stop();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    bool server_endpoint<GClientServiceStub, GServerService>::impl::is_listening() const
+    template<typename RemoteStub, typename LocalService>
+    bool server_endpoint<RemoteStub, LocalService>::impl::is_listening() const
     {
         return m_connector->is_active();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
+    template<typename RemoteStub, typename LocalService>
     template<typename Request, typename Response, typename StubMethod>
-    auto server_endpoint<GClientServiceStub, GServerService>::impl::make_request(
+    auto server_endpoint<RemoteStub, LocalService>::impl::make_request(
           uint64_t connection_id, StubMethod stub_method, const Request &req)
     {
         std::lock_guard guard(m_mtx);
@@ -227,9 +227,9 @@ namespace vshalygin::rpc {
         return it->second->template make_request<Request, Response, StubMethod>(stub_method, req);
     }
 
-    template<typename GClientServiceStub, typename GServerService>
+    template<typename RemoteStub, typename LocalService>
     template<typename Request, typename Response, typename StubMethod>
-    auto server_endpoint<GClientServiceStub, GServerService>::impl::make_request_all(
+    auto server_endpoint<RemoteStub, LocalService>::impl::make_request_all(
             StubMethod stub_method, const Request &req)
     {
         std::vector<std::pair<uint64_t, request_future<Response>>> ans;
@@ -243,14 +243,14 @@ namespace vshalygin::rpc {
         return ans;
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    server_endpoint<GClientServiceStub, GServerService>::server_endpoint(
+    template<typename RemoteStub, typename LocalService>
+    server_endpoint<RemoteStub, LocalService>::server_endpoint(
         on_connection_change_t &&on_connection_change,
         on_change_state_t &&on_change_state,
         cl::thread_pool *thread_pool,
         std::shared_ptr<iauthenticator> authenticator,
         std::shared_ptr<iserver_pipe_env> pipe_env,
-        std::shared_ptr<GServerService> gservice,
+        std::shared_ptr<LocalService> gservice,
         const config &config)
         : m_impl(std::make_shared<impl>(thread_pool, std::move(on_connection_change)))
     {
@@ -259,7 +259,7 @@ namespace vshalygin::rpc {
             authenticator,
             pipe_env,
             [gservice, thread_pool](uint64_t id) {
-                return std::make_unique<internal::service<GServerService>>(gservice, thread_pool, id);
+                return std::make_unique<internal::service<LocalService>>(gservice, thread_pool, id);
             },
             [impl = std::weak_ptr(m_impl)](uint64_t id, std::unique_ptr<internal::iconnection> c) {
                 if(auto self = impl.lock()) {
@@ -280,33 +280,33 @@ namespace vshalygin::rpc {
         m_impl->set_connector(std::move(connector));
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    server_endpoint<GClientServiceStub, GServerService>::~server_endpoint()
+    template<typename RemoteStub, typename LocalService>
+    server_endpoint<RemoteStub, LocalService>::~server_endpoint()
     {
         m_impl->finalize();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::start_listening()
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::start_listening()
     {
         m_impl->start_listening();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    void server_endpoint<GClientServiceStub, GServerService>::stop_listening()
+    template<typename RemoteStub, typename LocalService>
+    void server_endpoint<RemoteStub, LocalService>::stop_listening()
     {
         m_impl->stop_listening();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
-    bool server_endpoint<GClientServiceStub, GServerService>::is_listening() const
+    template<typename RemoteStub, typename LocalService>
+    bool server_endpoint<RemoteStub, LocalService>::is_listening() const
     {
         return m_impl->is_listening();
     }
 
-    template<typename GClientServiceStub, typename GServerService>
+    template<typename RemoteStub, typename LocalService>
     template<typename Request, typename Response, typename StubMethod>
-    auto server_endpoint<GClientServiceStub, GServerService>::make_request(
+    auto server_endpoint<RemoteStub, LocalService>::make_request(
         uint64_t connection_id, StubMethod stub_method, const Request &req)
     {
         return m_impl->template make_request<Request, Response, StubMethod>(connection_id,
@@ -314,9 +314,9 @@ namespace vshalygin::rpc {
                                                                             req);
     }
 
-    template<typename GClientServiceStub, typename GServerService>
+    template<typename RemoteStub, typename LocalService>
     template<typename Request, typename Response, typename StubMethod>
-    auto server_endpoint<GClientServiceStub, GServerService>::make_request_all(
+    auto server_endpoint<RemoteStub, LocalService>::make_request_all(
         StubMethod stub_method, const Request &req)
     {
         return m_impl->template make_request_all<Request, Response, StubMethod>(stub_method,
@@ -324,8 +324,8 @@ namespace vshalygin::rpc {
     }
 
 
-    template<typename GClientServiceStub, typename GServerService>
-    size_t server_endpoint<GClientServiceStub, GServerService>::get_active_connections_count() const
+    template<typename RemoteStub, typename LocalService>
+    size_t server_endpoint<RemoteStub, LocalService>::get_active_connections_count() const
     {
         return m_impl->get_active_connections_count();
     }

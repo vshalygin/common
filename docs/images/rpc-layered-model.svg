@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="670" viewBox="0 0 900 670" role="img" aria-labelledby="title description">
+  <title id="title">RPC library layered model</title>
+  <desc id="description">
+    The application uses public endpoints, generated stubs, and a Protobuf RPC channel.
+    A connection communicates with a request-processing service and delegates transport
+    operations to an abstract pipe endpoint backed by a transport-specific implementation.
+  </desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head"/>
+    </marker>
+    <style>
+      .box {
+        fill: #f6f8fa;
+        stroke: #0969da;
+        stroke-width: 2;
+      }
+      .label {
+        fill: #1f2328;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 18px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      .flow {
+        fill: none;
+        stroke: #57606a;
+        stroke-width: 2;
+        marker-end: url(#arrow);
+      }
+      .arrow-head {
+        fill: #57606a;
+      }
+      @media (prefers-color-scheme: dark) {
+        .box {
+          fill: #21262d;
+          stroke: #58a6ff;
+        }
+        .label {
+          fill: #f0f6fc;
+        }
+        .flow {
+          stroke: #8c959f;
+        }
+        .arrow-head {
+          fill: #8c959f;
+        }
+      }
+    </style>
+  </defs>
+
+  <rect class="box" x="150" y="20" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="47">Application</text>
+
+  <path class="flow" d="M 330 74 L 330 96"/>
+  <rect class="box" x="150" y="100" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="127">client_endpoint / server_endpoint</text>
+
+  <path class="flow" d="M 330 154 L 330 176"/>
+  <rect class="box" x="150" y="180" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="207">endpoint + generated stub</text>
+
+  <path class="flow" d="M 330 234 L 330 256"/>
+  <rect class="box" x="150" y="260" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="287">Protobuf RpcChannel</text>
+
+  <path class="flow" d="M 330 314 L 330 336"/>
+  <rect class="box" x="150" y="340" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="367">connection</text>
+
+  <path class="flow" d="M 510 367 L 548 367"/>
+  <rect class="box" x="552" y="340" width="298" height="54" rx="7"/>
+  <text class="label" x="701" y="367">Request-processing service</text>
+
+  <path class="flow" d="M 330 394 L 330 416"/>
+  <rect class="box" x="150" y="420" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="447">transport</text>
+
+  <path class="flow" d="M 330 474 L 330 496"/>
+  <rect class="box" x="150" y="500" width="360" height="54" rx="7"/>
+  <text class="label" x="330" y="527">ipipe_endpoint</text>
+
+  <path class="flow" d="M 330 554 L 330 576"/>
+  <rect class="box" x="110" y="580" width="440" height="54" rx="7"/>
+  <text class="label" x="330" y="607">Transport-specific pipe implementation</text>
+</svg>

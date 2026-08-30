@@ -8,7 +8,7 @@
 #include <memory>
 
 namespace vshalygin::rpc::internal {
-    template<typename GServiceStub>
+    template<typename RemoteStub>
     class endpoint final
     {
     public:
@@ -35,21 +35,21 @@ namespace vshalygin::rpc::internal {
         cl::thread_pool *m_thread_pool;
 
         channel m_channel;
-        GServiceStub m_service_stub;
+        RemoteStub m_service_stub;
     };
 
-    template<typename GServiceStub>
-    endpoint<GServiceStub>::endpoint(std::unique_ptr<iconnection> connection,
+    template<typename RemoteStub>
+    endpoint<RemoteStub>::endpoint(std::unique_ptr<iconnection> connection,
                                      cl::thread_pool *thread_pool)
         : m_thread_pool(thread_pool)
         , m_channel(std::move(connection))
         , m_service_stub(&m_channel)
     {}
 
-    template<typename GServiceStub>
+    template<typename RemoteStub>
     template<typename Request,typename Response, typename StubMethod>
-    typename endpoint<GServiceStub>::template request_future<Response>
-        endpoint<GServiceStub>::make_request(StubMethod stub_method, const Request &req)
+    typename endpoint<RemoteStub>::template request_future<Response>
+        endpoint<RemoteStub>::make_request(StubMethod stub_method, const Request &req)
     {
         cl::promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
             return cl::ftuple{ r, std::move(m) };
@@ -70,26 +70,26 @@ namespace vshalygin::rpc::internal {
         return future;
     }
 
-    template<typename GServiceStub>
-    void endpoint<GServiceStub>::start()
+    template<typename RemoteStub>
+    void endpoint<RemoteStub>::start()
     {
         m_channel.start();
     }
 
-    template<typename GServiceStub>
-    void endpoint<GServiceStub>::disconnect()
+    template<typename RemoteStub>
+    void endpoint<RemoteStub>::disconnect()
     {
         m_channel.disconnect();
     }
 
-    template<typename GServiceStub>
-    bool endpoint<GServiceStub>::is_connected() const
+    template<typename RemoteStub>
+    bool endpoint<RemoteStub>::is_connected() const
     {
         return m_channel.is_connected();
     }
 
-    template<typename GServiceStub>
-    void endpoint<GServiceStub>::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
+    template<typename RemoteStub>
+    void endpoint<RemoteStub>::set_disconnect_callback(cl::thread_pool_task<void()> &&callback)
     {
         m_channel.set_disconnect_callback(std::move(callback));
     }
