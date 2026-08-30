@@ -135,3 +135,7 @@ toolchain and architecture combinations.
 - [Future semantics](docs/future-semantics.md)
 - [RPC architecture and protocol](docs/rpc-architecture.md)
 - [Project roadmap](ROADMAP.md)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
