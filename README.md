@@ -10,6 +10,13 @@ targeting Linux and Windows.
 The project is under active development. C++17 is the minimum supported
 language standard; consumers may select a newer standard for their build.
 
+This is an independently developed project and an engineering research
+playground for exploring reusable C++ infrastructure, asynchronous execution,
+and RPC design. It is currently a work in progress and requires further
+development; the principal planned work is tracked in the
+[project roadmap](ROADMAP.md). The long-term ambition is to evolve the project
+into a complete, dependable, production-grade solution.
+
 ## Libraries
 
 | Component | CMake target | Platforms | Purpose |
