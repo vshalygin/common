@@ -1,5 +1,6 @@
 #pragma once
 #include "future-controller.h"
+#include "is-future.h"
 #include <atomic>
 #include <cassert>
 #include <exception>
@@ -13,6 +14,9 @@ namespace vshalygin::cl::internal {
     template<typename ThreadPool, typename T>
     class promise
     {
+        static_assert(!is_future_v<T>,
+                      "promise value type must not be a future");
+
     public:
         promise() = default;
 
@@ -121,6 +125,9 @@ namespace vshalygin::cl::internal {
              std::enable_if_t<!std::is_void_v<TT>, int>>
     void promise<ThreadPool, T>::set_value(U &&value)
     {
+        static_assert(!is_future_v<U>,
+                      "promise::set_value must not receive a future");
+
         claim_completion();
 
         try {

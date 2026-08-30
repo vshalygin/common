@@ -57,25 +57,14 @@ namespace {
     // Test-only asynchronous source used to prepare future states. Production
     // promise has no callable or start operation; it is completed only through
     // set_value() or set_exception().
-    template<typename R>
-    struct async_test_source_value
-    {
-        using type = R;
-    };
-
-    template<typename ThreadPool, typename T>
-    struct async_test_source_value<cl::future<ThreadPool, T>>
-    {
-        using type = T;
-    };
-
     template<typename ThreadPool, typename Signature>
     class async_test_source;
 
     template<typename ThreadPool, typename R, typename...Args>
     class async_test_source<ThreadPool, R(Args...)>
     {
-        using value_t = typename async_test_source_value<R>::type;
+        static_assert(!cl::internal::is_future_v<R>,
+                      "async_test_source must not return a future");
 
     public:
         async_test_source() = default;
@@ -84,7 +73,7 @@ namespace {
         async_test_source(ThreadPool *thread_pool, Function &&function)
             : m_thread_pool(thread_pool)
             , m_promise(
-                  std::make_shared<cl::promise<ThreadPool, value_t>>(thread_pool))
+                  std::make_shared<cl::promise<ThreadPool, R>>(thread_pool))
             , m_function(std::forward<Function>(function))
             , m_started(std::make_shared<std::atomic_bool>(false))
         {}
@@ -112,41 +101,7 @@ namespace {
                      arguments = std::tuple{
                          std::forward<Args>(args)... }]() mutable {
                         try {
-                            if constexpr(cl::internal::is_flattenable_future_v<R>) {
-                                auto nested = std::apply(
-                                    [&function](auto &&...values) -> decltype(auto) {
-                                        return function(std::move(values)...);
-                                    },
-                                    std::move(arguments));
-
-                                if(!nested.is_valid()) {
-                                    throw std::logic_error(
-                                        "test source returned an invalid future");
-                                }
-
-                                if constexpr(std::is_void_v<value_t>) {
-                                    nested.then([promise] {
-                                        promise->set_value();
-                                    })
-                                    .catched([promise](std::exception_ptr exception) {
-                                        promise->set_exception(exception);
-                                    });
-                                } else {
-                                    nested.then([promise](auto value) {
-                                        auto locked_value = value.lock();
-                                        if constexpr(std::is_reference_v<value_t>) {
-                                            promise->set_value(
-                                                std::forward<value_t>(*locked_value));
-                                        } else {
-                                            promise->set_value(
-                                                std::move(*locked_value));
-                                        }
-                                    })
-                                    .catched([promise](std::exception_ptr exception) {
-                                        promise->set_exception(exception);
-                                    });
-                                }
-                            } else if constexpr(std::is_void_v<R>) {
+                            if constexpr(std::is_void_v<R>) {
                                 std::apply(
                                     [&function](auto &&...values) {
                                         function(std::move(values)...);
@@ -185,7 +140,7 @@ namespace {
 
     private:
         ThreadPool *m_thread_pool = nullptr;
-        std::shared_ptr<cl::promise<ThreadPool, value_t>> m_promise;
+        std::shared_ptr<cl::promise<ThreadPool, R>> m_promise;
         cl::function<R(Args...)> m_function;
         std::shared_ptr<std::atomic_bool> m_started;
     };
@@ -3602,11 +3557,7 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](const volatile int &&v) { ASSERT_EQ(&i, &v); });
         })
         .get();
-    auto p13 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(&m_pool, [&]() -> int{ return i; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p13 = make_async_test_source(&m_pool, [&]() -> int { return i; });
     p13.start();
     p13.get_future()
         .finally([]() {})
@@ -3615,11 +3566,7 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](int v) { ASSERT_NE(&i, &v); });
         })
         .get();
-    auto p14 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(&m_pool, [&]() -> int &{ return i; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p14 = make_async_test_source(&m_pool, [&]() -> int &{ return i; });
     p14.start();
     p14.get_future()
         .finally([]() {})
@@ -3628,12 +3575,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](int &v) { ASSERT_EQ(&i, &v); });
         })
         .get();
-    auto p15 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> int &&{ return std::move(i); });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p15 = make_async_test_source(
+        &m_pool, [&]() -> int &&{ return std::move(i); });
     p15.start();
     p15.get_future()
         .finally([]() {})
@@ -3642,12 +3585,7 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](int &&v) { ASSERT_EQ(&i, &v); });
         })
         .get();
-    auto p16 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> const int{ return i; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p16 = make_async_test_source(&m_pool, [&]() -> const int { return i; });
     p16.start();
     p16.get_future()
         .finally([]() {})
@@ -3656,12 +3594,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](const int v) { ASSERT_NE(&i, &v); });
         })
         .get();
-    auto p17 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> const int & { return i; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p17 = make_async_test_source(
+        &m_pool, [&]() -> const int & { return i; });
     p17.start();
     p17.get_future()
         .finally([]() {})
@@ -3670,12 +3604,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](const int &v) { ASSERT_EQ(&i, &v); });
         })
         .get();
-    auto p18 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> const int &&{ return std::move(i); });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p18 = make_async_test_source(
+        &m_pool, [&]() -> const int &&{ return std::move(i); });
     p18.start();
     p18.get_future()
         .finally([]() {})
@@ -3684,12 +3614,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](const int &&v) { ASSERT_EQ(&i, &v); });
         })
         .get();
-    auto p19 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> volatile int{ return ii; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p19 = make_async_test_source(
+        &m_pool, [&]() -> volatile int { return ii; });
     p19.start();
     p19.get_future()
         .finally([]() {})
@@ -3698,12 +3624,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](volatile int v) { ASSERT_NE(&ii, &v); });
         })
         .get();
-    auto p20 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> volatile int &{ return ii; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p20 = make_async_test_source(
+        &m_pool, [&]() -> volatile int &{ return ii; });
     p20.start();
     p20.get_future()
         .finally([]() {})
@@ -3712,12 +3634,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](volatile int &v) { ASSERT_EQ(&ii, &v); });
         })
         .get();
-    auto p21 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> volatile int &&{ return std::move(ii); });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p21 = make_async_test_source(
+        &m_pool, [&]() -> volatile int &&{ return std::move(ii); });
     p21.start();
     p21.get_future()
         .finally([]() {})
@@ -3726,12 +3644,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](volatile int &&v) { ASSERT_EQ(&ii, &v); });
         })
         .get();
-    auto p22 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> const volatile int { return ii; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p22 = make_async_test_source(
+        &m_pool, [&]() -> const volatile int { return ii; });
     p22.start();
     p22.get_future()
         .finally([]() {})
@@ -3740,12 +3654,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](const volatile int v) { ASSERT_NE(&ii, &v); });
         })
         .get();
-    auto p23 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> const volatile int &{ return ii; });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p23 = make_async_test_source(
+        &m_pool, [&]() -> const volatile int &{ return ii; });
     p23.start();
     p23.get_future()
         .finally([]() {})
@@ -3754,12 +3664,8 @@ TEST_F(Future, FinallyHandlerMayStoreTypeWithAnySpecifier)
             return locked_source_value.with([&](const volatile int &v) { ASSERT_EQ(&ii, &v); });
         })
         .get();
-    auto p24 = make_async_test_source(&m_pool, [&]() {
-                                         auto p = make_async_test_source(
-                                             &m_pool, [&]() -> const volatile int &&{ return std::move(ii); });
-                                         p.start();
-                                         return p.get_future();
-                                     });
+    auto p24 = make_async_test_source(
+        &m_pool, [&]() -> const volatile int &&{ return std::move(ii); });
     p24.start();
     p24.get_future()
         .finally([]() {})
