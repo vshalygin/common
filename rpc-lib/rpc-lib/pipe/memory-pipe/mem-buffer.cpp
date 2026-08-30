@@ -29,7 +29,7 @@ namespace vshalygin::rpc {
             return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
-        cl::promise promise(m_thread_pool, [](pipe_op_res res) { return res; });
+        cl::promise<cl::thread_pool, pipe_op_res> promise(m_thread_pool);
         auto future = promise.get_future();
 
         auto timeout_point = timeout ? std::chrono::steady_clock::now() + *timeout
@@ -39,7 +39,7 @@ namespace vshalygin::rpc {
                              data = std::move(data),
                              timeout_point]() mutable
         {
-            promise.resolve(self->write_impl(std::move(data), timeout_point));
+            promise.set_value(self->write_impl(std::move(data), timeout_point));
             self->resolve_read_promise();
         });
         
@@ -48,7 +48,7 @@ namespace vshalygin::rpc {
     
     mem_buffer::read_future mem_buffer::read_async(const std::optional<std::chrono::milliseconds> &timeout)
     {
-        cl::promise promise(m_thread_pool, [](pipe_op_res res, cl::buffer b) { return cl::ftuple(res, std::move(b)); });
+        read_promise promise(m_thread_pool);
         auto future = promise.get_future();
 
         std::lock_guard guard(m_mtx);
@@ -75,7 +75,9 @@ namespace vshalygin::rpc {
             auto &q = read_promises->get<0>();
             for(auto it = q.begin(); it != q.end(); ++it) {
                 q.modify(it, [cancel_read](read_promise_data &el) {
-                    el.promise.resolve(cancel_read ? pipe_op_res::canceled : pipe_op_res::failed, {});
+                    el.promise.set_value(cl::ftuple(
+                        cancel_read ? pipe_op_res::canceled : pipe_op_res::failed,
+                        cl::buffer{}));
                 });
             }
             q.clear();
@@ -137,7 +139,7 @@ namespace vshalygin::rpc {
             }
             
             q.modify(q.begin(), [&buffer, &to_delete](read_promise_data &el) mutable {
-                el.promise.resolve(pipe_op_res::success, std::move(buffer));
+                el.promise.set_value(cl::ftuple(pipe_op_res::success, std::move(buffer)));
                 to_delete = std::move(el.promise);
             });
             q.pop_front();
@@ -151,13 +153,13 @@ namespace vshalygin::rpc {
         std::lock_guard guard(m_mtx);
 
         if(!m_is_valid) {
-            promise.resolve(started_while_valid ? m_read_invalidation_result
-                                                : pipe_op_res::failed,
-                            {});
+            promise.set_value(cl::ftuple(
+                started_while_valid ? m_read_invalidation_result : pipe_op_res::failed,
+                cl::buffer{}));
         } else if(!m_buffer.empty()) {
             auto msg = std::move(m_buffer.front());
             m_buffer.pop();
-            promise.resolve(pipe_op_res::success, std::move(msg));
+            promise.set_value(cl::ftuple(pipe_op_res::success, std::move(msg)));
         } else {
             const auto id = m_next_read_promise_id++;
 
@@ -180,7 +182,7 @@ namespace vshalygin::rpc {
                             }
                         }
                         if(promise.is_valid()) {
-                            promise.resolve(pipe_op_res::timeout, {});
+                            promise.set_value(cl::ftuple(pipe_op_res::timeout, cl::buffer{}));
                         }
                     }
                 };

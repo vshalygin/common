@@ -1,31 +1,22 @@
 #pragma once
 #include "future-controller.h"
-#include "future-store-type-or-self.h"
-#include "is-future.h"
-
-#include <common-lib/mpl/function-traits.h>
-#include <common-lib/utils/function.h>
-
+#include <atomic>
+#include <cassert>
+#include <exception>
 #include <future>
 #include <memory>
+#include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 namespace vshalygin::cl::internal {
-    template<typename ThreadPool, typename Signature>
-    class promise;
-
-    template<typename ThreadPool, typename R, typename...Args>
-    class promise<ThreadPool, R(Args...)>
+    template<typename ThreadPool, typename T>
+    class promise
     {
-        template<typename, typename>
-        friend class promise;
-
     public:
         promise() = default;
 
-        template<typename Function>
-        explicit promise(ThreadPool *thread_pool,
-                         Function &&function);
+        explicit promise(ThreadPool *thread_pool);
 
         promise(const promise &) = delete;
         promise &operator=(const promise &) = delete;
@@ -35,167 +26,138 @@ namespace vshalygin::cl::internal {
 
         ~promise() noexcept;
 
-        void resolve(Args...args);
+        template<typename U, typename TT = T,
+                 std::enable_if_t<!std::is_void_v<TT>, int> = 0>
+        void set_value(U &&value);
+
+        template<typename TT = T,
+                 std::enable_if_t<std::is_void_v<TT>, int> = 0>
+        void set_value();
+
+        void set_exception(std::exception_ptr exception);
 
         auto get_future();
 
-        bool is_valid() const;
+        bool is_valid() const noexcept;
 
     private:
         void abandon() noexcept;
+        void claim_completion();
 
     private:
-        ThreadPool *m_thread_pool = nullptr;
-
-        function<R(Args...)> m_function;
-
-        std::shared_ptr<future_controller<ThreadPool, future_store_type_or_self_t<R>>> m_controller;
-        future<ThreadPool, future_store_type_or_self_t<R>> m_future;
-        bool m_completion_pending = false;
+        std::shared_ptr<future_controller<ThreadPool, T>> m_controller;
+        future<ThreadPool, T> m_future;
+        std::atomic_bool m_completion_pending{ false };
     };
 
-    template<typename ThreadPool, typename Function>
-    promise(ThreadPool *thread_pool, Function &&function)
-        -> promise<ThreadPool, function_signature_t<Function>>;
-
-    template<typename ThreadPool, typename R, typename...Args>
-    template<typename Function>
-    promise<ThreadPool, R(Args...)>::promise(ThreadPool *thread_pool,
-                                             Function &&function)
-        : m_thread_pool(thread_pool)
-        , m_function(std::forward<Function>(function))
-        , m_controller(std::make_shared<future_controller<ThreadPool, future_store_type_or_self_t<R>>>(thread_pool))
+    template<typename ThreadPool, typename T>
+    promise<ThreadPool, T>::promise(ThreadPool *thread_pool)
+        : m_controller(std::make_shared<future_controller<ThreadPool, T>>(thread_pool))
         , m_future(thread_pool, m_controller)
         , m_completion_pending(true)
     {
-        assert(m_thread_pool);
+        assert(thread_pool);
         m_controller->set_self_shared_ptr(m_controller);
     }
 
-    template<typename ThreadPool, typename R, typename...Args>
-    promise<ThreadPool, R(Args...)>::promise(promise &&other) noexcept
-        : m_thread_pool(std::exchange(other.m_thread_pool, nullptr))
-        , m_function(std::move(other.m_function))
-        , m_controller(std::move(other.m_controller))
+    template<typename ThreadPool, typename T>
+    promise<ThreadPool, T>::promise(promise &&other) noexcept
+        : m_controller(std::move(other.m_controller))
         , m_future(std::move(other.m_future))
-        , m_completion_pending(std::exchange(other.m_completion_pending, false))
+        , m_completion_pending(other.m_completion_pending.exchange(
+              false,
+              std::memory_order_acq_rel))
     {}
 
-    template<typename ThreadPool, typename R, typename...Args>
-    promise<ThreadPool, R(Args...)> &
-        promise<ThreadPool, R(Args...)>::operator=(promise &&other) noexcept
+    template<typename ThreadPool, typename T>
+    promise<ThreadPool, T> &
+        promise<ThreadPool, T>::operator=(promise &&other) noexcept
     {
         if(this != &other) {
             abandon();
 
-            m_thread_pool = std::exchange(other.m_thread_pool, nullptr);
-            m_function = std::move(other.m_function);
             m_controller = std::move(other.m_controller);
             m_future = std::move(other.m_future);
-            m_completion_pending = std::exchange(other.m_completion_pending, false);
+            m_completion_pending.store(
+                other.m_completion_pending.exchange(false, std::memory_order_acq_rel),
+                std::memory_order_release);
         }
 
         return *this;
     }
 
-    template<typename ThreadPool, typename R, typename...Args>
-    promise<ThreadPool, R(Args...)>::~promise() noexcept
+    template<typename ThreadPool, typename T>
+    promise<ThreadPool, T>::~promise() noexcept
     {
         abandon();
     }
 
-    template<typename ThreadPool, typename R, typename...Args>
-    void promise<ThreadPool, R(Args...)>::abandon() noexcept
+    template<typename ThreadPool, typename T>
+    void promise<ThreadPool, T>::abandon() noexcept
     {
-        if(!m_completion_pending || !m_controller) {
+        if(!m_completion_pending.exchange(false, std::memory_order_acq_rel) ||
+           !m_controller)
+        {
             return;
         }
 
-        m_completion_pending = false;
+        m_controller->set_exception(std::make_exception_ptr(std::future_error(std::future_errc::broken_promise)));
+    }
+
+    template<typename ThreadPool, typename T>
+    void promise<ThreadPool, T>::claim_completion()
+    {
+        if(!m_controller) {
+            throw std::logic_error("promise is invalid");
+        }
+
+        if(!m_completion_pending.exchange(false, std::memory_order_acq_rel)) {
+            throw std::future_error(std::future_errc::promise_already_satisfied);
+        }
+    }
+
+    template<typename ThreadPool, typename T>
+    template<typename U, typename TT,
+             std::enable_if_t<!std::is_void_v<TT>, int>>
+    void promise<ThreadPool, T>::set_value(U &&value)
+    {
+        claim_completion();
 
         try {
-            const auto exception = std::make_exception_ptr(
-                std::future_error(std::future_errc::broken_promise));
-            m_controller->set_exception(exception);
+            m_controller->set_value(std::forward<U>(value));
         } catch(...) {
+            m_controller->set_exception(std::current_exception());
+            throw;
         }
     }
 
-    template<typename ThreadPool, typename R, typename...Args>
-    void promise<ThreadPool, R(Args...)>::resolve(Args...args)
+    template<typename ThreadPool, typename T>
+    template<typename TT, std::enable_if_t<std::is_void_v<TT>, int>>
+    void promise<ThreadPool, T>::set_value()
     {
-        if(!m_function) {
-            throw std::logic_error("no resolve function");
+        claim_completion();
+
+        try {
+            m_controller->set_value();
+        } catch(...) {
+            m_controller->set_exception(std::current_exception());
+            throw;
         }
-
-        if constexpr(is_future_v<R> && !is_flattenable_future_v<R>) {
-            static_assert(is_flattenable_future_v<R>,
-                          "future callback must return future by value without cv/ref qualifiers");
-        } else if constexpr(is_flattenable_future_v<R>) {
-            static_assert(is_value_v<R>);
-
-            using future_t = R;
-            using future_store = future_store_type_or_self_t<future_t>;
-
-            m_thread_pool->post([controller = m_controller,
-                                func = std::move(m_function),
-                                args = std::tuple{ std::forward<Args>(args)... }]() mutable {
-                try {
-                    auto future = std::apply([&func](auto&&...arg) -> decltype(auto) {
-                        return func(std::move(arg)...);
-                    }, std::move(args));
-
-                    auto on_fail = [c = controller](std::exception_ptr e) mutable {
-                        c->set_exception(e);
-                    };
-
-                    if(!future.is_valid()) {
-                        throw std::logic_error("returned future is invalid");
-                    }
-
-                    auto prev_controller = future.get_controller();
-                    if constexpr(std::is_void_v<future_store>) {
-                        auto on_success = [c = controller]() mutable {
-                            c->set_value();
-                        };
-                        prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
-                    } else {
-                        auto on_success = [c = controller] (fvalue<ThreadPool, future_store> value) mutable {
-                            c->add_value_source(value.get_controller());
-                            c->set_value_state(value.get_value_state());
-                        };
-                        prev_controller->set_on_success_and_fail(std::move(on_success), std::move(on_fail));
-                    }
-                } catch(...) {
-                    controller->set_exception(std::current_exception());
-                }
-            });
-        } else {
-            m_thread_pool->post([controller = m_controller,
-                                func = std::move(m_function),
-                                args = std::tuple{ std::forward<Args>(args)... }]() mutable {
-                try {
-                    if constexpr(!std::is_void_v<R>) {
-                        controller->set_value(std::apply([&func](auto&&...arg) -> decltype(auto) {
-                            return func(std::move(arg)...);
-                        }, std::move(args)));
-                    } else {
-                        std::apply([&func](auto&&...arg) {
-                            func(std::move(arg)...);
-                        }, std::move(args));
-                        controller->set_value();
-                    }
-                } catch(...) {
-                    controller->set_exception(std::current_exception());
-                }
-            });
-        }
-
-        m_completion_pending = false;
     }
 
-    template<typename ThreadPool, typename R, typename...Args>
-    auto promise<ThreadPool, R(Args...)>::get_future()
+    template<typename ThreadPool, typename T>
+    void promise<ThreadPool, T>::set_exception(std::exception_ptr exception)
+    {
+        if(!exception) {
+            throw std::invalid_argument("exception must not be null");
+        }
+
+        claim_completion();
+        m_controller->set_exception(exception);
+    }
+
+    template<typename ThreadPool, typename T>
+    auto promise<ThreadPool, T>::get_future()
     {
         if(!m_future.is_valid()) {
             throw std::logic_error("no future");
@@ -204,8 +166,8 @@ namespace vshalygin::cl::internal {
         return std::move(m_future);
     }
 
-    template<typename ThreadPool, typename R, typename...Args>
-    bool promise<ThreadPool, R(Args...)>::is_valid() const
+    template<typename ThreadPool, typename T>
+    bool promise<ThreadPool, T>::is_valid() const noexcept
     {
         return m_controller != nullptr;
     }

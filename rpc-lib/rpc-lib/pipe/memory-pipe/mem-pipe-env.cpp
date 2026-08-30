@@ -138,10 +138,12 @@ namespace vshalygin::rpc {
         if(!other.empty()) {
             auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
             std::shared_ptr<ipipe_endpoint> ans(new mem_pipe_endpoint(is_server, buffers));
-            std::shared_ptr<mem_pipe_endpoint> other_pipe(new mem_pipe_endpoint(!is_server, buffers));
+            std::shared_ptr<ipipe_endpoint> other_pipe(
+                new mem_pipe_endpoint(!is_server, buffers));
 
             other.modify(other.begin(), [&](promise_data &el) mutable {
-                el.promise.resolve(pipe_wait_res::success, std::move(other_pipe));
+                el.promise.set_value(cl::ftuple(pipe_wait_res::success,
+                                                std::move(other_pipe)));
                 if(el.timer_id) {
                     m_timer.cancel(*el.timer_id);
                 }
@@ -155,11 +157,7 @@ namespace vshalygin::rpc {
                 cl::ftuple(pipe_wait_res::success, std::move(ans)));
         }
 
-        cl::promise promise(
-            m_thread_pool,
-            [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> p) {
-                return cl::ftuple{ r, std::move(p)};
-            });
+        pipe_endpoint_promise promise(m_thread_pool);
         auto future = promise.get_future();
 
         const auto promise_id = m_next_read_promise_id++;
@@ -192,7 +190,9 @@ namespace vshalygin::rpc {
                     if(el.timer_id) {
                         m_timer.cancel(*el.timer_id);
                     }
-                    el.promise.resolve(pipe_wait_res::canceled, {});
+                    el.promise.set_value(cl::ftuple(
+                        pipe_wait_res::canceled,
+                        std::shared_ptr<ipipe_endpoint>{}));
                     promises_to_destroy.push_back((std::move(el.promise)));
                 });
                 it = q.erase(it);
@@ -211,7 +211,9 @@ namespace vshalygin::rpc {
         auto it = m.find(id);
         if(it != m.end()) {
             m.modify(it, [&](promise_data &el) mutable {
-                el.promise.resolve(pipe_wait_res::timeout, {});
+                el.promise.set_value(cl::ftuple(
+                    pipe_wait_res::timeout,
+                    std::shared_ptr<ipipe_endpoint>{}));
                 promise_to_destroy = std::move(el.promise);
             });
             m.erase(it);

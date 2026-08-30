@@ -29,8 +29,7 @@ namespace vshalygin::rpc::internal {
                                                      cl::thread_pool *thread_pool)
         : win_pipe_overlapped(win_pipe_operation_kind::read)
         , m_pipe(std::move(pipe))
-        , m_promise(thread_pool,
-                    [](win_pipe_operation_res r, cl::buffer b) { return cl::ftuple(r, std::move(b)); })
+        , m_promise(thread_pool)
     {
         m_buffers.push_back(cl::buffer(8192));
     }
@@ -93,9 +92,11 @@ namespace vshalygin::rpc::internal {
         assert(res != win_pipe_operation_res::unknown);
 
         if(res == win_pipe_operation_res::success) {
-            m_promise.resolve(res, merge_buffers(m_buffers, m_read_bytes.load(std::memory_order_relaxed)));
+            m_promise.set_value(cl::ftuple(
+                res,
+                merge_buffers(m_buffers, m_read_bytes.load(std::memory_order_relaxed))));
         } else {
-            m_promise.resolve(res, cl::buffer{});
+            m_promise.set_value(cl::ftuple(res, cl::buffer{}));
         }
     }
 

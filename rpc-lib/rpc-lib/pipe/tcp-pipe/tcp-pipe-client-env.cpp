@@ -16,8 +16,9 @@ namespace vshalygin::rpc {
     using socket = boost::asio::ip::tcp::socket;
 
     using pipe_endpoint_future = tcp_pipe_client_env::pipe_endpoint_future;
-    using pipe_endpoint_promise = cl::promise<cl::thread_pool, cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
-                                                                               pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
+    using pipe_endpoint_promise =
+        cl::promise<cl::thread_pool,
+                    cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>>;
 
     namespace {
         bool is_valid_ipv4(const std::string &value)
@@ -75,10 +76,7 @@ namespace vshalygin::rpc {
                                                 cl::ftuple(pipe_wait_res::failed, std::shared_ptr<ipipe_endpoint>{}));
                 }
 
-                cl::promise promise(m_thread_pool,
-                                    [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
-                                        return cl::ftuple(r, std::move(e));
-                                    });
+                pipe_endpoint_promise promise(m_thread_pool);
                 auto future = promise.get_future();
 
                 m_socket.async_connect(
@@ -87,14 +85,22 @@ namespace vshalygin::rpc {
                         std::lock_guard guard(self->m_socket_mtx);
                         if(self->m_was_canceled) {
                             auto r = self->m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
-                            promise.resolve(r, {});
+                            promise.set_value(cl::ftuple(
+                                r,
+                                std::shared_ptr<ipipe_endpoint>{}));
                         } else if(ec) {
-                            promise.resolve(pipe_wait_res::failed, {});
+                            promise.set_value(cl::ftuple(
+                                pipe_wait_res::failed,
+                                std::shared_ptr<ipipe_endpoint>{}));
                         } else {
                             self->m_is_socket_valid = false;
-                            auto endpoint = std::make_shared<tcp_pipe_endpoint>(self->m_thread_pool,
-                                                                                std::move(self->m_socket));
-                            promise.resolve(pipe_wait_res::success, std::move(endpoint));
+                            std::shared_ptr<ipipe_endpoint> endpoint =
+                                std::make_shared<tcp_pipe_endpoint>(
+                                    self->m_thread_pool,
+                                    std::move(self->m_socket));
+                            promise.set_value(cl::ftuple(
+                                pipe_wait_res::success,
+                                std::move(endpoint)));
                         }
                     });
 

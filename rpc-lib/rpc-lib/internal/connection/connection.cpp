@@ -18,8 +18,8 @@ namespace vshalygin::rpc::internal {
     {
     public:
         using req_result_future = cl::future<cl::thread_pool, cl::ftuple<request_result, cl::buffer>>;
-        using req_result_promise = cl::promise<cl::thread_pool, cl::ftuple<request_result, cl::buffer>(
-                                                                                      request_result, cl::buffer)>;
+        using req_result_promise =
+            cl::promise<cl::thread_pool, cl::ftuple<request_result, cl::buffer>>;
 
     private:
         struct request_data
@@ -156,9 +156,7 @@ namespace vshalygin::rpc::internal {
         assert(get_transfer_msg_type(message) == transfer_msg_type::req);
         const auto msg_number = get_msg_number_req(message);
 
-        cl::promise promise(m_thread_pool, [](request_result r, cl::buffer b) {
-            return cl::ftuple(r, std::move(b));
-        });
+        req_result_promise promise(m_thread_pool);
         auto future = promise.get_future();
 
         add_request_to_map(msg_number, std::move(promise));
@@ -281,7 +279,8 @@ namespace vshalygin::rpc::internal {
             req_data.is_req_sent = true;
             if(req_data.fail_req_result) {
                 assert(is_fail(*req_data.fail_req_result));
-                req_data.promise.resolve(*req_data.fail_req_result, {});
+                req_data.promise.set_value(cl::ftuple(*req_data.fail_req_result,
+                                                      cl::buffer{}));
                 to_delete = std::move(req_data.promise);
                 map->erase(it);
             }
@@ -317,7 +316,7 @@ namespace vshalygin::rpc::internal {
         }
 
         if(promise.is_valid()) {
-            promise.resolve(result, std::move(res_msg));
+            promise.set_value(cl::ftuple(result, std::move(res_msg)));
         }
     }
 
@@ -354,7 +353,7 @@ namespace vshalygin::rpc::internal {
             m_multiple_timer.cancel(req_data.timer_id);
 
             if(req_data.is_req_sent) {
-                req_data.promise.resolve(req_result, {});
+                req_data.promise.set_value(cl::ftuple(req_result, cl::buffer{}));
                 to_delete.push_back(std::move(req_data.promise));
                 it = map->erase(it);
             } else {

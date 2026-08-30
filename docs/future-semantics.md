@@ -24,7 +24,8 @@ They are exported in the `vshalygin::cl` namespace.
 
 Four concepts form one asynchronous operation:
 
-- `promise` owns the producer function and starts it through `resolve()`;
+- `promise` owns the right to settle the operation through `set_value()` or
+  `set_exception()`;
 - `future` observes the eventual value or exception and creates continuation
   branches;
 - `fvalue` is a move-only handle through which stored values are accessed;
@@ -40,13 +41,14 @@ flowchart LR
     Locked["locked_fvalue"]
     Child["child future"]
 
-    Producer -- "resolve(args...)" --> Pool
-    Pool -- "run producer" --> State
+    Producer -- "set_value / set_exception" --> State
     Producer -- "get_future()" --> Future
     Future --> State
     Future -- "get() or then()" --> Value
     Value -- "lock()" --> Locked
     Future -- "then / catched / finally" --> Child
+    State -- "schedule continuations" --> Pool
+    Pool -- "execute callback" --> Child
 ```
 
 The shared result state begins pending and settles with exactly one of two
@@ -58,29 +60,74 @@ outcomes:
 Each continuation returns a new future with its own result state. Registering
 a continuation does not consume the source future or its stored result.
 
-## Creating and starting an operation
+## Creating and completing an operation
 
-A promise is constructed from a thread pool and a callable. The callable's
-return type becomes the future's stored type. Arguments accepted by the
-callable become the arguments of `resolve()`.
+A promise is parameterized by its stored value type and constructed with the
+thread pool used by its future graph. The future handle may then be retrieved
+once. A promise does not store or execute a producer callable. The asynchronous
+operation is responsible for arranging its own execution and completing the
+promise when a result becomes available:
 
 ```cpp
 vshalygin::cl::thread_pool pool{4};
 
-auto square_promise = vshalygin::cl::promise(
-    &pool,
-    [](int value) {
-        return value * value;
-    });
-
-auto square_future = square_promise.get_future();
-square_promise.resolve(6);
+vshalygin::cl::promise<vshalygin::cl::thread_pool, int> result_promise(&pool);
+auto result_future = result_promise.get_future();
+result_promise.set_value(36);
 ```
 
-`resolve(6)` posts the producer to `pool` and returns without waiting for it.
-The producer eventually stores `36` or, if it throws, the current exception.
-Calling `resolve()` more than once is an error, and `get_future()` transfers the
-only future handle owned by the promise.
+`set_value()` also supports `void`, references, move-only values, and `ftuple`.
+A producer that already has a failure completes the state with an
+`std::exception_ptr`:
+
+```cpp
+vshalygin::cl::promise<vshalygin::cl::thread_pool, int> error_promise(&pool);
+auto error_future = error_promise.get_future();
+
+std::optional<int> result;
+std::exception_ptr failure;
+try {
+    result = perform_operation();
+} catch(...) {
+    failure = std::current_exception();
+}
+
+if(failure) {
+    error_promise.set_exception(failure);
+} else {
+    error_promise.set_value(std::move(*result));
+}
+```
+
+Work can be posted explicitly when it should run on the supplied pool:
+
+```cpp
+vshalygin::cl::promise<vshalygin::cl::thread_pool, int> square_promise(&pool);
+auto square_future = square_promise.get_future();
+
+pool.post([promise = std::move(square_promise)]() mutable {
+    std::optional<int> result;
+    std::exception_ptr failure;
+    try {
+        result = calculate_square(6);
+    } catch(...) {
+        failure = std::current_exception();
+    }
+
+    if(failure) {
+        promise.set_exception(failure);
+    } else {
+        promise.set_value(std::move(*result));
+    }
+});
+```
+
+`set_value()` and `set_exception()` share one thread-safe, one-shot completion
+right. Exactly one competing call can claim it. Every later call throws
+`std::future_error` with
+`std::future_errc::promise_already_satisfied`. Passing an empty
+`std::exception_ptr` is rejected without consuming the completion right.
+`get_future()` transfers the only future handle owned by the promise.
 
 If an unresolved valid promise is destroyed or replaced by move assignment,
 its future settles with `std::future_errc::broken_promise`. Moving a promise
@@ -104,7 +151,7 @@ an `fvalue` for a non-void result. Calling `get()` does not extract the stored
 value from the shared state, so the future can be observed again.
 
 ```cpp
-auto value_handle = square_future.get();
+auto value_handle = result_future.get();
 auto locked_value = value_handle.lock();
 
 std::cout << *locked_value << '\n';
@@ -115,7 +162,7 @@ returns a `locked_fvalue`. The lock remains held until that object is destroyed.
 The locked object supports `operator*`, `operator->`, and `with()`:
 
 ```cpp
-square_future.get().lock().with(
+result_future.get().lock().with(
     [](const int &value) {
         std::cout << value << '\n';
     });
@@ -149,11 +196,7 @@ source, it receives no argument. The callback's return type determines the
 stored type of the returned future.
 
 ```cpp
-auto source_promise = vshalygin::cl::promise(
-    &pool,
-    [](int value) {
-        return value * value;
-    });
+vshalygin::cl::promise<vshalygin::cl::thread_pool, int> source_promise(&pool);
 
 auto result = source_promise.get_future()
     .then([](auto source_fvalue) {
@@ -169,7 +212,7 @@ auto result = source_promise.get_future()
         });
     });
 
-source_promise.resolve(6);
+source_promise.set_value(36);
 
 result.get().lock().with(
     [](const std::string &text) {
@@ -193,11 +236,9 @@ accessed through `locked_fvalue::with()`, its elements become separate callback
 arguments:
 
 ```cpp
-auto parse_promise = vshalygin::cl::promise(
-    &pool,
-    [](std::string text) {
-        return vshalygin::cl::ftuple{text.size(), std::move(text)};
-    });
+using parsed_value = vshalygin::cl::ftuple<std::size_t, std::string>;
+vshalygin::cl::promise<vshalygin::cl::thread_pool, parsed_value>
+    parse_promise(&pool);
 
 auto parsed = parse_promise.get_future().then(
     [](auto source_fvalue) {
@@ -208,7 +249,9 @@ auto parsed = parse_promise.get_future().then(
             });
     });
 
-parse_promise.resolve("message");
+std::string message = "message";
+parse_promise.set_value(
+    vshalygin::cl::ftuple{message.size(), std::move(message)});
 ```
 
 Class template argument deduction stores values by default. Explicit reference
@@ -268,21 +311,17 @@ outcome.
 
 ## Future flattening
 
-When a promise producer, `then()` callback, or `catched()` callback returns a
-future by value, the outer operation adopts the returned future's eventual
-stored type and outcome. The caller receives one flattened future rather than
-a `future<future<T>>`.
+When a `then()` or `catched()` callback returns a future by value, the outer
+operation adopts the returned future's eventual stored type and outcome. The
+caller receives one flattened future rather than a `future<future<T>>`.
 
 ```cpp
 auto async_double = [&pool](int value) {
-    auto promise = vshalygin::cl::promise(
-        &pool,
-        [](int input) {
-            return input * 2;
-        });
-
+    vshalygin::cl::promise<vshalygin::cl::thread_pool, int> promise(&pool);
     auto future = promise.get_future();
-    promise.resolve(value);
+    pool.post([promise = std::move(promise), value]() mutable {
+        promise.set_value(value * 2);
+    });
     return future;
 };
 
@@ -313,7 +352,7 @@ Future result types may contain references. Two cases must be distinguished:
    future. The descendant retains the source controller and uses the same value
    mutex, keeping the ancestor state alive and synchronizing access through the
    chain.
-2. A producer or continuation returns a reference to an application-owned
+2. `set_value()` or a continuation supplies a reference to an application-owned
    object. The future stores only that reference. The application must keep the
    referenced object alive and must coordinate every access made outside the
    future chain.
@@ -381,7 +420,8 @@ separate control object.
 
 The future subsystem guarantees that:
 
-- a valid promise settles its result with one value or one exception;
+- a valid promise can be completed exactly once through `set_value()` or
+  `set_exception()` even when callers race;
 - destroying an unresolved promise reports `broken_promise` to its future;
 - continuations are scheduled through the supplied thread pool, including
   continuations registered after settlement;

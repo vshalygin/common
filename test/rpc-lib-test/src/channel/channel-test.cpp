@@ -69,9 +69,9 @@ protected:
 
     void call_method()
     {
-        promise promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
-            return ftuple(r, std::move(m));
-        });
+        promise<thread_pool,
+                ftuple<request_result, std::unique_ptr<proto::response_message>>>
+            promise(m_thread_pool.get());
         promise.get_future()
             .then([callback = m_request_callback.AsStdFunction()](auto value) mutable {
                 auto locked_value = value.lock();
@@ -98,9 +98,9 @@ protected:
         auto response_message2 = std::make_unique<proto::response_message>();
         m_response_message_ptr2 = response_message2.get();
         m_response_message_ptr2->set_data2(35);
-        promise promise(m_thread_pool.get(), [](request_result r, std::unique_ptr<proto::response_message> m) {
-            return ftuple(r, std::move(m));
-        });
+        promise<thread_pool,
+                ftuple<request_result, std::unique_ptr<proto::response_message>>>
+            promise(m_thread_pool.get());
         promise.get_future()
             .then([callback = m_request_callback.AsStdFunction()](auto value) mutable {
                 auto locked_value = value.lock();
@@ -163,12 +163,11 @@ TEST_F(Channel, MakesRequestWithCorrectRequestMessage)
 
 TEST_F(Channel, IncrementsMessageNumberOnEveryRequest)
 {
-    promise promise1(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
-    promise promise2(m_thread_pool.get(), [](request_result r, buffer &&b) {
-        return ftuple(r, std::move(b));
-    });
+    using request_promise =
+        promise<thread_pool, ftuple<request_result, buffer>>;
+
+    request_promise promise1(m_thread_pool.get());
+    request_promise promise2(m_thread_pool.get());
 
     EXPECT_CALL(*m_connection_ptr, request_async)
         .Times(2)

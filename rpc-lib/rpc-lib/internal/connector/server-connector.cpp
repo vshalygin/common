@@ -183,10 +183,10 @@ namespace vshalygin::rpc::internal {
                                     });
 
         auto connection_id = m_next_connection_id++;
-        cl::promise promise(m_thread_pool,
-                           [self = weak_from_this(), connection_id, is_running_sp](std::shared_ptr<ipipe_endpoint> pe) {
-            std::shared_ptr s(self);
-            return pe->read_async(s->m_config.handshake_timeout)
+        auto establish_connection =
+            [self = weak_from_this(), connection_id, is_running_sp](std::shared_ptr<ipipe_endpoint> pe) {
+                std::shared_ptr s(self);
+                return pe->read_async(s->m_config.handshake_timeout)
                 .then([pe, self](auto result) mutable {
                     return result.lock().with([&](pipe_op_res r, cl::buffer &&b) {
                           if(is_fail(r)) {
@@ -223,22 +223,36 @@ namespace vshalygin::rpc::internal {
                                  s->erase_connection_future_from_map(connection_id);
                              }
                          });
-        });
+            };
 
-        (*m_connection_future_map.lock())[connection_id] = promise.get_future();
-        
+        auto completion =
+            std::make_shared<cl::promise<cl::thread_pool, void>>(m_thread_pool);
+        (*m_connection_future_map.lock())[connection_id] = completion->get_future();
+
         m_connect_pipe_future
-            .then([promise = std::move(promise),
+            .then([completion,
+                   establish_connection = std::move(establish_connection),
                    self = shared_from_this(),
                    is_running_sp](auto result) mutable {
-                return result.lock().with([&](std::shared_ptr<ipipe_endpoint> ep) mutable {
-                      promise.resolve(std::move(ep));
-                      self->start_pipe_connect(false, is_running_sp);
-                  });
+                return result.lock().with(
+                    [&](std::shared_ptr<ipipe_endpoint> pe) mutable {
+                        self->start_pipe_connect(false, is_running_sp);
+
+                        establish_connection(std::move(pe))
+                            .then([completion] {
+                                completion->set_value();
+                            })
+                            .catched([completion](std::exception_ptr exception) {
+                                completion->set_exception(exception);
+                            });
+                    });
             })
-            .catched([self = shared_from_this(), is_running_sp](std::exception_ptr) {
-                         self->stop_impl(is_running_sp);
-                     });
+            .catched([completion,
+                      self = shared_from_this(),
+                      is_running_sp](std::exception_ptr exception) {
+                completion->set_exception(exception);
+                self->stop_impl(is_running_sp);
+            });
     }
 
     void server_connector::impl::stop_impl(std::shared_ptr<bool> is_running_sp)

@@ -17,9 +17,10 @@
 
 namespace vshalygin::rpc {
     using write_future = tcp_pipe_endpoint::write_future;
-    using write_promise = cl::promise<cl::thread_pool, pipe_op_res(pipe_op_res)>;
+    using write_promise = cl::promise<cl::thread_pool, pipe_op_res>;
     using read_future = tcp_pipe_endpoint::read_future;
-    using read_promise = cl::promise<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>(pipe_op_res, cl::buffer &&)>;
+    using read_promise =
+        cl::promise<cl::thread_pool, cl::ftuple<pipe_op_res, cl::buffer>>;
 
     namespace {
         static constexpr size_t s_header_size = sizeof(uint32_t);
@@ -46,7 +47,7 @@ namespace vshalygin::rpc {
             {
                 if(!m_is_promise_resolved) {
                     m_is_promise_resolved = true;
-                    m_promise.resolve(r);
+                    m_promise.set_value(r);
                 }
             }
 
@@ -122,9 +123,9 @@ namespace vshalygin::rpc {
                 if(!m_is_promise_resolved) {
                     m_is_promise_resolved = true;
                     if(r == pipe_op_res::success) {
-                        m_promise.resolve(r, std::move(m_payload_buffer));
+                        m_promise.set_value(cl::ftuple(r, std::move(m_payload_buffer)));
                     } else {
-                        m_promise.resolve(r, {});
+                        m_promise.set_value(cl::ftuple(r, cl::buffer{}));
                     }
                 }
             }
@@ -299,7 +300,7 @@ namespace vshalygin::rpc {
             return write_future(m_thread_pool, pipe_op_res::failed);
         }
 
-        cl::promise promise(m_thread_pool, [](pipe_op_res r) { return r; });
+        write_promise promise(m_thread_pool);
         auto future = promise.get_future();
 
         const auto id = m_next_write_op_id++;
@@ -336,10 +337,7 @@ namespace vshalygin::rpc {
             return read_future(m_thread_pool, cl::ftuple(pipe_op_res::failed, cl::buffer{}));
         }
 
-        cl::promise promise(m_thread_pool,
-                            [](pipe_op_res r, cl::buffer &&b) {
-                                return cl::ftuple(r, std::move(b));
-                            });
+        read_promise promise(m_thread_pool);
         auto future = promise.get_future();
 
         const auto id = m_next_read_op_id++;

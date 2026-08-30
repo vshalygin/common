@@ -17,7 +17,7 @@ namespace vshalygin::rpc::internal {
         : win_pipe_overlapped(win_pipe_operation_kind::write)
         , m_pipe(std::move(pipe))
         , m_buffer(std::move(buffer))
-        , m_promise(thread_pool, [](win_pipe_operation_res r) { return r; })
+        , m_promise(thread_pool)
     {}
 
     void win_pipe_write_operation::start(std::error_code &ec) noexcept
@@ -46,7 +46,7 @@ namespace vshalygin::rpc::internal {
         auto res = m_res.load(std::memory_order_acquire);
         assert(res != win_pipe_operation_res::unknown);
 
-        m_promise.resolve(res);
+        m_promise.set_value(res);
     }
 
     cl::future<cl::thread_pool, win_pipe_operation_res> win_pipe_write_operation::get_future()

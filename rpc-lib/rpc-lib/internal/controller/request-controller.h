@@ -12,8 +12,9 @@ namespace vshalygin::rpc::internal {
         : public request_controller_base
         , public google::protobuf::Closure
     {
-        using promise_t = cl::promise<cl::thread_pool, cl::ftuple<request_result, std::unique_ptr<Response>>(
-                                                                              request_result, std::unique_ptr<Response>)>;
+        using promise_t =
+            cl::promise<cl::thread_pool,
+                        cl::ftuple<request_result, std::unique_ptr<Response>>>;
 
         request_controller(promise_t &&promise,
                            std::unique_ptr<Response> &&response);
@@ -63,7 +64,7 @@ namespace vshalygin::rpc::internal {
                 m_request_result = request_result::unknown_error;
             }
 
-            m_promise.resolve(m_request_result, std::move(m_response));
+            m_promise.set_value(cl::ftuple(m_request_result, std::move(m_response)));
         } catch(...) {
         }
 

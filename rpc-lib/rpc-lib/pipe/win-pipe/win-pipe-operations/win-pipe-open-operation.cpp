@@ -5,8 +5,7 @@ namespace vshalygin::rpc::internal {
     win_pipe_open_operation::win_pipe_open_operation(const std::wstring &pipe_name,
                                                      cl::thread_pool *thread_pool)
         : m_full_pipe_name(L"\\\\.\\pipe\\" + pipe_name)
-        , m_promise(thread_pool,
-                    [](win_pipe_operation_res r, win::pipe_handle &&p) { return cl::ftuple(r, std::move(p)); })
+        , m_promise(thread_pool)
     {}
 
     win_pipe_open_operation::~win_pipe_open_operation()
@@ -59,16 +58,19 @@ namespace vshalygin::rpc::internal {
                 DWORD mode = PIPE_READMODE_MESSAGE;
 
                 if(!::SetNamedPipeHandleState(pipe.get(), &mode, nullptr, nullptr)) {
-                    m_promise.resolve(win_pipe_operation_res::failed, std::move(pipe));
+                    m_promise.set_value(cl::ftuple(win_pipe_operation_res::failed,
+                                                   std::move(pipe)));
                     break;
                 }
 
-                m_promise.resolve(win_pipe_operation_res::success, std::move(pipe));
+                m_promise.set_value(cl::ftuple(win_pipe_operation_res::success,
+                                               std::move(pipe)));
                 break;
             }
 
             if(::GetLastError() != ERROR_PIPE_BUSY && ::GetLastError() != ERROR_FILE_NOT_FOUND) {
-                m_promise.resolve(win_pipe_operation_res::failed, std::move(pipe));
+                m_promise.set_value(cl::ftuple(win_pipe_operation_res::failed,
+                                               std::move(pipe)));
                 break;
             }
 
@@ -79,7 +81,7 @@ namespace vshalygin::rpc::internal {
                 auto res = (m_cancel_event == cancel_event::canceled_by_timeout) ?
                                                win_pipe_operation_res::timeout :
                                                win_pipe_operation_res::canceled;
-                m_promise.resolve(res, std::move(pipe));
+                m_promise.set_value(cl::ftuple(res, std::move(pipe)));
                 break;
             }
         }

@@ -15,16 +15,26 @@ using namespace vshalygin::rpc::internal;
 using namespace vshalygin::cl;
 using namespace testing;
 
+namespace {
+    using response_promise =
+        promise<thread_pool,
+                ftuple<request_result, std::unique_ptr<proto::data_message>>>;
+}
+
 TEST(RequestController, ExecutesCallbackOnDone)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     bool is_called = false;
-    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
-                               is_called = true;
-                               return ftuple(r, std::move(m));
-                           });
+    response_promise promise(&pool);
     auto future = promise.get_future();
+    auto callback_future = future.then([&](auto value) {
+        auto locked_value = value.lock();
+        locked_value.with([&](request_result,
+                              std::unique_ptr<proto::data_message> &) {
+            is_called = true;
+        });
+    });
 
     {
         auto sut = request_controller<proto::data_message>::create_on_heap(
@@ -32,7 +42,7 @@ TEST(RequestController, ExecutesCallbackOnDone)
         closure_guard g(sut);
     }
    
-    future.get();
+    callback_future.get();
     ASSERT_TRUE(is_called);
 }
 
@@ -40,17 +50,21 @@ TEST(RequestController, ExecutesCallbackWithRequestResultCode)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
-    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
-        EXPECT_EQ(request_result::response_parse_error, r);
-        return ftuple(r, std::move(m));
-    });
+    response_promise promise(&pool);
     auto future = promise.get_future();
+    auto callback_future = future.then([](auto value) {
+        auto locked_value = value.lock();
+        locked_value.with([](request_result result,
+                             std::unique_ptr<proto::data_message> &) {
+            EXPECT_EQ(request_result::response_parse_error, result);
+        });
+    });
 
     auto sut = request_controller<proto::data_message>::create_on_heap(std::move(promise), std::move(response));
     sut->set_result(request_result::response_parse_error);
     sut->Run();
 
-    future.get();
+    callback_future.get();
 }
 
 TEST(RequestController, ExecutesCallbackWithResponseMessage)
@@ -58,28 +72,36 @@ TEST(RequestController, ExecutesCallbackWithResponseMessage)
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
     auto response_ptr = response.get();
-    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
-        EXPECT_EQ(response_ptr, m.get());
-        return ftuple(r, std::move(m));
-    });
+    response_promise promise(&pool);
     auto future = promise.get_future();
+    auto callback_future = future.then([response_ptr](auto value) {
+        auto locked_value = value.lock();
+        locked_value.with([response_ptr](request_result,
+                                         std::unique_ptr<proto::data_message> &message) {
+            EXPECT_EQ(response_ptr, message.get());
+        });
+    });
 
     auto sut = request_controller<proto::data_message>::create_on_heap(
         std::move(promise), std::move(response));
     sut->Run();
 
-    future.get();
+    callback_future.get();
 }
 
 TEST(RequestController, RpcControllerIsCastableToIRequestController)
 {
     thread_pool pool(2);
     auto response = std::make_unique<proto::data_message>();
-    promise promise(&pool, [&](request_result r, std::unique_ptr<proto::data_message> m) {
-        EXPECT_EQ(request_result::send_canceled, r);
-        return ftuple(r, std::move(m));
-    });
+    response_promise promise(&pool);
     auto future = promise.get_future();
+    auto callback_future = future.then([](auto value) {
+        auto locked_value = value.lock();
+        locked_value.with([](request_result result,
+                             std::unique_ptr<proto::data_message> &) {
+            EXPECT_EQ(request_result::send_canceled, result);
+        });
+    });
 
     auto sut = request_controller<proto::data_message>::create_on_heap(
         std::move(promise), std::move(response));
@@ -89,5 +111,5 @@ TEST(RequestController, RpcControllerIsCastableToIRequestController)
     request_controller->set_result(request_result::send_canceled);
 
     sut->Run();
-    future.get();
+    callback_future.get();
 }

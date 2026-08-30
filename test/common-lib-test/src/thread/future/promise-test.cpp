@@ -1,399 +1,289 @@
 #include <common-lib/thread/future/future.h>
 #include <common-lib/thread/thread-pool/thread-pool.h>
-#include <common-lib/synchronization/event.h>
 
 #include <gtest/gtest.h>
+
+#include <atomic>
+#include <exception>
+#include <future>
+#include <memory>
+#include <stdexcept>
+#include <thread>
+#include <type_traits>
 
 using namespace vshalygin::cl;
 using namespace testing;
 
-//promise is move only
-static_assert(!std::is_copy_constructible_v<promise<thread_pool, int()>>);
-static_assert(!std::is_copy_assignable_v<promise<thread_pool, int()>>);
-static_assert(std::is_move_constructible_v<promise<thread_pool, int()>>);
-static_assert(std::is_move_assignable_v<promise<thread_pool, int()>>);
+static_assert(!std::is_copy_constructible_v<promise<thread_pool, int>>);
+static_assert(!std::is_copy_assignable_v<promise<thread_pool, int>>);
+static_assert(std::is_move_constructible_v<promise<thread_pool, int>>);
+static_assert(std::is_move_assignable_v<promise<thread_pool, int>>);
 
 namespace {
-    class test_type
+    void expect_future_error(const std::future_error &error,
+                             std::future_errc expected)
     {
-    public:
-        bool was_moved = false;
-
-        test_type() = default;
-
-        test_type(const test_type &)
-        {
-            ++copy_num;
-        }
-
-        test_type &operator=(const test_type &)
-        {
-            ++copy_assign_num;
-            return *this;
-        }
-
-        test_type(test_type &&other)
-        {
-            ++move_num;
-            other.was_moved = true;
-        }
-
-        test_type &operator=(test_type &&other)
-        {
-            ++move_assign_num;
-            other.was_moved = true;
-            return *this;
-        }
-
-        void do_something() const {}
-
-        inline static std::atomic<unsigned> copy_num = 0;
-        inline static std::atomic<unsigned> copy_assign_num = 0;
-        inline static std::atomic<unsigned> move_num = 0;
-        inline static std::atomic<unsigned> move_assign_num = 0;
-
-        inline static void clear()
-        {
-            copy_num = 0;
-            copy_assign_num = 0;
-            move_num = 0;
-            move_assign_num = 0;
-        }
-    };
+        EXPECT_EQ(error.code(), std::make_error_code(expected));
+    }
 }
 
 class Promise
     : public Test
 {
 protected:
-    void SetUp() override
+    void TearDown() override
     {
-        test_type::clear();
+        m_thread_pool.stop();
     }
 
-protected:
     thread_pool m_thread_pool{ 2 };
 };
 
-TEST_F(Promise, DeducesFunctionSignature)
+TEST_F(Promise, IsValidAfterConstruction)
 {
-    auto void_promise = promise(&m_thread_pool, []() {});
-    auto value_promise = promise(
-        &m_thread_pool,
-        [](int, const double &) -> long { return 0; });
-
-    static_assert(std::is_same_v<decltype(void_promise),
-                                 promise<thread_pool, void()>>);
-    static_assert(std::is_same_v<decltype(value_promise),
-                                 promise<thread_pool, long(int, const double &)>>);
+    promise<thread_pool, int> sut(&m_thread_pool);
+    EXPECT_TRUE(sut.is_valid());
 }
 
-TEST_F(Promise, IsValidAfterCreation)
+TEST_F(Promise, DefaultConstructedPromiseIsInvalid)
 {
-    auto sut = promise(&m_thread_pool, []() {});
-
-    ASSERT_TRUE(sut.is_valid());
+    promise<thread_pool, int> sut;
+    EXPECT_FALSE(sut.is_valid());
+    EXPECT_THROW(sut.get_future(), std::logic_error);
+    EXPECT_THROW(sut.set_value(1), std::logic_error);
 }
 
-TEST_F(Promise, IsNotValidAfterMove)
+TEST_F(Promise, FutureMayBeRetrievedOnlyOnce)
 {
-    auto sut = promise(&m_thread_pool, []() {});
-    auto sut2(std::move(sut));
-
-    ASSERT_TRUE(sut2.is_valid());
-    ASSERT_FALSE(sut.is_valid());
+    promise<thread_pool, int> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    EXPECT_TRUE(result.is_valid());
+    EXPECT_THROW(sut.get_future(), std::logic_error);
 }
 
-TEST_F(Promise, IsNotValidAfterMoveAssign)
+TEST_F(Promise, SetValueCompletesValueFuture)
 {
-    auto sut = promise(&m_thread_pool, []() {});
-    auto sut2 = promise(&m_thread_pool, []() {});
-    sut2 = std::move(sut);
-
-    ASSERT_TRUE(sut2.is_valid());
-    ASSERT_FALSE(sut.is_valid());
+    promise<thread_pool, int> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    sut.set_value(42);
+    EXPECT_EQ(*result.get().lock(), 42);
 }
 
-TEST_F(Promise, MoveActuallyDoesMove)
+TEST_F(Promise, SetValueCompletesVoidFuture)
 {
-    event sync_event;
-    int i = 0;
-    auto sut = promise(&m_thread_pool, [&]() { i = 1; sync_event.set(); });
-    auto sut2(std::move(sut));
-    sut2.resolve();
-    
-    sync_event.wait();
-    ASSERT_EQ(i, 1);
+    promise<thread_pool, void> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    sut.set_value();
+    EXPECT_NO_THROW(result.get());
 }
 
-TEST_F(Promise, MoveAssignActuallyDoesMove)
+TEST_F(Promise, SetValueMovesMoveOnlyValue)
 {
-    event sync_event;
-    int i = 0;
-    auto sut = promise(&m_thread_pool, [&]() { i = 1; sync_event.set(); });
-    auto sut2 = promise(&m_thread_pool, []() {});
-    sut2 = std::move(sut);
-
-    sut2.resolve();
-
-    sync_event.wait();
-    ASSERT_EQ(i, 1);
+    promise<thread_pool, std::unique_ptr<int>> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    auto source = std::make_unique<int>(42);
+    sut.set_value(std::move(source));
+    EXPECT_FALSE(source);
+    auto value = result.get().lock();
+    ASSERT_TRUE(*value);
+    EXPECT_EQ(**value, 42);
 }
 
-TEST_F(Promise, GetFutureReturnsValidFuture)
+TEST_F(Promise, SetValuePreservesReference)
 {
-    auto sut = promise(&m_thread_pool, []() {});
-    
-    auto f = sut.get_future();
-    
-    ASSERT_TRUE(f.is_valid());
+    int source = 42;
+    promise<thread_pool, int &> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    sut.set_value(source);
+    auto value = result.get().lock();
+    EXPECT_EQ(&*value, &source);
 }
 
-TEST_F(Promise, ThrowsExceptionOnAttempltToCallGetFutureTwice)
+TEST_F(Promise, SetValueStoresFutureTuple)
 {
-    auto sut = promise(&m_thread_pool, []() {});
+    promise<thread_pool, ftuple<int, std::unique_ptr<int>>> sut(&m_thread_pool);
+    auto result = sut.get_future();
 
-    sut.get_future();
-    ASSERT_ANY_THROW(sut.get_future());
-}
+    sut.set_value(ftuple(19, std::make_unique<int>(23)));
 
-TEST_F(Promise, ResolveFunctionStartesFunctionExecutionInAnotherThread)
-{
-    const auto master_thread_id = std::this_thread::get_id();
-    event sync_event;
-
-    auto sut = promise(&m_thread_pool, [&]() {
-        ASSERT_NE(master_thread_id, std::this_thread::get_id());
-        sync_event.set();
+    auto value = result.get().lock();
+    value.with([](int left, const std::unique_ptr<int> &right) {
+        ASSERT_TRUE(right);
+        EXPECT_EQ(left + *right, 42);
     });
-    sut.resolve();
-
-
-    sync_event.wait();
 }
 
-TEST_F(Promise, ThrowsExceptionOnAttemptToCallResolveTwice)
+TEST_F(Promise, SetExceptionPropagatesException)
 {
-    auto sut = promise(&m_thread_pool, []() {});
+    promise<thread_pool, int> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    sut.set_exception(std::make_exception_ptr(std::runtime_error("failure")));
 
-    sut.resolve();
-    ASSERT_ANY_THROW(sut.resolve());
+    try {
+        (void)result.get();
+        FAIL();
+    } catch(const std::runtime_error &error) {
+        EXPECT_STREQ(error.what(), "failure");
+    }
 }
 
-TEST_F(Promise, ResolveMayBeCalledWithVariousParameters)
+TEST_F(Promise, NullExceptionDoesNotCompletePromise)
 {
-    event sync_event;
-    auto sut = promise(&m_thread_pool, [&](int i, double d, char c) {
-        EXPECT_EQ(i, 5);
-        EXPECT_EQ(d, 10.0);
-        EXPECT_EQ(c, 'v');
-        sync_event.set();
+    promise<thread_pool, int> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    EXPECT_THROW(sut.set_exception({}), std::invalid_argument);
+    sut.set_value(42);
+    EXPECT_EQ(*result.get().lock(), 42);
+}
+
+TEST_F(Promise, RepeatedCompletionThrowsPromiseAlreadySatisfied)
+{
+    promise<thread_pool, int> sut(&m_thread_pool);
+    sut.set_value(1);
+
+    try {
+        sut.set_exception(std::make_exception_ptr(std::runtime_error("ignored")));
+        FAIL();
+    } catch(const std::future_error &error) {
+        expect_future_error(error, std::future_errc::promise_already_satisfied);
+    }
+
+    try {
+        sut.set_value(2);
+        FAIL();
+    } catch(const std::future_error &error) {
+        expect_future_error(error, std::future_errc::promise_already_satisfied);
+    }
+}
+
+TEST_F(Promise, SetExceptionPreventsLaterSetValue)
+{
+    promise<thread_pool, int> sut(&m_thread_pool);
+    sut.set_exception(std::make_exception_ptr(std::runtime_error("failure")));
+
+    try {
+        sut.set_value(42);
+        FAIL();
+    } catch(const std::future_error &error) {
+        expect_future_error(error, std::future_errc::promise_already_satisfied);
+    }
+}
+
+TEST_F(Promise, MoveConstructionTransfersCompletionResponsibility)
+{
+    promise<thread_pool, int> source(&m_thread_pool);
+    auto result = source.get_future();
+    promise<thread_pool, int> destination(std::move(source));
+    destination.set_value(42);
+    EXPECT_FALSE(source.is_valid());
+    EXPECT_EQ(*result.get().lock(), 42);
+}
+
+TEST_F(Promise, MoveAssignmentBreaksReplacedPromise)
+{
+    promise<thread_pool, int> destination(&m_thread_pool);
+    auto replaced_result = destination.get_future();
+    promise<thread_pool, int> source(&m_thread_pool);
+    auto source_result = source.get_future();
+
+    destination = std::move(source);
+    destination.set_value(42);
+
+    try {
+        (void)replaced_result.get();
+        FAIL();
+    } catch(const std::future_error &error) {
+        expect_future_error(error, std::future_errc::broken_promise);
+    }
+    EXPECT_EQ(*source_result.get().lock(), 42);
+}
+
+TEST_F(Promise, DestructionOfUncompletedPromiseReportsBrokenPromise)
+{
+    future<thread_pool, int> result;
+    {
+        promise<thread_pool, int> sut(&m_thread_pool);
+        result = sut.get_future();
+    }
+
+    try {
+        (void)result.get();
+        FAIL();
+    } catch(const std::future_error &error) {
+        expect_future_error(error, std::future_errc::broken_promise);
+    }
+}
+
+TEST_F(Promise, ConcurrentCompletionHasExactlyOneWinner)
+{
+    promise<thread_pool, int> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    std::atomic<unsigned> successes{ 0 };
+    std::atomic<unsigned> already_satisfied{ 0 };
+    std::atomic<unsigned> unexpected_errors{ 0 };
+
+    auto complete = [&sut,
+                     &successes,
+                     &already_satisfied,
+                     &unexpected_errors](int value) {
+        try {
+            sut.set_value(value);
+            ++successes;
+        } catch(const std::future_error &error) {
+            if(error.code() == std::make_error_code(
+                                   std::future_errc::promise_already_satisfied)) {
+                ++already_satisfied;
+            } else {
+                ++unexpected_errors;
+            }
+        } catch(...) {
+            ++unexpected_errors;
+        }
+    };
+
+    std::thread first(complete, 1);
+    std::thread second(complete, 2);
+    first.join();
+    second.join();
+
+    EXPECT_EQ(successes, 1U);
+    EXPECT_EQ(already_satisfied, 1U);
+    EXPECT_EQ(unexpected_errors, 0U);
+    const auto value = *result.get().lock();
+    EXPECT_TRUE(value == 1 || value == 2);
+}
+
+TEST_F(Promise, ValueAndExceptionShareOneCompletionRight)
+{
+    promise<thread_pool, int> sut(&m_thread_pool);
+    auto result = sut.get_future();
+    std::atomic<unsigned> successes{ 0 };
+    std::atomic<unsigned> already_satisfied{ 0 };
+
+    auto run = [&successes, &already_satisfied](auto &&completion) {
+        try {
+            completion();
+            ++successes;
+        } catch(const std::future_error &error) {
+            if(error.code() == std::make_error_code(
+                                   std::future_errc::promise_already_satisfied)) {
+                ++already_satisfied;
+            }
+        }
+    };
+
+    std::thread value_setter([&] { run([&] { sut.set_value(1); }); });
+    std::thread exception_setter([&] {
+        run([&] {
+            sut.set_exception(
+                std::make_exception_ptr(std::runtime_error("failure")));
+        });
     });
+    value_setter.join();
+    exception_setter.join();
 
-    sut.resolve(5, 10.0, 'v');
-    
-    sync_event.wait();
-}
-
-TEST_F(Promise, MoveParametersIntoResolveFunction)
-{
-    event sync_event;
-    test_type param;
-    auto sut = promise(&m_thread_pool, [&](test_type &&) {
-        sync_event.set();
-        return 0;
-    });
-
-    sut.resolve(std::move(param));
-
-    sync_event.wait();
-    EXPECT_TRUE(param.was_moved);
-    EXPECT_EQ(test_type::copy_num, 0u);
-    EXPECT_EQ(test_type::copy_assign_num, 0u);
-    EXPECT_GT(test_type::move_num, 0u);
-    EXPECT_EQ(test_type::move_assign_num, 0u);
-}
-
-TEST_F(Promise, CopyResolveFunctionParameterOnlyOnce)
-{
-    event sync_event;
-    test_type param;
-    auto sut = promise(&m_thread_pool, [&](const test_type &) {
-        sync_event.set();
-        return 0;
-    });
-
-    sut.resolve(param);
-
-    sync_event.wait();
-    EXPECT_FALSE(param.was_moved);
-    EXPECT_EQ(test_type::copy_num, 1u);
-    EXPECT_EQ(test_type::copy_assign_num, 0u);
-    EXPECT_GT(test_type::move_num, 0u);
-    EXPECT_EQ(test_type::move_assign_num, 0u);
-}
-
-TEST_F(Promise, MoveParametersIntoResolveFunctionIfFunctionReturnsVoid)
-{
-    event sync_event;
-    test_type param;
-    auto sut = promise(&m_thread_pool, [&](test_type &&) {
-        sync_event.set();
-    });
-
-    sut.resolve(std::move(param));
-
-    sync_event.wait();
-    EXPECT_TRUE(param.was_moved);
-    EXPECT_EQ(test_type::copy_num, 0u);
-    EXPECT_EQ(test_type::copy_assign_num, 0u);
-    EXPECT_GT(test_type::move_num, 0u);
-    EXPECT_EQ(test_type::move_assign_num, 0u);
-}
-
-TEST_F(Promise, CopyResolveFunctionParameterOnlyOnceIfFunctionReturnsVoid)
-{
-    event sync_event;
-    test_type param;
-    auto sut = promise(&m_thread_pool, [&](const test_type &) {
-        sync_event.set();
-    });
-
-    sut.resolve(param);
-
-    sync_event.wait();
-    EXPECT_FALSE(param.was_moved);
-    EXPECT_EQ(test_type::copy_num, 1u);
-    EXPECT_EQ(test_type::copy_assign_num, 0u);
-    EXPECT_GT(test_type::move_num, 0u);
-    EXPECT_EQ(test_type::move_assign_num, 0u);
-}
-
-TEST_F(Promise, FunctionMayReturnVoidType)
-{
-    event sync_event;
-    auto sut = promise(&m_thread_pool, [&]() {
-        sync_event.set();
-    });
-
-    sut.resolve();
-
-    sync_event.wait();
-}
-
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#endif
-TEST_F(Promise, FunctionMayReturnTypeWithAnyQualifiers)
-{
-    int i = 0;
-    volatile int ii = 0;
-
-    auto sut1 = promise(&m_thread_pool, [&]() -> int {
-        return 1;
-    }); sut1.resolve();
-    auto sut2 = promise(&m_thread_pool, [&]() -> int & {
-        return i;
-    }); sut2.resolve();
-    auto sut3 = promise(&m_thread_pool, [&]() -> int && {
-        return std::move(i);
-    }); sut3.resolve();
-    auto sut4 = promise(&m_thread_pool, [&]() -> const int {
-        return 1;
-    }); sut4.resolve();
-    auto sut5 = promise(&m_thread_pool, [&]() -> const int & {
-        return i;
-    }); sut5.resolve();
-    auto sut6 = promise(&m_thread_pool, [&]() -> const int && {
-        return std::move(i);
-    }); sut6.resolve();
-    auto sut7 = promise(&m_thread_pool, [&]() -> volatile int {
-        return 1;
-    }); sut7.resolve();
-    auto sut8 = promise(&m_thread_pool, [&]() -> volatile int & {
-        return ii;
-    }); sut8.resolve();
-    auto sut9 = promise(&m_thread_pool, [&]() -> volatile int && {
-        return std::move(ii);
-    }); sut9.resolve();
-    auto sut10 = promise(&m_thread_pool, [&]() -> const volatile int {
-        return 1;
-    }); sut10.resolve();
-    auto sut11 = promise(&m_thread_pool, [&]() -> const volatile int & {
-        return ii;
-    }); sut11.resolve();
-    auto sut12 = promise(&m_thread_pool, [&]() -> const volatile int && {
-        return std::move(ii);
-    }); sut12.resolve();
-}
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-
-TEST_F(Promise, FunctionMayParameterTypeWithAnyQualifierExceptNonConstLValueReference)
-{
-    int i = 0;
-    volatile int ii = 0;
-
-    auto sut1 = promise(&m_thread_pool, [&](int) { }); sut1.resolve(i);
-    //auto sut2 = promise(&m_thread_pool, [&](int &) { }); sut2.resolve(i);
-    auto sut3 = promise(&m_thread_pool, [&](int &&) { }); sut3.resolve(std::move(i));
-    auto sut4 = promise(&m_thread_pool, [&](const int) { }); sut4.resolve(i);
-    auto sut5 = promise(&m_thread_pool, [&](const int &) { }); sut5.resolve(i);
-    auto sut6 = promise(&m_thread_pool, [&](const int &&) { }); sut6.resolve(std::move(i));
-    auto sut7 = promise(&m_thread_pool, [&](volatile int) { }); sut7.resolve(ii);
-    //auto sut8 = promise(&m_thread_pool, [&](volatile int &) { }); sut8.resolve(ii);
-    auto sut9 = promise(&m_thread_pool, [&](volatile int &&) { }); sut9.resolve(std::move(ii));
-    auto sut10 = promise(&m_thread_pool, [&](const volatile int) { }); sut10.resolve(ii);
-    //auto sut11 = promise(&m_thread_pool, [&](const volatile int &) { }); sut11.resolve(ii); ???
-    auto sut12 = promise(&m_thread_pool, [&](const volatile int &&) { }); sut12.resolve(std::move(ii));
-}
-
-TEST_F(Promise, FunctionMovesToPromise)
-{
-    event sync_event;
-    auto f = std::make_unique<std::function<void()>>([t = test_type{}, &sync_event]() { sync_event.set(); });
-    auto sut = promise(&m_thread_pool, std::move(*f));
-
-    f.reset();
-    sut.resolve();
-
-    sync_event.wait();
-    EXPECT_EQ(test_type::copy_num, 0u);
-    EXPECT_EQ(test_type::copy_assign_num, 0u);
-    EXPECT_GT(test_type::move_num, 0u);
-    EXPECT_EQ(test_type::move_assign_num, 0u);
-}
-
-TEST_F(Promise, FunctionCopiesToPromiseOnlyOnce)
-{
-    event sync_event;
-    auto f = std::make_unique<std::function<void()>>([t = test_type{}, &sync_event]() { sync_event.set(); });
-    auto sut = promise(&m_thread_pool, *f);
-
-    f.reset();
-    sut.resolve();
-
-    sync_event.wait();
-    EXPECT_EQ(test_type::copy_num, 1u);
-    EXPECT_EQ(test_type::copy_assign_num, 0u);
-    EXPECT_GT(test_type::move_num, 0u);
-    EXPECT_EQ(test_type::move_assign_num, 0u);
-}
-
-TEST_F(Promise, FunctionExecutesCorrectlyEvenAfterPromise)
-{
-    event sync_event1;
-    event sync_event2;
-    auto sut = std::make_unique<promise<thread_pool, void()>>(promise(&m_thread_pool, [&]() {
-        sync_event1.wait();
-        sync_event2.set();
-    }));
-
-    sut->resolve();
-    sut.reset();
-
-    sync_event1.set();
-    sync_event2.wait();
+    EXPECT_EQ(successes, 1U);
+    EXPECT_EQ(already_satisfied, 1U);
+    result.wait();
+    EXPECT_NE(result.has_value(), result.has_exception());
 }

@@ -51,9 +51,8 @@ namespace vshalygin::rpc::internal {
     typename endpoint<RemoteStub>::template request_future<Response>
         endpoint<RemoteStub>::make_request(StubMethod stub_method, const Request &req)
     {
-        cl::promise promise(m_thread_pool, [](request_result r, std::unique_ptr<Response> m) {
-            return cl::ftuple{ r, std::move(m) };
-        });
+        cl::promise<cl::thread_pool,
+                    cl::ftuple<request_result, std::unique_ptr<Response>>> promise(m_thread_pool);
         auto future = promise.get_future();
 
         auto response = std::make_unique<Response>();

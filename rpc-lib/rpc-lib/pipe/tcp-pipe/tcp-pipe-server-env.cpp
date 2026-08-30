@@ -18,8 +18,9 @@ using namespace boost::asio::ip;
 
 namespace vshalygin::rpc {
     using pipe_endpoint_future = tcp_pipe_server_env::pipe_endpoint_future;
-    using pipe_endpoint_promise = cl::promise<cl::thread_pool, cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>(
-                                          pipe_wait_res, std::shared_ptr<ipipe_endpoint>)>;
+    using pipe_endpoint_promise =
+        cl::promise<cl::thread_pool,
+                    cl::ftuple<pipe_wait_res, std::shared_ptr<ipipe_endpoint>>>;
 
     namespace {
         class create_operation
@@ -29,10 +30,7 @@ namespace vshalygin::rpc {
                              tcp::acceptor &acceptor)
                 : m_thread_pool(thread_pool)
                 , m_acceptor(acceptor)
-                , m_promise(m_thread_pool,
-                            [](pipe_wait_res r, std::shared_ptr<ipipe_endpoint> e) {
-                                return cl::ftuple(r, std::move(e));
-                            })
+                , m_promise(m_thread_pool)
             {}
 
         public:
@@ -63,26 +61,39 @@ namespace vshalygin::rpc {
                     std::lock_guard guard(self->m_mtx);
                     if(self->m_was_canceled) {
                         auto r = self->m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
-                        self->m_promise.resolve(r, {});
+                        self->m_promise.set_value(cl::ftuple(
+                            r,
+                            std::shared_ptr<ipipe_endpoint>{}));
                     } else if (ec) {
-                        self->m_promise.resolve(pipe_wait_res::failed, {});
+                        self->m_promise.set_value(cl::ftuple(
+                            pipe_wait_res::failed,
+                            std::shared_ptr<ipipe_endpoint>{}));
                     } else {
                         boost::system::error_code option_ec;
 
                         socket.set_option(tcp::no_delay(true), option_ec);
                         if(option_ec) {
-                            self->m_promise.resolve(pipe_wait_res::failed, {});
+                            self->m_promise.set_value(cl::ftuple(
+                                pipe_wait_res::failed,
+                                std::shared_ptr<ipipe_endpoint>{}));
                             return;
                         }
 
                         socket.set_option(boost::asio::socket_base::keep_alive(true), option_ec);
                         if(option_ec) {
-                            self->m_promise.resolve(pipe_wait_res::failed, {});
+                            self->m_promise.set_value(cl::ftuple(
+                                pipe_wait_res::failed,
+                                std::shared_ptr<ipipe_endpoint>{}));
                             return;
                         }
 
-                        auto endpoint = std::make_shared<tcp_pipe_endpoint>(self->m_thread_pool, std::move(socket));
-                        self->m_promise.resolve(pipe_wait_res::success, std::move(endpoint));
+                        std::shared_ptr<ipipe_endpoint> endpoint =
+                            std::make_shared<tcp_pipe_endpoint>(
+                                self->m_thread_pool,
+                                std::move(socket));
+                        self->m_promise.set_value(cl::ftuple(
+                            pipe_wait_res::success,
+                            std::move(endpoint)));
                     }
                 });
             }
@@ -97,7 +108,9 @@ namespace vshalygin::rpc {
                         boost::system::error_code ignored;
                         m_acceptor.cancel(ignored);
                     } else {
-                        m_promise.resolve(m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled, {});
+                        m_promise.set_value(cl::ftuple(
+                            m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled,
+                            std::shared_ptr<ipipe_endpoint>{}));
                     }
                 }
             }

@@ -129,7 +129,7 @@ namespace vshalygin::rpc {
     void server_endpoint<RemoteStub, LocalService>::impl::process_new_connection(
         uint64_t id, std::unique_ptr<internal::iconnection> c)
     {
-        cl::promise disconnect_promise(m_thread_pool, []() {});
+        cl::promise<cl::thread_pool, void> disconnect_promise(m_thread_pool);
         auto disconnect_future = disconnect_promise.get_future();
 
         std::lock_guard guard(m_mtx);
@@ -142,7 +142,7 @@ namespace vshalygin::rpc {
             cl::thread_pool_task(
                 m_thread_pool,
                 [disconnect_promise = std::move(disconnect_promise)]() mutable {
-                    disconnect_promise.resolve();
+                    disconnect_promise.set_value();
                 }));
 
         ep->start();

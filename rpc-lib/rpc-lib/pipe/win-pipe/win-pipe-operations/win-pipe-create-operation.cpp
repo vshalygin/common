@@ -12,7 +12,7 @@ namespace vshalygin::rpc::internal {
                                                          cl::thread_pool *thread_pool)
         : win_pipe_overlapped(win_pipe_operation_kind::create)
         , m_full_pipe_name(L"\\\\.\\pipe\\" + pipe_name)
-        , m_promise(thread_pool, [](win_pipe_operation_res r, win::pipe_handle &&p) { return cl::ftuple(r, std::move(p)); })
+        , m_promise(thread_pool)
     {}
 
     bool win_pipe_create_operation::create_pipe()
@@ -74,10 +74,10 @@ namespace vshalygin::rpc::internal {
         auto pipe = m_pipe.lock();
         if(res == win_pipe_operation_res::success) {
             assert(!pipe->empty());
-            m_promise.resolve(res, std::move(*pipe));
+            m_promise.set_value(cl::ftuple(res, std::move(*pipe)));
         } else {
             pipe->reset();
-            m_promise.resolve(res, {});
+            m_promise.set_value(cl::ftuple(res, win::pipe_handle{}));
         }
     }
 

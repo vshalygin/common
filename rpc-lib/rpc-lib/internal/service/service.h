@@ -60,7 +60,7 @@ namespace vshalygin::rpc::internal {
     template<typename Service>
     cl::future<cl::thread_pool, cl::buffer> service<Service>::process_request_async(cl::buffer &&request_message)
     {
-        cl::promise promise(m_thread_pool, [](cl::buffer &&b) { return std::move(b); });
+        cl::promise<cl::thread_pool, cl::buffer> promise(m_thread_pool);
         auto future = promise.get_future();
 
         m_thread_pool->post([gservice = m_gservice,
@@ -69,9 +69,9 @@ namespace vshalygin::rpc::internal {
                              promise = std::move(promise)]() mutable
         {
             if(!is_request_buffer_valid(req_msg)) {
-                promise.resolve(create_transfer_msg_res(static_cast<uint64_t>(-1),
-                                                        response_result::invalid_request,
-                                                        nullptr));
+                promise.set_value(create_transfer_msg_res(static_cast<uint64_t>(-1),
+                                                          response_result::invalid_request,
+                                                          nullptr));
                 return;
             }
             assert(get_transfer_msg_type(req_msg) == transfer_msg_type::req);
@@ -81,9 +81,9 @@ namespace vshalygin::rpc::internal {
             const auto serialized_req_message = get_serialized_proto_message(req_msg);
 
             if(!gservice || method_idx >= get_methods_count(gservice)) {
-                promise.resolve(create_transfer_msg_res(message_number,
-                                                        response_result::not_implemented,
-                                                        nullptr));
+                promise.set_value(create_transfer_msg_res(message_number,
+                                                          response_result::not_implemented,
+                                                          nullptr));
                 return;
             }
 
@@ -91,9 +91,9 @@ namespace vshalygin::rpc::internal {
             auto res = create_response_message(gservice, method_idx);
 
             if(!parse_proto_message(req, serialized_req_message)) {
-                promise.resolve(create_transfer_msg_res(message_number,
-                                                        response_result::request_parse_error,
-                                                        res.get()));
+                promise.set_value(create_transfer_msg_res(message_number,
+                                                          response_result::request_parse_error,
+                                                          res.get()));
                 return;
             }
 
@@ -103,7 +103,7 @@ namespace vshalygin::rpc::internal {
                     rc = response_result::response_too_big;
                 }
 
-                promise.resolve(create_transfer_msg_res(message_number, rc, res.get()));
+                promise.set_value(create_transfer_msg_res(message_number, rc, res.get()));
             };
 
             auto controller =
