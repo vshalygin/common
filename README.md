@@ -21,7 +21,7 @@ into a complete, dependable, production-grade solution.
 
 | Area | Technologies |
 | --- | --- |
-| Language and build | C++17 or newer, CMake, CMake Presets |
+| Language and build | C++17 or newer, CMake |
 | Libraries and serialization | Boost, Protocol Buffers |
 | Dependency management | vcpkg |
 | Testing | GoogleTest, CTest |
