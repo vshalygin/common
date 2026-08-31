@@ -17,6 +17,17 @@ development; the principal planned work is tracked in the
 [project roadmap](ROADMAP.md). The long-term ambition is to evolve the project
 into a complete, dependable, production-grade solution.
 
+## Technology stack
+
+| Area | Technologies |
+| --- | --- |
+| Language and build | C++17 or newer, CMake, CMake Presets |
+| Libraries and serialization | Boost, Protocol Buffers |
+| Dependency management | vcpkg |
+| Testing | GoogleTest, CTest |
+| Toolchains | MSVC, GCC, Clang |
+| CI and diagnostics | GitHub Actions, Docker, sanitizers, gcovr |
+
 ## Libraries
 
 | Component | CMake target | Platforms | Purpose |
