@@ -17,6 +17,6 @@ change as the project evolves.
   failures.
 - Introduce public API versioning and a compatibility policy.
 - Add Windows XP support.
-- Provide a production authenticator, with transport-level traffic encryption
+- Provide a rpc authenticator, transport-level traffic encryption
   and integrity verification.
 - Resolve existing tracked issues and newly discovered defects.
