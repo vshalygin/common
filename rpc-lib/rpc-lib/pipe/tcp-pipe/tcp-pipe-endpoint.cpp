@@ -228,11 +228,13 @@ namespace vshalygin::rpc {
 
         void invalidate_unsafe(bool by_cancel);
 
-        void start_write_header_async();
+        void start_write_header_async(
+            std::vector<pending_write_result> &pending_results);
         void start_write_payload_async(
             std::vector<pending_write_result> &pending_results);
 
-        void start_read_header_async();
+        void start_read_header_async(
+            std::vector<pending_read_result> &pending_results);
         void start_read_payload_async(
             std::vector<pending_read_result> &pending_results);
 
@@ -338,6 +340,7 @@ namespace vshalygin::rpc {
         assert(msg.size() != 0);
 
         write_future future;
+        std::vector<pending_write_result> pending_results;
         bool is_connected;
         {
             cl::ordered_lock guard(m_write_mtx, m_socket_mtx);
@@ -379,10 +382,12 @@ namespace vshalygin::rpc {
                     std::move(msg), std::move(promise), id, timer_id);
 
                 if(m_write_operations.size() == 1) {
-                    start_write_header_async();
+                    start_write_header_async(pending_results);
                 }
             }
         }
+
+        publish_results(pending_results);
 
         if(!is_connected) {
             return write_future(m_thread_pool, pipe_op_res::failed);
@@ -393,6 +398,7 @@ namespace vshalygin::rpc {
     read_future tcp_pipe_endpoint::impl::read_async(const std::optional<std::chrono::milliseconds> &timeout)
     {
         read_future future;
+        std::vector<pending_read_result> pending_results;
         bool is_connected;
         {
             cl::ordered_lock guard(m_read_mtx, m_socket_mtx);
@@ -434,10 +440,12 @@ namespace vshalygin::rpc {
                 m_read_operations.emplace_front(std::move(promise), id, timer_id);
 
                 if(m_read_operations.size() == 1) {
-                    start_read_header_async();
+                    start_read_header_async(pending_results);
                 }
             }
         }
+
+        publish_results(pending_results);
 
         if(!is_connected) {
             return read_future(m_thread_pool, cl::ftuple(pipe_op_res::failed, cl::buffer{}));
@@ -445,10 +453,19 @@ namespace vshalygin::rpc {
         return future;
     }
 
-    void tcp_pipe_endpoint::impl::start_write_header_async()
+    void tcp_pipe_endpoint::impl::start_write_header_async(
+        std::vector<pending_write_result> &pending_results)
     {
         assert(!m_write_operations.empty());
-        assert(m_socket.is_open());
+
+        if(!m_socket.is_open()) {
+            auto r = m_was_invalidated_by_fail
+                ? pipe_op_res::failed
+                : pipe_op_res::canceled;
+            complete_all_operations_unsafe(
+                r, m_write_operations, pending_results);
+            return;
+        }
 
         m_socket.async_write_some(m_write_operations.back().op.get_unwritten_header_buffer(),
                                   [self = shared_from_this()](const boost::system::error_code &ec,
@@ -485,10 +502,19 @@ namespace vshalygin::rpc {
                                   });
     }
 
-    void tcp_pipe_endpoint::impl::start_read_header_async()
+    void tcp_pipe_endpoint::impl::start_read_header_async(
+        std::vector<pending_read_result> &pending_results)
     {
         assert(!m_read_operations.empty());
-        assert(m_socket.is_open());
+
+        if(!m_socket.is_open()) {
+            auto r = m_was_invalidated_by_fail
+                ? pipe_op_res::failed
+                : pipe_op_res::canceled;
+            complete_all_operations_unsafe(
+                r, m_read_operations, pending_results);
+            return;
+        }
 
         m_socket.async_read_some(m_read_operations.back().op.get_buffer_for_unread_header(),
                                  [self = shared_from_this()](const boost::system::error_code &ec,
@@ -563,7 +589,7 @@ namespace vshalygin::rpc {
                 }
             } else {
                 if(!op.is_header_completed()) {
-                    (this->*start_header_op_async)();
+                    (this->*start_header_op_async)(pending_results);
                 } else {
                     (this->*start_payload_op_async)(pending_results);
                 }
@@ -617,7 +643,7 @@ namespace vshalygin::rpc {
                     operations.pop_back();
 
                     if(!operations.empty()) {
-                        (this->*start_header_op_async)();
+                        (this->*start_header_op_async)(pending_results);
                     }
                 }
             }
