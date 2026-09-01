@@ -133,90 +133,104 @@ namespace vshalygin::rpc {
                                                                  promise_container &own,
                                                                  promise_container &other)
     {
-        pipe_endpoint_promise promise_to_destroy;
-        std::lock_guard guard(m_mtx);
-        if(!other.empty()) {
+        pipe_endpoint_promise promise_to_complete;
+        std::shared_ptr<ipipe_endpoint> endpoint;
+        std::shared_ptr<ipipe_endpoint> other_endpoint;
+
+        {
+            std::lock_guard guard(m_mtx);
+            if(other.empty()) {
+                pipe_endpoint_promise promise(m_thread_pool);
+                auto future = promise.get_future();
+
+                const auto promise_id = m_next_read_promise_id++;
+
+                std::optional<uint64_t> timer_id;
+                if(timeout) {
+                    timer_id = m_timer.start([self = weak_from_this(), promise_id, &own]() {
+                        if(auto s = self.lock()) {
+                            s->remove_promise_by_timeout(own, promise_id);
+                        }
+                    }, *timeout);
+                }
+
+                own.push_back(promise_data{ promise_id , client_id, timer_id, std::move(promise) });
+
+                return future;
+            }
+
             auto buffers = std::make_shared<mem_buffers>(m_thread_pool);
-            std::shared_ptr<ipipe_endpoint> ans(new mem_pipe_endpoint(is_server, buffers));
-            std::shared_ptr<ipipe_endpoint> other_pipe(
+            endpoint = std::shared_ptr<ipipe_endpoint>(new mem_pipe_endpoint(is_server, buffers));
+            other_endpoint = std::shared_ptr<ipipe_endpoint>(
                 new mem_pipe_endpoint(!is_server, buffers));
 
-            other.modify(other.begin(), [&](promise_data &el) mutable {
-                el.promise.set_value(cl::ftuple(pipe_wait_res::success,
-                                                std::move(other_pipe)));
+            other.modify(other.begin(), [&](promise_data &el) {
                 if(el.timer_id) {
                     m_timer.cancel(*el.timer_id);
                 }
-                promise_to_destroy = std::move(el.promise);
+                promise_to_complete = std::move(el.promise);
             });
-
             other.pop_front();
-
-            return pipe_endpoint_future(
-                m_thread_pool,
-                cl::ftuple(pipe_wait_res::success, std::move(ans)));
         }
 
-        pipe_endpoint_promise promise(m_thread_pool);
-        auto future = promise.get_future();
-
-        const auto promise_id = m_next_read_promise_id++;
-
-        std::optional<uint64_t> timer_id;
-        if(timeout) {
-            timer_id = m_timer.start([self = weak_from_this(), promise_id, &own]() {
-                if(auto s = self.lock()) {
-                    s->remove_promise_by_timeout(own, promise_id);
-                }
-            }, *timeout);
-        }
-
-        own.push_back(promise_data{ promise_id , client_id, timer_id, std::move(promise) });
-
-        return future;
+        promise_to_complete.set_value(cl::ftuple(pipe_wait_res::success,
+                                                 std::move(other_endpoint)));
+        return pipe_endpoint_future(
+            m_thread_pool,
+            cl::ftuple(pipe_wait_res::success, std::move(endpoint)));
     }
 
     void mem_pipe_env::impl::cancel_pending_endpoints(const std::optional<uint64_t> &client_id,
                                                       promise_container &container)
     {
-        std::vector<pipe_endpoint_promise> promises_to_destroy;
+        std::vector<pipe_endpoint_promise> promises_to_complete;
 
-        std::lock_guard guard(m_mtx);
-        auto &q = container.get<0>();
-        auto it = q.begin();
-        while(it != q.end()) {
-            if(!client_id || it->client_id == *client_id) {
-                q.modify(it, [&](promise_data &el) mutable {
-                    if(el.timer_id) {
-                        m_timer.cancel(*el.timer_id);
-                    }
-                    el.promise.set_value(cl::ftuple(
-                        pipe_wait_res::canceled,
-                        std::shared_ptr<ipipe_endpoint>{}));
-                    promises_to_destroy.push_back((std::move(el.promise)));
-                });
-                it = q.erase(it);
-            } else {
-                ++it;
+        {
+            std::lock_guard guard(m_mtx);
+            auto &q = container.get<0>();
+            auto it = q.begin();
+            while(it != q.end()) {
+                if(!client_id || it->client_id == *client_id) {
+                    q.modify(it, [&](promise_data &el) {
+                        if(el.timer_id) {
+                            m_timer.cancel(*el.timer_id);
+                        }
+                        promises_to_complete.push_back(std::move(el.promise));
+                    });
+                    it = q.erase(it);
+                } else {
+                    ++it;
+                }
             }
+        }
+
+        for(auto &promise : promises_to_complete) {
+            promise.set_value(cl::ftuple(
+                pipe_wait_res::canceled,
+                std::shared_ptr<ipipe_endpoint>{}));
         }
     }
 
     void mem_pipe_env::impl::remove_promise_by_timeout(promise_container &container, uint64_t id)
     {
-        pipe_endpoint_promise promise_to_destroy;
+        pipe_endpoint_promise promise_to_complete;
 
-        std::lock_guard guard(m_mtx);
-        auto &m = container.get<1>();
-        auto it = m.find(id);
-        if(it != m.end()) {
-            m.modify(it, [&](promise_data &el) mutable {
-                el.promise.set_value(cl::ftuple(
-                    pipe_wait_res::timeout,
-                    std::shared_ptr<ipipe_endpoint>{}));
-                promise_to_destroy = std::move(el.promise);
-            });
-            m.erase(it);
+        {
+            std::lock_guard guard(m_mtx);
+            auto &m = container.get<1>();
+            auto it = m.find(id);
+            if(it != m.end()) {
+                m.modify(it, [&](promise_data &el) {
+                    promise_to_complete = std::move(el.promise);
+                });
+                m.erase(it);
+            }
+        }
+
+        if(promise_to_complete.is_valid()) {
+            promise_to_complete.set_value(cl::ftuple(
+                pipe_wait_res::timeout,
+                std::shared_ptr<ipipe_endpoint>{}));
         }
     }
 

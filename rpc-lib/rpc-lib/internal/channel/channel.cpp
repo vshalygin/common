@@ -43,10 +43,9 @@ namespace vshalygin::rpc::internal {
         const auto method_idx = static_cast<uint32_t>(method->index());
         m_connection->request_async(create_transfer_msg_req(req_id, method_idx, request))
             .then([cg = std::move(cg), request_controller, response, req_id] (auto value) mutable {
+                auto guard = std::move(cg);
                 return value.lock().with(
                     [&](request_result rc, cl::buffer &&buffer) mutable {
-                        auto guard = std::move(cg);
-
                         try {
                             if(is_success(rc)) {
                                 if(!is_response_buffer_valid(buffer)) {

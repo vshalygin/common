@@ -82,26 +82,27 @@ namespace vshalygin::rpc {
                 m_socket.async_connect(
                     tcp::endpoint(make_address(ip4_address), static_cast<uint16_t>(port)),
                     [promise = std::move(promise), self = shared_from_this()](const boost::system::error_code &ec) mutable {
-                        std::lock_guard guard(self->m_socket_mtx);
-                        if(self->m_was_canceled) {
-                            auto r = self->m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
-                            promise.set_value(cl::ftuple(
-                                r,
-                                std::shared_ptr<ipipe_endpoint>{}));
-                        } else if(ec) {
-                            promise.set_value(cl::ftuple(
-                                pipe_wait_res::failed,
-                                std::shared_ptr<ipipe_endpoint>{}));
-                        } else {
-                            self->m_is_socket_valid = false;
-                            std::shared_ptr<ipipe_endpoint> endpoint =
+                        pipe_wait_res result;
+                        std::shared_ptr<ipipe_endpoint> endpoint;
+                        {
+                            std::lock_guard guard(self->m_socket_mtx);
+                            if(self->m_was_canceled) {
+                                result = self->m_canceled_by_timer
+                                    ? pipe_wait_res::timeout
+                                    : pipe_wait_res::canceled;
+                            } else if(ec) {
+                                result = pipe_wait_res::failed;
+                            } else {
+                                self->m_is_socket_valid = false;
+                                result = pipe_wait_res::success;
+                                endpoint =
                                 std::make_shared<tcp_pipe_endpoint>(
                                     self->m_thread_pool,
                                     std::move(self->m_socket));
-                            promise.set_value(cl::ftuple(
-                                pipe_wait_res::success,
-                                std::move(endpoint)));
+                            }
                         }
+
+                        promise.set_value(cl::ftuple(result, std::move(endpoint)));
                     });
 
                 return future;

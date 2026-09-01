@@ -81,6 +81,7 @@ namespace vshalygin::rpc::internal {
                 auto res = (m_cancel_event == cancel_event::canceled_by_timeout) ?
                                                win_pipe_operation_res::timeout :
                                                win_pipe_operation_res::canceled;
+                lock.unlock();
                 m_promise.set_value(cl::ftuple(res, std::move(pipe)));
                 break;
             }

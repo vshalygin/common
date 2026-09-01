@@ -253,33 +253,51 @@ namespace vshalygin::rpc {
 
     void win_pipe_endpoint::impl::cancel_write_op_by_timeout(uint64_t op_id)
     {
-        std::unique_lock g(m_write_op_mtx);
+        std::shared_ptr<write_op> operation_to_resolve;
+        {
+            std::unique_lock g(m_write_op_mtx);
 
-        auto it = std::find_if(m_write_ops.begin(), m_write_ops.end(), [op_id](auto &v) { return v.id == op_id; });
-        if(it != m_write_ops.end()) {
-            it->op->set_timeout_if_possible();
-            if(it->id == m_write_ops.back().id) {
-                m_iocp_owner->cancel_write(it->op);
-            } else {
-                it->op->resolve();
-                m_write_ops.erase(it);
+            auto it = std::find_if(
+                m_write_ops.begin(), m_write_ops.end(),
+                [op_id](auto &v) { return v.id == op_id; });
+            if(it != m_write_ops.end()) {
+                it->op->set_timeout_if_possible();
+                if(it->id == m_write_ops.back().id) {
+                    m_iocp_owner->cancel_write(it->op);
+                } else {
+                    operation_to_resolve = std::move(it->op);
+                    m_write_ops.erase(it);
+                }
             }
+        }
+
+        if(operation_to_resolve) {
+            operation_to_resolve->resolve();
         }
     }
 
     void win_pipe_endpoint::impl::cancel_read_op_by_timeout(uint64_t op_id)
     {
-        std::unique_lock g(m_read_op_mtx);
+        std::shared_ptr<read_op> operation_to_resolve;
+        {
+            std::unique_lock g(m_read_op_mtx);
 
-        auto it = std::find_if(m_read_ops.begin(), m_read_ops.end(), [op_id](auto &v) { return v.id == op_id; });
-        if(it != m_read_ops.end()) {
-            it->op->set_timeout_if_possible();
-            if(it->id == m_read_ops.back().id) {
-                m_iocp_owner->cancel_read(it->op);
-            } else {
-                it->op->resolve();
-                m_read_ops.erase(it);
+            auto it = std::find_if(
+                m_read_ops.begin(), m_read_ops.end(),
+                [op_id](auto &v) { return v.id == op_id; });
+            if(it != m_read_ops.end()) {
+                it->op->set_timeout_if_possible();
+                if(it->id == m_read_ops.back().id) {
+                    m_iocp_owner->cancel_read(it->op);
+                } else {
+                    operation_to_resolve = std::move(it->op);
+                    m_read_ops.erase(it);
+                }
             }
+        }
+
+        if(operation_to_resolve) {
+            operation_to_resolve->resolve();
         }
     }
 
