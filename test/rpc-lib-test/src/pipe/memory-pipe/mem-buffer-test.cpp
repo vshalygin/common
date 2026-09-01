@@ -104,6 +104,47 @@ TEST_F(MemBuffer, ExecutePendingReadCallbackOnWrite)
     EXPECT_EQ(sut->get_pending_read_handlers_count(), 0);
 }
 
+TEST_F(MemBuffer, CanStartNextReadWhileReadValueIsLocked)
+{
+    event next_read_started;
+    event next_read_completed;
+    auto first_data = create_test_data();
+    auto second_data = create_test_data();
+    second_data[0] = std::byte(42);
+
+    auto sut = mem_buffer::create(m_thread_pool.get());
+    auto first_read = sut->read_async(std::nullopt)
+        .then([sut, &next_read_started, &next_read_completed,
+               first_data = first_data.copy(), second_data = second_data.copy()]
+              (auto value) mutable {
+            auto locked_value = value.lock();
+            locked_value.with([&](pipe_op_res result, buffer &&data) {
+                EXPECT_EQ(result, pipe_op_res::success);
+                EXPECT_EQ(data, first_data);
+
+                sut->read_async(std::nullopt)
+                    .then([&next_read_completed, second_data = std::move(second_data)]
+                          (auto next_value) mutable {
+                        auto locked_next_value = next_value.lock();
+                        locked_next_value.with([&](pipe_op_res next_result,
+                                                   buffer &&next_data) {
+                            EXPECT_EQ(next_result, pipe_op_res::success);
+                            EXPECT_EQ(next_data, second_data);
+                            next_read_completed.set();
+                        });
+                    });
+                next_read_started.set();
+            });
+        });
+
+    sut->write_async(first_data.copy(), std::nullopt).get();
+    ASSERT_TRUE(next_read_started.wait_for(std::chrono::seconds(1)));
+    sut->write_async(second_data.copy(), std::nullopt).get();
+
+    EXPECT_TRUE(next_read_completed.wait_for(std::chrono::seconds(1)));
+    first_read.get();
+}
+
 TEST_F(MemBuffer, DoesNotWriteIfInvalidated)
 {
     MockFunction<void(pipe_op_res)> callback;

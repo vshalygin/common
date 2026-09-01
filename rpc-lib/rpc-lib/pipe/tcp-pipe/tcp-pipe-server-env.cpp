@@ -9,6 +9,7 @@
 #include <optional>
 #include <mutex>
 #include <list>
+#include <vector>
 #include <algorithm>
 #include <cassert>
 #include <stdexcept>
@@ -58,61 +59,65 @@ namespace vshalygin::rpc {
 
                 m_acceptor.async_accept([self = shared_from_this()]
                                         (const boost::system::error_code &ec, tcp::socket socket) mutable {
-                    std::lock_guard guard(self->m_mtx);
-                    if(self->m_was_canceled) {
-                        auto r = self->m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled;
-                        self->m_promise.set_value(cl::ftuple(
-                            r,
-                            std::shared_ptr<ipipe_endpoint>{}));
-                    } else if (ec) {
-                        self->m_promise.set_value(cl::ftuple(
-                            pipe_wait_res::failed,
-                            std::shared_ptr<ipipe_endpoint>{}));
-                    } else {
-                        boost::system::error_code option_ec;
+                    pipe_wait_res result;
+                    std::shared_ptr<ipipe_endpoint> endpoint;
+                    {
+                        std::lock_guard guard(self->m_mtx);
+                        if(self->m_was_canceled) {
+                            result = self->m_canceled_by_timer
+                                ? pipe_wait_res::timeout
+                                : pipe_wait_res::canceled;
+                        } else if(ec) {
+                            result = pipe_wait_res::failed;
+                        } else {
+                            boost::system::error_code option_ec;
 
-                        socket.set_option(tcp::no_delay(true), option_ec);
-                        if(option_ec) {
-                            self->m_promise.set_value(cl::ftuple(
-                                pipe_wait_res::failed,
-                                std::shared_ptr<ipipe_endpoint>{}));
-                            return;
+                            socket.set_option(tcp::no_delay(true), option_ec);
+                            if(!option_ec) {
+                                socket.set_option(
+                                    boost::asio::socket_base::keep_alive(true),
+                                    option_ec);
+                            }
+
+                            if(option_ec) {
+                                result = pipe_wait_res::failed;
+                            } else {
+                                result = pipe_wait_res::success;
+                                endpoint = std::make_shared<tcp_pipe_endpoint>(
+                                    self->m_thread_pool,
+                                    std::move(socket));
+                            }
                         }
-
-                        socket.set_option(boost::asio::socket_base::keep_alive(true), option_ec);
-                        if(option_ec) {
-                            self->m_promise.set_value(cl::ftuple(
-                                pipe_wait_res::failed,
-                                std::shared_ptr<ipipe_endpoint>{}));
-                            return;
-                        }
-
-                        std::shared_ptr<ipipe_endpoint> endpoint =
-                            std::make_shared<tcp_pipe_endpoint>(
-                                self->m_thread_pool,
-                                std::move(socket));
-                        self->m_promise.set_value(cl::ftuple(
-                            pipe_wait_res::success,
-                            std::move(endpoint)));
                     }
+
+                    self->complete(result, std::move(endpoint));
                 });
             }
 
-            void cancel(bool by_timer)
+            std::optional<pipe_wait_res> cancel(bool by_timer)
             {
                 std::lock_guard guard(m_mtx);
-                if(!m_was_canceled) {
-                    m_was_canceled = true;
-                    m_canceled_by_timer = by_timer;
-                    if(m_was_started) {
-                        boost::system::error_code ignored;
-                        m_acceptor.cancel(ignored);
-                    } else {
-                        m_promise.set_value(cl::ftuple(
-                            m_canceled_by_timer ? pipe_wait_res::timeout : pipe_wait_res::canceled,
-                            std::shared_ptr<ipipe_endpoint>{}));
-                    }
+                if(m_was_canceled) {
+                    return std::nullopt;
                 }
+
+                m_was_canceled = true;
+                m_canceled_by_timer = by_timer;
+                if(m_was_started) {
+                    boost::system::error_code ignored;
+                    m_acceptor.cancel(ignored);
+                    return std::nullopt;
+                }
+
+                return m_canceled_by_timer
+                    ? pipe_wait_res::timeout
+                    : pipe_wait_res::canceled;
+            }
+
+            void complete(pipe_wait_res result,
+                          std::shared_ptr<ipipe_endpoint> endpoint = {})
+            {
+                m_promise.set_value(cl::ftuple(result, std::move(endpoint)));
             }
 
         private:
@@ -222,14 +227,23 @@ namespace vshalygin::rpc {
 
     void tcp_pipe_server_env::impl::on_timeout(uint64_t id)
     {
-        std::lock_guard guard(m_mtx);
-        auto it = std::find_if(m_create_operations.begin(), m_create_operations.end(),
-                               [id](const auto &v) { return v.id == id; });
-        if(it != m_create_operations.end()) {
-            it->op->cancel(true);
-            if(it->id != m_create_operations.back().id) {
-                m_create_operations.erase(it);
+        std::shared_ptr<create_operation> operation;
+        std::optional<pipe_wait_res> result;
+        {
+            std::lock_guard guard(m_mtx);
+            auto it = std::find_if(m_create_operations.begin(), m_create_operations.end(),
+                                   [id](const auto &v) { return v.id == id; });
+            if(it != m_create_operations.end()) {
+                operation = it->op;
+                result = operation->cancel(true);
+                if(it->id != m_create_operations.back().id) {
+                    m_create_operations.erase(it);
+                }
             }
+        }
+
+        if(result) {
+            operation->complete(*result);
         }
     }
 
@@ -260,30 +274,48 @@ namespace vshalygin::rpc {
 
     void tcp_pipe_server_env::impl::cancel_pending_server_endpoints(const std::optional<uint64_t> &client_id)
     {
-        std::lock_guard guard(m_mtx);
-        if(m_create_operations.empty()) {
-            return;
-        }
+        std::vector<std::pair<std::shared_ptr<create_operation>, pipe_wait_res>>
+            operations_to_complete;
+        {
+            std::lock_guard guard(m_mtx);
+            if(m_create_operations.empty()) {
+                return;
+            }
 
-        auto it = m_create_operations.begin();
-        auto it_back = --m_create_operations.end();
-        while(it != it_back) {
-            if(!client_id || it->client_id == *client_id) {
-                if(it->timer_id) {
-                    m_timer.cancel(*it->timer_id);
+            auto it = m_create_operations.begin();
+            auto it_back = --m_create_operations.end();
+            while(it != it_back) {
+                if(!client_id || it->client_id == *client_id) {
+                    if(it->timer_id) {
+                        m_timer.cancel(*it->timer_id);
+                    }
+                    auto operation = it->op;
+                    if(auto result = operation->cancel(false)) {
+                        operations_to_complete.emplace_back(
+                            std::move(operation), *result);
+                    }
+                    it = m_create_operations.erase(it);
+                } else {
+                    ++it;
                 }
-                it->op->cancel(false);
-                it = m_create_operations.erase(it);
-            } else {
-                ++it;
+            }
+
+            if(!m_create_operations.empty() &&
+               (!client_id || m_create_operations.back().client_id == *client_id))
+            {
+                if(m_create_operations.back().timer_id) {
+                    m_timer.cancel(*m_create_operations.back().timer_id);
+                }
+                auto operation = m_create_operations.back().op;
+                if(auto result = operation->cancel(false)) {
+                    operations_to_complete.emplace_back(
+                        std::move(operation), *result);
+                }
             }
         }
 
-        if(!m_create_operations.empty() && (!client_id || m_create_operations.back().client_id == *client_id)) {
-            if(m_create_operations.back().timer_id) {
-                m_timer.cancel(*m_create_operations.back().timer_id);
-            }
-            m_create_operations.back().op->cancel(false);
+        for(auto &[operation, result] : operations_to_complete) {
+            operation->complete(result);
         }
     }
 

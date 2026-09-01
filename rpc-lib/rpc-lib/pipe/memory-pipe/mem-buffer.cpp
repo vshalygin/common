@@ -2,6 +2,8 @@
 
 #include <common-lib/thread/thread-pool/thread-pool.h>
 
+#include <vector>
+
 namespace vshalygin::rpc {
     std::shared_ptr<mem_buffer> mem_buffer::create(cl::thread_pool *thread_pool)
     {
@@ -65,23 +67,34 @@ namespace vshalygin::rpc {
 
     void mem_buffer::invalidate(bool cancel_read)
     {
-        std::lock_guard guard(m_mtx);
-        if(m_is_valid) {
+        std::vector<read_promise> pending_promises;
+        {
+            std::lock_guard guard(m_mtx);
+            if(!m_is_valid) {
+                return;
+            }
+
             m_is_valid = false;
             m_read_invalidation_result = cancel_read ? pipe_op_res::canceled
                                                      : pipe_op_res::failed;
             m_buffer = {};
+
             auto read_promises = m_read_promises->lock();
             auto &q = read_promises->get<0>();
+            pending_promises.reserve(q.size());
             for(auto it = q.begin(); it != q.end(); ++it) {
-                q.modify(it, [cancel_read](read_promise_data &el) {
-                    el.promise.set_value(cl::ftuple(
-                        cancel_read ? pipe_op_res::canceled : pipe_op_res::failed,
-                        cl::buffer{}));
+                q.modify(it, [&pending_promises](read_promise_data &el) {
+                    pending_promises.push_back(std::move(el.promise));
                 });
             }
             q.clear();
             m_timer.cancel_all();
+        }
+
+        for(auto &promise : pending_promises) {
+            promise.set_value(cl::ftuple(
+                cancel_read ? pipe_op_res::canceled : pipe_op_res::failed,
+                cl::buffer{}));
         }
     }
 
@@ -125,72 +138,86 @@ namespace vshalygin::rpc {
 
     void mem_buffer::resolve_read_promise()
     {
-        read_promise to_delete;
+        read_promise promise;
+        cl::buffer buffer;
 
-        std::lock_guard guard(m_mtx);
-        auto read_promises = m_read_promises->lock();
-        auto &q = read_promises->get<0>();
-        if(!q.empty() && !m_buffer.empty()) {
-            auto buffer = std::move(m_buffer.front());
+        {
+            std::lock_guard guard(m_mtx);
+            auto read_promises = m_read_promises->lock();
+            auto &q = read_promises->get<0>();
+            if(q.empty() || m_buffer.empty()) {
+                return;
+            }
+
+            buffer = std::move(m_buffer.front());
             m_buffer.pop();
 
             if(q.begin()->timer_id) {
                 m_timer.cancel(*q.begin()->timer_id);
             }
-            
-            q.modify(q.begin(), [&buffer, &to_delete](read_promise_data &el) mutable {
-                el.promise.set_value(cl::ftuple(pipe_op_res::success, std::move(buffer)));
-                to_delete = std::move(el.promise);
+
+            q.modify(q.begin(), [&promise](read_promise_data &el) {
+                promise = std::move(el.promise);
             });
             q.pop_front();
         }
+
+        promise.set_value(cl::ftuple(pipe_op_res::success, std::move(buffer)));
     }
 
     void mem_buffer::read_impl(read_promise promise,
                                const std::optional<std::chrono::milliseconds> &timeout,
                                bool started_while_valid)
     {
-        std::lock_guard guard(m_mtx);
+        std::optional<pipe_op_res> result;
+        cl::buffer result_buffer;
 
-        if(!m_is_valid) {
-            promise.set_value(cl::ftuple(
-                started_while_valid ? m_read_invalidation_result : pipe_op_res::failed,
-                cl::buffer{}));
-        } else if(!m_buffer.empty()) {
-            auto msg = std::move(m_buffer.front());
-            m_buffer.pop();
-            promise.set_value(cl::ftuple(pipe_op_res::success, std::move(msg)));
-        } else {
-            const auto id = m_next_read_promise_id++;
+        {
+            std::lock_guard guard(m_mtx);
 
-            auto read_promises = m_read_promises->lock();
-            std::optional<uint64_t> timer_id;
-            if(timeout) {
-                auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
-                    if(auto read_promises = read_promises_wp.lock()) {
-                        //avoid deadlock in case future callback stores mem_buffer itself
-                        read_promise promise;
-                        {
-                            auto promises = read_promises->lock();
-                            auto &m = promises->get<1>();
-                            auto it = m.find(id);
-                            if(it != m.end()) {
-                                m.modify(it, [&promise](read_promise_data &el) {
-                                    promise = std::move(el.promise);
-                                });
-                                m.erase(it);
+            if(!m_is_valid) {
+                result = started_while_valid ? m_read_invalidation_result
+                                             : pipe_op_res::failed;
+            } else if(!m_buffer.empty()) {
+                result = pipe_op_res::success;
+                result_buffer = std::move(m_buffer.front());
+                m_buffer.pop();
+            } else {
+                const auto id = m_next_read_promise_id++;
+
+                auto read_promises = m_read_promises->lock();
+                std::optional<uint64_t> timer_id;
+                if(timeout) {
+                    auto timeout_callback = [id, read_promises_wp = std::weak_ptr(m_read_promises)]() {
+                        if(auto read_promises = read_promises_wp.lock()) {
+                            //avoid deadlock in case future callback stores mem_buffer itself
+                            read_promise promise;
+                            {
+                                auto promises = read_promises->lock();
+                                auto &m = promises->get<1>();
+                                auto it = m.find(id);
+                                if(it != m.end()) {
+                                    m.modify(it, [&promise](read_promise_data &el) {
+                                        promise = std::move(el.promise);
+                                    });
+                                    m.erase(it);
+                                }
+                            }
+                            if(promise.is_valid()) {
+                                promise.set_value(cl::ftuple(pipe_op_res::timeout, cl::buffer{}));
                             }
                         }
-                        if(promise.is_valid()) {
-                            promise.set_value(cl::ftuple(pipe_op_res::timeout, cl::buffer{}));
-                        }
-                    }
-                };
+                    };
 
-                timer_id = m_timer.start(std::move(timeout_callback), *timeout);
+                    timer_id = m_timer.start(std::move(timeout_callback), *timeout);
+                }
+
+                read_promises->push_back({ id, timer_id, std::move(promise) });
             }
+        }
 
-            read_promises->push_back({ id, timer_id, std::move(promise) });
+        if(result) {
+            promise.set_value(cl::ftuple(*result, std::move(result_buffer)));
         }
     }
 }

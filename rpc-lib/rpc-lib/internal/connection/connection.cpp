@@ -162,17 +162,17 @@ namespace vshalygin::rpc::internal {
         add_request_to_map(msg_number, std::move(promise));
 
         auto send_callback = [self = shared_from_this(), msg_number](auto value) {
-            value.lock().with([&](pipe_op_res res) {
-                if(is_success(res)) {
-                    self->process_request_sent(msg_number);
-                } else if(res == pipe_op_res::canceled) {
-                    self->complete_request(msg_number, request_result::send_canceled, {});
-                } else if(res == pipe_op_res::timeout) {
-                    self->complete_request(msg_number, request_result::send_timeout, {});
-                } else {
-                    self->complete_request(msg_number, request_result::send_failed, {});
-                }
-            });
+            pipe_op_res result = *value.lock();
+
+            if(is_success(result)) {
+                self->process_request_sent(msg_number);
+            } else if(result == pipe_op_res::canceled) {
+                self->complete_request(msg_number, request_result::send_canceled, {});
+            } else if(result == pipe_op_res::timeout) {
+                self->complete_request(msg_number, request_result::send_timeout, {});
+            } else {
+                self->complete_request(msg_number, request_result::send_failed, {});
+            }
         };
 
         m_transport.send_async(std::move(message))
@@ -202,14 +202,19 @@ namespace vshalygin::rpc::internal {
     {
         m_transport.recv_async()
             .then([self = shared_from_this()](auto value) mutable {
-                return value.lock().with([&](pipe_op_res r, cl::buffer &&message) {
-                      if(is_success(r)) {
-                          self->dispatch_receive_event(std::move(message));
-                          self->do_receive_async();
-                      } else {
-                          self->complete_receive_routine(r);
-                      }
-                  });
+                pipe_op_res result = pipe_op_res::failed;
+                cl::buffer message;
+                value.lock().with([&](pipe_op_res value_result, cl::buffer &&value_message) {
+                    result = value_result;
+                    message = std::move(value_message);
+                });
+
+                if(is_success(result)) {
+                    self->dispatch_receive_event(std::move(message));
+                    self->do_receive_async();
+                } else {
+                    self->complete_receive_routine(result);
+                }
             });
     }
 
@@ -270,20 +275,26 @@ namespace vshalygin::rpc::internal {
 
     void connection::impl::process_request_sent(uint64_t req_msg_number)
     {
-        req_result_promise to_delete;
+        req_result_promise promise;
+        std::optional<request_result> result;
 
-        auto map = m_request_map.lock();
-        auto it = map->find(req_msg_number);
-        if(it != map->end()) {
-            auto &req_data = it->second;
-            req_data.is_req_sent = true;
-            if(req_data.fail_req_result) {
-                assert(is_fail(*req_data.fail_req_result));
-                req_data.promise.set_value(cl::ftuple(*req_data.fail_req_result,
-                                                      cl::buffer{}));
-                to_delete = std::move(req_data.promise);
-                map->erase(it);
+        {
+            auto map = m_request_map.lock();
+            auto it = map->find(req_msg_number);
+            if(it != map->end()) {
+                auto &req_data = it->second;
+                req_data.is_req_sent = true;
+                if(req_data.fail_req_result) {
+                    assert(is_fail(*req_data.fail_req_result));
+                    result = *req_data.fail_req_result;
+                    promise = std::move(req_data.promise);
+                    map->erase(it);
+                }
             }
+        }
+
+        if(result) {
+            promise.set_value(cl::ftuple(*result, cl::buffer{}));
         }
     }
 
@@ -345,21 +356,26 @@ namespace vshalygin::rpc::internal {
                                      request_result::canceled :
                                      request_result::failed;
 
-        std::vector<req_result_promise> to_delete;
+        std::vector<req_result_promise> promises;
 
-        auto map = m_request_map.lock();
-        for(auto it = map->begin(); it != map->end(); ) {
-            auto &req_data = it->second;
-            m_multiple_timer.cancel(req_data.timer_id);
+        {
+            auto map = m_request_map.lock();
+            for(auto it = map->begin(); it != map->end(); ) {
+                auto &req_data = it->second;
+                m_multiple_timer.cancel(req_data.timer_id);
 
-            if(req_data.is_req_sent) {
-                req_data.promise.set_value(cl::ftuple(req_result, cl::buffer{}));
-                to_delete.push_back(std::move(req_data.promise));
-                it = map->erase(it);
-            } else {
-                req_data.fail_req_result = req_result;
-                ++it;
+                if(req_data.is_req_sent) {
+                    promises.push_back(std::move(req_data.promise));
+                    it = map->erase(it);
+                } else {
+                    req_data.fail_req_result = req_result;
+                    ++it;
+                }
             }
+        }
+
+        for(auto &promise : promises) {
+            promise.set_value(cl::ftuple(req_result, cl::buffer{}));
         }
     }
 

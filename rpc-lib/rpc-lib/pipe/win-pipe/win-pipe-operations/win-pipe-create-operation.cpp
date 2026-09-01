@@ -71,14 +71,18 @@ namespace vshalygin::rpc::internal {
         auto res = m_res.load(std::memory_order_acquire);
         assert(res != win_pipe_operation_res::unknown);
 
-        auto pipe = m_pipe.lock();
-        if(res == win_pipe_operation_res::success) {
-            assert(!pipe->empty());
-            m_promise.set_value(cl::ftuple(res, std::move(*pipe)));
-        } else {
-            pipe->reset();
-            m_promise.set_value(cl::ftuple(res, win::pipe_handle{}));
+        win::pipe_handle result_pipe;
+        {
+            auto pipe = m_pipe.lock();
+            if(res == win_pipe_operation_res::success) {
+                assert(!pipe->empty());
+                result_pipe = std::move(*pipe);
+            } else {
+                pipe->reset();
+            }
         }
+
+        m_promise.set_value(cl::ftuple(res, std::move(result_pipe)));
     }
 
     win_pipe_create_operation::future win_pipe_create_operation::get_future()
