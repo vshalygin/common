@@ -154,6 +154,11 @@ toolchain and architecture combinations.
 - [RPC architecture and protocol](docs/rpc-architecture.md)
 - [Project roadmap](ROADMAP.md)
 
+## Contact
+
+For general questions and private inquiries related to the project, contact
+[contact@vshalygin.dev](mailto:contact@vshalygin.dev).
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
