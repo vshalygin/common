@@ -64,7 +64,7 @@ is built as a standalone project and consumes the installed package through
   custom builds.
 - [vcpkg](https://github.com/microsoft/vcpkg), bootstrapped locally, required
   for the provided presets.
-- Ninja for the provided Linux presets.
+- Ninja 1.10.2 or newer for the provided Linux presets.
 - A multilib toolchain and 32-bit development libraries for Linux x86 builds.
 - Python 3 and gcovr 8.6 for coverage generation.
 
