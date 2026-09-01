@@ -122,7 +122,7 @@ distribution. Package names may differ on other distributions.
 
 ### 1. Install the tools
 
-Install the compiler, Ninja, Git, Python, and the utilities needed by vcpkg:
+Install the compiler, Git, Python, and the utilities needed by vcpkg:
 
 ```bash
 sudo apt-get update
@@ -131,7 +131,6 @@ sudo apt-get install --yes \
     ca-certificates \
     curl \
     git \
-    ninja-build \
     pkg-config \
     python3 \
     python3-pip \
@@ -140,11 +139,14 @@ sudo apt-get install --yes \
     zip
 ```
 
-Ubuntu 22.04 provides an older CMake than this project requires. One way to
-install a sufficiently recent user-local version is:
+Ubuntu 22.04 provides older CMake and Ninja versions than the recommended
+project setup. Install the same versions used by the Linux toolchain images in
+the user-local Python binary directory:
 
 ```bash
-python3 -m pip install --user "cmake==4.4.2"
+python3 -m pip install --user \
+    "cmake==4.4.2" \
+    "ninja==1.11.1.1"
 export PATH="$HOME/.local/bin:$PATH"
 ```
 

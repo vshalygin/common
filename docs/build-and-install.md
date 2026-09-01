@@ -39,8 +39,8 @@ Every build requires:
 - platform thread support.
 
 GoogleTest is required only when `BUILD_TESTING=ON`. The recommended Linux
-presets use Ninja. Linux x86 builds additionally require a multilib compiler
-and 32-bit system development libraries.
+presets use Ninja 1.10.2 or newer. Linux x86 builds additionally require a
+multilib compiler and 32-bit system development libraries.
 
 The current CI toolchains are MSVC v143, GCC 11, and Clang 14. These versions
 define the continuously tested configurations, not a hard requirement for a
@@ -369,7 +369,7 @@ architectures, standard-library ABIs, or MSVC runtime models.
 
 - Confirm that `VCPKG_ROOT` is set in the environment visible to CMake or the
   IDE, not only in a different terminal session.
-- Install Ninja before selecting a provided Linux preset.
+- Install Ninja 1.10.2 or newer before selecting a provided Linux preset.
 - Use a fresh build directory after changing the compiler, generator,
   architecture, toolchain, or vcpkg triplet.
 - Ensure the package architecture and configuration match the consumer.
