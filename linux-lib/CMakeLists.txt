@@ -1,9 +1,9 @@
 set(linux_lib_sources
-    linux-lib/src.cpp
+    linux-lib/types/epoll.cpp
 )
 
 set(linux_lib_headers
-    linux-lib/src.h
+    linux-lib/types/epoll.h
     linux-lib/types/unique-fd.h
 )
 
