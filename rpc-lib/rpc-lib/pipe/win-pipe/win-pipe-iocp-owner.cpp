@@ -49,7 +49,7 @@ namespace vshalygin::rpc::internal {
         m_write_iocp_thread.stop();
     }
     
-    cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>> win_pipe_iocp_owner::create_pipe_async(
+    win_pipe_iocp_owner::pipe_future win_pipe_iocp_owner::create_pipe_async(
         std::shared_ptr<win_pipe_create_operation> overlapped)
     {
         auto f = overlapped->get_future();
@@ -86,8 +86,7 @@ namespace vshalygin::rpc::internal {
         });
     }
 
-    cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>>
-        win_pipe_iocp_owner::open_pipe_async(win_pipe_open_operation *op)
+    win_pipe_iocp_owner::pipe_future win_pipe_iocp_owner::open_pipe_async(win_pipe_open_operation *op)
     {
         auto f = op->get_future();
         op->start();

@@ -27,6 +27,8 @@ namespace vshalygin::rpc::internal {
         win_pipe_iocp_owner();
 
     public:
+        using pipe_future = cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>>;
+
         static std::shared_ptr<win_pipe_iocp_owner> create();
 
         win_pipe_iocp_owner(const win_pipe_iocp_owner &) = delete;
@@ -34,13 +36,10 @@ namespace vshalygin::rpc::internal {
 
         ~win_pipe_iocp_owner();
 
-        cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>> create_pipe_async(
-            std::shared_ptr<win_pipe_create_operation> overlapped);
-        void cancel_create(
-            std::shared_ptr<win_pipe_create_operation> overlapped, bool by_timeout);
+        pipe_future create_pipe_async(std::shared_ptr<win_pipe_create_operation> overlapped);
+        void cancel_create(std::shared_ptr<win_pipe_create_operation> overlapped, bool by_timeout);
 
-        cl::future<cl::thread_pool, cl::ftuple<pipe_wait_res, win::pipe_handle>> open_pipe_async(
-            win_pipe_open_operation *op);
+        pipe_future open_pipe_async(win_pipe_open_operation *op);
 
         void read_async(std::shared_ptr<win_pipe_read_operation> overlapped);
         void cancel_read(std::shared_ptr<win_pipe_read_operation> overlapped);
