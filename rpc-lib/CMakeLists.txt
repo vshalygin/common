@@ -18,6 +18,15 @@ set(rpc_lib_sources
     rpc-lib/pipe/tcp-pipe/tcp-pipe-server-env.cpp
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND rpc_lib_sources
+        rpc-lib/pipe/uds-pipe/uds-pipe-client-env.cpp
+        rpc-lib/pipe/uds-pipe/uds-pipe-endpoint.cpp
+        rpc-lib/pipe/uds-pipe/uds-pipe-epoll-owner.cpp
+        rpc-lib/pipe/uds-pipe/uds-pipe-server-env.cpp
+    )
+endif()
+
 if(WIN32)
     list(APPEND rpc_lib_sources
         rpc-lib/pipe/win-pipe/win-pipe-iocp-owner.cpp
@@ -75,6 +84,15 @@ set(rpc_lib_headers
     rpc-lib/types/response-result.h
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND rpc_lib_headers
+        rpc-lib/pipe/uds-pipe/uds-pipe-client-env.h
+        rpc-lib/pipe/uds-pipe/uds-pipe-endpoint.h
+        rpc-lib/pipe/uds-pipe/uds-pipe-epoll-owner.h
+        rpc-lib/pipe/uds-pipe/uds-pipe-server-env.h
+    )
+endif()
+
 if(WIN32)
     list(APPEND rpc_lib_headers
         rpc-lib/pipe/win-pipe/win-pipe-iocp-owner.h
@@ -114,6 +132,9 @@ target_link_libraries(rpc-lib PUBLIC
 
 if(WIN32)
     target_link_libraries(rpc-lib PUBLIC win-lib)
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(rpc-lib PUBLIC linux-lib)
 endif()
 
 configure_target(rpc-lib LIBRARY)
