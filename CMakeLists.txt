@@ -48,15 +48,22 @@ add_subdirectory(rpc-lib)
 if(BUILD_TESTING)
     include(GoogleTest)
     add_subdirectory(test/common-lib-test)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_subdirectory(test/linux-lib-test)
+    endif()
     if(WIN32)
         add_subdirectory(test/win-lib-test)
     endif()
     add_subdirectory(test/rpc-lib-test)
 
-    add_coverage_report_target(
+    set(vshalygin_common_coverage_targets
         common-lib-test
         rpc-lib-test
     )
+    if(TARGET linux-lib-test)
+        list(APPEND vshalygin_common_coverage_targets linux-lib-test)
+    endif()
+    add_coverage_report_target(${vshalygin_common_coverage_targets})
 endif()
 
 include(CMakePackageConfigHelpers)

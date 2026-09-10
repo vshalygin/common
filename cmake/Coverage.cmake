@@ -101,6 +101,7 @@ function(add_coverage_report_target)
             --root "${CMAKE_SOURCE_DIR}"
             --object-directory "${CMAKE_BINARY_DIR}"
             --filter "${CMAKE_SOURCE_DIR}/common-lib/"
+            --filter "${CMAKE_SOURCE_DIR}/linux-lib/"
             --filter "${CMAKE_SOURCE_DIR}/rpc-lib/"
             --html-details "${coverage_directory}/index.html"
             --cobertura "${coverage_directory}/coverage.xml"
