@@ -4,6 +4,7 @@ set(linux_lib_sources
 
 set(linux_lib_headers
     linux-lib/src.h
+    linux-lib/types/unique-fd.h
 )
 
 add_library(linux-lib STATIC
